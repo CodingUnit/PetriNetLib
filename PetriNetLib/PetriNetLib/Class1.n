@@ -1,0 +1,107 @@
+﻿using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Collections.Immutable;
+using CommonLib.Macros;
+
+namespace PetriNetLib
+{
+  
+  public class Arc
+  {
+  }
+  
+  [Record]
+  [Lens]
+  public class Place
+  {
+    public idx : int;
+    public name : string;
+  }
+  
+  [Record]
+  [Lens]
+  public class Transition
+  { 
+    public idx : int;
+    public name : string;
+  }
+  
+  [Lens]
+  public class Graph
+  {
+    places      : List[Place] = List();
+    transitions : List[Transition] = List();
+    
+    input_matrix       : List[List[List[Arc]]];//List[List[List[Arc]]];
+    output_matrix      : List[List[List[Arc]]];
+    //transition_input_matrix  : List[List[int]];
+    //transition_output_matrix : List[List[int]];
+    //place_arcs               : List[List[Arc]];
+    //transition_arcs          : List[List[Arc]];
+    
+    place_idx : int;
+    transition_idx : int;
+    
+    GetEdgesNull(count : int) : List[List[Arc]]
+    {
+      ListUtils.Init(count, _ => null).ToList()
+    }
+    
+    public AddPlace(place : Place) : Graph * Place
+    {
+      def place = Place.idx_lens.Set(place, place_idx);
+      places.Add(place);
+      def graph = Graph.place_idx_lens.Update(this, _ + 1) |>
+                  Graph.input_matrix_lens.Update(_, x => x ?? List()) |>
+                  Graph.output_matrix_lens.Update(_, x => x ?? List());
+      input_matrix.Add(GetEdgesNull(transitions.Count));
+      output_matrix.Add(GetEdgesNull(transitions.Count));
+      //input_matrix.
+      //Graph.places_lens.Update(this, x => x.Add(place.name, place))
+      (graph, place)
+    }
+    
+    public AddTransition(tran : Transition) : Graph * Transition
+    {
+      def tran = Transition.idx_lens.Set(tran, transition_idx);
+      transitions.Add(tran);
+      def graph = Graph.transition_idx_lens.Update(this, _ + 1) |>
+                  Graph.input_matrix_lens.Update(_, x => x ?? List()) |>
+                  Graph.output_matrix_lens.Update(_, x => x ?? List());
+      foreach (i in input_matrix)
+      {
+        i.Add(null)
+      }
+      foreach (i in output_matrix)
+      {
+        i.Add(null)
+      }
+      (graph, tran)
+      //input_matrix.Add(List());
+      //output_matrix.Add(List());
+      //input_matrix.
+      //Graph.places_lens.Update(this, x => x.Add(place.name, place))
+    }
+    
+    public AddArc(place : Place, arc : Arc, tran : Transition) : void
+    {
+      def idx = place.idx;
+      def tidx = tran.idx;
+      def add = output_matrix[idx][tidx] ?? List();
+      add.Add(arc);
+    }
+    
+    public AddArc(tran : Transition, arc : Arc, place : Place) : void
+    {
+      def idx = place.idx;
+      def tidx = tran.idx;
+      def add = input_matrix[idx][tidx] ?? List();
+      add.Add(arc);
+    }
+  }
+}
