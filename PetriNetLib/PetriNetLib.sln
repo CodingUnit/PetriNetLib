@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2026
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "PetriNetLib", "PetriNetLib\PetriNetLib.nproj", "{4424F461-4ED3-40BB-B142-13FFBF19BEBF}"
+EndProject
+Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "CommonLib.Macros", "..\CommonLib.Macros\CommonLib.Macros.nproj", "{5E9CFDA7-975A-4EF5-A7E7-B638DF3D19F7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		LIBS|Any CPU = LIBS|Any CPU
+		NViewer|Any CPU = NViewer|Any CPU
+		OPC|Any CPU = OPC|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4424F461-4ED3-40BB-B142-13FFBF19BEBF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4424F461-4ED3-40BB-B142-13FFBF19BEBF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4424F461-4ED3-40BB-B142-13FFBF19BEBF}.LIBS|Any CPU.ActiveCfg = Release|Any CPU
+		{4424F461-4ED3-40BB-B142-13FFBF19BEBF}.LIBS|Any CPU.Build.0 = Release|Any CPU
+		{4424F461-4ED3-40BB-B142-13FFBF19BEBF}.NViewer|Any CPU.ActiveCfg = Release|Any CPU
+		{4424F461-4ED3-40BB-B142-13FFBF19BEBF}.NViewer|Any CPU.Build.0 = Release|Any CPU
+		{4424F461-4ED3-40BB-B142-13FFBF19BEBF}.OPC|Any CPU.ActiveCfg = Release|Any CPU
+		{4424F461-4ED3-40BB-B142-13FFBF19BEBF}.OPC|Any CPU.Build.0 = Release|Any CPU
+		{4424F461-4ED3-40BB-B142-13FFBF19BEBF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4424F461-4ED3-40BB-B142-13FFBF19BEBF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E9CFDA7-975A-4EF5-A7E7-B638DF3D19F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E9CFDA7-975A-4EF5-A7E7-B638DF3D19F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E9CFDA7-975A-4EF5-A7E7-B638DF3D19F7}.LIBS|Any CPU.ActiveCfg = LIBS|Any CPU
+		{5E9CFDA7-975A-4EF5-A7E7-B638DF3D19F7}.LIBS|Any CPU.Build.0 = LIBS|Any CPU
+		{5E9CFDA7-975A-4EF5-A7E7-B638DF3D19F7}.NViewer|Any CPU.ActiveCfg = NViewer|Any CPU
+		{5E9CFDA7-975A-4EF5-A7E7-B638DF3D19F7}.NViewer|Any CPU.Build.0 = NViewer|Any CPU
+		{5E9CFDA7-975A-4EF5-A7E7-B638DF3D19F7}.OPC|Any CPU.ActiveCfg = OPC|Any CPU
+		{5E9CFDA7-975A-4EF5-A7E7-B638DF3D19F7}.OPC|Any CPU.Build.0 = OPC|Any CPU
+		{5E9CFDA7-975A-4EF5-A7E7-B638DF3D19F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E9CFDA7-975A-4EF5-A7E7-B638DF3D19F7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E0498C02-B0F6-44FB-83FF-18598E796C3A}
+	EndGlobalSection
+EndGlobal

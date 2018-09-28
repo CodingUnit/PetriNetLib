@@ -1,0 +1,711 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace CommonLib.Macros
+{
+  using TreeUtils;
+  
+  partial public module LensUtils
+  {
+    //public ToTreeLens[T, Res](this l1 : Lens[T, list[Res]]) : TreeLens[T, Res] where Res : IGeneralTree[Res]
+    //{
+    //}
+    
+    public Mapper[T, Res](this l1 : IEnumerable[Lens[T, Res]], func : Res -> Res) : Mapper[T]
+    {
+      Mapper(l1.Update(_, func))
+    }
+    
+    public Mapper[T, Res](this l1 : EnumerableLens[T, option[Res]], func : Res -> Res) : Mapper[T]
+    {
+      Mapper(l1.Map(_, _.Map(func)))
+    }
+    
+    public Mapper[T, Res](this l1 : Lens[T, option[Res]], func : Res -> Res) : Mapper[T]
+    {
+      Mapper(l1.Update(_, _.Map(func)))
+    }
+    
+    
+    //public Map[T, TB, TR](this l1 : BaseLens[T, IEnumerable[TB], IEnumerable[TR]], obj : T, func : TR -> TB) : T
+    //{
+    //  l1.Update(obj, _.Select(func))
+    //}
+    
+    public Map[T, TR](this l1 : PartialLens[T, option[TR]], obj : T, func : TR -> TR) : T
+    {
+      l1.Update(obj, _.Map(func))
+    }
+    
+    public Map[T, TR](this l1 : EnumerableLens[T, option[TR]], obj : T, func : TR -> TR) : T
+    {
+      l1.Map(obj, _.Map(func))
+    }
+
+    public DownMap[T, TR, TB](this l1 : IEnumerable[EnumerableLens[T, TB]], obj : T, func : TR -> TB) : T where TR : TB
+    {
+      def map(x)
+      {
+        match (x)
+        {
+          | x is TR => func(x)
+          | _       => x
+        }
+      }
+      
+      l1.Fold(obj, (x, a) => x.Map(a, map))
+    }
+    
+    public DownMap[T, TR, TB](this l1 : Lens[T, TB], obj : T, func : TR -> TB) : T where TR : TB
+    {
+      def map(x : TB)
+      {
+        | x is TR => func(x)
+        | _       => x
+      }
+      
+      l1.Update(obj, map)
+    }
+    
+    public DownMap[T, TR, TB](this l1 : PartialLens[T, TB], obj : T, func : TR -> TB) : T where TR : TB
+    {
+      def map(x : TB)
+      {
+        | x is TR => func(x)
+        | _       => x
+      }
+      
+      l1.Update(obj, map)
+    }
+    
+    public DownMap[T, TR, TB](this l1 : Lens[T, IEnumerable[TB]], obj : T, func : TR -> TB) : T where TR : TB
+    {
+      def map(x)
+      {
+        | x is TR => func(x)
+        | _       => x
+      }
+      
+      l1.Map(obj, map)
+    }
+    
+    public Map[T, TR](this l1 : Lens[T, option[TR]], a : T, f : TR -> TR) : T
+    {
+      l1.Update(a, x => x.Map(f))
+    }
+    
+    public Map[T, TR](this l1 : Lens[T, IEnumerable[TR]], a : T, f : TR -> TR) : T
+    {
+      def value = a |> l1.Get;
+      def value = value.Map(f);
+      l1.Set(a, value)
+    }
+    
+    public Map[T, TR](this l1 : Lens[T, list[TR]], a : T, f : TR -> TR) : T
+    {
+      def value = a |> l1.Get;
+      def value = value.Map(f);
+      l1.Set(a, value)
+    }
+    
+    public ToPartial[T, TR](this l1 : Lens[T, option[TR]]) : PartialLens[T, TR]
+    {
+      def get = l1.Get;
+      def set = (x, y) => l1.Set(x, Some(y));
+      PartialLens(get, set)
+    }   
+
+    public OptToEnum[T, TR](this l1 : Lens[T, option[TR]]) : EnumerableLens[T, TR]
+    {
+      def get = x => l1.Get(x).ToEnum();
+      def set = (x, y) => l1.Set(x, y.FromEnum());
+      EnumerableLens(get, set)
+    }
+
+    public FilterType[T, T2, T3](this l1 : IEnumerable[Lens[T, T2]], obj : T) : IEnumerable[Lens[T, T3]] where T3 : T2
+    {
+      l1.Where(x => x.Get(obj) is T3).Select(_.Cast())
+    }
+
+    public Update[T, T2, T3, T4](this l1 : IEnumerable[Lens[T, T2]], obj : T, func : T2 -> T2) : T
+    {
+      l1.Fold(obj, _.Update(_, func))
+    }
+
+    public ToList[T, T2, T3, T4](l1 : Lens[T, T2], l2 : Lens[T, T3]) : list[Lens[T, T4]]
+    {
+      [l1.Cast(), l2.Cast()]
+    }
+
+    public CombineEnum[T, T2, T3, T4](this l1 : Lens[T, T2], l2 : Lens[T, T3]) : IEnumerable[Lens[T, T4]]
+    {
+      yield l1.Cast();
+      yield l2.Cast();
+    }
+
+    public CombineEnum[T, T2, T3, T4](this l1 : EnumerableLens[T, T2], l2 : EnumerableLens[T, T3]) : IEnumerable[EnumerableLens[T, T4]]
+    {
+      yield l1.Cast();
+      yield l2.Cast();
+    }
+    
+    public CombineEnum[T, T2, T3, T4](this l1 : IEnumerable[Lens[T, T4]], l2 : Lens[T, T3]) : IEnumerable[Lens[T, T4]]
+    {
+      foreach (l in l1) yield l;
+      yield l2.Cast()
+    }
+
+    public @%+[T, T2, T3, T4](l1 : EnumerableLens[T, T2], l2 : EnumerableLens[T, T3]) : IEnumerable[EnumerableLens[T, T4]]
+    {
+      CombineEnum(l1, l2)
+    }
+    
+    //public @%+[T, T2](l1 : EnumerableLens[T, T2], l2 : EnumerableLens[T, T2]) : IEnumerable[EnumerableLens[T, T2]]
+    //{
+    //  yield l1;
+    //  yield l2;
+    //}
+    
+    public @%+[T, T2, T3, T4](l1 : Lens[T, T2], l2 : Lens[T, T3]) : IEnumerable[Lens[T, T4]]
+    {
+      CombineEnum(l1, l2)
+    }
+
+    public @%+[T, T2, T3, T4](l1 : IEnumerable[Lens[T, T4]], l2 : Lens[T, T3]) : IEnumerable[Lens[T, T4]]
+    {
+      CombineEnum(l1, l2)
+    }
+
+    public @%+[T, T2, T3, T4](l1 : IEnumerable[EnumerableLens[T, T2]], l2 : EnumerableLens[T, T2]) : IEnumerable[EnumerableLens[T, T2]]
+    {
+      foreach (l in l1) yield l;
+      yield l2;
+    }
+    
+    public @()[T](this map : Mapper[T], l1 : T) : T
+    {
+      map.func(l1)
+    }
+    
+    public @>>[T](map1 : Mapper[T], map2 : Mapper[T]) : Mapper[T]
+    {
+      map1.Combine(map2)
+    }
+    
+    public @|>[T](l1 : T, map : Mapper[T]) : T
+    {
+      map.func(l1)
+    }
+    
+    public @|[T, T2, TB](l1 : Mapper[T], l2 : Mapper[T2]) : Mapper[TB]
+    {
+      def map(x : TB, l1, l2) : TB
+      {
+        match (x)
+        {
+          | x is T  => l1(x) :> TB
+          | x is T2 => l2(x) :> TB
+          | x       => x
+        }
+      }
+      
+      Mapper(map(_, l1.func, l2.func))
+    }
+    
+    public @|[T, T2, T3, TR](l1 : Lens[T2, TR], l2 : EnumerableLens[T3, TR]) : Matcher[T, TR] where T2 : T where T3 : T
+    {
+      Match.[T, T2, T3, TR](l1.ToEnum(), l2)
+    }
+    
+    public @|[T, T2, T3, TR](l1 : Lens[T2, TR], l2 : Lens[T3, TR]) : PartialLens[T, TR] where T2 : T where T3 : T
+    {
+      Match.[T, T2, T3, TR](l1, l2)
+    }
+
+    public @|[T, T2, TR](l1 : Matcher[T, TR], l2 : Lens[T2, TR]) : Matcher[T, TR] where T2 : T
+    {
+      Match.[T, T2, TR](l1, l2)
+    }
+    
+    public @|[T, T2, TR](l1 : Matcher[T, TR], l2 : EnumerableLens[T2, TR]) : Matcher[T, TR] where T2 : T
+    {
+      Match.[T, T2, TR](l1, l2)
+    }
+    
+    public @|[T, T2, TR](l1 : Matcher[T, TR], l2 : ListLens[T2, TR]) : Matcher[T, TR] where T2 : T
+    {
+      Match.[T, T2, TR](l1, l2.ToEnum())
+    }
+    
+    public @%|[T, T2, T3, TR](l1 : EnumerableLens[T2, TR], l2 : EnumerableLens[T3, TR]) : Matcher[T, TR] where T2 : T where T3 : T
+    {
+      Match.[T, T2, T3, TR](l1, l2)
+    }
+    
+    public @|[T, T2, TR](l1 : PartialLens[T, TR], l2 : Lens[T2, TR]) : PartialLens[T, TR] where T2 : T
+    {
+      Match.[T, T2, TR](l1, l2)
+    }
+
+    public Match[T, T2, TR] (l1 : Matcher[T, TR], l2 : Lens[T2, TR]) : Matcher[T, TR] where T2 : T
+    {
+      Match(l1, l2.ToEnum())
+    }
+    
+    public Match[T, T2, TR] (l1 : Matcher[T, TR], l2 : EnumerableLens[T2, TR]) : Matcher[T, TR] where T2 : T
+    {
+      def get(x : T)
+      {
+        | x is T2 => l2.Get(x)
+        | x       => l1.Get(x)
+      }
+
+      def set(a : T, r)
+      {
+        match (a)
+        {
+          | x is T2 => l2.Set(x, r)
+          | x       => l1.Set(x, r)
+        }
+      }
+
+      Matcher(get, set)
+    }
+    
+    public Match[T, T2, T3, TR] (l1 : EnumerableLens[T2, TR], l2 : EnumerableLens[T3, TR]) : Matcher[T, TR] where T2 : T where T3 : T
+    {
+      def get(x : T)
+      {
+        | x is T2 => l1.Get(x)
+        | x is T3 => l2.Get(x)
+        | _       => Enumerable.Empty()
+      }
+
+      def set(a : T, r)
+      {
+        match (a)
+        {
+          | x is T2 => l1.Set(x, r)
+          | x is T3 => l2.Set(x, r)
+          | _       => a
+        }
+      }
+
+      Matcher(get, set)
+    }
+    
+    public Match[T, T2, TR] (l1 : PartialLens[T, TR], l2 : Lens[T2, TR]) : PartialLens[T, TR] where T2 : T
+    {
+      def get(x : T)
+      {
+        match (l1.Get(x))
+        {
+          | Some as x => x
+          | _     => match (x)
+              {
+                | x is T2  => Some(l2.Get(x))
+                | _        => None()
+              }
+        }
+      }
+
+      def set(a : T, r)
+      {
+        match (l1.Set(a, r))
+        {
+          | x is T2 => l2.Set(x, r)
+          | x    => x
+        }
+      }
+
+      PartialLens(get, set)
+    }    
+    
+    public ToEnumOpt[T, TR](this l1 : Lens[T, option[TR]]) : EnumerableLens[T, TR]
+    {
+      def get = x => l1.Get(x).ToEnum();
+      def set = (x, y) => l1.Set(x, y.FromEnum());
+      EnumerableLens(get, set)
+    }
+    
+    public ToEnum[T, TR](this l1 : PartialLens[T, TR]) : EnumerableLens[T, TR]
+    {
+      def get = x => l1.Get(x).ToEnum();
+      def set = (x, r) => if (r.IsEmpty()) x else l1.Set(x, r.First());
+      EnumerableLens(get, set)
+    }
+    
+    public ToEnum[T, TR](this l1 : PartialLens[T, IEnumerable[TR]]) : EnumerableLens[T, TR]
+    {
+      def get = x => l1.Get(x).WithDefault(Enumerable.Empty());
+      EnumerableLens(get, l1.Set)
+    }
+
+    public Match[T, T2, T3, TR] (l1 : Lens[T2, TR], l2 : Lens[T3, TR]) : PartialLens[T, TR] where T2 : T where T3 : T
+    {
+      def get(x : T)
+      {
+        | x is T2 => Some(l1.Get(x))
+        | x is T3 => Some(l2.Get(x))
+        | _       => None()
+      }
+
+      def set(a : T, r)
+      {
+        match (a)
+        {
+          | x is T2 => l1.Set(x, r)
+          | x is T3 => l2.Set(x, r)
+          | _       => a
+        }
+      }
+
+      PartialLens(get, set)
+    }
+
+    
+    
+    public @+[T](l1 : Mapper[T], l2 : Mapper[T]) : Mapper[T]
+    {
+      l1.Combine(l2)
+    }
+    
+    
+    //public Upper[T](l1 : )
+  //public @>>[T, T2, TR] (l1 : ListLens[T, T2], l2 : ListLens[T2, TR]) : EnumerableLens[T, TR]
+  //{
+  // def get = x => l1.Get(x).SelectMany(x => l2.Get(x));
+
+  // def set(a, r)
+  // {
+  //  def update(x)
+  //  {
+  //   def len  = x.Select(x => l2.Get(x).Length);
+  //   def unflat = r.Unflat(len);
+  //   def res  = x.ZipLazy(unflat);
+  //   res.Map((x, y) => l2.Set(x, y.NToList()));
+  //  }
+  //  l1.Update(a, update);
+  // }
+
+  // EnumerableLens(get, set)
+  //}
+  //public @>>[T, T2, TR] (l1 : ListLens[T, T2], l2 : Lens[T2, TR]) : Lens[T, IEnumerable[TR]]
+  //{
+  // def get = x => l1.Get(x).Select(l2.Get);
+  // def set = (a, r) => l1.Update(a, x => x.ZipLazy(r).Map(l2.Set));
+  // Lens(get, set)
+  //}
+    
+  }
+  
+  //[Record]
+  //public class BaseLens[T, TB, TBB, Res]// where T : TB
+  //{
+  //  public Get : T -> TBB;
+  //  public Set : T * TB -> T;    
+    
+  //  public Update(obj : T, func : TBB * TBB -> TB) : T
+  //  {
+  //    def value = obj   |> Get;
+  //    def value = value |> func();
+  //    Set(obj, value)
+  //  }
+  //}
+/// <summary>
+/// Description of Lens.
+/// </summary>
+  [Record]
+  public class Lens[T, Res]
+  {
+    public Get : T -> Res;
+    public Set : T * Res -> T;    
+    
+    public Mapper(func : Res -> Res) : Mapper[T]
+    {
+      Mapper(Update(_, func))
+    }
+      
+    public ToBasePartial[T2]() : PartialLens[T2, Res] where T : T2
+    {
+      def get(x : T2)
+      {
+        | x is T => Some(Get(x))
+        | _      => None()
+      }
+
+      def set(x : T2, r : Res)
+      {
+        match (x)
+        {
+          | x is T => Set(x, r) :> T2
+          | _   => x
+        }
+      }
+
+      PartialLens(get, set);
+    }
+
+    public ToBase[T2]() : Lens[T2, Res] where T : T2
+    {
+      def get = x => Get(x :> T);
+      def set = (x, r) => Set(x :> T, r) :> T2;
+      Lens(get, set)
+    }
+
+    public ConvertEnum[T2](to : Res -> IEnumerable[T2], from : IEnumerable[T2] -> Res) : EnumerableLens[T, T2]
+    {
+      def get = Get >> to;
+      def set = (x, y) => Set(x, y |> from);
+      EnumerableLens(get, set)
+    }
+
+    public ToEnum() : EnumerableLens[T, Res]
+    {
+      def get = x => Get(x) |> ListUtils.SingleElement;
+      def set = (x, y) => if (y.Count() >= 1) Set(x, y.First()) else x;
+      EnumerableLens(get, set)
+    }
+
+    public Convert[T2](to : Res -> T2, from : T2 -> Res) : Lens[T, T2]
+    {
+      def get = Get >> to;
+      def set = (x, y) => Set(x, y |> from);
+      Lens(get, set)
+    }
+
+    public Cast[T2]() : Lens[T, T2] where Res : T2
+    {
+      def get = x => Get(x) :> T2;
+      def set = (x, y) => Set(x, y :> Res);
+      Lens(get, set)
+    }  
+
+    public Update(a : T, f : Res -> Res) : T
+    {
+      def value = a   |> Get;
+      def value = value |> f;
+      Set(a, value)
+    }
+
+  }
+
+  [Record]
+  public class PartialLens[T, Res]
+  {
+    public Get : T -> option[Res];
+    public Set : T * Res -> T;
+
+    public Mapper(func : Res -> Res) : Mapper[T]
+    {
+      Mapper(Update(_, func))
+    }
+    
+    public ToBase[T2]() : PartialLens[T2, Res] where T : T2
+    {
+      def get(x : T2)
+      {
+        | x is T => Get(x)
+        | _      => None()
+      }
+
+      def set(x : T2, r)
+      {
+        match (x)
+        {
+          | x is T => Set(x, r) :> T2
+          | _      => x
+        }
+      }
+
+      PartialLens(get, set);
+    }
+    
+    public DownCast[T2]() : PartialLens[T, T2]
+    {
+      def get = x => match (Get(x))
+                     {
+                       | Some(x is T2) => Some(x)
+                       | _             => None()
+                     };
+      def set = (x, y) => Set(x, y :> Res);
+      PartialLens(get, set)
+    }  
+    
+    public Update(a : T, f : Res -> Res) : T
+    {
+      def value = a |> Get;
+      if (value is Some(v)) 
+      {
+        Set(a, v |> f)
+      } else a
+    }
+  }
+
+/// <summary>
+/// Description of Lens.
+/// </summary>
+// public type ListLens[T, Res] = Lens[T, list[Res]];
+  [Record]
+  public class ListLens[T, Res] : Lens[T, list[Res]]
+  {
+
+    public Mapper(func : Res -> Res) : Mapper[T]
+    {
+      Mapper(Map(_, func))
+    }
+    
+    public new ToBasePartial[T2]() : ListLens[T2, Res] where T : T2
+    {
+      def get(x : T2)
+      {
+        | x is T => Get(x)
+        | _      => []
+      }
+
+      def set(x : T2, r)
+      {
+        match (x)
+        {
+          | x is T => Set(x, r) :> T2
+          | _      => x
+        }
+      }
+
+      ListLens(get, set);
+    }    
+
+    public new ToEnum() : EnumerableLens[T, Res]
+    {
+      EnumerableLens(Get, (x, y) => Set(x, y.NToList()))
+    }
+  }
+
+//public type EnumerableLens[T, Res] = Lens[T, IEnumerable[Res]];
+
+  [Record]
+  public class EnumerableLens[T, Res] : Lens[T, IEnumerable[Res]]
+  {
+    public new ToBase[T2]() : EnumerableLens[T2, Res] where T : T2
+    {
+      def get = x => Get(x :> T);
+      def set = (x, r) => Set(x :> T, r) :> T2;
+      EnumerableLens(get, set)
+    }
+
+    public new Cast[T2]() : EnumerableLens[T, T2] where Res : T2
+    {
+      def get = x => Get(x).Select(_ :> T2);
+      def set = (x, y) => Set(x, y.Select(_ :> Res));
+      EnumerableLens(get, set)
+    }
+    
+    public DownCast[T2]() : EnumerableLens[T, T2]
+    {
+      def get(x)
+      {
+        def val = Get(x);
+        if (val.IsEmpty())
+        {
+          Enumerable.Empty()
+        } else
+        match (val.First())
+        {
+          | _ is T2 => val.Select(x => x :> T2)
+          | _       => Enumerable.Empty()
+        };
+      }
+      
+      def set = (x, y) => Set(x, y.Select(x => x :> Res));
+      EnumerableLens(get, set)
+    }
+    
+    public new ToBasePartial[T2]() : EnumerableLens[T2, Res] where T : T2
+    {
+      def get(x : T2)
+      {
+        | x is T => Get(x)
+        | _      => Enumerable.Empty()
+      }
+
+      def set(x : T2, r)
+      {
+        match (x)
+        {
+          | x is T => Set(x, r) :> T2
+          | _      => x
+        }
+      }
+
+      EnumerableLens(get, set)
+    }    
+    
+    public Map(a : T, f : Res -> Res) : T
+    {
+      def value = a |> Get;
+      def value = value.Select(f);
+      Set(a, value)
+    }
+
+    public Mapper(func : Res -> Res) : Mapper[T]
+    {
+      Mapper(Map(_, func))
+    }
+  }
+  
+  [Record]
+  public class TreeLens[T, Res] : Lens[T, IGeneralTree[Res]] where Res : IGeneralTree[Res]
+  {
+    public Map(a : T, f : Res -> Res) : T
+    {
+      def value = a |> Get;
+      def value = value.Reduce(f);
+      Set(a, value)
+    }
+    
+    public Mapper(func : Res -> Res) : Mapper[T]
+    {
+      Mapper(Map(_, func))
+    }
+  }
+  
+  [Record]
+  public class Mapper[T]
+  {
+    public func : T -> T;
+    
+    public apply(p : T) : T
+    {
+      func(p)
+    }
+    
+    public Combine(l2 : Mapper[T]) : Mapper[T]
+    {
+      Mapper(func >> l2.func)
+    }
+  }
+  
+  [Record]
+  public class Mapper2[T, T2]
+  {
+    public func : T -> T2;
+    
+    public apply(p : T) : T2
+    {
+      func(p)
+    }
+    
+    
+  }
+  
+  [Record]
+  public class Matcher[T, TR] : EnumerableLens[T, TR]
+  {
+  }
+}

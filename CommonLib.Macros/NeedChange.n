@@ -1,0 +1,252 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Compiler;
+using Nemerle.Compiler.Parsetree;
+using Nemerle.Compiler.Typedtree;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+
+namespace CommonLib.Macros
+{
+  [MacroUsage(MacroPhase.BeforeTypedMembers, MacroTargets.Class)]
+  macro NeedChange(typeBuilder : TypeBuilder, params pars : list[PExpr])
+  {
+    when (pars is [<[ debug ]>] ) assert2(false);
+    NeedChangeImpl.DoTransform(Macros.ImplicitCTX(), typeBuilder, pars)
+  }
+
+  [MacroUsage(MacroPhase.WithTypedMembers, MacroTargets.Class)]
+  macro NeedChange(typeBuilder : TypeBuilder, params pars : list[PExpr])
+  {
+    when (pars is [<[ debug ]>] ) assert2(false);
+    NeedChangeImpl.DoTransform2(Macros.ImplicitCTX(), typeBuilder, pars)
+  }
+  
+  [MacroUsage(MacroPhase.WithTypedMembers, MacroTargets.Field)]
+  macro NeedChange(typeBuilder : TypeBuilder, field : FieldBuilder, params pars : list[PExpr])
+  {
+    when (pars is [<[ debug ]>] ) assert2(false);
+    NeedChangeImpl.DoTransform(Macros.ImplicitCTX(), typeBuilder, field, pars)
+  }
+  
+  partial module NeedChangeImpl
+  {
+
+    public ToCamel(this s : string) : string
+    {
+      def upper(a)
+      {
+         | head :: tail => Char.ToUpper(head) :: tail
+         | lst          => lst
+      }
+      
+      def to_camel(s, a)
+      {
+        if (s == '_')
+        {
+          upper(a)
+        } else s :: a
+      }
+
+      def chars = s.FoldRightO([], to_camel);
+      def chars = upper(chars);
+      string(chars.ToArray())
+    }
+
+    public GetChangeFields(type : TypeBuilder) : IEnumerable[IField]
+    {
+      def get_base_change_fields(t)
+      {
+        def fields = t.tycon.GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
+        fields.Where(x => x.attr_func(x => x.Exists(_ is <[ NeedChange ]>)));
+      }
+      def fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy);
+      def fields = fields.Filter(x => !x.Name.StartsWith("_N_cached_value_") && !x.Name.StartsWith("_N_is_cached_") && !x.Attributes.HasFlag(NemerleModifiers.Mutable));
+      def base_fields = type.GetDirectSuperTypes().SelectMany(get_base_change_fields);
+      fields.Concat(base_fields)
+    }
+
+    public DoTransform2(_ : Typer, typeBuilder : TypeBuilder, field : FieldBuilder) : void
+    {
+      def defined(type, fields)
+      {
+        def constr = type.GetConstructors();
+        constr.Exists(c => c.Header.Parameters.Equals(fields.NToList(), (x, y) => x.Name == StrToLower(y.Name)))
+      }
+
+      def def_constr(type)
+      {
+
+        def fields = GetChangeFields(type);
+        when (!defined(type, fields) && !fields.IsEmpty())
+        {
+          def (this_type, base_type) = fields.PartitionLazy(x => x.DeclaringType.Name == type.Name);
+          def body = this_type.Map(x => <[ this.$(x.Name : usesite) = $(StrToLower(x.Name) : usesite) ]>);
+          def pars = fields.Map(f => <[ parameter: $(StrToLower(f.Name) : usesite) : $(f.GetMemType() : typed) ]>);
+          def base_cons = base_type.Map(x => <[ $(StrToLower(x.Name) : usesite) = $(StrToLower(x.Name) : usesite) ]>);
+          def base_type = if (base_cons is []) <[]> else <[ base(..$base_cons) ]>;
+          _ = type.DefineWithSource(<[decl: public this(..$pars)
+                              {
+                                $base_type;
+                                {..$body}
+                              } ]>);
+        }
+      }
+
+      //assert2(false);
+      when (field.attr_func(x => x.Exists(_ is <[ RecordIgnore ]>) && x.Exists(_ is <[ NeedChange ]>)))
+        match (typeBuilder.GetVariantOptions())
+        {
+          | []  => def_constr(typeBuilder)
+          | lst => def_constr(typeBuilder);
+                  lst.Iter(def_constr);
+        }
+    }
+
+    public DoTransform2(_typer : Typer, typeBuilder : TypeBuilder, aliases : list[PExpr]) : void
+    {
+      //  assert2(false);
+      def opts = typeBuilder.GetVariantOptions();
+      def name = typeBuilder.Name;
+      match (opts)
+      {
+        | [] => 
+            def fields = typeBuilder.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy);
+            //def ty = typeBuilder.GetSuperTypes();
+        
+            def fields = fields.Filter(x => !x.Attributes.HasFlag(NemerleModifiers.Mutable));
+            def (base_fields, other) = fields.Select(x => x :> FieldBuilder).PartitionLazy(x => typeBuilder.IsDerivedFrom(x.DeclaringType) && typeBuilder != x.DeclaringType : object);
+        
+            foreach (f in base_fields)
+            {
+              create_cons(typeBuilder, f, aliases, "")//$"_$name")
+            }
+        | opts => 
+        
+            foreach (o in opts)
+            {
+                def fields = o.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy);
+            //def ty = typeBuilder.GetSuperTypes();
+        
+                def fields = fields.Filter(x => !x.Attributes.HasFlag(NemerleModifiers.Mutable));
+                //def (base_fields, other) = fields.Select(x => x :> FieldBuilder).PartitionLazy(x => typeBuilder.IsDerivedFrom(x.DeclaringType) && typeBuilder != x.DeclaringType : object);
+                def (base_fields, other) = fields.Select(x => x :> FieldBuilder).PartitionLazy(x => o.IsDerivedFrom(x.DeclaringType) && o != x.DeclaringType : object);
+        
+                foreach (f in base_fields)
+                {
+                  create_cons(o, f, aliases, "")//$"_$name")
+                } 
+            }
+        
+      }
+      //def opts = if (opts.IsEmpty()) opts.AppendElem(typeBuilder) else opts;
+      
+    }
+    
+    public DoTransform(_typer : Typer, typeBuilder : TypeBuilder, _aliases : list[PExpr]) : void
+    {
+      //assert2(false);
+      
+      def gen_field(f)
+      {
+        when (!f.ParsedAttributsAndModifiers.CustomAttributes.Exists(x => x is <[ NeedChange ]>))
+             f.AddCustomAttribute(<[ NeedChange ]>)
+      }
+      
+      def opts = typeBuilder.GetVariantOptions();
+      match (opts)
+      {
+        | [] => def fields = typeBuilder.GetParsedMembers();
+                foreach (f in fields)
+                {
+                  | ClassMember.Field as f => gen_field(f)
+                  | _                      => ()
+                }
+        | _ =>  foreach (o in opts)
+                {
+                  def fields = o.GetParsedMembers();
+                  foreach (f in fields)
+                  {
+                    | ClassMember.Field as f => gen_field(f)
+                    | _                      => ()
+                  }    
+                }
+      }
+      
+      
+    }
+    
+    create_cons(t : TypeBuilder, f : IField, aliases : list[PExpr], prefix : string = null) : void
+    {
+      def get_short_name(name)
+      {
+        StrToLower($"_par$name")
+      }
+      
+      def fields = t.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy).Rev();
+      //def fields = fields.Exclude(have_record_ignore);
+      def fields = fields.Exclude(x => x.Attributes.HasFlag(NemerleModifiers.Mutable));
+      def fields = f :: fields.Filter(x => aliases.Exists(y => y.ToString() == x.Name));
+        
+      def names = fields.Map(x => (x.Name, x.GetMemType()));
+      def cnames = names.Map((x, _) => ToCamel(x));
+      def fname = $<#..$(cnames;"")$prefix#>;
+      def name = $"Change$fname";
+      def sname = names.Map((x, y) => (get_short_name(x), y));
+      def sname = sname.Map((x, t) => <[ parameter: $(x : usesite) : $(t : typed) ]>);
+      def chlist = names.Map((x, y) => (x.TrimStart('_'), get_short_name(x), y));
+      def type = t.GetMemType();
+
+      def clist = chlist.Map((x, y, _) => (x, y));
+      def body = CreateNewInst(t, null, clist);
+      def chlist = names.Map((x, y) => (x, get_short_name(x), y));
+      def check_list = chlist.Map((x, y, t) => if (t.IsValueType) <[ ! $(x : usesite).Equals($(y : usesite)) ]> else <[ $(x : usesite) : object != $(y : usesite) ]>);
+      def check = check_list.Reduce((x, a) => <[ $x || $a ]>);
+      if (prefix != null)
+      {
+        _ = t.DefineWithSource(<[ decl: public override $(name : usesite)(..$sname) : $(type : typed)
+          {
+            if ($check) 
+            {
+              $body
+            } else this
+          }]>);
+      } else
+      {
+      _ = t.DefineWithSource(<[ decl: public virtual $(name : usesite)(..$sname) : $(type : typed)
+          {
+            if ($check) 
+            {
+              $body
+            } else this
+          }]>);
+        }
+    }
+      
+    public DoTransform(typer : Typer, typeBuilder : TypeBuilder, field : FieldBuilder, aliases : list[PExpr]) : void
+    {
+      Macros.DefineCTX(typer);
+      //assert2(false);
+      DoTransform2(typer, typeBuilder, field);
+      //DoTransform2(typer, typeBuilder, field, aliases);
+     
+
+      
+
+      match (typeBuilder.GetVariantOptions())
+      {
+        | [] => create_cons(typeBuilder, field, aliases)
+        | lst => create_cons(typeBuilder, field, aliases);
+                 lst.Iter(create_cons(_, field, aliases))
+      }
+
+      // TODO: Add implementation here.
+      _ = typeBuilder; _ = field;
+    }
+  }
+}

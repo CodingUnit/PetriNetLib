@@ -1,0 +1,111 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+
+namespace CommonLib.Macros
+{
+  /// <summary>
+  /// Description of ThreadSafeUtils.
+  /// </summary>
+  public module ThreadSafeUtils
+  {
+    public LockFreeUpdate[T](field : ref T, update : Func[T, T]) : void where T : class
+    {
+      def wait = SpinWait();
+      
+      def equals(e1, e2)
+      {
+        | (null, null) => true
+        | (null, _)     
+        | (_, null)    => false
+        | (_, _)       => e1.Equals(e2)
+      }
+      
+      def loop()
+      {
+        def temp1 = field;
+        def calc = update(temp1);
+        def temp2 = Interlocked.CompareExchange(ref field, calc, temp1);
+        if (equals(temp1, temp2)) () else 
+        {
+          wait.SpinOnce();
+          loop()
+        }
+      }
+      
+      loop()
+    }
+  
+    public LockFreeUpdateRet[T](field : ref T, update : Func[T, T]) : T where T : class
+    {
+      def wait = SpinWait();
+      
+      def equals(e1, e2)
+      {
+        | (null, null) => true
+        | (null, _)     
+        | (_, null)    => false
+        | (_, _)       => e1.Equals(e2)
+      }
+      
+      def loop()
+      {
+        def temp1 = field;
+        def calc = update(temp1);
+        def temp2 = Interlocked.CompareExchange(ref field, calc, temp1);
+        if (equals(temp1, temp2)) calc else 
+        {
+          wait.SpinOnce();
+          loop()
+        }
+      }
+      
+      loop()
+    }
+    
+    public LockFreeUpdateVal[T](field : ref T, update : Func[T, T]) : void where T : struct
+    {
+      def wait = SpinWait();
+      
+      def loop()
+      {
+        def temp1 = field;
+        def calc = update(temp1);
+        def temp2 = Interlocked.CompareExchange(ref field, calc, temp1);
+        if (System.ValueType.Equals(temp1, temp2)) () else 
+        {
+          wait.SpinOnce();
+          loop()
+        }
+      }
+      
+      loop()
+    }
+    
+    public LockFreeUpdateValRet[T](field : ref T, update : Func[T, T]) : T
+    {
+      def wait = SpinWait();
+      
+      def loop()
+      {
+        def temp1 = field;
+        def calc = update(temp1);
+        def temp2 = Interlocked.CompareExchange(ref field, calc, temp1);
+        if (System.ValueType.Equals(temp1, temp2)) calc else 
+        {
+          wait.SpinOnce();
+          loop()
+        }
+      }
+      
+      loop()
+    }
+  }
+  
+}

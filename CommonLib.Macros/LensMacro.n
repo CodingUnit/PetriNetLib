@@ -1,0 +1,192 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Compiler;
+using Nemerle.Compiler.Parsetree;
+using Nemerle.Compiler.Typedtree;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+
+namespace CommonLib.Macros
+{
+  [MacroUsage(MacroPhase.BeforeTypedMembers, MacroTargets.Class)]
+  macro Lens(typeBuilder : TypeBuilder, params pars : list[PExpr])
+  {
+    when (pars is [<[ debug ]>] ) assert2(false);
+    LensImpl.DoTransform(Macros.ImplicitCTX(), typeBuilder, pars)
+  }
+
+  [MacroUsage(MacroPhase.WithTypedMembers, MacroTargets.Class)]
+  macro Lens(typeBuilder : TypeBuilder, params pars : list[PExpr])
+  {
+    when (pars is [<[ debug ]>] ) assert2(false);
+    LensImpl.DoTransform2(Macros.ImplicitCTX(), typeBuilder, pars)
+  }
+  
+  //[MacroUsage(MacroPhase.WithTypedMembers, MacroTargets.Field)]
+  //macro NeedChange(typeBuilder : TypeBuilder, field : FieldBuilder, params pars : list[PExpr])
+  //{
+  //  NeedChangeImpl.DoTransform(Macros.ImplicitCTX(), typeBuilder, field, pars)
+  //}
+  
+  partial module LensImpl
+  {
+
+    //public GetChangeFields(type : TypeBuilder) : IEnumerable[IField]
+    //{
+    //  def get_base_change_fields(t)
+    //  {
+    //    def fields = t.tycon.GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
+    //    fields.Where(x => x.attr_func(x => x.Exists(_ is <[ NeedChange ]>)));
+    //  }
+    //  def fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy);
+    //  def fields = fields.Filter(x => !x.Name.StartsWith("_N_cached_value_") && !x.Name.StartsWith("_N_is_cached_"));
+    //  def base_fields = type.GetDirectSuperTypes().SelectMany(get_base_change_fields);
+    //  fields.Concat(base_fields)
+    //}
+
+    //public DoTransform2(_ : Typer, typeBuilder : TypeBuilder, field : FieldBuilder) : void
+    //{
+    //  def defined(type, fields)
+    //  {
+    //    def constr = type.GetConstructors();
+    //    constr.Exists(c => c.Header.Parameters.Equals(fields.NToList(), (x, y) => x.Name == StrToLower(y.Name)))
+    //  }
+
+    //  def def_constr(type)
+    //  {
+
+    //    def fields = GetChangeFields(type);
+    //    when (!defined(type, fields))
+    //    {
+    //      def (this_type, base_type) = fields.PartitionLazy(x => x.DeclaringType.Name == type.Name);
+    //      def body = this_type.Map(x => <[ this.$(x.Name : usesite) = $(StrToLower(x.Name) : usesite) ]>);
+    //      def pars = fields.Map(f => <[ parameter: $(StrToLower(f.Name) : usesite) : $(f.GetMemType() : typed) ]>);
+    //      def base_cons = base_type.Map(x => <[ $(StrToLower(x.Name) : usesite) = $(StrToLower(x.Name) : usesite) ]>);
+    //      def base_type = if (base_cons is []) <[]> else <[ base(..$base_cons) ]>;
+    //      _ = type.DefineWithSource(<[decl: public this(..$pars)
+    //                          {
+    //                            $base_type;
+    //                            {..$body}
+    //                          } ]>);
+    //    }
+    //  }
+
+    //  //assert2(false);
+    //  when (field.attr_func(x => x.Exists(_ is <[ RecordIgnore ]>) && x.Exists(_ is <[ NeedChange ]>)))
+    //    match (typeBuilder.GetVariantOptions())
+    //    {
+    //      | []  => def_constr(typeBuilder)
+    //      | lst => def_constr(typeBuilder);
+    //              lst.Iter(def_constr);
+    //    }
+    //}
+
+    public DoTransform2(typer : Typer, typeBuilder : TypeBuilder, aliases : list[PExpr]) : void
+    {
+      //assert2(false);
+      def gen_fields(t)
+      {
+        def fields = t.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy);        
+        //def fields_inst = t.GetFields(BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic);
+        //def base_fields = fields.Except(fields_inst);
+        def fields = fields.Exclude(x => x.Attributes.HasFlag(NemerleModifiers.Mutable));
+        def base_fields = fields.Filter(x => typeBuilder.BaseType.CompareTo(x.DeclaringType) == 0);//fields.Filter(x => typeBuilder.IsDerivedFrom(x.DeclaringType) && x.DeclaringType != t : object);
+        def fields_inst = fields.Filter(x => !x.Name.StartsWith("_N_cached_value_") && !x.Name.StartsWith("_N_is_cached_"));
+        def fields_inst = fields_inst.Except(base_fields);
+        def oper = fields_inst.Map(x => if (x is FieldBuilder as x) create_cons(typer, t, x, aliases) else <[]>);
+        def name = typeBuilder.Name;
+        //def oper = base_fields.Map(x => if (x is FieldBuilder as x) create_cons(typer, t, x, aliases) else <[]>) + oper;
+        //foreach (f in base_fields)
+        //{
+        //  | FieldBuilder as f => create_cons(typer, t, f, aliases, "")//$"_$name")
+        //  | _                 => ()
+        //}
+        def list_name = $"lens_list_$(name)";
+        def ty = t.GetMemType();
+        
+        
+        //def fname = $<#$(f.Name)#>;
+        //def fnameup = NeedChangeImpl.ToCamel(fname);
+        //def change_name = $"Change$fnameup$prefix";
+        //def name = $"$(fname)$(prefix)_lens";
+      
+        if (fields_inst.IsEmpty())
+        {
+          (t, <[]>)
+        } else
+        {
+          def fnames = fields_inst.Select(x => $"$(x.Name)_lens");//.Concat(base_fields.Select(x => $"$(x.Name)_$(name)_lens"));
+          def fcode = fnames.Select(x => <[ $(x : usesite).Cast() ]>);
+          def fcode = <[ [..$fcode]]>;
+          def type = <[ list[Lens[$(ty : typed), object]] ]>;//Lens(_.$(fname : usesite), _.$(change_name : usesite)(_))
+          _ = t.DefineWithSource(<[ decl: public static $(list_name : usesite) : $(type); ]>);
+          def fcode = <[ $(list_name : usesite) = $fcode ]>;
+          def expr = <[ {..$oper} $fcode ]>;
+          (t, expr)
+        }
+      }
+      
+      def gen_ctor(t, e)
+      {
+        def cons = t.GetConstructors(BindingFlags.Static);
+        if (cons.IsEmpty())
+        {
+          if (e is <[]>) () else
+          {
+            _ = t.DefineWithSource(<[ decl: static this()
+                                    {
+                                      $e
+                                    }]>);
+          }
+        } else
+        {
+          def builder = cons.Head :> MethodBuilder;
+          builder.Body = <[ $(builder.Body); $e ]>;
+        }
+      }
+      
+      def opts = typeBuilder.GetVariantOptions();
+      match (opts)
+      {
+        | []   => def (x, y) = gen_fields(typeBuilder);
+                  gen_ctor(x, y)
+        | opts => opts.Map(gen_fields).Iter(gen_ctor)
+      }
+      
+      
+    }
+    
+    public DoTransform(_typer : Typer, typeBuilder : TypeBuilder, aliases : list[PExpr]) : void
+    {
+      when (!typeBuilder.Ast.ParsedAttributsAndModifiers.ParsedCustomAttributes.Exists(x => x is <[ NeedChange ]>))
+             typeBuilder.AddMacroAttribute(<[ NeedChange(..$aliases) ]>);
+    }
+    
+    create_cons(_typer : Typer, t : TypeBuilder, f : FieldBuilder, _aliases : list[PExpr], prefix : string = "") : PExpr
+    {
+      //assert2(false);
+      def fname = $<#$(f.Name)#>;
+      def fnameup = NeedChangeImpl.ToCamel(fname);
+      def change_name = $"Change$fnameup$prefix";
+      def name = $"$(fname)$(prefix)_lens";
+      def type = t.GetMemType();
+      def ftype = f.GetMemType();
+      def (ltype, type) = match (f.Ast.ty)
+      {
+        | <[ list[$t]]>        => (<[ ListLens ]>, <[ ListLens[$(type : typed), $t] ]>)
+        | <[ IEnumerable[$t]]> => (<[ EnumerableLens ]>, <[ EnumerableLens[$(type : typed), $t]]>)
+        | _                    => (<[ Lens ]>, <[ Lens[$(type : typed), $(ftype : typed)] ]>);
+      }
+        
+      _ = t.DefineWithSource(<[ decl: public static $(name : usesite) : $(type)]>);
+      <[ $(name : usesite) = $ltype(_.$(fname : usesite), _.$(change_name : usesite)(_)) ]>
+    }
+      
+    
+  }
+}
