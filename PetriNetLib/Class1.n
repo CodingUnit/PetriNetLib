@@ -1,0 +1,244 @@
+﻿using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Collections.Immutable;
+using CommonLib.Macros;
+
+namespace PetriNetLib
+{
+  [Lens]
+  [Record]
+  public class Colour
+  {
+    public idx : int;
+  }
+  
+  [Record]
+  public class Arc
+  {
+    public colour : Colour;
+    public expr   : ArcExpr;
+  }
+  
+  [Record]
+  public class TokenVal[T]
+  {
+  }
+  
+  [Record]
+  public class Token
+  {
+    public value  : TokenVal[Colour];
+    public colour : Colour;
+  }
+  
+  [Record]
+  [Lens]
+  public class Place
+  {
+    public idx : int;
+    public name : string;
+    public colour : Colour;
+    public marking : list[Token];
+    
+   
+      
+  }
+  
+  [Record]
+  public class TokenSet
+  {
+    public num   : int;
+    public token : Token;
+  }
+  
+  [Record]
+  [Lens]
+  public class Transition
+  { 
+    public idx : int;
+    public name : string;
+    public guard : Guard;
+  }
+  
+  public class GuardExpr
+  {
+  }
+  
+  [Record]
+  public class Guard
+  {
+    expr : GuardExpr;
+  }
+  
+  public variant ListExpr
+  {
+  }
+  
+  [Record]
+  public variant ArcExpr
+  {
+    | NumTok { tok : Token; }
+    | Var { n : string; }
+    | ListExpr {expr : ListExpr;}
+    
+  }
+  
+  [Lens]
+  [Record]
+  public class PetriNet
+  {
+    mutable places      : ImmutableList[Place] = ImmutableList.Create();
+    mutable transitions : ImmutableList[Transition] = ImmutableList.Create();
+    
+    input_matrix       : array[3, Arc];//List[List[List[Arc]]];
+    output_matrix      : array[3, Arc];
+    incidence_matrix   : array[3, int];
+    colours            : List[Colour] = List();
+    //arcs               : List[List[Arc]] = List();
+    //transition_input_matrix  : List[List[int]];
+    //transition_output_matrix : List[List[int]];
+    //place_arcs               : List[List[Arc]];
+    //transition_arcs          : List[List[Arc]];
+    
+    place_idx : int;
+    transition_idx : int;
+    colour_idx : int;
+    
+    //GetEdgesNull(count : int) : List[List[Arc]]
+    //{
+    //  ListUtils.Init(count, _ => null).ToList()
+    //}
+    
+    //GetEmptyMatrix(count : int) : IEnumerable[List[List[Arc]]]
+    //{
+    //  Enumerable.Repeat(ListUtils.Init(places.Count, _ => null).ToList(), count)
+    //}
+    
+    BuildMatrix() : PetriNet
+    {
+      def col    = colours.Count;
+      def places = places.Count;
+      def tran   = transitions.Count;
+      
+      PetriNet.input_matrix_lens.Set(this, array(col, places, tran)) |>
+      PetriNet.output_matrix_lens.Set(_, array(col, places, tran))   |>
+      PetriNet.incidence_matrix_lens.Set(_, array(col, places, tran));
+      
+      //when (colours.Count > 0)
+      //{
+      //  def diff = colours.Count - input_matrix.Count;
+      //  when (diff > 0)
+      //  {
+      //    input_matrix.AddRange(GetEmptyMatrix(diff));
+      //    output_matrix.AddRange(GetEmptyMatrix(diff));
+      //    incidence_matrix.AddRange(Enumerable.Repeat(ListUtils.Init(places.Count, _ => List()).ToList(), diff));
+      //  }
+      //  when (places.Count > 0)
+      //  {
+      //    def diff = places.Count - input_matrix[0].Count;
+      //    when (diff > 0)
+      //    {
+      //      def add_place_matrix(matrix)
+      //      {
+      //        foreach (elem in matrix)
+      //        {
+      //          elem.AddRange(Enumerable.Repeat(ListUtils.Init(transitions.Count, _ => null).ToList(), diff))
+      //        }
+      //      }
+          
+      //      add_place_matrix(input_matrix);
+      //      add_place_matrix(output_matrix);
+      //      foreach (elem in incidence_matrix)
+      //      {
+      //        def lst = ListUtils.Init(transitions.Count, _ => 0).ToList();
+      //        elem.AddRange(Enumerable.Repeat(lst, diff));
+      //      }
+          
+      //    }
+        
+      //    def diff = transitions.Count - input_matrix[0][0].Count;
+      //    when (diff > 0)
+      //    {
+      //      def add_tran_matrix(matrix)
+      //      {
+      //        foreach (colour in matrix)
+      //        {
+      //          foreach (elem in colour)
+      //          {
+      //            elem.AddRange(Enumerable.Repeat(null, diff))
+      //          }
+      //        }
+      //      }
+          
+      //      add_tran_matrix(input_matrix);
+      //      add_tran_matrix(output_matrix);
+      //      foreach (elem in incidence_matrix)
+      //      {
+      //        elem.AddRange(Enumerable.Repeat(null, diff))
+      //      }
+      //    }
+      //  }
+      //}
+    }
+    
+    public AddColour(col : Colour) : PetriNet
+    {
+      def col = Colour.idx_lens.Set(col, colour_idx);
+      //col.idx = colour_idx;
+      colours.Add(col);
+      BuildMatrix() |> PetriNet.colour_idx_lens.Update(_, _ + 1)
+    }
+    
+    public AddPlace(place : Place) : PetriNet * int
+    {
+      def place = Place.idx_lens.Set(place, place_idx);
+      def net = PetriNet.places_lens.Update(this, x => x.Add(place)) |> 
+      _.BuildMatrix() |> PetriNet.place_idx_lens.Update(_, _ + 1);
+      (net, place.idx)
+    }
+    
+    public AddTransition(tran : Transition) : PetriNet * int
+    {
+      def tran = Transition.idx_lens.Set(tran, transition_idx);
+      def net = PetriNet.transitions_lens.Update(this, x => x.Add(tran)) |> 
+      _.BuildMatrix() |> PetriNet.transition_idx_lens.Update(_, _ + 1);
+      (net, tran.idx)
+    }
+    
+    public AddArc(place : Place, arc : Arc, tran : Transition) : void
+    {
+      def idx = place.idx;
+      def tidx = tran.idx;
+      def cidx = arc.colour.idx;
+      output_matrix[cidx, idx, tidx] = arc;
+    }
+    
+    public AddArc(tran : Transition, arc : Arc, place : Place) : void
+    {
+      def idx = place.idx;
+      def tidx = tran.idx;
+      def cidx = arc.colour.idx;
+      input_matrix[cidx, idx, tidx] = arc;
+    }
+    
+     public AddToken(place_idx : int, tok : Token) : void
+     {
+       def set_tok(t)
+       {
+         Place.marking_lens.Update(t[place_idx], tok :: _) |> t.SetItem(place_idx, _)
+       }
+       
+       ThreadSafeUtils.LockFreeUpdate(ref places, set_tok)
+       //places[place_idx] = place;
+     }
+     
+     public AddToken(place : Place, tok : Token) : void
+     {
+     }
+  }
+}
