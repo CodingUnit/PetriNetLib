@@ -45,7 +45,7 @@ namespace PetriNetLib
     public colour : Colour;
     public marking : list[Token];
     
-   
+    public net : PetriNet;
       
   }
   
@@ -63,20 +63,28 @@ namespace PetriNetLib
     public idx : int;
     public name : string;
     public guard : Guard;
+    
+    public net : PetriNet;
   }
   
-  public class GuardExpr
+  public class GuardExpr : Guard
   {
   }
   
   [Record]
   public class Guard
   {
-    expr : GuardExpr;
+    public virtual Eval() : bool {true}
+  }
+  
+  public class GuardFunc : Guard
+  {
+    public Func : Token -> bool;
   }
   
   public variant ListExpr
   {
+    // head :: tail
   }
   
   [Record]
@@ -85,10 +93,24 @@ namespace PetriNetLib
     | NumTok { tok : Token; }
     | Var { n : string; }
     | ListExpr {expr : ListExpr;}
-    
+    | Func {}
+    // record
   }
   
-  [Lens]
+  class ColourSet
+  {
+    public name : string;
+    public type : Type;
+  }
+  
+  class Declarations
+  {
+    public vars : Hashtable[string, Colour];
+    
+    public colour_sets : Hashtable[string, ColourSet];
+  }
+  
+  [Lens(debug)]
   [Record]
   public class PetriNet
   {
@@ -98,16 +120,16 @@ namespace PetriNetLib
     input_matrix       : array[3, Arc];//List[List[List[Arc]]];
     output_matrix      : array[3, Arc];
     incidence_matrix   : array[3, int];
-    colours            : List[Colour] = List();
+    colours            : list[Colour] = [];
     //arcs               : List[List[Arc]] = List();
     //transition_input_matrix  : List[List[int]];
     //transition_output_matrix : List[List[int]];
     //place_arcs               : List[List[Arc]];
     //transition_arcs          : List[List[Arc]];
     
-    place_idx : int;
-    transition_idx : int;
-    colour_idx : int;
+    //place_idx : int;
+    //transition_idx : int;
+    //colour_idx : int;
     
     //GetEdgesNull(count : int) : List[List[Arc]]
     //{
@@ -121,7 +143,7 @@ namespace PetriNetLib
     
     BuildMatrix() : PetriNet
     {
-      def col    = colours.Count;
+      def col    = colours.Length;
       def places = places.Count;
       def tran   = transitions.Count;
       
@@ -188,31 +210,31 @@ namespace PetriNetLib
     
     public AddColour(col : Colour) : PetriNet
     {
-      def col = Colour.idx_lens.Set(col, colour_idx);
+      def col = Colour.idx_lens.Set(col, colours.Length);
       //col.idx = colour_idx;
-      colours.Add(col);
-      BuildMatrix() |> PetriNet.colour_idx_lens.Update(_, _ + 1)
+      
+      BuildMatrix() |> PetriNet.colours_lens.Update(_, col :: _)
     }
     
     public AddPlace(place : Place) : PetriNet * int
     {
-      def place = Place.idx_lens.Set(place, place_idx);
-      def net = PetriNet.places_lens.Update(this, x => x.Add(place)) |> 
-      _.BuildMatrix() |> PetriNet.place_idx_lens.Update(_, _ + 1);
+      def place = Place.idx_lens.Set(place, places.Count);
+      places = places.Add(place);
+      def net = BuildMatrix();
       (net, place.idx)
     }
     
     public AddTransition(tran : Transition) : PetriNet * int
     {
-      def tran = Transition.idx_lens.Set(tran, transition_idx);
-      def net = PetriNet.transitions_lens.Update(this, x => x.Add(tran)) |> 
-      _.BuildMatrix() |> PetriNet.transition_idx_lens.Update(_, _ + 1);
+      def tran = Transition.idx_lens.Set(tran, transitions.Count);
+      transitions = transitions.Add(tran);
+      def net = BuildMatrix();
       (net, tran.idx)
     }
     
     public AddArc(place : Place, arc : Arc, tran : Transition) : void
     {
-      def idx = place.idx;
+      def idx  = place.idx;
       def tidx = tran.idx;
       def cidx = arc.colour.idx;
       output_matrix[cidx, idx, tidx] = arc;
@@ -220,7 +242,7 @@ namespace PetriNetLib
     
     public AddArc(tran : Transition, arc : Arc, place : Place) : void
     {
-      def idx = place.idx;
+      def idx  = place.idx;
       def tidx = tran.idx;
       def cidx = arc.colour.idx;
       input_matrix[cidx, idx, tidx] = arc;
@@ -238,6 +260,10 @@ namespace PetriNetLib
      }
      
      public AddToken(place : Place, tok : Token) : void
+     {
+     }
+     
+     public Step() : void
      {
      }
   }
