@@ -14,7 +14,8 @@ namespace PetriNetLib
   [Record]
   public class Colour
   {
-    public idx : int;
+    public idx  : int;
+    public type : Type;
   }
   
   [Record]
@@ -32,7 +33,7 @@ namespace PetriNetLib
   [Record]
   public class Token
   {
-    public value  : TokenVal[Colour];
+    public value  : object;//TokenVal[Colour];
     public colour : Colour;
   }
   
@@ -47,6 +48,10 @@ namespace PetriNetLib
     
     public net : PetriNet;
       
+    public override GetHashCode() : int
+    {
+      idx
+    }
   }
   
   [Record]
@@ -65,6 +70,11 @@ namespace PetriNetLib
     public guard : Guard;
     
     public net : PetriNet;
+    
+    public override GetHashCode() : int
+    {
+      idx
+    }
   }
   
   public class GuardExpr : Guard
@@ -90,9 +100,12 @@ namespace PetriNetLib
   [Record]
   public variant ArcExpr
   {
+    | Constant { val : int; }
     | NumTok { tok : Token; }
     | Var { n : string; }
+    | Tuple { tup : list[Var];}
     | ListExpr {expr : ListExpr;}
+    | Delay { expr : ArcExpr; delay : ArcExpr; }
     | Func {}
     // record
   }
@@ -100,27 +113,69 @@ namespace PetriNetLib
   class ColourSet
   {
     public name : string;
-    public type : Type;
+    public type : Colour;
   }
   
   class Declarations
   {
-    public vars : Hashtable[string, Colour];
-    
+    public vars        : Hashtable[string, Colour];
     public colour_sets : Hashtable[string, ColourSet];
   }
   
-  [Lens(debug)]
+  [Lens]
   [Record]
   public class PetriNet
   {
     mutable places      : ImmutableList[Place] = ImmutableList.Create();
     mutable transitions : ImmutableList[Transition] = ImmutableList.Create();
     
+    matrix_len         : array[int] = array[];
     input_matrix       : array[3, Arc];//List[List[List[Arc]]];
     output_matrix      : array[3, Arc];
     incidence_matrix   : array[3, int];
     colours            : list[Colour] = [];
+
+    InputTransitionArcs : list[Transition * list[Place * Arc]]
+    {
+      [Memoize]
+      get
+      {
+        OutputArcs.GroupBy((_, t, _) => t).Map(x => (x.Key, x.Map((p, _, a) => (p, a))));
+      }
+    }
+    
+    InputArcs : IEnumerable[Place * Transition * Arc]
+    {
+      [Memoize]
+      get
+      {
+        foreach (c in Enumerable.Range(0, colours.Length))
+          foreach (p in Enumerable.Range(0, places.Count))
+            foreach (t in Enumerable.Range(0, transitions.Count))
+            {
+              def arc = input_matrix[p, t, c];
+              when (arc != null)
+                yield (places[p], transitions[t], arc)
+            }
+       }
+    }
+
+    OutputArcs : IEnumerable[Place * Transition * Arc]
+    {
+      [Memoize]
+      get
+      {
+        foreach (c in Enumerable.Range(0, colours.Length))
+          foreach (p in Enumerable.Range(0, places.Count))
+            foreach (t in Enumerable.Range(0, transitions.Count))
+            {
+              def arc = output_matrix[p, t, c];
+              when (arc != null)
+                yield (places[p], transitions[t], arc)
+            }
+       }
+    }
+    
     //arcs               : List[List[Arc]] = List();
     //transition_input_matrix  : List[List[int]];
     //transition_output_matrix : List[List[int]];
@@ -147,65 +202,23 @@ namespace PetriNetLib
       def places = places.Count;
       def tran   = transitions.Count;
       
-      PetriNet.input_matrix_lens.Set(this, array(col, places, tran)) |>
-      PetriNet.output_matrix_lens.Set(_, array(col, places, tran))   |>
-      PetriNet.incidence_matrix_lens.Set(_, array(col, places, tran));
       
-      //when (colours.Count > 0)
-      //{
-      //  def diff = colours.Count - input_matrix.Count;
-      //  when (diff > 0)
-      //  {
-      //    input_matrix.AddRange(GetEmptyMatrix(diff));
-      //    output_matrix.AddRange(GetEmptyMatrix(diff));
-      //    incidence_matrix.AddRange(Enumerable.Repeat(ListUtils.Init(places.Count, _ => List()).ToList(), diff));
-      //  }
-      //  when (places.Count > 0)
-      //  {
-      //    def diff = places.Count - input_matrix[0].Count;
-      //    when (diff > 0)
-      //    {
-      //      def add_place_matrix(matrix)
-      //      {
-      //        foreach (elem in matrix)
-      //        {
-      //          elem.AddRange(Enumerable.Repeat(ListUtils.Init(transitions.Count, _ => null).ToList(), diff))
-      //        }
-      //      }
-          
-      //      add_place_matrix(input_matrix);
-      //      add_place_matrix(output_matrix);
-      //      foreach (elem in incidence_matrix)
-      //      {
-      //        def lst = ListUtils.Init(transitions.Count, _ => 0).ToList();
-      //        elem.AddRange(Enumerable.Repeat(lst, diff));
-      //      }
-          
-      //    }
-        
-      //    def diff = transitions.Count - input_matrix[0][0].Count;
-      //    when (diff > 0)
-      //    {
-      //      def add_tran_matrix(matrix)
-      //      {
-      //        foreach (colour in matrix)
-      //        {
-      //          foreach (elem in colour)
-      //          {
-      //            elem.AddRange(Enumerable.Repeat(null, diff))
-      //          }
-      //        }
-      //      }
-          
-      //      add_tran_matrix(input_matrix);
-      //      add_tran_matrix(output_matrix);
-      //      foreach (elem in incidence_matrix)
-      //      {
-      //        elem.AddRange(Enumerable.Repeat(null, diff))
-      //      }
-      //    }
-      //  }
-      //}
+      if (matrix_len.Length == 0 || matrix_len[0] != col || matrix_len[1] != places || matrix_len[2] != tran)
+      {
+        def net = PetriNet.input_matrix_lens.Set(this, array(col, places, tran)) |>
+        PetriNet.output_matrix_lens.Set(_, array(col, places, tran))   |>
+        PetriNet.incidence_matrix_lens.Set(_, array(col, places, tran));
+      
+        for (mutable c = 0; c < col; c++)
+          for (mutable p = 0; p < places; p++)
+            for (mutable t = 0; t < tran; t++)
+            {
+              def output = if (output_matrix[c, p, t] != null) 1 else 0; 
+              def input = if (input_matrix[c, p, t] != null) 1 else 0; 
+              incidence_matrix[c, p, t] = output - input;
+            }
+        net
+      } else this
     }
     
     public AddColour(col : Colour) : PetriNet
@@ -213,23 +226,21 @@ namespace PetriNetLib
       def col = Colour.idx_lens.Set(col, colours.Length);
       //col.idx = colour_idx;
       
-      BuildMatrix() |> PetriNet.colours_lens.Update(_, col :: _)
+      PetriNet.colours_lens.Update(_, col :: _)
     }
     
-    public AddPlace(place : Place) : PetriNet * int
+    public AddPlace(place : Place) : Place
     {
       def place = Place.idx_lens.Set(place, places.Count);
       places = places.Add(place);
-      def net = BuildMatrix();
-      (net, place.idx)
+      place
     }
     
-    public AddTransition(tran : Transition) : PetriNet * int
+    public AddTransition(tran : Transition) : Transition
     {
       def tran = Transition.idx_lens.Set(tran, transitions.Count);
       transitions = transitions.Add(tran);
-      def net = BuildMatrix();
-      (net, tran.idx)
+      tran
     }
     
     public AddArc(place : Place, arc : Arc, tran : Transition) : void
@@ -265,6 +276,10 @@ namespace PetriNetLib
      
      public Step() : void
      {
+       def input_places_contains_tokens = InputTransitionArcs.Where((t, a : list[_]) => a.All((p, _) => !p.marking.IsEmpty()));
+       def places = input_places_contains_tokens.SelectMany((_, l) => l.Select((p, _ : Arc) => p));
+       // забираем токены из входных позиций и передаем в выходные позиции перехода
+       //OutputArcs.Where((p, t, a) => !p.marking.IsEmpty());
      }
   }
 }
