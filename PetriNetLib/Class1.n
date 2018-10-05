@@ -35,6 +35,13 @@ namespace PetriNetLib
   {
     public value  : object;//TokenVal[Colour];
     public colour : Colour;
+    
+    public this(val : object)
+    {
+      value = val;
+      colour = Colour(-1, val.GetType());
+    }
+    
   }
   
   [Record]
@@ -48,6 +55,20 @@ namespace PetriNetLib
     
     public net : PetriNet;
       
+    public RemoveToken() : Place * Token
+    {
+      match (marking)
+      {
+        | []           => throw InvalidOperationException()
+        | head :: tail => (Place.marking_lens.Set(this, tail), head)
+      }
+    }
+    
+    public AddToken(tok : Token) : Place
+    {
+      Place.marking_lens.Set(this, tok :: marking)
+    }
+    
     public override GetHashCode() : int
     {
       idx
@@ -70,6 +91,8 @@ namespace PetriNetLib
     public guard : Guard;
     
     public net : PetriNet;
+    
+    public context  : TransitionExecContext;
     
     public override GetHashCode() : int
     {
@@ -97,29 +120,68 @@ namespace PetriNetLib
     // head :: tail
   }
   
+  public class CondExpr
+  {
+  }
+  
+  public variant Oper
+  {
+    | Mul
+    | Div
+    | Add
+    | Sub
+    | Mod
+  }
+  
   [Record]
   public variant ArcExpr
   {
-    | Constant { val : int; }
-    | NumTok { tok : Token; }
+    | Constant { val : object; }
+    | NumTok { num : int; tok : ArcExpr; }
     | Var { n : string; }
-    | Tuple { tup : list[Var];}
+    | Tuple { tup : list[ArcExpr];}
     | ListExpr {expr : ListExpr;}
     | Delay { expr : ArcExpr; delay : ArcExpr; }
-    | Func {}
+    | IfThen { expr : CondExpr; then : ArcExpr; els : ArcExpr; }
+    | Func { name : string; parms : list[ArcExpr]; }
+    | BinaryOperator {left : ArcExpr; op : Oper; right : ArcExpr; }
     // record
   }
   
-  class ColourSet
+  public class ColourSet
   {
     public name : string;
     public type : Colour;
   }
   
-  class Declarations
+  public class Declarations
   {
     public vars        : Hashtable[string, Colour];
     public colour_sets : Hashtable[string, ColourSet];
+  }
+  
+  public variant ExecError
+  {
+    | TokenConstantNotFound { place : Place; val : object }
+    | VarNotFound {name : string}
+    | TypeTokenNotCompat {incol : Colour; outcol : Colour;place : Place}
+  }
+  
+  [Lens]
+  [Record]
+  public class TransitionExecContext
+  {
+    public binding : Hashtable[string, Token];
+    public tokens  : list[Token];
+    public error   : list[ExecError];
+    
+    public all_getted_tokens : list[Token]
+    {
+      get
+      {
+        []
+      }
+    }
   }
   
   [Lens]
@@ -128,6 +190,7 @@ namespace PetriNetLib
   {
     mutable places      : ImmutableList[Place] = ImmutableList.Create();
     mutable transitions : ImmutableList[Transition] = ImmutableList.Create();
+    public decls : Declarations;
     
     matrix_len         : array[int] = array[];
     input_matrix       : array[3, Arc];//List[List[List[Arc]]];
@@ -160,6 +223,11 @@ namespace PetriNetLib
        }
     }
 
+    TranOutputArcs(tran : Transition) : IEnumerable[Place * Arc]
+    {
+      InputArcs.Where((_, t, _) => t : object == tran).Select((p, _, a) => (p, a))
+    }
+    
     OutputArcs : IEnumerable[Place * Transition * Arc]
     {
       [Memoize]
@@ -272,12 +340,131 @@ namespace PetriNetLib
      
      public AddToken(place : Place, tok : Token) : void
      {
+       
+     }
+     
+     TypeCompatible(col : Colour, col_out : Colour) : bool
+     {
+       false
+     }
+     
+     RemoveTokens(places : list[Place * Arc]) : TransitionExecContext * list[Place]
+     {
+       mutable tokens = [];
+       mutable err = [];
+       mutable binding = [];
+       
+       def get_tokens(place, arc) : list[Token]
+       {
+         def marking = place.marking;
+         match (arc.expr)
+         {
+           | ArcExpr.Constant(v) => if (marking.Find(x => x.value.Equals(v)) is Some(tok))
+                                    {
+                                      tokens ::= tok;
+                                      marking.Remove(tok)
+                                    } else
+                                    {
+                                      err ::= ExecError.TokenConstantNotFound(place, v);
+                                      marking
+                                    }
+           | Var(n)              => if (decls.vars.Contains(n))
+                                    {
+                                      def type = decls.vars[n];
+                                      if (TypeCompatible(place.colour, type))
+                                      {
+                                        binding ::= (n, marking.Head);
+                                        marking.Tail
+                                      } else
+                                      {
+                                        err ::= ExecError.TypeTokenNotCompat(place.colour, type, place);
+                                        marking
+                                      }
+                                    } else
+                                    {
+                                      err ::= ExecError.VarNotFound(n);
+                                      marking
+                                    }
+           | NumTok(n, Constant(t)) => def tok = marking.Filter(x => x.value.Equals(t));
+                                       if (tok.Length >= n)       
+                                       {
+                                         def tok = tok.Take(n);
+                                         tokens += tok.NToList();
+                                         marking.Except(tok).NToList()
+                                       } else
+                                       {
+                                         err ::= ExecError.TokenConstantNotFound(place, t);
+                                         marking
+                                       }
+           | _                        => throw InvalidOperationException("unimplemented expression")
+           //| Tuple(t)               => 
+    //       | Constant { val : object; }
+    //| NumTok { num : int; tok : ArcExpr; }
+    //| Var { n : string; }
+    //| Tuple { tup : list[ArcExpr];}
+    //| ListExpr {expr : ListExpr;}
+    //| Delay { expr : ArcExpr; delay : ArcExpr; }
+    //| IfThen { expr : CondExpr; then : ArcExpr; els : ArcExpr; }
+    //| Func { name : string; parms : list[ArcExpr]; }
+         }
+       }
+       
+       def new_marking = places.Map(x => (x[0], get_tokens(x)));
+       def places = new_marking.Map(Place.marking_lens.Set);
+       (TransitionExecContext(Hashtable(binding), tokens, err), places)
+     }
+     
+     AddTokens(tran_ctx : TransitionExecContext, places : IEnumerable[Place * Arc]) : list[Place]
+     {
+       mutable tok = tran_ctx.tokens;
+       mutable binding = tran_ctx.binding;
+       
+       def eval(e)
+       {
+         | ArcExpr.Constant(c) => c
+         | Var(n)              => binding[n].value
+       }
+       
+       def add_tok(p, a)
+       {
+         def res_tok = match (a.expr)
+         {
+           | ArcExpr.Constant(c) => c |> Token |> Some
+           | Var(n)              => if (binding.Contains(n))
+                                    {
+                                      binding[n] |> Some
+                                    } else
+                                    {
+                                      None()
+                                    }
+           | BinaryOperator(l, o, r) => def l = eval(l);
+                                        def r = eval(r);
+                                        def res = match (o)
+                                        {
+                                          | Oper.Mul => match (l, r)
+                                                        {
+                                                          | (l is int, r is int) => (l * r) |> Some
+                                                          | _                    => None()
+                                                        }
+                                        }
+                                        res.Map(Token)
+        }                                        
+       }
+       
+       places.Map(add_tok)
      }
      
      public Step() : void
      {
        def input_places_contains_tokens = InputTransitionArcs.Where((t, a : list[_]) => a.All((p, _) => !p.marking.IsEmpty()));
        def places = input_places_contains_tokens.SelectMany((_, l) => l.Select((p, _ : Arc) => p));
+       foreach ((t, p) in input_places_contains_tokens)
+       {
+         def (tran_ctx, places) = RemoveTokens(p);
+         def out_acs = TranOutputArcs(t);
+         
+         //t.ChangeContext()
+       }
        // забираем токены из входных позиций и передаем в выходные позиции перехода
        //OutputArcs.Where((p, t, a) => !p.marking.IsEmpty());
      }
