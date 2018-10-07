@@ -10,6 +10,9 @@ using CommonLib.Macros;
 
 namespace PetriNetLib
 {
+  
+  //using Nemerle.Builtins.Function;
+  
   [Lens]
   [Record]
   public class Colour
@@ -124,13 +127,16 @@ namespace PetriNetLib
   {
   }
   
-  public variant Oper
+  public variant BinaryOper
   {
     | Mul
     | Div
     | Add
     | Sub
     | Mod
+    
+    public left : ArcExpr; 
+    public right : ArcExpr;
   }
   
   [Record]
@@ -144,7 +150,8 @@ namespace PetriNetLib
     | Delay { expr : ArcExpr; delay : ArcExpr; }
     | IfThen { expr : CondExpr; then : ArcExpr; els : ArcExpr; }
     | Func { name : string; parms : list[ArcExpr]; }
-    | BinaryOperator {left : ArcExpr; op : Oper; right : ArcExpr; }
+    | BinaryOperator { op : BinaryOper; }
+    | ArcFunc {func : TransitionExecContext * Place * Arc -> IEnumerable[Token]}
     // record
   }
   
@@ -425,35 +432,45 @@ namespace PetriNetLib
          | Var(n)              => binding[n].value
        }
        
-       def add_tok(p, a)
+       def get_tok(expr : ArcExpr) : option[TokenSet]
        {
-         def res_tok = match (a.expr)
-         {
-           | ArcExpr.Constant(c) => c |> Token |> Some
+           | ArcExpr.Constant(c) => c |> Token |> TokenSet(1, _) |> Some
            | Var(n)              => if (binding.Contains(n))
                                     {
-                                      binding[n] |> Some
+                                      binding[n] |> TokenSet(1, _) |> Some
                                     } else
                                     {
                                       None()
                                     }
-           | BinaryOperator(l, o, r) => def l = eval(l);
-                                        def r = eval(r);
-                                        def res = match (o)
-                                        {
-                                          | Oper.Mul => match (l, r)
-                                                        {
-                                                          | (l is int, r is int) => (l * r) |> Some
-                                                          | _                    => None()
-                                                        }
-                                        }
-                                        res.Map(Token)
-        }                                        
+           | BinaryOperator(op) => def left  = op.left  |> eval;
+                                   def right = op.right |> eval;
+                                   def res  = match (op)
+                                              {
+                                                | BinaryOper.Mul => match (left, right)
+                                                                    {
+                                                                      | (l is int, r is int) => Some(l * r)
+                                                                      | _                    => None()
+                                                                    }
+                                                | Add            => match (left, right)
+                                                                    {
+                                                                      | (l is int, r is int) => Some(l + r)
+                                                                      | _                    => None()
+                                                                    }
+                                              }
+                                   res.Map(x => TokenSet(1, Token(x)))
+           | NumTok(n, t)      => get_tok(t).Map(x => TokenSet(n * x.num, x.token))
+                                  
        }
        
-       places.Map(add_tok)
+       def add_tok(a : ArcExpr) : option[TokenSet]
+       {
+         get_tok(a)
+       }
+       
+       def tokens = places.MapLazy((p, a) => (p, add_tok(a.expr).Value));
+       null
      }
-     
+       
      public Step() : void
      {
        def input_places_contains_tokens = InputTransitionArcs.Where((t, a : list[_]) => a.All((p, _) => !p.marking.IsEmpty()));

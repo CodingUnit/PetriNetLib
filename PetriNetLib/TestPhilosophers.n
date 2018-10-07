@@ -1,0 +1,151 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using CommonLib.Macros;
+namespace PetriNetLib
+{
+  [Record]
+  class Ph
+  {
+    public idx : int;
+    public static All() : list[Ph] {Enumerable.Range(int_min, int_max).Select(Ph).NToList();}
+    
+    public static int_min : int = 1;
+    public static int_max : int = 5;
+  }
+  
+  [Record]
+  class Cs
+  {
+    public idx : int;
+    public static All() : list[Cs] {Enumerable.Range(int_min, int_max).Select(Cs).NToList();}
+    
+    public static int_min : int = 1;
+    public static int_max : int = 5;
+  }
+  
+  class Think
+  {
+    public mutable marking : list[Ph] = Ph.All();
+    
+    public Add(p : Ph) : void
+    {
+      ThreadSafeUtils.LockFreeUpdate(ref marking, p :: _)
+    }
+    
+    public Get() : Ph
+    {
+      def get(x)
+      {
+        | []           => (null, [])
+        | head :: tail => (head, tail)
+      }
+      
+      ThreadSafeUtils.LockFreeUpdateRet(ref marking, x => get(x)[1], x => get(x)[0])
+    }
+  }
+  
+  class Eat
+  {
+    public mutable marking : list[Ph];
+    
+    public Get() : Ph
+    {
+      def get(x)
+      {
+        | []           => (null, [])
+        | head :: tail => (head, tail)
+      }
+      
+      ThreadSafeUtils.LockFreeUpdateRet(ref marking, x => get(x)[1], x => get(x)[0])
+    }
+    
+    public Add(p : Ph) : void
+    {
+      ThreadSafeUtils.LockFreeUpdate(ref marking, p :: _)
+    }
+  }
+  
+  class UnusedChopsticks
+  {
+    public mutable marking : list[Cs] = Cs.All();
+    
+    public Add(cs : IEnumerable[Cs]) : void
+    {
+      ThreadSafeUtils.LockFreeUpdate(ref marking, x => x + cs.NToList())
+    }
+    
+    public Peek(cs : IEnumerable[Cs]) : list[Cs]
+    {
+      def tokens = marking.Filter(x => cs.Exists(y => y.idx == x.idx));
+      if (tokens.Length >= cs.Count())
+      {
+        tokens.Take(cs.Count()).NToList()
+      } else [];
+    }
+    
+    public Get(cs : IEnumerable[Cs]) : list[Cs]
+    {
+      def get(x)
+      {
+        def tokens = x.Filter(x => cs.Exists(y => y.idx == x.idx));
+        if (tokens.Length >= cs.Count())
+        {
+          def tokens = tokens.Take(cs.Count()).NToList();
+          def left = tokens.Skip(cs.Count()).NToList();
+          (tokens, left)
+        } else ([], x);
+      }
+      
+      ThreadSafeUtils.LockFreeUpdateRet(ref marking, x => get(x)[1], x => get(x)[0])
+    }
+  }
+  
+  /// <summary>
+  /// Description of TestPhilosophers.
+  /// </summary>
+  public class TestPhilosophers
+  {
+    think      : Think            = Think();
+    chopsticks : UnusedChopsticks = UnusedChopsticks();
+    eat        : Eat              = Eat();
+    
+    Chopsticks(p : Ph) : IEnumerable[Cs]
+    {
+      def i = p.idx;
+      yield Cs(i);
+      yield Cs(if (i == 5) 1 else i + 1)
+    }
+    
+    TakeChopSticks() : void
+    {
+      match (think.marking)
+      {
+        | [] => ()
+        | p :: _ => def cs = Chopsticks(p);
+                    when (!chopsticks.Get(cs).IsEmpty()) think.Get() |> eat.Add
+      }
+    }
+    
+    PutDownChopSticks() : void
+    {
+      when (!eat.marking.IsEmpty())
+      {
+        def p = eat.Get();
+        p |> think.Add;
+        p |> Chopsticks |> chopsticks.Add
+      }
+    }
+    
+    public Step() : void
+    {
+      TakeChopSticks();
+      PutDownChopSticks();
+    }
+  }
+}

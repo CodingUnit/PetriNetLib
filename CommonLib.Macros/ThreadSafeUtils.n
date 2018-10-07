@@ -42,7 +42,7 @@ namespace CommonLib.Macros
       loop()
     }
   
-    public LockFreeUpdateRet[T](field : ref T, update : Func[T, T]) : T where T : class
+    public LockFreeUpdateRet[T, Res](field : ref T, update : Func[T, T], ret : Func[T, Res]) : Res where T : class
     {
       def wait = SpinWait();
       
@@ -59,7 +59,7 @@ namespace CommonLib.Macros
         def temp1 = field;
         def calc = update(temp1);
         def temp2 = Interlocked.CompareExchange(ref field, calc, temp1);
-        if (equals(temp1, temp2)) calc else 
+        if (equals(temp1, temp2)) ret(temp1) else 
         {
           wait.SpinOnce();
           loop()
