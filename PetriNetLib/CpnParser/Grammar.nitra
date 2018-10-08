@@ -1,0 +1,88 @@
+﻿language CpnML
+{
+  syntax module CpnML.Grammar.Main start rule Declaration;
+  
+  //syntax module Nemerle.Statechart.Grammar.Actions;
+  //syntax module Nemerle.Statechart.Grammar.Base;
+  //syntax module Nemerle.Statechart.Grammar.Events;
+  //syntax module Nemerle.Statechart.Grammar.PseudoStates;
+  //syntax module Nemerle.Statechart.Grammar.Regions;
+  //syntax module Nemerle.Statechart.Grammar.Targets;
+  //syntax module Nemerle.Statechart.Grammar.Transitions;
+}
+
+namespace CpnML.Grammar
+{
+   
+
+  syntax module Main
+  {
+    using Base;
+
+    syntax Literal
+    {
+      | Integer
+      | FloatingNumber
+      | String
+    }
+    syntax InitExpr
+    {
+      | Literal
+    }
+
+    syntax Oper
+    {
+       | TokenCombine = TokenExpr "++" TokenExpr
+       | Equal        = Expr "=" Expr
+       | NotEqual     = Expr "<>" Expr
+    }
+
+    syntax TokenExpr = Integer '`' TokenRef
+    {
+        syntax TokenRef
+        {
+          | VarRef
+          | Literal
+        }
+    }
+    
+    syntax Expr
+    {
+      | Literal
+      | TokenExpr
+      | If = "if" Expr "then" Expr "else" Expr
+      | Oper
+      | Var = AnyIdentifier
+    }
+
+    syntax CondExpr
+    {
+    }
+
+    syntax SimpleExpr
+    {
+      
+    }
+
+    syntax VarRef
+    {
+      | Var = AnyIdentifier
+      | IndexVar
+    }
+
+    syntax IndexVar = Name=AnyIdentifier '(' Idx=SimpleExpr')';
+
+    syntax Declaration
+    {
+      | Val  = "val" Name=AnyIdentifier '=' InitExpr
+      | Func = "fun" Name=AnyIdentifier '(' Parm* ')' '=' Expr ';'
+      {
+        syntax Parm
+        {
+          | Var = AnyIdentifier
+          | IndexVar
+        }
+      }
+    }
+  }
+}

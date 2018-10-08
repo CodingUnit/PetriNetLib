@@ -7,6 +7,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using CommonLib.Macros;
+using System.Reactive;
+using System.Reactive.Linq;
+
 namespace PetriNetLib
 {
   [Record]
@@ -17,6 +20,11 @@ namespace PetriNetLib
     
     public static int_min : int = 1;
     public static int_max : int = 5;
+    
+    public override ToString() : string
+    {
+      $"Philosopher $idx"
+    }
   }
   
   [Record]
@@ -27,6 +35,11 @@ namespace PetriNetLib
     
     public static int_min : int = 1;
     public static int_max : int = 5;
+    
+    public override ToString() : string
+    {
+      $"Chopstick $idx"
+    }
   }
   
   class Think
@@ -53,6 +66,14 @@ namespace PetriNetLib
   class Eat
   {
     public mutable marking : list[Ph];
+    
+    public HaveToken : bool
+    {
+      get
+      {
+        !marking.IsEmpty()
+      }
+    }
     
     public Get() : Ph
     {
@@ -122,7 +143,7 @@ namespace PetriNetLib
       yield Cs(if (i == 5) 1 else i + 1)
     }
     
-    TakeChopSticks() : void
+    public TakeChopSticks() : void
     {
       match (think.marking)
       {
@@ -132,9 +153,9 @@ namespace PetriNetLib
       }
     }
     
-    PutDownChopSticks() : void
+    public PutDownChopSticks() : void
     {
-      when (!eat.marking.IsEmpty())
+      when (eat.HaveToken)
       {
         def p = eat.Get();
         p |> think.Add;

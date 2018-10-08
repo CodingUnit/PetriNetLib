@@ -7,6 +7,10 @@ Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "CommonLib.Macros", "..\Comm
 EndProject
 Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "PetriNetLib", "PetriNetLib.nproj", "{2EDFF5C5-D99F-4416-96E2-C5B4A4F18247}"
 EndProject
+Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "TestParser", "..\TestParser\TestParser.nproj", "{B1416C2D-41F3-48FB-897C-DB60958423DF}"
+EndProject
+Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "CpnParser", "CpnParser\CpnParser.nproj", "{5BD4C7C7-4CCE-4159-9ACB-C3F324431EF7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,6 +40,26 @@ Global
 		{2EDFF5C5-D99F-4416-96E2-C5B4A4F18247}.OPC|Any CPU.Build.0 = Release|Any CPU
 		{2EDFF5C5-D99F-4416-96E2-C5B4A4F18247}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2EDFF5C5-D99F-4416-96E2-C5B4A4F18247}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1416C2D-41F3-48FB-897C-DB60958423DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1416C2D-41F3-48FB-897C-DB60958423DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1416C2D-41F3-48FB-897C-DB60958423DF}.LIBS|Any CPU.ActiveCfg = Release|Any CPU
+		{B1416C2D-41F3-48FB-897C-DB60958423DF}.LIBS|Any CPU.Build.0 = Release|Any CPU
+		{B1416C2D-41F3-48FB-897C-DB60958423DF}.NViewer|Any CPU.ActiveCfg = Release|Any CPU
+		{B1416C2D-41F3-48FB-897C-DB60958423DF}.NViewer|Any CPU.Build.0 = Release|Any CPU
+		{B1416C2D-41F3-48FB-897C-DB60958423DF}.OPC|Any CPU.ActiveCfg = Release|Any CPU
+		{B1416C2D-41F3-48FB-897C-DB60958423DF}.OPC|Any CPU.Build.0 = Release|Any CPU
+		{B1416C2D-41F3-48FB-897C-DB60958423DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1416C2D-41F3-48FB-897C-DB60958423DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5BD4C7C7-4CCE-4159-9ACB-C3F324431EF7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5BD4C7C7-4CCE-4159-9ACB-C3F324431EF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5BD4C7C7-4CCE-4159-9ACB-C3F324431EF7}.LIBS|Any CPU.ActiveCfg = Release|Any CPU
+		{5BD4C7C7-4CCE-4159-9ACB-C3F324431EF7}.LIBS|Any CPU.Build.0 = Release|Any CPU
+		{5BD4C7C7-4CCE-4159-9ACB-C3F324431EF7}.NViewer|Any CPU.ActiveCfg = Release|Any CPU
+		{5BD4C7C7-4CCE-4159-9ACB-C3F324431EF7}.NViewer|Any CPU.Build.0 = Release|Any CPU
+		{5BD4C7C7-4CCE-4159-9ACB-C3F324431EF7}.OPC|Any CPU.ActiveCfg = Release|Any CPU
+		{5BD4C7C7-4CCE-4159-9ACB-C3F324431EF7}.OPC|Any CPU.Build.0 = Release|Any CPU
+		{5BD4C7C7-4CCE-4159-9ACB-C3F324431EF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5BD4C7C7-4CCE-4159-9ACB-C3F324431EF7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

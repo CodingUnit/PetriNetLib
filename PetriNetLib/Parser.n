@@ -1,0 +1,148 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Xml;
+using CommonLib.Macros;
+
+namespace PetriNetLib
+{
+  public variant Color
+  {
+    | Union
+    | Record
+    | Index {min : int; max : int;id : string}
+    | Simple
+  }
+  
+  [Record]
+  public variant CpnDecl
+  {
+    | Var {id : string; type : string;}
+    | ColorSet
+    {
+      name : string;
+      type : Color;
+    }
+  }
+  
+  [Record]
+  public variant CpnTree
+  {
+    | Declaration {decl : list[CpnDecl]}
+  }
+  
+  /// <summary>
+  /// Description of Parser.
+  /// </summary>
+  public class Parser
+  {
+    mutable xml : XmlDocument;
+    mutable decls : list[CpnDecl];
+    
+    Parse[T](path : list[string]) : list[XmlElement]
+    {
+      def loop(p, child : IEnumerable[XmlElement])
+      {
+        match (p)
+        {
+          | head :: []   => child.Filter(x => x.Name == head);
+          | head :: tail => def inner = child.Filter(x => x.Name == head);
+                            inner.SelectMany(x => loop(tail, x.ChildNodes.OfType())).NToList()
+        }
+      }
+      
+      loop(path, xml.ChildNodes.OfType())
+    }
+    
+    ParseSect(path : list[string]) : IEnumerable[XmlElement]
+    {
+      def loop(p, child : IEnumerable[XmlElement])
+      {
+        match (p)
+        {
+          | []           => child
+          | head :: tail => def inner = child.Filter(x => x.Name == head);
+                            inner.SelectMany(x => loop(tail, x.ChildNodes.OfType())).NToList()
+        }
+      }
+      
+      loop(path, xml.ChildNodes.OfType())
+    }
+    
+    Parse[T](path : IEnumerable[XmlElement], elem : string) : IEnumerable[XmlElement]
+    {
+      path.Filter(x => x.Name == elem);
+    }
+    
+    Parse[T](path : IEnumerable[XmlElement], elem : list[string]) : IEnumerable[XmlElement]
+    {
+      def loop(p, child : IEnumerable[XmlElement])
+      {
+        match (p)
+        {
+          | head :: []   => child.Filter(x => x.Name == head);
+          | head :: tail => def inner = child.Filter(x => x.Name == head);
+                            inner.SelectMany(x => loop(tail, x.ChildNodes.OfType())).NToList()
+        }
+      }
+      
+      path.SelectMany(x => loop(elem, x.ChildNodes.Cast()))
+    }
+    
+    Parse[T](path : XmlElement, elem : list[string]) : IEnumerable[XmlElement]
+    {
+      def loop(p, child : IEnumerable[XmlElement])
+      {
+        match (p)
+        {
+          | head :: []   => child.Filter(x => x.Name == head);
+          | head :: tail => def inner = child.Filter(x => x.Name == head);
+                            inner.SelectMany(x => loop(tail, x.ChildNodes.OfType())).NToList()
+        }
+      }
+      
+      loop(elem, path.ChildNodes.Cast())
+    }
+    
+    public Parse(file : string) : CpnTree
+    {
+      xml = XmlDocument();
+      xml.Load(file);
+      def glob = ParseSect(["workspaceElements", "cpnet", "globbox"]);
+      def ml_decls = Parse(glob, "ml").Map(_.InnerText);
+      def var_tags = Parse(glob, "var");
+      def color = Parse(glob, "color");
+      def idx_color = color.Select(x => (Parse(x, ["id"]).First(), Parse(x, ["index", "ml"]), Parse(x, ["index", "id"]))).Where((_, x, _) => !x.IsEmpty());
+      decls = idx_color.Map((x, r, i) => CpnDecl.ColorSet(x.InnerText, Color.Index(r.First().InnerText |> int.Parse, r.Skip(1).First().InnerText |> int.Parse, i.First().InnerText)));
+      def var = var_tags.Select(x => (Parse(x, ["type", "id"]).First(), Parse(x, ["id"]).First()));
+      def var = var.Map((x, y) => CpnDecl.Var(y.InnerText, x.InnerText));
+      decls += var;
+      //def nodes = xml.ChildNodes;
+      
+      //def parse(x : XmlElement)
+      //{
+      //  if (ParseElement(x))
+      //  {
+      //    foreach (x in x.ChildNodes) 
+      //    {
+      //      | XmlElement as x => parse(x)
+            
+      //      | _ => ()
+      //    }
+      //  } else ()
+      //}
+      
+      //foreach (n in nodes)
+      //{
+      //  | XmlElement as x => parse(x)
+      //}
+      null
+    }
+  }
+}
