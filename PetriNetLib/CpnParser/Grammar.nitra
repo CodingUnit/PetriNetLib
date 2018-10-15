@@ -1,7 +1,6 @@
-﻿language CpnML
+﻿language CPNML
 {
-  syntax module CpnML.Grammar.Main start rule Declaration;
-  
+  syntax module CpnML.Grammar.Main start rule LangExpr;
   //syntax module Nemerle.Statechart.Grammar.Actions;
   //syntax module Nemerle.Statechart.Grammar.Base;
   //syntax module Nemerle.Statechart.Grammar.Events;
@@ -13,11 +12,11 @@
 
 namespace CpnML.Grammar
 {
-   
 
   syntax module Main
   {
     using Base;
+	using Nitra.Core;
 
     syntax Literal
     {
@@ -32,9 +31,18 @@ namespace CpnML.Grammar
 
     syntax Oper
     {
-       | TokenCombine = TokenExpr "++" TokenExpr
-       | Equal        = Expr "=" Expr
-       | NotEqual     = Expr "<>" Expr
+		| SetUnion = TokenExpr "++" TokenExpr
+		| SetDiff  = TokenExpr "--" TokenExpr
+		| Plus	   = Expr '+' Expr
+		| Minus    = Expr '-' Expr
+		| Equal    = Expr "=" Expr
+		| Above	   = Expr '>' Expr
+		| Below	   = Expr '<' Expr
+		| AboveEqual = Expr ">=" Expr
+		| BelowEqual = Expr "<=" Expr
+		| NotEqual = Expr "<>" Expr
+		| AndAlso = Expr "andalso" Expr
+		| OrElse  = Expr "orelse" Expr
     }
 
     syntax TokenExpr = Integer '`' TokenRef
@@ -46,15 +54,6 @@ namespace CpnML.Grammar
         }
     }
     
-    syntax Expr
-    {
-      | Literal
-      | TokenExpr
-      | If = "if" Expr "then" Expr "else" Expr
-      | Oper
-      | Var = AnyIdentifier
-    }
-
     syntax CondExpr
     {
     }
@@ -72,9 +71,27 @@ namespace CpnML.Grammar
 
     syntax IndexVar = Name=AnyIdentifier '(' Idx=SimpleExpr')';
 
-    syntax Declaration
+	syntax FuncCall  = Name=AnyIdentifier '(' Expr* ')';
+
+	syntax Expr
     {
-      | Val  = "val" Name=AnyIdentifier '=' InitExpr
+	  | UnitVal = '(' ')'
+      | Literal
+      | TokenExpr
+      | If = "if" Expr "then" Expr "else" Expr
+      | Oper
+      | Var = AnyIdentifier
+	  | Tuple = '(' Expr* ')'
+	  | FuncCall
+	  | ModuleFunc = (AnyIdentifier;'.')+ FuncCall
+	  precedence ArcDelay:
+	  | Delay = Expr ^ ArcDelay '@' '+' Expr
+	  
+    }
+
+	syntax Declaration
+    {
+      | Val  = "val" Name=AnyIdentifier '=' InitExpr ';'
       | Func = "fun" Name=AnyIdentifier '(' Parm* ')' '=' Expr ';'
       {
         syntax Parm
@@ -84,5 +101,11 @@ namespace CpnML.Grammar
         }
       }
     }
+
+	syntax LangExpr
+	{
+		| Declaration
+		| Expr
+	}
   }
 }

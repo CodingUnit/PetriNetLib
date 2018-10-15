@@ -95,7 +95,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Class1.n" />
+    <Compile Include="Class1.n" />
     <Compile Include="Parser.n">
       <SubType>Code</SubType>
     </Compile>

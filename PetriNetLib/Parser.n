@@ -12,17 +12,23 @@ using CommonLib.Macros;
 
 namespace PetriNetLib
 {
+  
   public variant Color
   {
-    | Union
+    | Union { types : list[string * string]}
+    | Product {tuple : list[string]}
     | Record
-    | Index {min : int; max : int;id : string}
+    | Index {min : string; max : string;id : string}
+    | SubsetBy { name : string; by : string}
+    | SubsetWith { name : string; with_list : list[string]}
+    | Enum {vals : list[string]}
     | Simple
   }
   
   [Record]
   public variant CpnDecl
   {
+    | ML {str : string;}
     | Var {id : string; type : string;}
     | ColorSet
     {
@@ -35,6 +41,9 @@ namespace PetriNetLib
   public variant CpnTree
   {
     | Declaration {decl : list[CpnDecl]}
+    | Place {name : string; type : string; init_mark : string;}
+    | Transition {name : string;}
+    | Arc {text : string;}
   }
   
   /// <summary>
@@ -43,41 +52,25 @@ namespace PetriNetLib
   public class Parser
   {
     mutable xml : XmlDocument;
+    
+    [Accessor]
     mutable decls : list[CpnDecl];
     
-    Parse[T](path : list[string]) : list[XmlElement]
+    [Accessor]
+    mutable places : list[CpnTree.Place];
+    [Accessor]
+    mutable transitions : list[CpnTree.Transition];
+    [Accessor]
+    mutable arcs : list[CpnTree.Arc];
+    
+    public static Get[T](this xml : XmlDocument, params path : array[string]) : IEnumerable[XmlElement]
     {
-      def loop(p, child : IEnumerable[XmlElement])
-      {
-        match (p)
-        {
-          | head :: []   => child.Filter(x => x.Name == head);
-          | head :: tail => def inner = child.Filter(x => x.Name == head);
-                            inner.SelectMany(x => loop(tail, x.ChildNodes.OfType())).NToList()
-        }
-      }
-      
-      loop(path, xml.ChildNodes.OfType())
+      Get(xml.ChildNodes.OfType(), path)
     }
     
-    ParseSect(path : list[string]) : IEnumerable[XmlElement]
+    public static GetChilds[T](this xml : XmlDocument, params path : array[string]) : IEnumerable[XmlElement]
     {
-      def loop(p, child : IEnumerable[XmlElement])
-      {
-        match (p)
-        {
-          | []           => child
-          | head :: tail => def inner = child.Filter(x => x.Name == head);
-                            inner.SelectMany(x => loop(tail, x.ChildNodes.OfType())).NToList()
-        }
-      }
-      
-      loop(path, xml.ChildNodes.OfType())
-    }
-    
-    Parse[T](path : IEnumerable[XmlElement], elem : string) : IEnumerable[XmlElement]
-    {
-      path.Filter(x => x.Name == elem);
+      Get(xml.ChildNodes.OfType(), path).SelectMany(x => x.ChildNodes.OfType())
     }
     
     public static Contains(this path : XmlElement, elem : string) : bool
@@ -85,111 +78,111 @@ namespace PetriNetLib
       path.ChildNodes.OfType().Exists(x : XmlElement => x.Name == elem)
     }
     
-    public static GetOne(this path : XmlElement, elem : string) : XmlElement
+    public static GetText(this parent : XmlElement, params elem : array[string]) : IEnumerable[string]
     {
-      path.ChildNodes.OfType().Where(x => x.Name == elem).First()
+      Get(parent, elem).Select(x => x.InnerText)
     }
-
-    public static GetOne(this parent : XmlElement, elem : list[string]) : XmlElement
+    
+    public static GetOneText(this parent : XmlElement, params elem : array[string]) : string
+    {
+      GetOne(parent, elem).InnerText
+    }
+    
+    public static GetText(this parent : IEnumerable[XmlElement], params elem : array[string]) : IEnumerable[string]
+    {
+      parent.Get(elem).Select(_.InnerText)
+    }
+    
+    public static GetOne(this parent : XmlElement, params elem : array[string]) : XmlElement
+    {
+      parent.Get(elem).First()
+    }
+    
+    public static Get(this path : IEnumerable[XmlElement], params elem : array[string]) : IEnumerable[XmlElement]
     {
       def loop(p, child : IEnumerable[XmlElement])
       {
         match (p)
         {
-          | []           => child.First()
+          | []           => Enumerable.Empty()
+          | head :: []   => child.Where(x => x.Name == head)
           | head :: tail => def inner = child.Filter(x => x.Name == head);
-                            inner.Select(x => loop(tail, x.ChildNodes.OfType())).First()
+                            inner.SelectMany(x => loop(tail, x.ChildNodes.OfType()))
         }
       }
       
-      loop(elem, parent.ChildNodes.OfType())
-      
-      //path.ChildNodes.OfType().Where(x => x.Name == elem).First()
+      loop(elem.NToList(), path)
     }
     
-    Parse[T](path : IEnumerable[XmlElement], elem : list[string]) : IEnumerable[XmlElement]
+    public static Get(this path : XmlElement, params elem : array[string]) : IEnumerable[XmlElement]
     {
-      def loop(p, child : IEnumerable[XmlElement])
-      {
-        match (p)
-        {
-          | head :: []   => child.Filter(x => x.Name == head);
-          | head :: tail => def inner = child.Filter(x => x.Name == head);
-                            inner.SelectMany(x => loop(tail, x.ChildNodes.OfType())).NToList()
-        }
-      }
-      
-      path.SelectMany(x => loop(elem, x.ChildNodes.Cast()))
+      Get(path.ChildNodes.OfType(), elem)
     }
     
-    public static Get(this path : XmlElement, elem : list[string]) : IEnumerable[XmlElement]
-    {
-      def loop(p, child : IEnumerable[XmlElement])
-      {
-        match (p)
-        {
-          | head :: []   => child.Filter(x => x.Name == head);
-          | head :: tail => def inner = child.Filter(x => x.Name == head);
-                            inner.SelectMany(x => loop(tail, x.ChildNodes.OfType())).NToList()
-        }
-      }
-      
-      loop(elem, path.ChildNodes.Cast())
-    }
-    
-    public Parse(file : string) : CpnTree
+    public Parse(file : string) : void
     {
       xml = XmlDocument();
       xml.Load(file);
-      def glob = ParseSect(["workspaceElements", "cpnet", "globbox"]);
-      def ml_decls = Parse(glob, "ml").Map(_.InnerText);
-      def var_tags = Parse(glob, "var");
-      def color = Parse(glob, "color");
+      def glob = xml.GetChilds("workspaceElements", "cpnet", "globbox");
+      def ml_decls = glob.GetText("ml");
+      decls = ml_decls.Map(x => CpnDecl.ML(x));
+      def var_tags = glob.Get("var");
+      def color = glob.Get("color");
       
       def parse_color(col)
       {
-        def name = col.GetOne("id");
+        def name = col.GetOneText("id");
         def set = if (col.Contains("index"))
         {
-          def range = col.Get(["index", "ml"]);
-          def range = range.Select(x => x.InnerText |> int.Parse).ToArray();
-          def type  = col.GetOne(["index", "id"]).InnerText;
+          def range = col.Get("index", "ml").MapToArray(x => x.InnerText);
+          //def range = range.Select(x => int.Parse(x)).ToArray();
+          def type  = col.GetOneText("index", "id");
           Color.Index(range[0], range[1], type)
         } else 
+        if (col.Contains("product"))
+        {
+          def vals = col.Get("product", "id");
+          Color.Product(vals.Map(_.InnerText))
+        } else
         {
           null
         }
-        CpnDecl.ColorSet(name.InnerText, set)
+        CpnDecl.ColorSet(name, set)
         //null : CpnDecl.ColorSet
         //Parse(x, ["id"]);
         //.First(), Parse(x, ["index", "ml"]), Parse(x, ["index", "id"]))).Where((_, x, _) => !x.IsEmpty()
       }
       
-      decls = color.Map(parse_color);
+      def get_places(p)
+      {
+        def name = p.GetOneText("text");
+        def type = p.GetOneText("type", "text");
+        def initmark = p.GetOneText("initmark", "text");
+        CpnTree.Place(name, type, initmark)
+      }
+      
+      def get_tran(p)
+      {
+        def name = p.GetOneText("text");
+        CpnTree.Transition(name)
+      }
+      
+      def get_arc(a)
+      {
+        def annot = a.GetOneText("annot", "text");
+        CpnTree.Arc(annot)
+      }
+      
+      decls += color.Map(parse_color);
       //decls = idx_color.Map((x, r, i) => CpnDecl.ColorSet(x.InnerText, Color.Index(r.First().InnerText |> int.Parse, r.Skip(1).First().InnerText |> int.Parse, i.First().InnerText)));
-      def var = var_tags.Select(x => (x.GetOne(["type", "id"]), x.GetOne(["id"])));
-      def var = var.Map((x, y) => CpnDecl.Var(y.InnerText, x.InnerText));
+      def var = var_tags.Map(x => CpnDecl.Var(x.GetOneText("id"), x.GetOneText("type", "id")));
       decls += var;
-      //def nodes = xml.ChildNodes;
-      
-      //def parse(x : XmlElement)
-      //{
-      //  if (ParseElement(x))
-      //  {
-      //    foreach (x in x.ChildNodes) 
-      //    {
-      //      | XmlElement as x => parse(x)
-            
-      //      | _ => ()
-      //    }
-      //  } else ()
-      //}
-      
-      //foreach (n in nodes)
-      //{
-      //  | XmlElement as x => parse(x)
-      //}
-      null
+      def page = xml.Get("workspaceElements", "cpnet", "page");
+      def places = page.Get("place");
+      this.places = places.Map(get_places);
+      def tran   = page.Get("trans");
+      transitions   = tran.Map(get_tran);
+      arcs          = page.Get("arc").Map(get_arc);
     }
   }
 }
