@@ -23,6 +23,7 @@ namespace PetriNetLib
     | SubsetWith { name : string; with_list : list[string]}
     | Enum {vals : list[string]}
     | Simple
+    | StringWith { str_with : char * char; str_and : option[char * char];} 
   }
   
   [Record]

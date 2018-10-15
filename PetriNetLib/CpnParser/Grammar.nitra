@@ -43,6 +43,7 @@ namespace CpnML.Grammar
 		| NotEqual = Expr "<>" Expr
 		| AndAlso = Expr "andalso" Expr
 		| OrElse  = Expr "orelse" Expr
+		| Concat  = Expr '^' Expr
     }
 
     syntax TokenExpr = Integer '`' TokenRef
@@ -82,6 +83,7 @@ namespace CpnML.Grammar
       | Oper
       | Var = AnyIdentifier
 	  | Tuple = '(' Expr* ')'
+	  | FuncCallML = Name=AnyIdentifier Expr*
 	  | FuncCall
 	  | ModuleFunc = (AnyIdentifier;'.')+ FuncCall
 	  precedence ArcDelay:
