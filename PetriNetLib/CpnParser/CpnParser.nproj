@@ -78,6 +78,9 @@
     <Compile Include="Grammar.nitra">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="ProjectSupport.n">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />

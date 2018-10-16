@@ -24,6 +24,7 @@ namespace CpnML.Grammar
       | FloatingNumber
       | String
     }
+
     syntax InitExpr
     {
       | Literal

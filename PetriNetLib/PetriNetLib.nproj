@@ -37,6 +37,21 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
+    <Reference Include="Nemerle.Compiler, Version=1.2.0.550, Culture=neutral, PublicKeyToken=5291d186334f6101">
+      <Name>Nemerle.Compiler</Name>
+      <AssemblyName>Nemerle.Compiler.dll</AssemblyName>
+      <HintPath>C:\Program Files (x86)\Nemerle\Net-4.0\Nemerle.Compiler.dll</HintPath>
+    </Reference>
+    <Reference Include="Nitra.Compiler, Version=1.0.9999.0, Culture=neutral, PublicKeyToken=e080a9c724e2bfcd">
+      <Name>Nitra.Compiler</Name>
+      <AssemblyName>Nitra.Compiler.dll</AssemblyName>
+      <HintPath>C:\Program Files (x86)\nitra\Nitra.Compiler.dll</HintPath>
+    </Reference>
+    <Reference Include="Nitra.Runtime, Version=1.0.9999.0, Culture=neutral, PublicKeyToken=e080a9c724e2bfcd">
+      <Name>Nitra.Runtime</Name>
+      <AssemblyName>Nitra.Runtime.dll</AssemblyName>
+      <HintPath>C:\Program Files (x86)\nitra\Nitra.Runtime.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Collections.Immutable, Version=1.2.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <Name>System.Collections.Immutable</Name>
@@ -111,6 +126,11 @@
     <ProjectReference Include="..\CommonLib.Macros\CommonLib.Macros.nproj">
       <Name>CommonLib.Macros</Name>
       <Project>{5e9cfda7-975a-4ef5-a7e7-b638df3d19f7}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="CpnParser\CpnParser.nproj">
+      <Name>CpnParser</Name>
+      <Project>{5bd4c7c7-4cce-4159-9acb-c3f324431ef7}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>

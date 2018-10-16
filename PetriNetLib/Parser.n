@@ -2,6 +2,7 @@
 using Nemerle.Collections;
 using Nemerle.Text;
 using Nemerle.Utility;
+using Nemerle.Compiler.Parsetree;
 
 using System;
 using System.Collections;
@@ -9,12 +10,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml;
 using CommonLib.Macros;
+using Nitra;
+using CpnML.Grammar;
+using CpnML.Grammar.MainParseTree;
 
 namespace PetriNetLib
 {
   
   public variant Color
   {
+    | List {type : string; with_range : int * int;}
     | Union { types : list[string * string]}
     | Product {tuple : list[string]}
     | Record
@@ -67,6 +72,51 @@ namespace PetriNetLib
     public static Get[T](this xml : XmlDocument, params path : array[string]) : IEnumerable[XmlElement]
     {
       Get(xml.ChildNodes.OfType(), path)
+    }
+    
+    ConvertTree(tree : MainParseTree.LangExpr) : PExpr
+    {
+      | LangExpr.Declaration(Declaration = MainParseTree.Declaration.Val(Name = name, InitExpr = InitExpr.Literal as l)) => 
+         def name = name.IdentifierBodyData;
+         match (l)
+         {
+           | Literal.FloatingNumber as n => def val = n.GetText() |> double.Parse;
+                                            <[ $(name : usesite) : double = $(val : double) ]>
+           | Literal.Integer as n        => def val = n.GetText() |> int.Parse;
+                                            <[ $(name : usesite) : int = $(val : int) ]>
+           | Literal.String as n         => def val = n.GetText();
+                                            <[ $(name : usesite) : string = $(val : string) ]>
+         }                    
+    }
+    
+    public ParseML(text : string, file : string) : PExpr
+    {
+      def msg = Nitra.ProjectSystem.CompilerMessageList();
+      def parserHost = ParseSession(Main.LangExpr, compilerMessages = msg);
+      
+      if (string.IsNullOrWhiteSpace(text)) null else
+      {
+        def source = SourceSnapshot(text, file);
+        def result = parserHost.Parse(source);//Main.StateMachine(source, parserHost);
+        def ast = result.CreateParseTree();
+        if (result.IsSuccess) 
+        {
+          match (ast)
+          {
+            | MainParseTree.LangExpr as a => ConvertTree(a);
+            | _                           => null
+          }
+
+           
+        } else 
+        {
+          def msg = msg.GetMessages();
+          null
+          //(null, msg.GetMessages().NToList())
+        }
+        //    def (line, col) = error.Location.StartLineColumn;
+        //    WriteLine($<#$line:$col: $(error.Message)#>);
+      }
     }
     
     public static GetChilds[T](this xml : XmlDocument, params path : array[string]) : IEnumerable[XmlElement]
