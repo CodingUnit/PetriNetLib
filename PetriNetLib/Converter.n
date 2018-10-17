@@ -1,0 +1,109 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+using Nemerle.Compiler.Parsetree;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Nitra;
+using CpnML.Grammar;
+using CpnML.Grammar.MainParseTree;
+
+namespace PetriNetLib
+{
+  /// <summary>
+  /// Description of Converter.
+  /// </summary>
+  class Converter
+  {
+    file : string;
+    parserHost : ParseSession;
+    msg : Nitra.ProjectSystem.CompilerMessageList;
+    
+    public this()
+    {
+      msg = Nitra.ProjectSystem.CompilerMessageList();
+      parserHost = ParseSession(Main.LangExpr, compilerMessages = msg);
+    }
+    
+    GetLiteral(l : Literal) : PExpr
+    {
+      | Literal.FloatingNumber as n => def val = n.FloatingNumber.GetValue();
+                                      <[ $(val : double) ]>
+      | Literal.Numeric as n        => def val = n.Numeric.GetValue();
+                                      <[ $(val : int) ]>
+      | Literal.String as n         => def val = n.GetText();
+                                      <[ $(val : string) ]>
+      | Literal.Boolean(Boolean = BaseParseTree.Boolean.True) => <[ $(true : bool) ]>
+      | Literal.Boolean(Boolean = BaseParseTree.Boolean.False) => <[ $(false : bool) ]>
+    }
+    
+    GetExpr(expr : MainParseTree.Expr) : PExpr
+    {
+      | Literal as l => GetLiteral(l.Literal)
+      | Var as v     => def name = v.AnyIdentifier.GetText();
+                        <[ $(name : usesite) ]>
+      | FuncCall(FuncCall = MainParseTree.FuncCall(Name = n, Parms = p)) => def parms = p.Item1.Map(GetExpr);
+                                                                            <[ $(n.GetText() : usesite)(..$parms)]>
+      | TokenExpr(TokenExpr = MainParseTree.TokenExpr(Integer = i, Expr = e)) => 
+          def count = expr.GetText(i) |> int.Parse;
+          def expr = GetExpr(e);
+          <[ $(count : int) ` $expr ]>
+    }
+    
+    ConvertTree(tree : MainParseTree.LangExpr) : PExpr
+    {
+      | LangExpr.Declaration(Declaration = MainParseTree.Declaration.Val(Name = name, TypeOptData = _t, InitExpr = InitExpr.Literal as l)) => 
+         def name = name.IdentifierBodyData;
+         def val = GetLiteral(l.Literal);
+         <[ def $(name : usesite) = $val]>
+         
+      | LangExpr.Declaration(Declaration = Declaration.Func(Name = n, TypeOpt = t, ParmsData = (p, _), Body = b)) => 
+      
+        def get_parm(p)
+        {
+          | MainParseTree.Declaration.Func.Nested.Parm.Var(AnyIdentifier = n, TypeOpt = t) => 
+            <[parameter: $(n.GetText() : usesite) ]>
+        }
+        
+        def parms = p.Map(get_parm);
+        def n = n.GetText();
+        def body = b |> GetExpr;
+        <[
+          def $(n : usesite)(..$parms)
+          {
+            $body
+          }
+        ]>
+    }
+    
+    public ParseML(text : string) : PExpr
+    {
+      if (string.IsNullOrWhiteSpace(text)) null else
+      {
+        def source = SourceSnapshot(text, file);
+        def result = parserHost.Parse(source);//Main.StateMachine(source, parserHost);
+        def ast = result.CreateParseTree();
+        if (result.IsSuccess) 
+        {
+          match (ast)
+          {
+            | MainParseTree.LangExpr as a => ConvertTree(a);
+            | _                           => null
+          }
+
+           
+        } else 
+        {
+          def msg = msg.GetMessages();
+          null
+          //(null, msg.GetMessages().NToList())
+        }
+        //    def (line, col) = error.Location.StartLineColumn;
+        //    WriteLine($<#$line:$col: $(error.Message)#>);
+      }
+    }
+  }
+}

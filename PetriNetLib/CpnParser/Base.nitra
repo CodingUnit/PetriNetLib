@@ -10,12 +10,13 @@
 	  extend token IgnoreToken
     {
      | [SplitAtCompletionPosition] SpaceToken = Spaces;
+     | MultiLineComment = "(*" (Any !")*")* ")*";
     }
 
     /*extend token IgnoreToken
     {
-      | [SpanClass(Comment)] SingleLineComment = SingleLineComment;
-      | [SpanClass(Comment)] MultiLineComment;
+      //| [SpanClass(Comment)] SingleLineComment = SingleLineComment;
+      
     }*/
 
 		regex UnicodeLineSeparator      = '\u2028';
@@ -31,21 +32,37 @@
     regex Whitespace = [Zs] | '\t' | '\v' | '\f';
     //regex Spaces     = Whitespace*;
 
-		token String
-		{
-			| Single = '\'' (!'\'' Any)* '\''
-			| Double = '"' (!'"' Any)* '"'
-		}
+		token String = '"' (!'"' Any)* '"';
 
 	  regex Integer  = '0' | ['1'..'9'] ['0'..'9']*;
-	  alias Numeric = Integer;
+	  token Numeric = Minus="~"? Val=Integer
+    {
+      GetValue() : int
+      { 
+        def val = int.Parse(GetText(Val));
+        if (Minus.HasValue) -val else val
+      }
+    }
 
     [SpanClass(Number)]
-    regex FloatingNumber = "-"? Integer Fraction? Exponent?
+    token FloatingNumber = Minus="~"? Val=Number
     {
+      token Number = Integer Fraction? Exponent?;
       regex Digits   = ['0'..'9']+;
       regex Fraction = "." Digits;
       regex Exponent = ("E" | "e") ("-" | "+")? Digits;
+
+      GetValue() : double 
+      {
+        def val = double.Parse(Val.GetText());
+        if (Minus.HasValue) -val else val
+      }
+    }
+
+    token Boolean
+    {
+      | True = "true"
+      | False = "false"
     }
 
     regex KeywordToken =   EventNotKeywords | "state"    | "else"     | "flags"      | "name"    | "region"

@@ -16,14 +16,19 @@ namespace CpnML.Grammar
   syntax module Main
   {
     using Base;
-	using Nitra.Core;
+	  using Nitra.Core;
 
     syntax Literal
     {
-      | Integer
+      | Numeric
       | FloatingNumber
       | String
+      | Boolean
+      | Char
+      | NilList = "nil"
     }
+
+    token Char = '#' '"' Any '"';
 
     syntax InitExpr
     {
@@ -32,29 +37,30 @@ namespace CpnML.Grammar
 
     syntax Oper
     {
-		| SetUnion = TokenExpr "++" TokenExpr
-		| SetDiff  = TokenExpr "--" TokenExpr
-		| Plus	   = Expr '+' Expr
-		| Minus    = Expr '-' Expr
-		| Equal    = Expr "=" Expr
-		| Above	   = Expr '>' Expr
-		| Below	   = Expr '<' Expr
-		| AboveEqual = Expr ">=" Expr
-		| BelowEqual = Expr "<=" Expr
-		| NotEqual = Expr "<>" Expr
-		| AndAlso = Expr "andalso" Expr
-		| OrElse  = Expr "orelse" Expr
-		| Concat  = Expr '^' Expr
+		  | SetUnion = TokenExpr "++" TokenExpr
+		  | SetDiff  = TokenExpr "--" TokenExpr
+		  | Plus	   = Expr '+' Expr
+		  | Minus    = Expr '-' Expr
+      | Multiply = Expr '*' Expr
+      | Div      = Expr '/' Expr
+      | IntDiv   = Expr "div" Expr
+      | Mod      = Expr "mod" Expr
+		  | Equal    = Expr "=" Expr
+		  | Above	   = Expr '>' Expr
+		  | Below	   = Expr '<' Expr
+		  | AboveEqual = Expr ">=" Expr
+		  | BelowEqual = Expr "<=" Expr
+		  | NotEqual = Expr "<>" Expr
+		  | AndAlso = Expr "andalso" Expr
+		  | OrElse  = Expr "orelse" Expr
+		  | Concat  = Expr '^' Expr
+      | Not     = "not" Expr
+      | ListCombine = Expr "::" Expr
+      | ListAppend  = Expr "@" Expr
+      | RecordAccess = !Char '#' AnyIdentifier Expr
     }
 
-    syntax TokenExpr = Integer '`' TokenRef
-    {
-        syntax TokenRef
-        {
-          | VarRef
-          | Literal
-        }
-    }
+    syntax TokenExpr = Integer '`' Expr;
     
     syntax CondExpr
     {
@@ -73,42 +79,73 @@ namespace CpnML.Grammar
 
     syntax IndexVar = Name=AnyIdentifier '(' Idx=SimpleExpr')';
 
-	syntax FuncCall  = Name=AnyIdentifier '(' Expr* ')';
+	  syntax FuncCall  = Name=AnyIdentifier '(' Parms=(Expr;',')* ')';
 
-	syntax Expr
+    syntax TypeExpr
     {
-	  | UnitVal = '(' ')'
+      | Int    = "int"
+      | Real   = "real"
+      | String = "string"
+    }
+
+	  syntax Expr
+    {
+	    | UnitVal = '(' ')'
+      | BraceExpr = '(' Expr* ')'
       | Literal
       | TokenExpr
-      | If = "if" Expr "then" Expr "else" Expr
+      | If = "if" Expr "then" Expr* "else" Expr*
       | Oper
+      precedence TypeExpr:
+      | TypeAnnot = Expr ':' TypeExpr
       | Var = AnyIdentifier
-	  | Tuple = '(' Expr* ')'
-	  | FuncCallML = Name=AnyIdentifier Expr*
-	  | FuncCall
-	  | ModuleFunc = (AnyIdentifier;'.')+ FuncCall
-	  precedence ArcDelay:
-	  | Delay = Expr ^ ArcDelay '@' '+' Expr
+	    | Tuple = '(' (Expr;",")+ ')'
+      | Record = '{' (Elem;",")* '}'
+      {
+        syntax Elem = Name=AnyIdentifier '=' Expr;
+      }
+	    | FuncCallML = Name=AnyIdentifier Expr*
+	    | FuncCall
+	    | ModuleFunc = (AnyIdentifier;'.')+ FuncCall
+      | List = '[' (Expr;",")* ']'
+      | Let = Expr* "in" Expr* "end"
+      | Match = "case" Expr "of" (Case;"|")*
+      {
+        syntax Case = Expr "=>" Expr*;
+      }
+      | Lambda = Name=AnyIdentifier Parms=AnyIdentifier* "=>" Expr*
+	    precedence ArcDelay:
+	    | Delay = Expr '@' '+' Expr*
 	  
     }
 
-	syntax Declaration
+    syntax Type = ":" TypeExpr;
+
+	  syntax Declaration
     {
-      | Val  = "val" Name=AnyIdentifier '=' InitExpr ';'
-      | Func = "fun" Name=AnyIdentifier '(' Parm* ')' '=' Expr ';'
+      | Val  = "val" Name=AnyIdentifier Type? '=' InitExpr ';'?
+      | Func = "fun" Name=AnyIdentifier '(' Parms=(Parm;",")* ')' Type? '=' Body=Expr ';'?
       {
         syntax Parm
         {
-          | Var = AnyIdentifier
+          | Var = AnyIdentifier Type?
           | IndexVar
+        }
+      }
+      | FunMatch = "fun" MatchCase*
+      {
+        syntax MatchCase = Name=AnyIdentifier (Case;"|")*
+        {
+          syntax Case = Expr '=' Expr;
         }
       }
     }
 
-	syntax LangExpr
-	{
-		| Declaration
-		| Expr
-	}
+	  syntax LangExpr
+	  {
+		  | Declaration
+		  | Expr
+	  }
+  
   }
 }

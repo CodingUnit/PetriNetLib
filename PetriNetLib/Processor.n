@@ -15,19 +15,19 @@ namespace PetriNetLib
   
   //using Nemerle.Builtins.Function;
   
-  [Lens]
-  [Record]
-  public class Colour
-  {
-    public idx  : int;
-    public type : Type;
-  }
+  //[Lens]
+  //[Record]
+  //public class Colour
+  //{
+  //  public idx  : int;
+  //  public type : Type;
+  //}
   
   [Record]
   public class Arc
   {
     public colour : Colour;
-    public expr   : ArcExpr;
+    //public expr   : ArcExpr;
   }
   
   [Record]
@@ -53,27 +53,14 @@ namespace PetriNetLib
   [Lens]
   public class Place
   {
-    public idx : int;
+    public idx  : int;
     public name : string;
-    public colour : Colour;
-    public marking : list[Token];
+    public colour : ColourSet;
     
+    public init_mark : list[TokenSet];
+    public tree : CpnTree.Place;
     public net : PetriNet;
       
-    public RemoveToken() : Place * Token
-    {
-      match (marking)
-      {
-        | []           => throw InvalidOperationException()
-        | head :: tail => (Place.marking_lens.Set(this, tail), head)
-      }
-    }
-    
-    public AddToken(tok : Token) : Place
-    {
-      Place.marking_lens.Set(this, tok :: marking)
-    }
-    
     public override GetHashCode() : int
     {
       idx
@@ -120,53 +107,10 @@ namespace PetriNetLib
     public Func : Token -> bool;
   }
   
-  public variant ListExpr
-  {
-    // head :: tail
-  }
-  
-  public class CondExpr
-  {
-  }
-  
-  public variant BinaryOper
-  {
-    | Mul
-    | Div
-    | Add
-    | Sub
-    | Mod
-    
-    public left : ArcExpr; 
-    public right : ArcExpr;
-  }
-  
-  [Record]
-  public variant ArcExpr
-  {
-    | Constant { val : object; }
-    | NumTok { num : int; tok : ArcExpr; }
-    | Var { n : string; }
-    | Tuple { tup : list[ArcExpr];}
-    | ListExpr {expr : ListExpr;}
-    | Delay { expr : ArcExpr; delay : ArcExpr; }
-    | IfThen { expr : CondExpr; then : ArcExpr; els : ArcExpr; }
-    | Func { name : string; parms : list[ArcExpr]; }
-    | BinaryOperator { op : BinaryOper; }
-    | ArcFunc {func : TransitionExecContext * Place * Arc -> IEnumerable[Token]}
-    // record
-  }
-  
   public class ColourSet
   {
     public name : string;
     public type : Colour;
-  }
-  
-  public class Declarations
-  {
-    public vars        : Hashtable[string, Colour];
-    public colour_sets : Hashtable[string, ColourSet];
   }
   
   public variant ExecError
@@ -199,12 +143,13 @@ namespace PetriNetLib
   {
     mutable places      : array[Place];
     mutable transitions : array[Transition];
-    public  decls       : Declarations;
-
+    public vars        : Hashtable[string, Colour];
+    public colour_sets : Hashtable[string, ColourSet];
+    
     tree_places : list[CpnTree.Place];
     tree_tran   : list[CpnTree.Transition];
     tree_arcs   : list[CpnTree.Arc];
-    tree_decls       : list[CpnDecl];
+    tree_decls  : list[CpnDecl];
     
     matrix_len         : array[int] = array[];
     input_matrix       : array[3, Arc];//List[List[List[Arc]]];
@@ -212,51 +157,56 @@ namespace PetriNetLib
     incidence_matrix   : array[3, int];
     colours            : list[Colour] = [];
 
-    InputTransitionArcs : list[Transition * list[Place * Arc]]
-    {
-      [Memoize]
-      get
-      {
-        OutputArcs.GroupBy((_, t, _) => t).Map(x => (x.Key, x.Map((p, _, a) => (p, a))));
-      }
-    }
+    //InputTransitionArcs : list[Transition * list[Place * Arc]]
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    OutputArcs.GroupBy((_, t, _) => t).Map(x => (x.Key, x.Map((p, _, a) => (p, a))));
+    //  }
+    //}
     
-    InputArcs : IEnumerable[Place * Transition * Arc]
-    {
-      [Memoize]
-      get
-      {
-        foreach (c in Enumerable.Range(0, colours.Length))
-          foreach (p in Enumerable.Range(0, places.Length))
-            foreach (t in Enumerable.Range(0, transitions.Length))
-            {
-              def arc = input_matrix[p, t, c];
-              when (arc != null)
-                yield (places[p], transitions[t], arc)
-            }
-       }
-    }
+    //InputArcs : IEnumerable[Place * Transition * Arc]
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    foreach (c in Enumerable.Range(0, colours.Length))
+    //    {
+    //      foreach (p in Enumerable.Range(0, places.Length))
+    //      {
+    //        foreach (t in Enumerable.Range(0, transitions.Length))
+    //        {
+    //          def arc = input_matrix[p, t, c];
+    //          if (arc != null)
+    //            yield (places[p], transitions[t], arc) else ()
+    //        }
+    //      }
+    //    }
+    //   }
+    //}
 
     TranOutputArcs(tran : Transition) : IEnumerable[Place * Arc]
     {
-      InputArcs.Where((_, t, _) => t : object == tran).Select((p, _, a) => (p, a))
+      null
+      //InputArcs.Where((_, t, _) => t : object == tran).Select((p, _, a) => (p, a))
     }
     
-    OutputArcs : IEnumerable[Place * Transition * Arc]
-    {
-      [Memoize]
-      get
-      {
-        foreach (c in Enumerable.Range(0, colours.Length))
-          foreach (p in Enumerable.Range(0, places.Length))
-            foreach (t in Enumerable.Range(0, transitions.Length))
-            {
-              def arc = output_matrix[p, t, c];
-              when (arc != null)
-                yield (places[p], transitions[t], arc)
-            }
-       }
-    }
+    //OutputArcs : IEnumerable[Place * Transition * Arc]
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    foreach (c in Enumerable.Range(0, colours.Length))
+    //      foreach (p in Enumerable.Range(0, places.Length))
+    //        foreach (t in Enumerable.Range(0, transitions.Length))
+    //        {
+    //          def arc = output_matrix[p, t, c];
+    //          when (arc != null)
+    //            yield (places[p], transitions[t], arc)
+    //        }
+    //   }
+    //}
     
     //arcs               : List[List[Arc]] = List();
     //transition_input_matrix  : List[List[int]];
@@ -313,7 +263,16 @@ namespace PetriNetLib
     
     public Process() : void
     {
+      mutable idx : int = 0;
       
+      def create_place(p)
+      {
+        def col = colour_sets[p.type];
+        
+        Place(idx, p.name, col, [], p, this)
+      }
+      
+      def places = tree_places.Map(create_place);
     }
     //public AddColour(col : Colour) : PetriNet
     //{
