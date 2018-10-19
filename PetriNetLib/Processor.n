@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Collections.Immutable;
 using CommonLib.Macros;
+using Nemerle.Compiler.Parsetree;
 
 namespace PetriNetLib
 {
@@ -31,11 +32,6 @@ namespace PetriNetLib
   }
   
   [Record]
-  public class TokenVal[T]
-  {
-  }
-  
-  [Record]
   public class Token
   {
     public value  : object;//TokenVal[Colour];
@@ -44,7 +40,7 @@ namespace PetriNetLib
     public this(val : object)
     {
       value = val;
-      colour = Colour(-1, val.GetType());
+      //colour = Colour(-1, val.GetType());
     }
     
   }
@@ -53,13 +49,13 @@ namespace PetriNetLib
   [Lens]
   public class Place
   {
-    public idx  : int;
-    public name : string;
-    public colour : ColourSet;
+    public idx    : int;
+    public name   : string;
+    public colour : Colour;
     
     public init_mark : list[TokenSet];
-    public tree : CpnTree.Place;
-    public net : PetriNet;
+    public tree      : CpnTree.Place;
+    public net       : PetriNet;
       
     public override GetHashCode() : int
     {
@@ -137,14 +133,13 @@ namespace PetriNetLib
     }
   }
   
-  [Lens]
-  [Record]
   public class PetriNet
   {
     mutable places      : array[Place];
     mutable transitions : array[Transition];
-    public vars        : Hashtable[string, Colour];
-    public colour_sets : Hashtable[string, ColourSet];
+    public vars        : Hashtable[string, Colour] = Hashtable();
+    public colour_sets : Hashtable[string, Colour] = Hashtable();
+    mutable ml_decls : list[PExpr];
     
     tree_places : list[CpnTree.Place];
     tree_tran   : list[CpnTree.Transition];
@@ -152,11 +147,12 @@ namespace PetriNetLib
     tree_decls  : list[CpnDecl];
     
     matrix_len         : array[int] = array[];
-    input_matrix       : array[3, Arc];//List[List[List[Arc]]];
-    output_matrix      : array[3, Arc];
-    incidence_matrix   : array[3, int];
+    mutable input_matrix       : array[3, Arc];//List[List[List[Arc]]];
+    mutable output_matrix      : array[3, Arc];
+    mutable incidence_matrix   : array[3, int];
     colours            : list[Colour] = [];
-
+    converter          : Converter = Converter();
+    
     //InputTransitionArcs : list[Transition * list[Place * Arc]]
     //{
     //  [Memoize]
@@ -228,18 +224,18 @@ namespace PetriNetLib
     //  Enumerable.Repeat(ListUtils.Init(places.Count, _ => null).ToList(), count)
     //}
     
-    BuildMatrix() : PetriNet
+    BuildMatrix() : void
     {
       def col    = colours.Length;
       def places = places.Length;
       def tran   = transitions.Length;
       
       
-      if (matrix_len.Length == 0 || matrix_len[0] != col || matrix_len[1] != places || matrix_len[2] != tran)
+      when (matrix_len.Length == 0 || matrix_len[0] != col || matrix_len[1] != places || matrix_len[2] != tran)
       {
-        def net = PetriNet.input_matrix_lens.Set(this, array(col, places, tran)) |>
-        PetriNet.output_matrix_lens.Set(_, array(col, places, tran))   |>
-        PetriNet.incidence_matrix_lens.Set(_, array(col, places, tran));
+        input_matrix = array(col, places, tran);
+        output_matrix = array(col, places, tran);
+        incidence_matrix = array(col, places, tran);
       
         for (mutable c = 0; c < col; c++)
           for (mutable p = 0; p < places; p++)
@@ -249,8 +245,7 @@ namespace PetriNetLib
               def input = if (input_matrix[c, p, t] != null) 1 else 0; 
               incidence_matrix[c, p, t] = output - input;
             }
-        net
-      } else this
+      }
     }
     
     public this(places : list[CpnTree.Place], tran : list[CpnTree.Transition], arcs : list[CpnTree.Arc], decls : list[CpnDecl])
@@ -272,6 +267,19 @@ namespace PetriNetLib
         Place(idx, p.name, col, [], p, this)
       }
       
+      def (color, decls) = tree_decls.PartitionType();
+      foreach (d : CpnDecl.ColorSet in color)
+      {
+        colour_sets[d.name] = d.type
+      }
+      
+      foreach (d in decls)
+      {
+        | CpnDecl.Var(i, c) => vars[i] = colour_sets[c]
+        | ML(str)           => def expr = converter.ParseML(str);
+                               ml_decls ::= expr
+        | _                 => ()
+      }
       def places = tree_places.Map(create_place);
     }
     //public AddColour(col : Colour) : PetriNet

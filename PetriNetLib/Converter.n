@@ -4,6 +4,7 @@ using Nemerle.Text;
 using Nemerle.Utility;
 using Nemerle.Compiler.Parsetree;
 
+using CommonLib.Macros;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,6 +22,7 @@ namespace PetriNetLib
     file : string;
     parserHost : ParseSession;
     msg : Nitra.ProjectSystem.CompilerMessageList;
+    host : CompilerHost = CompilerHost();
     
     public this()
     {
@@ -43,14 +45,34 @@ namespace PetriNetLib
     GetExpr(expr : MainParseTree.Expr) : PExpr
     {
       | Literal as l => GetLiteral(l.Literal)
-      | Var as v     => def name = v.AnyIdentifier.GetText();
+      | Var as v     => def name = v.Identifier.GetText();
                         <[ $(name : usesite) ]>
-      | FuncCall(FuncCall = MainParseTree.FuncCall(Name = n, Parms = p)) => def parms = p.Item1.Map(GetExpr);
-                                                                            <[ $(n.GetText() : usesite)(..$parms)]>
-      | TokenExpr(TokenExpr = MainParseTree.TokenExpr(Integer = i, Expr = e)) => 
+      | FuncCall(NameData = (n, _), Parms = p) => 
+           def parms = match (p)
+           {
+             | BraceExpr(Expr = e) => [e]
+             | Tuple(Expr1 = e1, Expr2 = e2, ExprsData = e3)    => e1 :: e2 :: e3
+             
+           }
+           def parms = parms.Map(GetExpr);
+           def path = if (n.Length > 1) n.ChopLast() else [];
+           def path = path.Map(x => <[ $(x.GetText() : usesite) ]> );
+           <[ $(path.Last())(..$parms)]>
+           //def n = n.Last();
+           //def a = <[ a.b.c() ]>;
+           //a
+          //def parms = p.Item1.Map(GetExpr);<[ $(n.GetText() : usesite)(..$parms)]>
+                                                                            
+      | TokenExpr(Integer = i, Expr = e) => 
           def count = expr.GetText(i) |> int.Parse;
           def expr = GetExpr(e);
           <[ $(count : int) ` $expr ]>
+      | SetUnion(Expr1 = left, Expr2 = right) => def left  = GetExpr(left);
+                                                 def right = GetExpr(right);
+                                                 <[ $left %++ $right ]>
+      | SetDiff(Expr1 = left, Expr2 = right)  => def left  = GetExpr(left);
+                                                 def right = GetExpr(right);
+                                                 <[ $left %-- $right ]>
     }
     
     ConvertTree(tree : MainParseTree.LangExpr) : PExpr
@@ -60,12 +82,21 @@ namespace PetriNetLib
          def val = GetLiteral(l.Literal);
          <[ def $(name : usesite) = $val]>
          
-      | LangExpr.Declaration(Declaration = Declaration.Func(Name = n, TypeOpt = t, ParmsData = (p, _), Body = b)) => 
+      | LangExpr.Declaration(Declaration = Declaration.Func(Func = MainParseTree.Func(Name = n, TypeOpt = t, ParmsData = (p, _), Body = b))) => 
       
         def get_parm(p)
         {
-          | MainParseTree.Declaration.Func.Nested.Parm.Var(AnyIdentifier = n, TypeOpt = t) => 
+          | MainParseTree.Func.Nested.Parm.Var(Identifier = n, TypeOpt = t) => 
             <[parameter: $(n.GetText() : usesite) ]>
+          | MainParseTree.Func.Nested.Parm.IndexVar(IndexVar = IndexVar(Name = n, Idx = i)) =>
+            def e = GetExpr(i);
+            match (e)
+            {
+              | <[ $(i : usesite)]> =>
+                  def n = n.GetText();
+                  <[parameter: $(i : usesite) : Index.[$(n : usesite)]]>
+            }
+            
         }
         
         def parms = p.Map(get_parm);

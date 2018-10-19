@@ -37,31 +37,9 @@ namespace CpnML.Grammar
 
     syntax Oper
     {
-		  | SetUnion = TokenExpr "++" TokenExpr
-		  | SetDiff  = TokenExpr "--" TokenExpr
-		  | Plus	   = Expr '+' Expr
-		  | Minus    = Expr '-' Expr
-      | Multiply = Expr '*' Expr
-      | Div      = Expr '/' Expr
-      | IntDiv   = Expr "div" Expr
-      | Mod      = Expr "mod" Expr
-		  | Equal    = Expr "=" Expr
-		  | Above	   = Expr '>' Expr
-		  | Below	   = Expr '<' Expr
-		  | AboveEqual = Expr ">=" Expr
-		  | BelowEqual = Expr "<=" Expr
-		  | NotEqual = Expr "<>" Expr
-		  | AndAlso = Expr "andalso" Expr
-		  | OrElse  = Expr "orelse" Expr
-		  | Concat  = Expr '^' Expr
-      | Not     = "not" Expr
-      | ListCombine = Expr "::" Expr
-      | ListAppend  = Expr "@" Expr
-      | RecordAccess = !Char '#' AnyIdentifier Expr
+		  
     }
 
-    syntax TokenExpr = Integer '`' Expr;
-    
     syntax CondExpr
     {
     }
@@ -77,9 +55,9 @@ namespace CpnML.Grammar
       | IndexVar
     }
 
-    syntax IndexVar = Name=AnyIdentifier '(' Idx=SimpleExpr')';
+    syntax IndexVar = Name=Identifier '(' Idx=Expr')';
 
-	  syntax FuncCall  = Name=AnyIdentifier '(' Parms=(Expr;',')* ')';
+	  //syntax FuncCall
 
     syntax TypeExpr
     {
@@ -91,50 +69,93 @@ namespace CpnML.Grammar
 	  syntax Expr
     {
 	    | UnitVal = '(' ')'
-      | BraceExpr = '(' Expr* ')'
       | Literal
-      | TokenExpr
-      | If = "if" Expr "then" Expr* "else" Expr*
-      | Oper
-      precedence TypeExpr:
-      | TypeAnnot = Expr ':' TypeExpr
-      | Var = AnyIdentifier
-	    | Tuple = '(' (Expr;",")+ ')'
+      
+      precedence Type:
+      | TypeAnnot = Expr Type
+	    | Tuple = '(' Expr ',' Expr (',' Expr)* ')'
       | Record = '{' (Elem;",")* '}'
       {
         syntax Elem = Name=AnyIdentifier '=' Expr;
       }
-	    | FuncCallML = Name=AnyIdentifier Expr*
-	    | FuncCall
-	    | ModuleFunc = (AnyIdentifier;'.')+ FuncCall
-      | List = '[' (Expr;",")* ']'
-      | Let = Expr* "in" Expr* "end"
+      precedence Func:
+	    | FuncCall   = Name=(Identifier;'.')+ Parms=Expr
+	    //| ModuleFunc = Name=(Identifier;'.')+ FuncCall
+      | List = '[' (Expr;",")* ']'      
+      //| Let = Expr* "in" Expr* "end"
       | Match = "case" Expr "of" (Case;"|")*
       {
-        syntax Case = Expr "=>" Expr*;
+        syntax Case = Expr "=>" Expr;
       }
-      | Lambda = Name=AnyIdentifier Parms=AnyIdentifier* "=>" Expr*
+      //| IndexVar
+      | Var = Identifier
+      //| Lambda = Name=AnyIdentifier Parms=AnyIdentifier* "=>" Expr*
 	    precedence ArcDelay:
-	    | Delay = Expr '@' '+' Expr*
-	  
+	    | Delay = Expr '@' '+' Expr
+
+	    precedence Union:
+      | SetUnion = Expr "++" Expr// ^ Oper
+		  | SetDiff  = Expr "--" Expr
+		  
+      precedence Token:
+      | TokenExpr = Integer '`' Expr// ^ Oper
+		  
+      //| RecordAccess = !Char '#' AnyIdentifier Expr            
+      precedence Conditional:
+      | If = "if" Expr ^ Conditional "then" Expr "else" Expr
+      precedence And:
+      | AndAlso = Expr "andalso" Expr
+      precedence Or:
+		  | OrElse  = Expr "orelse" Expr
+      precedence Equality:
+		  | Equal    = Expr '=' Expr
+      | NotEqual = Expr "<>" Expr
+      precedence Relational:
+		  | Above	   = Expr '>' Expr
+		  | Below	   = Expr '<' Expr
+		  | AboveEqual = Expr ">=" Expr
+		  | BelowEqual = Expr "<=" Expr
+      precedence Append:
+      | Append  = Expr "@" Expr
+      | Concat  = Expr '^' Expr
+      | ListCombine = Expr "::" Expr
+      precedence Additive:
+      | Plus	   = Expr '+' Expr
+		  | Minus    = Expr '-' Expr
+      precedence MulDiv:
+      | Multiply = Expr '*' Expr
+      | Div      = Expr '/' Expr
+      | IntDiv   = Expr "div" Expr
+      | Mod      = Expr "mod" Expr
+      precedence Not:
+      | Not     = "not" Expr
+      precedence Sharp:
+      | SharpOper = '#' Expr
+      precedence Braces:
+      | BraceExpr = '(' Expr ')'
+      precedence FigBraces:
+      | FigBraceExpr = '{' Expr '}'
     }
 
     syntax Type = ":" TypeExpr;
 
+    syntax Func = "fun" Name=Identifier '(' Parms=(Parm;",")* ')' Type? '=' Body=Expr ';'?
+    {
+      syntax Parm
+      {
+        | Var = Identifier Type?
+        | IndexVar
+      }
+    }
+
 	  syntax Declaration
     {
-      | Val  = "val" Name=AnyIdentifier Type? '=' InitExpr ';'?
-      | Func = "fun" Name=AnyIdentifier '(' Parms=(Parm;",")* ')' Type? '=' Body=Expr ';'?
+      | Val  = "val" Name=Identifier Type? '=' InitExpr ';'?
+      | Func
+      
+      | FunMatch = !Func "fun" MatchCase+
       {
-        syntax Parm
-        {
-          | Var = AnyIdentifier Type?
-          | IndexVar
-        }
-      }
-      | FunMatch = "fun" MatchCase*
-      {
-        syntax MatchCase = Name=AnyIdentifier (Case;"|")*
+        syntax MatchCase = Name=Identifier Case "|" (Case;"|")+
         {
           syntax Case = Expr '=' Expr;
         }
@@ -144,7 +165,7 @@ namespace CpnML.Grammar
 	  syntax LangExpr
 	  {
 		  | Declaration
-		  | Expr
+		  | Expression = !Declaration Expr
 	  }
   
   }

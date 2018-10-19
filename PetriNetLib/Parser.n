@@ -37,7 +37,7 @@ namespace PetriNetLib
     | ColorSet
     {
       name : string;
-      type : Color;
+      type : Colour;
     }
   }
   
@@ -141,12 +141,12 @@ namespace PetriNetLib
           def range = col.Get("index", "ml").MapToArray(x => x.InnerText);
           //def range = range.Select(x => int.Parse(x)).ToArray();
           def type  = col.GetOneText("index", "id");
-          Color.Index(range[0], range[1], type)
+          Colour.Index(range[0], range[1], type)
         } else 
         if (col.Contains("product"))
         {
           def vals = col.Get("product", "id");
-          Color.Product(vals.Map(_.InnerText))
+          Colour.Product(vals.Map(_.InnerText))
         } else
         {
           null
@@ -181,7 +181,7 @@ namespace PetriNetLib
       //decls = idx_color.Map((x, r, i) => CpnDecl.ColorSet(x.InnerText, Color.Index(r.First().InnerText |> int.Parse, r.Skip(1).First().InnerText |> int.Parse, i.First().InnerText)));
       def var = var_tags.Map(x => CpnDecl.Var(x.GetOneText("id"), x.GetOneText("type", "id")));
       decls += var;
-      def page = xml.Get("workspaceElements", "cpnet", "page");
+      def page = xml.GetChilds("workspaceElements", "cpnet", "page");
       def places = page.Get("place");
       this.places = places.Map(get_places);
       def tran   = page.Get("trans");

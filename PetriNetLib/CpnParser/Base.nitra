@@ -65,17 +65,9 @@
       | False = "false"
     }
 
-    regex KeywordToken =   EventNotKeywords | "state"    | "else"     | "flags"      | "name"    | "region"
-                           | "and"          | "history"  | "defer"    | "terminate"  | "X"       | "x"      
-                           | "join"         | "junction" | "choice"   | "merge"      | "event" Spaces "class" 
-                           | "event"        | "using"    | "submachine" | "state_conc";
-
-    regex EventNotKeywords =   "(X)"       | "(x)"        | "entry:"   | "exit:" | "entry"
-                            | "exit"       | "0"          | "initial"  | "do"    | "(H*)"
-                            | "(H)"        | "deferred"   | "$>"       | "$<"
-                            | "completion" | "_";
-
-    regex PseudoKeywords = "exit:"  | "(X)" | "(x)" | "history";
+    regex KeywordToken =   "fun"    | "var"     | "val"      | "orelse"    | "andalso"
+                           | "case"          | "in"  | "end"    | "int"  | "string"      | "real"
+                           | "if";
 
     regex IdentifierBody = IdentifierStartCharacter IdentifierPartCharacters*;
 
@@ -92,11 +84,6 @@
                                       | CombiningCharacter
                                       | FormattingCharacter
                                       | '-';
-
-    token EventIdentifier = !Keyword IdentifierBody
-    {
-      token Keyword = EventNotKeywords !IdentifierPartCharacters;
-    }
 
 	  token Identifier = !Keyword !'=' IdentifierBody
     {
