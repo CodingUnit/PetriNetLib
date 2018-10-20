@@ -24,36 +24,12 @@ namespace CpnML.Grammar
       | FloatingNumber
       | String
       | Boolean
-      | Char
+      //| Char
       | NilList = "nil"
+      | EmptyToken = "empty"
     }
 
-    token Char = '#' '"' Any '"';
-
-    syntax InitExpr
-    {
-      | Literal
-    }
-
-    syntax Oper
-    {
-		  
-    }
-
-    syntax CondExpr
-    {
-    }
-
-    syntax SimpleExpr
-    {
-      
-    }
-
-    syntax VarRef
-    {
-      | Var = AnyIdentifier
-      | IndexVar
-    }
+    //token Char = '#' '"' Any '"';
 
     syntax IndexVar = Name=Identifier '(' Idx=Expr')';
 
@@ -65,12 +41,11 @@ namespace CpnML.Grammar
       | Real   = "real"
       | String = "string"
     }
+    syntax Delay = '@' '+' Expr;
 
 	  syntax Expr
     {
-	    | UnitVal = '(' ')'
       | Literal
-      
       precedence Type:
       | TypeAnnot = Expr Type
 	    | Tuple = '(' Expr ',' Expr (',' Expr)* ')'
@@ -78,31 +53,29 @@ namespace CpnML.Grammar
       {
         syntax Elem = Name=AnyIdentifier '=' Expr;
       }
-      precedence Func:
-	    | FuncCall   = Name=(Identifier;'.')+ Parms=Expr
-	    //| ModuleFunc = Name=(Identifier;'.')+ FuncCall
       | List = '[' (Expr;",")* ']'      
-      //| Let = Expr* "in" Expr* "end"
+      | Let = "let" Expr* "in" Expr* "end"
       | Match = "case" Expr "of" (Case;"|")*
       {
         syntax Case = Expr "=>" Expr;
       }
-      //| IndexVar
       | Var = Identifier
-      //| Lambda = Name=AnyIdentifier Parms=AnyIdentifier* "=>" Expr*
+      | Lambda = Name=Identifier Parms=AnyIdentifier* "=>" Expr
 	    precedence ArcDelay:
-	    | Delay = Expr '@' '+' Expr
-
+	    | DelayExpr = Expr Delay
+      | Delay
 	    precedence Union:
       | SetUnion = Expr "++" Expr// ^ Oper
 		  | SetDiff  = Expr "--" Expr
 		  
+      precedence Func:
+	    | FuncCall   = Name=(Identifier;'.')+ Parms=(Expr ^ Func)+
       precedence Token:
       | TokenExpr = Integer '`' Expr// ^ Oper
 		  
       //| RecordAccess = !Char '#' AnyIdentifier Expr            
       precedence Conditional:
-      | If = "if" Expr ^ Conditional "then" Expr "else" Expr
+      | If = "if" Cond=Expr ^ Conditional "then" Then=Expr "else" Else=Expr
       precedence And:
       | AndAlso = Expr "andalso" Expr
       precedence Or:
@@ -133,13 +106,16 @@ namespace CpnML.Grammar
       | SharpOper = '#' Expr
       precedence Braces:
       | BraceExpr = '(' Expr ')'
+      | UnitVal = '(' ')'
       precedence FigBraces:
       | FigBraceExpr = '{' Expr '}'
+      precedence Decl:
+      | Declaration
     }
 
     syntax Type = ":" TypeExpr;
 
-    syntax Func = "fun" Name=Identifier '(' Parms=(Parm;",")* ')' Type? '=' Body=Expr ';'?
+    syntax Func = "fun" Name=Identifier '(' Parms=(Parm;",")* ')' Type? '=' Body=(Expr;';')* ';'?
     {
       syntax Parm
       {
@@ -150,7 +126,7 @@ namespace CpnML.Grammar
 
 	  syntax Declaration
     {
-      | Val  = "val" Name=Identifier Type? '=' InitExpr ';'?
+      | Val  = "val" Name=Identifier Type? '=' Expr ';'?
       | Func
       
       | FunMatch = !Func "fun" MatchCase+
@@ -164,8 +140,8 @@ namespace CpnML.Grammar
 
 	  syntax LangExpr
 	  {
-		  | Declaration
-		  | Expression = !Declaration Expr
+		  //| Declaration = Declaration*
+		  | Expression = (Expr;";")*
 	  }
   
   }

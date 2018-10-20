@@ -53,7 +53,7 @@ namespace PetriNetLib
     public name   : string;
     public colour : Colour;
     
-    public init_mark : list[TokenSet];
+    public init_mark : PExpr;
     public tree      : CpnTree.Place;
     public net       : PetriNet;
       
@@ -76,31 +76,17 @@ namespace PetriNetLib
   { 
     public idx : int;
     public name : string;
-    public guard : Guard;
+    public guard : PExpr;
     
+    public time_expr : PExpr;
+    public code_segment : PExpr;
+    public priority : int;
     public net : PetriNet;
-    
-    public context  : TransitionExecContext;
     
     public override GetHashCode() : int
     {
       idx
     }
-  }
-  
-  public class GuardExpr : Guard
-  {
-  }
-  
-  [Record]
-  public class Guard
-  {
-    public virtual Eval() : bool {true}
-  }
-  
-  public class GuardFunc : Guard
-  {
-    public Func : Token -> bool;
   }
   
   public class ColourSet
@@ -258,13 +244,21 @@ namespace PetriNetLib
     
     public Process() : void
     {
-      mutable idx : int = 0;
+      mutable pidx : int = 0;
+      mutable tidx : int = 0;
       
       def create_place(p)
       {
         def col = colour_sets[p.type];
-        
-        Place(idx, p.name, col, [], p, this)
+        def expr = p.init_mark |> converter.ParseML;
+        def place = Place(pidx, p.name, col, expr, p, this);
+        pidx += 1;
+        place
+      }
+      
+      def create_tran(t)
+      {
+        Transition(tidx, t.name, null, this)
       }
       
       def (color, decls) = tree_decls.PartitionType();
@@ -280,7 +274,9 @@ namespace PetriNetLib
                                ml_decls ::= expr
         | _                 => ()
       }
+      
       def places = tree_places.Map(create_place);
+      tree_tran.Map(create_tran);
     }
     //public AddColour(col : Colour) : PetriNet
     //{

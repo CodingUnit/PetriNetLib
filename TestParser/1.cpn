@@ -379,8 +379,8 @@
         <binding x="7.200000"
                  y="-3.000000"/>
         <cond id="ID1412324137">
-          <posattr x="-106.000000"
-                   y="93.000000"/>
+          <posattr x="-72.000000"
+                   y="103.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -390,11 +390,11 @@
           <textattr colour="Black"
                     bold="false"/>
           <text tool="CPN Tools"
-                version="4.0.1"/>
+                version="4.0.1">[b=1]</text>
         </cond>
         <time id="ID1412324138">
-          <posattr x="-22.500000"
-                   y="93.000000"/>
+          <posattr x="-21.500000"
+                   y="109.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -404,9 +404,9 @@
           <textattr colour="Black"
                     bold="false"/>
           <text tool="CPN Tools"
-                version="4.0.1"/>
+                version="4.0.1">@+1</text>
         </time>
-        <code id="ID1412324139">
+        <code id="ID1412505581">
           <posattr x="-2.500000"
                    y="10.000000"/>
           <fillattr colour="White"
@@ -881,8 +881,8 @@
                  height="400">
         <sheets>
           <cpnsheet id="ID2215"
-                    panx="1.160000"
-                    pany="99.880000"
+                    panx="-24.840000"
+                    pany="75.880000"
                     zoom="1.000000"
                     instance="ID2149">
             <zorder>

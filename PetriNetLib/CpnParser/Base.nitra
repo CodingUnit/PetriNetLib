@@ -10,7 +10,7 @@
 	  extend token IgnoreToken
     {
      | [SplitAtCompletionPosition] SpaceToken = Spaces;
-     | MultiLineComment = "(*" (Any !")*")* ")*";
+     | MultiLineComment = "(*" (!"*)" Any)* "*)";
     }
 
     /*extend token IgnoreToken
@@ -65,9 +65,9 @@
       | False = "false"
     }
 
-    regex KeywordToken =   "fun"    | "var"     | "val"      | "orelse"    | "andalso"
-                           | "case"          | "in"  | "end"    | "int"  | "string"      | "real"
-                           | "if";
+    regex KeywordToken =   "fun"    | "var" | "val" | "orelse" | "andalso" 
+                           | "case" | "in"  | "end" | "int"    | "string" 
+                           | "real" | "if";
 
     regex IdentifierBody = IdentifierStartCharacter IdentifierPartCharacters*;
 

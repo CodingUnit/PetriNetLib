@@ -1,5 +1,4 @@
-after (50 sec) => C;
-after (10:20) => D;
-after (10:20:30) => D;
-after (10:20:30.10) => D;
-after (1.10:20:30.10) => D;
+﻿val four = 8 - 4;
+val n = op + (5, 5);
+fun Mes(s) = 
+PR.mult(1`s,DBM.all() --1`s);
