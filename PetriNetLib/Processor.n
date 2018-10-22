@@ -25,13 +25,6 @@ namespace PetriNetLib
   //}
   
   [Record]
-  public class Arc
-  {
-    public colour : Colour;
-    //public expr   : ArcExpr;
-  }
-  
-  [Record]
   public class Token
   {
     public value  : object;//TokenVal[Colour];
@@ -89,6 +82,14 @@ namespace PetriNetLib
     }
   }
   
+  [Record]
+  [Lens]
+  public class Arc
+  { 
+    public expr : PExpr;
+    
+  }
+  
   public class ColourSet
   {
     public name : string;
@@ -123,8 +124,8 @@ namespace PetriNetLib
   {
     mutable places      : array[Place];
     mutable transitions : array[Transition];
-    public vars        : Hashtable[string, Colour] = Hashtable();
-    public colour_sets : Hashtable[string, Colour] = Hashtable();
+    public  vars        : Hashtable[string, Colour] = Hashtable();
+    public  colour_sets : Hashtable[string, Colour] = Hashtable();
     mutable ml_decls : list[PExpr];
     
     tree_places : list[CpnTree.Place];
@@ -249,16 +250,28 @@ namespace PetriNetLib
       
       def create_place(p)
       {
-        def col = colour_sets[p.type];
-        def expr = p.init_mark |> converter.ParseML;
-        def place = Place(pidx, p.name, col, expr, p, this);
+        | CpnTree.Place(n, t, i) =>
+        def col = colour_sets[t];
+        def expr = i |> converter.ParseML;
+        def place = Place(pidx, n, col, expr, p, this);
         pidx += 1;
         place
       }
       
       def create_tran(t)
       {
-        Transition(tidx, t.name, null, this)
+        | CpnTree.Transition(n, g, t) =>
+        
+        def guard = g.Map(converter.ParseML).WithDefault(<[]>);
+        def time  = t.Map(converter.ParseML).WithDefault(<[]>);
+        Transition(tidx, n, guard, time, null, 0, this)
+      }
+      
+      def create_arcs(a)
+      {
+        | CpnTree.Arc(t) => 
+          def expr = converter.ParseML(t);
+          Arc(expr)
       }
       
       def (color, decls) = tree_decls.PartitionType();
@@ -275,8 +288,9 @@ namespace PetriNetLib
         | _                 => ()
       }
       
-      def places = tree_places.Map(create_place);
-      tree_tran.Map(create_tran);
+      places      = tree_places.MapToArray(create_place);
+      transitions = tree_tran.MapToArray(create_tran);
+      def arcs    = tree_arcs.MapToArray(create_arcs);
     }
     //public AddColour(col : Colour) : PetriNet
     //{

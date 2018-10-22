@@ -48,7 +48,7 @@ namespace CpnML.Grammar
       | Literal
       precedence Type:
       | TypeAnnot = Expr Type
-	    | Tuple = '(' Expr ',' Expr (',' Expr)* ')'
+	    //| Tuple = '(' Expr ',' Expr (',' Expr)* ')'
       | Record = '{' (Elem;",")* '}'
       {
         syntax Elem = Name=AnyIdentifier '=' Expr;
@@ -105,8 +105,8 @@ namespace CpnML.Grammar
       precedence Sharp:
       | SharpOper = '#' Expr
       precedence Braces:
-      | BraceExpr = '(' Expr ')'
-      | UnitVal = '(' ')'
+      | BraceExpr = '(' Expr* ')'
+      //| UnitVal = '(' ')'
       precedence FigBraces:
       | FigBraceExpr = '{' Expr '}'
       precedence Decl:

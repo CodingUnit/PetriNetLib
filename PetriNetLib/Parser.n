@@ -45,9 +45,10 @@ namespace PetriNetLib
   public variant CpnTree
   {
     | Declaration {decl : list[CpnDecl]}
-    | Place {name : string; type : string; init_mark : string;}
-    | Transition {name : string;}
-    | Arc {text : string;}
+    | Place {name : string; id : string; type : string; init_mark : string;}
+    | Transition {name : string; id : string;guard : option[string];time : option[string];}
+    | PlaceToTranArc {text : string;from : string; to : string;}
+    | TranToPlaceArc {text : string;from : string; to : string;}
   }
   
   /// <summary>
@@ -77,6 +78,11 @@ namespace PetriNetLib
       Get(xml.ChildNodes.OfType(), path).SelectMany(x => x.ChildNodes.OfType())
     }
     
+    public static GetChilds[T](this xml : XmlElement, params path : array[string]) : IEnumerable[XmlElement]
+    {
+      Get(xml.ChildNodes.OfType(), path).SelectMany(x => x.ChildNodes.OfType())
+    }
+    
     public static Contains(this path : XmlElement, elem : string) : bool
     {
       path.ChildNodes.OfType().Exists(x : XmlElement => x.Name == elem)
@@ -92,6 +98,11 @@ namespace PetriNetLib
       GetOne(parent, elem).InnerText
     }
     
+    public static GetOneTextOpt(this parent : XmlElement, params elem : array[string]) : option[string]
+    {
+      GetOneOpt(parent, elem).Map(_.InnerText)
+    }
+    
     public static GetText(this parent : IEnumerable[XmlElement], params elem : array[string]) : IEnumerable[string]
     {
       parent.Get(elem).Select(_.InnerText)
@@ -100,6 +111,12 @@ namespace PetriNetLib
     public static GetOne(this parent : XmlElement, params elem : array[string]) : XmlElement
     {
       parent.Get(elem).First()
+    }
+    
+    public static GetOneOpt(this parent : XmlElement, params elem : array[string]) : option[XmlElement]
+    {
+      def lst = parent.Get(elem);
+      if (lst.IsEmpty()) None() else lst.First() |> Some
     }
     
     public static Get(this path : IEnumerable[XmlElement], params elem : array[string]) : IEnumerable[XmlElement]
@@ -148,6 +165,15 @@ namespace PetriNetLib
           def vals = col.Get("product", "id");
           Colour.Product(vals.Map(_.InnerText))
         } else
+        if (col.Contains("record"))
+        {
+          def rec = col.GetChilds("record");
+          def fields = rec.Get("recordfield");
+          def fields = fields.Map(x => x.GetText("id").ToArray());
+          def fields = fields.Map(x => (x[0], x[1]));
+          Colour.Record(fields)
+        }
+        else
         {
           null
         }
@@ -168,7 +194,9 @@ namespace PetriNetLib
       def get_tran(p)
       {
         def name = p.GetOneText("text");
-        CpnTree.Transition(name)
+        def guard = p.GetOneTextOpt("cond", "text");
+        def time  = p.GetOneTextOpt("time", "text");
+        CpnTree.Transition(name, guard, time)
       }
       
       def get_arc(a)
