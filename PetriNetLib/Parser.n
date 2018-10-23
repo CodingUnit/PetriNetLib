@@ -47,8 +47,7 @@ namespace PetriNetLib
     | Declaration {decl : list[CpnDecl]}
     | Place {name : string; id : string; type : string; init_mark : string;}
     | Transition {name : string; id : string;guard : option[string];time : option[string];}
-    | PlaceToTranArc {text : string;from : string; to : string;}
-    | TranToPlaceArc {text : string;from : string; to : string;}
+    | Arc {text : string;from : string; to : string;p2t : bool;}
   }
   
   /// <summary>
@@ -68,17 +67,17 @@ namespace PetriNetLib
     [Accessor]
     mutable arcs : list[CpnTree.Arc];
     
-    public static Get[T](this xml : XmlDocument, params path : array[string]) : IEnumerable[XmlElement]
+    public static Get(this xml : XmlDocument, params path : array[string]) : IEnumerable[XmlElement]
     {
       Get(xml.ChildNodes.OfType(), path)
     }
     
-    public static GetChilds[T](this xml : XmlDocument, params path : array[string]) : IEnumerable[XmlElement]
+    public static GetChilds(this xml : XmlDocument, params path : array[string]) : IEnumerable[XmlElement]
     {
       Get(xml.ChildNodes.OfType(), path).SelectMany(x => x.ChildNodes.OfType())
     }
     
-    public static GetChilds[T](this xml : XmlElement, params path : array[string]) : IEnumerable[XmlElement]
+    public static GetChilds(this xml : XmlElement, params path : array[string]) : IEnumerable[XmlElement]
     {
       Get(xml.ChildNodes.OfType(), path).SelectMany(x => x.ChildNodes.OfType())
     }
@@ -88,9 +87,14 @@ namespace PetriNetLib
       path.ChildNodes.OfType().Exists(x : XmlElement => x.Name == elem)
     }
     
-    public static GetText(this parent : XmlElement, params elem : array[string]) : IEnumerable[string]
+    public static GetText(this parent : XmlElement, params elem : array[string]) : array[string]
     {
-      Get(parent, elem).Select(x => x.InnerText)
+      Get(parent, elem).MapToArray(x => x.InnerText)
+    }
+    
+    public static GetAttrText(this parent : XmlElement, elem : string) : string
+    {
+      GetOneAttr(parent, elem).Value
     }
     
     public static GetOneText(this parent : XmlElement, params elem : array[string]) : string
@@ -106,6 +110,11 @@ namespace PetriNetLib
     public static GetText(this parent : IEnumerable[XmlElement], params elem : array[string]) : IEnumerable[string]
     {
       parent.Get(elem).Select(_.InnerText)
+    }
+    
+    public static GetOneAttr(this parent : XmlElement, elem : string) : XmlAttribute
+    {
+      parent.Attributes.OfType().Filter(x : XmlAttribute => x.Name == elem).First()
     }
     
     public static GetOne(this parent : XmlElement, params elem : array[string]) : XmlElement
@@ -140,23 +149,12 @@ namespace PetriNetLib
       Get(path.ChildNodes.OfType(), elem)
     }
     
-    public Parse(file : string) : void
-    {
-      xml = XmlDocument();
-      xml.Load(file);
-      def glob = xml.GetChilds("workspaceElements", "cpnet", "globbox");
-      def ml_decls = glob.GetText("ml");
-      decls = ml_decls.Map(x => CpnDecl.ML(x));
-      def var_tags = glob.Get("var");
-      def color = glob.Get("color");
-      
-      def parse_color(col)
+    parse_color(col : XmlElement) : CpnDecl
       {
         def name = col.GetOneText("id");
         def set = if (col.Contains("index"))
         {
-          def range = col.Get("index", "ml").MapToArray(x => x.InnerText);
-          //def range = range.Select(x => int.Parse(x)).ToArray();
+          def range = col.GetText("index", "ml");
           def type  = col.GetOneText("index", "id");
           Colour.Index(range[0], range[1], type)
         } else 
@@ -169,40 +167,65 @@ namespace PetriNetLib
         {
           def rec = col.GetChilds("record");
           def fields = rec.Get("recordfield");
-          def fields = fields.Map(x => x.GetText("id").ToArray());
-          def fields = fields.Map(x => (x[0], x[1]));
+          
+          def get_fields(x)
+          {
+            def arr = x.GetText("id");
+            (arr[0], arr[1])
+          }
+          
+          def fields = fields.Map(get_fields);
           Colour.Record(fields)
         }
         else
         {
-          null
+          null : Colour
         }
         CpnDecl.ColorSet(name, set)
+      }
+      
+    public Parse(file : string) : void
+    {
+      xml = XmlDocument();
+      xml.Load(file);
+      def glob = xml.GetChilds("workspaceElements", "cpnet", "globbox");
+      def ml_decls = glob.GetText("ml");
+      decls = ml_decls.Map(x => CpnDecl.ML(x));
+      def var_tags = glob.Get("var");
+      def color = glob.Get("color");
+      
+      decls += color.Map(parse_color);
+        
         //null : CpnDecl.ColorSet
         //Parse(x, ["id"]);
         //.First(), Parse(x, ["index", "ml"]), Parse(x, ["index", "id"]))).Where((_, x, _) => !x.IsEmpty()
-      }
       
       def get_places(p)
       {
+        def id = p.GetAttrText("id");
         def name = p.GetOneText("text");
         def type = p.GetOneText("type", "text");
         def initmark = p.GetOneText("initmark", "text");
-        CpnTree.Place(name, type, initmark)
+        CpnTree.Place(name, id, type, initmark)
       }
       
       def get_tran(p)
       {
+        def id = p.GetAttrText("id");
         def name = p.GetOneText("text");
         def guard = p.GetOneTextOpt("cond", "text");
         def time  = p.GetOneTextOpt("time", "text");
-        CpnTree.Transition(name, guard, time)
+        CpnTree.Transition(name, id, guard, time)
       }
       
       def get_arc(a)
       {
         def annot = a.GetOneText("annot", "text");
-        CpnTree.Arc(annot)
+        def p2t   = a.GetAttrText("orientation") == "PtoT";
+        def trans  = a.GetOne("transend").GetAttrText("idref");
+        def place  = a.GetOne("placeend").GetAttrText("idref");
+        def (from, to) = if (p2t) (place, trans) else (trans, place);
+        CpnTree.Arc(annot, from, to, p2t)
       }
       
       decls += color.Map(parse_color);

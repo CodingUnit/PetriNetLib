@@ -43,6 +43,7 @@ namespace PetriNetLib
   public class Place
   {
     public idx    : int;
+    public id     : string;
     public name   : string;
     public colour : Colour;
     
@@ -68,6 +69,7 @@ namespace PetriNetLib
   public class Transition
   { 
     public idx : int;
+    public id  : string;
     public name : string;
     public guard : PExpr;
     
@@ -250,26 +252,26 @@ namespace PetriNetLib
       
       def create_place(p)
       {
-        | CpnTree.Place(n, t, i) =>
+        | CpnTree.Place(n, id, t, i) =>
         def col = colour_sets[t];
         def expr = i |> converter.ParseML;
-        def place = Place(pidx, n, col, expr, p, this);
+        def place = Place(pidx, id, n, col, expr, p, this);
         pidx += 1;
         place
       }
       
       def create_tran(t)
       {
-        | CpnTree.Transition(n, g, t) =>
+        | CpnTree.Transition(n, id, g, t) =>
         
-        def guard = g.Map(converter.ParseML).WithDefault(<[]>);
-        def time  = t.Map(converter.ParseML).WithDefault(<[]>);
-        Transition(tidx, n, guard, time, null, 0, this)
+        def guard = g.MapDefault(converter.ParseML, <[]>);
+        def time  = t.MapDefault(converter.ParseML, <[]>);
+        Transition(tidx, id, n, guard, time, null, 0, this)
       }
       
       def create_arcs(a)
       {
-        | CpnTree.Arc(t) => 
+        | CpnTree.Arc(t, from, to, p2t) => 
           def expr = converter.ParseML(t);
           Arc(expr)
       }

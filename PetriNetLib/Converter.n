@@ -50,9 +50,8 @@ namespace PetriNetLib
       | FuncCall(NameData = (n, _), ParmsData = p) => 
            def parms = match (p)
            {
-             | [BraceExpr(Expr = e)] => [e]
-             | [Tuple(Expr1 = e1, Expr2 = e2, ExprsData = e3)] => e1 :: e2 :: e3
-             | lst => lst
+             | [BraceExpr(Exprs = e)] => e
+             | lst                    => lst
            }
            def parms = parms.Map(GetExpr);
            //def path = if (n.Length > 1) n.ChopLast() else [];
