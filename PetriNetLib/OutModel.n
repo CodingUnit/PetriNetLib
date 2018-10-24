@@ -1,0 +1,25 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace PetriNetLib
+{
+  /// <summary>
+  /// Description of OutModel.
+  /// </summary>
+  class OutModel
+  {
+    public places      : array[Place];
+    public transitions : array[Transition];
+    public arcs        : array[Arc];
+    public vars        : Hashtable[string, Colour] = Hashtable();
+    public colour_sets : Hashtable[string, Colour] = Hashtable();
+    public ml_decls    : list[PExpr];
+  }
+  
+}

@@ -97,6 +97,19 @@
           </record>
           <layout>colset name = record id1:INT * id2:REAL *  idn:STRING;</layout>
         </color>
+        <color id="ID1412507654">
+          <id>Day</id>
+          <enum>
+            <id>Mon</id>
+            <id>Tues</id>
+            <id>Wed</id>
+            <id>Thurs</id>
+            <id>Fri</id>
+            <id>Sat</id>
+            <id>Sun</id>
+          </enum>
+          <layout>colset Day = with Mon | Tues | Wed | Thurs | Fri | Sat | Sun ;</layout>
+        </color>
       </block>
     </globbox>
     <page id="ID6">
@@ -986,6 +999,7 @@
           <IndexNode expanded="true"/>
           <IndexNode expanded="true"/>
           <IndexNode expanded="false"/>
+          <IndexNode expanded="true"/>
           <IndexNode expanded="true"/>
           <IndexNode expanded="true"/>
           <IndexNode expanded="true"/>

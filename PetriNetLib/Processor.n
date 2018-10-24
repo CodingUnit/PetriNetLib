@@ -25,7 +25,7 @@ namespace PetriNetLib
   //}
   
   [Record]
-  public class Token
+  class Token
   {
     public value  : object;//TokenVal[Colour];
     public colour : Colour;
@@ -40,12 +40,12 @@ namespace PetriNetLib
   
   [Record]
   [Lens]
-  public class Place
+  class Place
   {
     public idx    : int;
     public id     : string;
     public name   : string;
-    public colour : Colour;
+    public colour : ColourSet;
     
     public init_mark : PExpr;
     public tree      : CpnTree.Place;
@@ -58,7 +58,7 @@ namespace PetriNetLib
   }
   
   [Record]
-  public class TokenSet
+  class TokenSet
   {
     public num   : int;
     public token : Token;
@@ -66,7 +66,7 @@ namespace PetriNetLib
   
   [Record]
   [Lens]
-  public class Transition
+  class Transition
   { 
     public idx : int;
     public id  : string;
@@ -85,55 +85,67 @@ namespace PetriNetLib
   }
   
   [Record]
+  variant ArcSource
+  {
+    | PlaceEnd {place : Place}
+    | TransitionEnd {tran : Transition}
+  }
+  
+  
+  [Record]
   [Lens]
-  public class Arc
+  class Arc
   { 
     public expr : PExpr;
     
+    public from : ArcSource;
+    public to   : ArcSource;
   }
-  
-  public class ColourSet
+  [Record]
+  class ColourSet
   {
     public name : string;
     public type : Colour;
   }
   
-  public variant ExecError
+  variant ExecError
   {
     | TokenConstantNotFound { place : Place; val : object }
     | VarNotFound {name : string}
     | TypeTokenNotCompat {incol : Colour; outcol : Colour;place : Place}
   }
   
-  [Lens]
-  [Record]
-  public class TransitionExecContext
-  {
-    public binding : Hashtable[string, Token];
-    public tokens  : list[Token];
-    public error   : list[ExecError];
+  //[Lens]
+  //[Record]
+  //public class TransitionExecContext
+  //{
+  //  public binding : Hashtable[string, Token];
+  //  public tokens  : list[Token];
+  //  public error   : list[ExecError];
     
-    public all_getted_tokens : list[Token]
-    {
-      get
-      {
-        []
-      }
-    }
-  }
+  //  public all_getted_tokens : list[Token]
+  //  {
+  //    get
+  //    {
+  //      []
+  //    }
+  //  }
+  //}
   
   public class PetriNet
   {
     mutable places      : array[Place];
     mutable transitions : array[Transition];
-    public  vars        : Hashtable[string, Colour] = Hashtable();
-    public  colour_sets : Hashtable[string, Colour] = Hashtable();
+    mutable arcs        : array[Arc];
+    public  vars        : Hashtable[string, ColourSet] = Hashtable();
+    public  colour_sets : Hashtable[string, ColourSet] = Hashtable();
     mutable ml_decls : list[PExpr];
-    
+    name : string;
     tree_places : list[CpnTree.Place];
     tree_tran   : list[CpnTree.Transition];
     tree_arcs   : list[CpnTree.Arc];
     tree_decls  : list[CpnDecl];
+    
     
     matrix_len         : array[int] = array[];
     mutable input_matrix       : array[3, Arc];//List[List[List[Arc]]];
@@ -215,30 +227,32 @@ namespace PetriNetLib
     
     BuildMatrix() : void
     {
-      def col    = colours.Length;
+      def arcs    = arcs.Length;
       def places = places.Length;
       def tran   = transitions.Length;
       
       
-      when (matrix_len.Length == 0 || matrix_len[0] != col || matrix_len[1] != places || matrix_len[2] != tran)
+      when (matrix_len.Length == 0 || matrix_len[0] != places || matrix_len[1] != tran || matrix_len[2] != arcs)
       {
-        input_matrix = array(col, places, tran);
-        output_matrix = array(col, places, tran);
-        incidence_matrix = array(col, places, tran);
-      
-        for (mutable c = 0; c < col; c++)
-          for (mutable p = 0; p < places; p++)
-            for (mutable t = 0; t < tran; t++)
-            {
-              def output = if (output_matrix[c, p, t] != null) 1 else 0; 
-              def input = if (input_matrix[c, p, t] != null) 1 else 0; 
-              incidence_matrix[c, p, t] = output - input;
-            }
+        input_matrix = array(places, tran, arcs);
+        output_matrix = array(places, tran, arcs);
+        incidence_matrix = array(places, tran, arcs);
       }
+      
+      for (mutable p = 0; p < places; p++)
+        for (mutable t = 0; t < tran; t++)
+          for (mutable a = 0; a < arcs; a++)
+          {
+            def output = if (output_matrix[p, t, a] != null) 1 else 0; 
+            def input = if (input_matrix[p, t, a] != null) 1 else 0; 
+            incidence_matrix[p, t, a] = output - input;
+          }
+      //}
     }
     
-    public this(places : list[CpnTree.Place], tran : list[CpnTree.Transition], arcs : list[CpnTree.Arc], decls : list[CpnDecl])
+    public this(name : string, places : list[CpnTree.Place], tran : list[CpnTree.Transition], arcs : list[CpnTree.Arc], decls : list[CpnDecl])
     {
+      this.name = name;
       tree_places = places;
       tree_tran = tran;
       tree_arcs = arcs;
@@ -264,22 +278,29 @@ namespace PetriNetLib
       {
         | CpnTree.Transition(n, id, g, t) =>
         
-        def guard = g.MapDefault(converter.ParseML, <[]>);
-        def time  = t.MapDefault(converter.ParseML, <[]>);
-        Transition(tidx, id, n, guard, time, null, 0, this)
+            def guard = g.MapDefault(converter.ParseML, <[]>);
+            def time  = t.MapDefault(converter.ParseML, <[]>);
+            def tran = Transition(tidx, id, n, guard, time, null, 0, this);
+            tidx += 1;
+            tran
       }
       
       def create_arcs(a)
       {
         | CpnTree.Arc(t, from, to, p2t) => 
-          def expr = converter.ParseML(t);
-          Arc(expr)
+            def expr = converter.ParseML(t);
+            def placeend = end => places.First(x => x.id == end) |> ArcSource.PlaceEnd;
+            def transend = end => transitions.First(x => x.id == end) |> ArcSource.TransitionEnd;
+            def (f, t) = if (p2t) (placeend, transend) else (transend, placeend);
+            def from = from |> f;
+            def to =   to   |> t;
+            Arc(expr, from, to)
       }
       
       def (color, decls) = tree_decls.PartitionType();
       foreach (d : CpnDecl.ColorSet in color)
       {
-        colour_sets[d.name] = d.type
+        colour_sets[d.name] = ColourSet(d.name, d.type)
       }
       
       foreach (d in decls)
@@ -292,196 +313,22 @@ namespace PetriNetLib
       
       places      = tree_places.MapToArray(create_place);
       transitions = tree_tran.MapToArray(create_tran);
-      def arcs    = tree_arcs.MapToArray(create_arcs);
+      arcs        = tree_arcs.MapToArray(create_arcs);
+      BuildMatrix();
+      foreach (Arc(_, f, t) as a in arcs with i)
+      {
+        match (f, t)
+        {
+          | (ArcSource.PlaceEnd(p), ArcSource.TransitionEnd(t)) =>
+              output_matrix[p.idx, t.idx, i] = a;
+          | (ArcSource.TransitionEnd(t), ArcSource.PlaceEnd(p)) =>
+              input_matrix[p.idx, t.idx, i] = a;
+          | _ => ()
+        }
+      }
+      BuildMatrix();
     }
-    //public AddColour(col : Colour) : PetriNet
-    //{
-    //  def col = Colour.idx_lens.Set(col, colours.Length);
-    //  //col.idx = colour_idx;
-      
-    //  PetriNet.colours_lens.Update(_, col :: _)
-    //}
     
-    //public AddPlace(place : Place) : Place
-    //{
-    //  def place = Place.idx_lens.Set(place, places.Count);
-    //  places = places.Add(place);
-    //  place
-    //}
     
-    //public AddTransition(tran : Transition) : Transition
-    //{
-    //  def tran = Transition.idx_lens.Set(tran, transitions.Count);
-    //  transitions = transitions.Add(tran);
-    //  tran
-    //}
-    
-    //public AddArc(place : Place, arc : Arc, tran : Transition) : void
-    //{
-    //  def idx  = place.idx;
-    //  def tidx = tran.idx;
-    //  def cidx = arc.colour.idx;
-    //  output_matrix[cidx, idx, tidx] = arc;
-    //}
-    
-    //public AddArc(tran : Transition, arc : Arc, place : Place) : void
-    //{
-    //  def idx  = place.idx;
-    //  def tidx = tran.idx;
-    //  def cidx = arc.colour.idx;
-    //  input_matrix[cidx, idx, tidx] = arc;
-    //}
-    
-    // public AddToken(place_idx : int, tok : Token) : void
-    // {
-    //   def set_tok(t)
-    //   {
-    //     Place.marking_lens.Update(t[place_idx], tok :: _) |> t.SetItem(place_idx, _)
-    //   }
-       
-    //   ThreadSafeUtils.LockFreeUpdate(ref places, set_tok)
-    //   //places[place_idx] = place;
-    // }
-     
-    // public AddToken(place : Place, tok : Token) : void
-    // {
-       
-    // }
-     
-    // TypeCompatible(col : Colour, col_out : Colour) : bool
-    // {
-    //   false
-    // }
-     
-    // RemoveTokens(places : list[Place * Arc]) : TransitionExecContext * list[Place]
-    // {
-    //   mutable tokens = [];
-    //   mutable err = [];
-    //   mutable binding = [];
-       
-    //   def get_tokens(place, arc) : list[Token]
-    //   {
-    //     def marking = place.marking;
-    //     match (arc.expr)
-    //     {
-    //       | ArcExpr.Constant(v) => if (marking.Find(x => x.value.Equals(v)) is Some(tok))
-    //                                {
-    //                                  tokens ::= tok;
-    //                                  marking.Remove(tok)
-    //                                } else
-    //                                {
-    //                                  err ::= ExecError.TokenConstantNotFound(place, v);
-    //                                  marking
-    //                                }
-    //       | Var(n)              => if (decls.vars.Contains(n))
-    //                                {
-    //                                  def type = decls.vars[n];
-    //                                  if (TypeCompatible(place.colour, type))
-    //                                  {
-    //                                    binding ::= (n, marking.Head);
-    //                                    marking.Tail
-    //                                  } else
-    //                                  {
-    //                                    err ::= ExecError.TypeTokenNotCompat(place.colour, type, place);
-    //                                    marking
-    //                                  }
-    //                                } else
-    //                                {
-    //                                  err ::= ExecError.VarNotFound(n);
-    //                                  marking
-    //                                }
-    //       | NumTok(n, Constant(t)) => def tok = marking.Filter(x => x.value.Equals(t));
-    //                                   if (tok.Length >= n)       
-    //                                   {
-    //                                     def tok = tok.Take(n);
-    //                                     tokens += tok.NToList();
-    //                                     marking.Except(tok).NToList()
-    //                                   } else
-    //                                   {
-    //                                     err ::= ExecError.TokenConstantNotFound(place, t);
-    //                                     marking
-    //                                   }
-    //       | _                        => throw InvalidOperationException("unimplemented expression")
-    //       //| Tuple(t)               => 
-    ////       | Constant { val : object; }
-    ////| NumTok { num : int; tok : ArcExpr; }
-    ////| Var { n : string; }
-    ////| Tuple { tup : list[ArcExpr];}
-    ////| ListExpr {expr : ListExpr;}
-    ////| Delay { expr : ArcExpr; delay : ArcExpr; }
-    ////| IfThen { expr : CondExpr; then : ArcExpr; els : ArcExpr; }
-    ////| Func { name : string; parms : list[ArcExpr]; }
-    //     }
-    //   }
-       
-    //   def new_marking = places.Map(x => (x[0], get_tokens(x)));
-    //   def places = new_marking.Map(Place.marking_lens.Set);
-    //   (TransitionExecContext(Hashtable(binding), tokens, err), places)
-    // }
-     
-    // AddTokens(tran_ctx : TransitionExecContext, places : IEnumerable[Place * Arc]) : list[Place]
-    // {
-    //   mutable tok = tran_ctx.tokens;
-    //   mutable binding = tran_ctx.binding;
-       
-    //   def eval(e)
-    //   {
-    //     | ArcExpr.Constant(c) => c
-    //     | Var(n)              => binding[n].value
-    //   }
-       
-    //   def get_tok(expr : ArcExpr) : option[TokenSet]
-    //   {
-    //       | ArcExpr.Constant(c) => c |> Token |> TokenSet(1, _) |> Some
-    //       | Var(n)              => if (binding.Contains(n))
-    //                                {
-    //                                  binding[n] |> TokenSet(1, _) |> Some
-    //                                } else
-    //                                {
-    //                                  None()
-    //                                }
-    //       | BinaryOperator(op) => def left  = op.left  |> eval;
-    //                               def right = op.right |> eval;
-    //                               def res  = match (op)
-    //                                          {
-    //                                            | BinaryOper.Mul => match (left, right)
-    //                                                                {
-    //                                                                  | (l is int, r is int) => Some(l * r)
-    //                                                                  | _                    => None()
-    //                                                                }
-    //                                            | Add            => match (left, right)
-    //                                                                {
-    //                                                                  | (l is int, r is int) => Some(l + r)
-    //                                                                  | _                    => None()
-    //                                                                }
-    //                                          }
-    //                               res.Map(x => TokenSet(1, Token(x)))
-    //       | NumTok(n, t)      => get_tok(t).Map(x => TokenSet(n * x.num, x.token))
-                                  
-    //   }
-       
-    //   def add_tok(a : ArcExpr) : option[TokenSet]
-    //   {
-    //     get_tok(a)
-    //   }
-       
-    //   def tokens = places.MapLazy((p, a) => (p, add_tok(a.expr).Value));
-    //   null
-    // }
-       
-    // public Step() : void
-    // {
-    //   def input_places_contains_tokens = InputTransitionArcs.Where((t, a : list[_]) => a.All((p, _) => !p.marking.IsEmpty()));
-    //   def places = input_places_contains_tokens.SelectMany((_, l) => l.Select((p, _ : Arc) => p));
-    //   foreach ((t, p) in input_places_contains_tokens)
-    //   {
-    //     def (tran_ctx, places) = RemoveTokens(p);
-    //     def out_acs = TranOutputArcs(t);
-         
-    //     //t.ChangeContext()
-    //   }
-    //   // забираем токены из входных позиций и передаем в выходные позиции перехода
-    //   //OutputArcs.Where((p, t, a) => !p.marking.IsEmpty());
-    // }
   }
 }

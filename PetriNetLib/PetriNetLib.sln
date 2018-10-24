@@ -11,6 +11,8 @@ Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "TestParser", "..\TestParser
 EndProject
 Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "CpnParser", "CpnParser\CpnParser.nproj", "{5BD4C7C7-4CCE-4159-9ACB-C3F324431EF7}"
 EndProject
+Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "PetriNetModel", "..\PetriNetModel\PetriNetModel.nproj", "{9756A67B-F1A6-4C59-A9A6-45492777B4AC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -60,6 +62,16 @@ Global
 		{5BD4C7C7-4CCE-4159-9ACB-C3F324431EF7}.OPC|Any CPU.Build.0 = Release|Any CPU
 		{5BD4C7C7-4CCE-4159-9ACB-C3F324431EF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5BD4C7C7-4CCE-4159-9ACB-C3F324431EF7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9756A67B-F1A6-4C59-A9A6-45492777B4AC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9756A67B-F1A6-4C59-A9A6-45492777B4AC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9756A67B-F1A6-4C59-A9A6-45492777B4AC}.LIBS|Any CPU.ActiveCfg = Release|Any CPU
+		{9756A67B-F1A6-4C59-A9A6-45492777B4AC}.LIBS|Any CPU.Build.0 = Release|Any CPU
+		{9756A67B-F1A6-4C59-A9A6-45492777B4AC}.NViewer|Any CPU.ActiveCfg = Release|Any CPU
+		{9756A67B-F1A6-4C59-A9A6-45492777B4AC}.NViewer|Any CPU.Build.0 = Release|Any CPU
+		{9756A67B-F1A6-4C59-A9A6-45492777B4AC}.OPC|Any CPU.ActiveCfg = Release|Any CPU
+		{9756A67B-F1A6-4C59-A9A6-45492777B4AC}.OPC|Any CPU.Build.0 = Release|Any CPU
+		{9756A67B-F1A6-4C59-A9A6-45492777B4AC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9756A67B-F1A6-4C59-A9A6-45492777B4AC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

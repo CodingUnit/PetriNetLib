@@ -1,0 +1,56 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Nemerle.Compiler.Parsetree;
+
+namespace PetriNetLib
+{
+  /// <summary>
+  /// Description of Generator.
+  /// </summary>
+  class Generator
+  {
+    model : OutModel;
+    
+    CreatePlace(place : Place) : ClassMember
+    {
+      def name = place.name;
+      def type = match (place.colour)
+      {
+        | ColourSet(_, Colour.Simple(type)) => 
+              match (type)
+              {
+                | "string" => <[ string ]>
+                | "int"    => <[ int ]>
+                | "intinf" => <[ IntInf ]>
+                | "real"   => <[ double ]>
+                | "time"   => <[ Time ]>
+                | "bool"   => <[ bool ]>
+                | "unit"   => <[ void ]>
+              }
+        | ColourSet(_, Product(vals))  => def vals = vals.Map(x => <[ $(x : usesite) ]>);
+                                          <[ (..$vals) ]>
+        | ColourSet(n, Enum)           => <[ $(n : usesite) ]>
+        | ColourSet(_, List(t, _))     => <[ list[$(t : usesite)]]>
+      }
+      
+      <[decl: $(name : usesite) : PetriNetModel.Place.[$type] = PetriNetModel.Place()]>
+    }
+    
+    CreateTran(tran : Transition) : ClassMember
+    {
+      null
+    }
+    
+    public Generate() : void
+    {
+      def fields = model.places.Map(CreatePlace);
+      model.transitions.Map(CreateTran);
+    }
+  }
+}

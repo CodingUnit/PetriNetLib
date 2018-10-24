@@ -1,0 +1,48 @@
+﻿using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace PetriNetModel
+{
+  class BitArray
+  {
+    buf : List[int] = List();
+  }
+  
+  class RandomQueue[T]
+  {
+    queue   : List[T];
+    elems   : BitArray;
+    
+    public Add(elem : T) : void
+    {
+    }
+    
+    public Get() : T
+    {
+      default(T)
+    }
+    
+    public HaveElems : bool
+    {
+      get
+      {
+        false
+      }
+    }
+  }
+  
+  public class Place[T]
+  {
+    tokens : array[T];
+    
+    
+    Set() : void
+    {
+    }
+  }
+}

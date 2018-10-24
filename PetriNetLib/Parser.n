@@ -25,7 +25,7 @@ namespace PetriNetLib
     | SubsetBy { name : string; by : string}
     | SubsetWith { name : string; with_list : list[string]}
     | Enum {vals : list[string]}
-    | Simple
+    | Simple {type : string}
     | StringWith { str_with : char * char; str_and : option[char * char];} 
   }
   
@@ -128,6 +128,11 @@ namespace PetriNetLib
       if (lst.IsEmpty()) None() else lst.First() |> Some
     }
     
+    public static GetChilds(this path : IEnumerable[XmlElement], params elem : array[string]) : IEnumerable[XmlElement]
+    {
+      Get(path, elem).SelectMany(x => x.ChildNodes.OfType())
+    }
+    
     public static Get(this path : IEnumerable[XmlElement], params elem : array[string]) : IEnumerable[XmlElement]
     {
       def loop(p, child : IEnumerable[XmlElement])
@@ -165,8 +170,7 @@ namespace PetriNetLib
         } else
         if (col.Contains("record"))
         {
-          def rec = col.GetChilds("record");
-          def fields = rec.Get("recordfield");
+          def fields = col.Get("record", "recordfield");
           
           def get_fields(x)
           {
@@ -178,9 +182,19 @@ namespace PetriNetLib
           Colour.Record(fields)
         }
         else
+        if (col.Contains("enum"))
         {
-          null : Colour
-        }
+          def en = col.GetText("enum", "id");
+          Colour.Enum(en.NToList())
+        } else
+        if (col.Contains("unit"))   Colour.Simple("unit") else
+        if (col.Contains("bool"))   Colour.Simple("bool")   else
+        if (col.Contains("int"))    Colour.Simple("int")    else
+        if (col.Contains("intinf")) Colour.Simple("intinf") else
+        if (col.Contains("time"))   Colour.Simple("time")   else
+        if (col.Contains("real"))   Colour.Simple("real")   else
+        if (col.Contains("string")) Colour.Simple("string") else
+        null;
         CpnDecl.ColorSet(name, set)
       }
       
@@ -189,16 +203,14 @@ namespace PetriNetLib
       xml = XmlDocument();
       xml.Load(file);
       def glob = xml.GetChilds("workspaceElements", "cpnet", "globbox");
+      def blocks = glob.GetChilds("block");
+      def glob = glob.Concat(blocks);
       def ml_decls = glob.GetText("ml");
       decls = ml_decls.Map(x => CpnDecl.ML(x));
       def var_tags = glob.Get("var");
       def color = glob.Get("color");
       
       decls += color.Map(parse_color);
-        
-        //null : CpnDecl.ColorSet
-        //Parse(x, ["id"]);
-        //.First(), Parse(x, ["index", "ml"]), Parse(x, ["index", "id"]))).Where((_, x, _) => !x.IsEmpty()
       
       def get_places(p)
       {
