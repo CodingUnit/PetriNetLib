@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Nemerle.Compiler.Parsetree;
+using CommonLib.Macros;
 
 namespace PetriNetLib
 {
@@ -16,12 +17,10 @@ namespace PetriNetLib
   class Generator
   {
     model : OutModel;
+    proc : PetriNet;
     
-    CreatePlace(place : Place) : ClassMember
+    GetTypeExpr(p : ColourSet) : PExpr
     {
-      def name = place.name;
-      def type = match (place.colour)
-      {
         | ColourSet(_, Colour.Simple(type)) => 
               match (type)
               {
@@ -33,18 +32,105 @@ namespace PetriNetLib
                 | "bool"   => <[ bool ]>
                 | "unit"   => <[ void ]>
               }
-        | ColourSet(_, Product(vals))  => def vals = vals.Map(x => <[ $(x : usesite) ]>);
+        | ColourSet(_, Product(vals))  => def vals = vals.Map(x => <[ $(TypeFromStr(x)) ]>);
                                           <[ (..$vals) ]>
         | ColourSet(n, Enum)           => <[ $(n : usesite) ]>
-        | ColourSet(_, List(t, _))     => <[ list[$(t : usesite)]]>
+        | ColourSet(_, List(t, _))     => 
+            def inner = t |> TypeFromStr;
+            <[ list[$inner]]>
+    }
+      
+    TypeFromStr(str : string) : PExpr
+    {
+      | "string" => <[ string ]>
+      | "int"    => <[ int ]>
+      | "intinf" => <[ IntInf ]>
+      | "real"   => <[ double ]>
+      | "time"   => <[ Time ]>
+      | "bool"   => <[ bool ]>
+      | "unit"   => <[ void ]>
+      | str      => proc.colour_sets[str] |> GetTypeExpr
+      
+    }
+    
+    CreatePlace(place : Place) : ClassMember
+    {
+      def name = place.name;
+      def type = GetTypeExpr(place.colour);
+      <[decl: $(name : usesite) : PetriNetModel.Place.[$type] = PetriNetModel.Place()]>
+    }
+    
+    IsTokenExpr(expr : PExpr) : bool
+    {
+      | <[ $(_ : usesite) ]> => false
+      | _                    => true
+    }
+    
+    //class a : IEqualityComparer[PExpr]
+    //{
+    //  public override GetHashCode() : int
+    //  {
+    //  }
+      
+    //  public override Equals(left : PExpr, right : PExpr) : bool
+    //  {
+    //  }
+    //}
+    
+    EvalTokenExpr(expr : PExpr) : PExpr
+    {
+      | <[ $(lit : int)]>            => expr
+      | <[ $(count : int) ` $expr ]> => expr
+      | <[ $left %++ $right ]>       => match (left, right)
+                                        {// int, real, string, tuple,
+                                          | (<[ $(count : int) ` $expr ]>, <[ $(count2 : int) ` $expr2 ]>) =>
+                                        }
+    }
+    
+    GetTokenExpr(expr : PExpr) : list[PExpr]
+    {
+      | <[ $(count : int) ` $expr ]> => Enumerable.Repeat(expr, count).NToList()
+      | <[ $left %++ $right ]>       => GetTokenExpr(left) + GetTokenExpr(right)
+      | _                            => [expr]
+    }
+    
+    CreateTranBody(tran : Transition) : PExpr
+    {
+      def input = tran.InputPlaces;
+      
+      def create_check(p, a)
+      {
+        def name = p.name;
+        if (a.expr |> IsTokenExpr)
+        {
+          <[]>
+        } else
+        {
+          <[ $(name : usesite).HaveTokens ]>
+        }
       }
       
-      <[decl: $(name : usesite) : PetriNetModel.Place.[$type] = PetriNetModel.Place()]>
+      def checks = input.Map(create_check);
+      def checks = checks.Reduce((x, y) => <[ $x && $y]>);
+      //def run_body = create_run_body()
+      <[ when ($checks)
+         {
+           $run_body
+         }
+       ]>
     }
     
     CreateTran(tran : Transition) : ClassMember
     {
-      null
+     
+      def name = tran.name;
+      def body = CreateTranBody(tran);
+      <[
+         decl: public $(name : usesite)() : void
+               {
+                 $body
+               }
+       ]>
     }
     
     public Generate() : void

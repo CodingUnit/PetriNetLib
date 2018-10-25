@@ -110,6 +110,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Generator.n">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="OutModel.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Processor.n" />
     <Compile Include="Converter.n">
       <SubType>Code</SubType>
@@ -129,6 +135,11 @@
     <ProjectReference Include="..\CommonLib.Macros\CommonLib.Macros.nproj">
       <Name>CommonLib.Macros</Name>
       <Project>{5e9cfda7-975a-4ef5-a7e7-b638df3d19f7}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\PetriNetModel\PetriNetModel.nproj">
+      <Name>PetriNetModel</Name>
+      <Project>{9756a67b-f1a6-4c59-a9a6-45492777b4ac}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="CpnParser\CpnParser.nproj">

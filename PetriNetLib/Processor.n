@@ -14,29 +14,11 @@ using Nemerle.Compiler.Parsetree;
 namespace PetriNetLib
 {
   
-  //using Nemerle.Builtins.Function;
-  
-  //[Lens]
-  //[Record]
-  //public class Colour
-  //{
-  //  public idx  : int;
-  //  public type : Type;
-  //}
-  
-  [Record]
-  class Token
-  {
-    public value  : object;//TokenVal[Colour];
-    public colour : Colour;
-    
-    public this(val : object)
-    {
-      value = val;
-      //colour = Colour(-1, val.GetType());
-    }
-    
-  }
+  /*
+  todo:
+    - fifo places
+    - sorted tokens places
+  */
   
   [Record]
   [Lens]
@@ -57,12 +39,12 @@ namespace PetriNetLib
     }
   }
   
-  [Record]
-  class TokenSet
-  {
-    public num   : int;
-    public token : Token;
-  }
+  //[Record]
+  //class TokenSet
+  //{
+  //  public num   : int;
+  //  public token : Token;
+  //}
   
   [Record]
   [Lens]
@@ -78,6 +60,15 @@ namespace PetriNetLib
     public priority : int;
     public net : PetriNet;
     
+    public InputPlaces : list[Place * Arc]
+    {
+      [Memoize]
+      get
+      {
+        net.InputTransitionArcs(this)
+      }
+    }
+    
     public override GetHashCode() : int
     {
       idx
@@ -87,8 +78,8 @@ namespace PetriNetLib
   [Record]
   variant ArcSource
   {
-    | PlaceEnd {place : Place}
-    | TransitionEnd {tran : Transition}
+    | PlaceEnd      {place : Place}
+    | TransitionEnd {tran  : Transition}
   }
   
   
@@ -101,6 +92,7 @@ namespace PetriNetLib
     public from : ArcSource;
     public to   : ArcSource;
   }
+  
   [Record]
   class ColourSet
   {
@@ -132,14 +124,14 @@ namespace PetriNetLib
   //  }
   //}
   
-  public class PetriNet
+  class PetriNet
   {
     mutable places      : array[Place];
     mutable transitions : array[Transition];
     mutable arcs        : array[Arc];
     public  vars        : Hashtable[string, ColourSet] = Hashtable();
     public  colour_sets : Hashtable[string, ColourSet] = Hashtable();
-    mutable ml_decls : list[PExpr];
+    mutable ml_decls    : list[PExpr];
     name : string;
     tree_places : list[CpnTree.Place];
     tree_tran   : list[CpnTree.Transition];
@@ -154,14 +146,12 @@ namespace PetriNetLib
     colours            : list[Colour] = [];
     converter          : Converter = Converter();
     
-    //InputTransitionArcs : list[Transition * list[Place * Arc]]
-    //{
-    //  [Memoize]
-    //  get
-    //  {
-    //    OutputArcs.GroupBy((_, t, _) => t).Map(x => (x.Key, x.Map((p, _, a) => (p, a))));
-    //  }
-    //}
+    public InputTransitionArcs(tran : Transition) : list[Place * Arc]
+    {
+      OutputArcs
+      .Where((_, t, _) => t == tran : object)
+      .Map((p, _, a) => (p, a))//GroupBy((_, t, _) => t).Map(x => (x.Key, x.Map((p, _, a) => (p, a))));
+    }
     
     //InputArcs : IEnumerable[Place * Transition * Arc]
     //{
@@ -189,21 +179,21 @@ namespace PetriNetLib
       //InputArcs.Where((_, t, _) => t : object == tran).Select((p, _, a) => (p, a))
     }
     
-    //OutputArcs : IEnumerable[Place * Transition * Arc]
-    //{
-    //  [Memoize]
-    //  get
-    //  {
-    //    foreach (c in Enumerable.Range(0, colours.Length))
-    //      foreach (p in Enumerable.Range(0, places.Length))
-    //        foreach (t in Enumerable.Range(0, transitions.Length))
-    //        {
-    //          def arc = output_matrix[p, t, c];
-    //          when (arc != null)
-    //            yield (places[p], transitions[t], arc)
-    //        }
-    //   }
-    //}
+    public OutputArcs : IEnumerable[Place * Transition * Arc]
+    {
+      [Memoize]
+      get
+      {
+        foreach (c in Enumerable.Range(0, colours.Length))
+          foreach (p in Enumerable.Range(0, places.Length))
+            foreach (t in Enumerable.Range(0, transitions.Length))
+            {
+              def arc = output_matrix[p, t, c];
+              when (arc != null)
+                yield (places[p], transitions[t], arc)
+            }
+       }
+    }
     
     //arcs               : List[List[Arc]] = List();
     //transition_input_matrix  : List[List[int]];

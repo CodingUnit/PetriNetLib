@@ -41,8 +41,31 @@ namespace PetriNetModel
     tokens : array[T];
     
     
-    Set() : void
+    public Add(tok : T) : void
     {
+    }
+    
+    public Have(tok : array[T]) : bool
+    {
+      false
+    }
+    
+    public HaveTokens : bool
+    {
+      get
+      {
+        false
+      }
+    }
+    
+    public GetMany(tok : array[T]) : array[T]
+    {
+      array[]
+    }
+    
+    public Get() : T
+    {
+      default(T)
     }
   }
 }
