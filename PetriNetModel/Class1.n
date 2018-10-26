@@ -45,6 +45,10 @@ namespace PetriNetModel
     {
     }
     
+    public AddMany(tok : array[T]) : void
+    {
+    }
+    
     public Have(tok : array[T]) : bool
     {
       false

@@ -60,6 +60,15 @@ namespace PetriNetLib
     public priority : int;
     public net : PetriNet;
     
+    public OutputPlaces : list[Place * Arc]
+    {
+      [Memoize]
+      get
+      {
+        net.OutputTransitionArcs(this)
+      }
+    }
+    
     public InputPlaces : list[Place * Arc]
     {
       [Memoize]
@@ -148,30 +157,33 @@ namespace PetriNetLib
     
     public InputTransitionArcs(tran : Transition) : list[Place * Arc]
     {
-      OutputArcs
+      OutputArcs()
       .Where((_, t, _) => t == tran : object)
       .Map((p, _, a) => (p, a))//GroupBy((_, t, _) => t).Map(x => (x.Key, x.Map((p, _, a) => (p, a))));
     }
     
-    //InputArcs : IEnumerable[Place * Transition * Arc]
-    //{
-    //  [Memoize]
-    //  get
-    //  {
-    //    foreach (c in Enumerable.Range(0, colours.Length))
-    //    {
-    //      foreach (p in Enumerable.Range(0, places.Length))
-    //      {
-    //        foreach (t in Enumerable.Range(0, transitions.Length))
-    //        {
-    //          def arc = input_matrix[p, t, c];
-    //          if (arc != null)
-    //            yield (places[p], transitions[t], arc) else ()
-    //        }
-    //      }
-    //    }
-    //   }
-    //}
+    public OutputTransitionArcs(tran : Transition) : list[Place * Arc]
+    {
+      InputArcs()
+      .Where((_, t, _) => t == tran : object)
+      .Map((p, _, a) => (p, a))//GroupBy((_, t, _) => t).Map(x => (x.Key, x.Map((p, _, a) => (p, a))));
+    }
+    
+    public InputArcs() : IEnumerable[Place * Transition * Arc]
+    {
+        foreach (c in Enumerable.Range(0, colours.Length))
+        {
+          foreach (p in Enumerable.Range(0, places.Length))
+          {
+            foreach (t in Enumerable.Range(0, transitions.Length))
+            {
+              def arc = input_matrix[p, t, c];
+              if (arc != null)
+                yield (places[p], transitions[t], arc) else ()
+            }
+          }
+        }
+    }
 
     TranOutputArcs(tran : Transition) : IEnumerable[Place * Arc]
     {
@@ -179,11 +191,8 @@ namespace PetriNetLib
       //InputArcs.Where((_, t, _) => t : object == tran).Select((p, _, a) => (p, a))
     }
     
-    public OutputArcs : IEnumerable[Place * Transition * Arc]
+    public OutputArcs() : IEnumerable[Place * Transition * Arc]
     {
-      [Memoize]
-      get
-      {
         foreach (c in Enumerable.Range(0, colours.Length))
           foreach (p in Enumerable.Range(0, places.Length))
             foreach (t in Enumerable.Range(0, transitions.Length))
@@ -192,7 +201,6 @@ namespace PetriNetLib
               when (arc != null)
                 yield (places[p], transitions[t], arc)
             }
-       }
     }
     
     //arcs               : List[List[Arc]] = List();

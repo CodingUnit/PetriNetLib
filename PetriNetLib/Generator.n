@@ -77,15 +77,15 @@ namespace PetriNetLib
     //  }
     //}
     
-    EvalTokenExpr(expr : PExpr) : PExpr
-    {
-      | <[ $(lit : int)]>            => expr
-      | <[ $(count : int) ` $expr ]> => expr
-      | <[ $left %++ $right ]>       => match (left, right)
-                                        {// int, real, string, tuple,
-                                          | (<[ $(count : int) ` $expr ]>, <[ $(count2 : int) ` $expr2 ]>) =>
-                                        }
-    }
+    //EvalTokenExpr(expr : PExpr) : PExpr
+    //{
+    //  | <[ $(lit : int)]>            => expr
+    //  | <[ $(count : int) ` $expr ]> => expr
+    //  | <[ $left %++ $right ]>       => match (left, right)
+    //                                    {// int, real, string, tuple,
+    //                                      | (<[ $(count : int) ` $expr ]>, <[ $(count2 : int) ` $expr2 ]>) =>
+    //                                    }
+    //}
     
     GetTokenExpr(expr : PExpr) : list[PExpr]
     {
@@ -97,32 +97,64 @@ namespace PetriNetLib
     CreateTranBody(tran : Transition) : PExpr
     {
       def input = tran.InputPlaces;
+      def output = tran.OutputPlaces;
       
       def create_check(p, a)
       {
         def name = p.name;
         if (a.expr |> IsTokenExpr)
         {
-          <[]>
+          def tok = GetTokenExpr(a.expr);
+          <[ $(name : usesite).Have(..$tok) ]>
         } else
         {
           <[ $(name : usesite).HaveTokens ]>
         }
       }
       
+      def create_run_body(p, a)
+      {
+        def name = p.name;
+        if (a.expr |> IsTokenExpr)
+        {
+          def expr = GetTokenExpr(a.expr);
+          <[ $(name : usesite).GetMany(array[..$expr])]>
+        } else
+        {
+          <[def $(a.expr) = $(name : usesite).Get()]>
+        }
+      }
+      
+      def create_out(p, a)
+      {
+        def name = p.name;
+        match (a.expr)
+        {
+          | <[ 1 ` $e ]>
+          | <[ $_(..$_)]> as e                                    
+          | <[ $(_ : usesite) ]> as e      => <[ $(name : usesite).Add($e)]>
+          | <[ $(_ : int) ` $_ ]> 
+          | <[ $_ %++ $_ ]>                => def expr = GetTokenExpr(a.expr);
+                                              <[ $(name : usesite).AddMany(array[..$expr])]>
+          
+        }
+      }
+      
       def checks = input.Map(create_check);
       def checks = checks.Reduce((x, y) => <[ $x && $y]>);
-      //def run_body = create_run_body()
-      <[ when ($checks)
+      def run_body = input.Map(create_run_body);
+      def out_body = output.Map(create_out);
+      <[ 
+         when ($checks)
          {
-           $run_body
+           {..$run_body}
+           {..$out_body}
          }
        ]>
     }
     
     CreateTran(tran : Transition) : ClassMember
     {
-     
       def name = tran.name;
       def body = CreateTranBody(tran);
       <[
