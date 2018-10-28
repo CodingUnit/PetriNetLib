@@ -18,8 +18,8 @@ namespace PetriNetLib
     public places      : array[Place];
     public transitions : array[Transition];
     public arcs        : array[Arc];
-    public vars        : Hashtable[string, Colour] = Hashtable();
-    public colour_sets : Hashtable[string, Colour] = Hashtable();
+    public vars        : Hashtable[string, ColourSet] = Hashtable();
+    public colour_sets : Hashtable[string, ColourSet] = Hashtable();
     public ml_decls    : list[PExpr];
   }
   

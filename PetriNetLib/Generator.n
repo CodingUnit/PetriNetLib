@@ -165,10 +165,32 @@ namespace PetriNetLib
        ]>
     }
     
+    CreateVars(name : string, type : ColourSet) : ClassMember
+    {
+      def type = GetTypeExpr(type);
+      <[decl: $(name : usesite) : $type]>
+    }
+    
+    CreateDecl(expr : PExpr) : ClassMember
+    {
+      | <[ def $(name : usesite) = $val]> => <[decl: $(name : usesite) = $val]>
+      | <[
+            def $(n : usesite)(..$parms)
+            {
+              ..$body
+            }
+          ]>                              => <[decl: $(n : usesite)(..$parms)
+                                                     {
+                                                       ..$body
+                                                     }]>
+    }
+    
     public Generate() : void
     {
       def fields = model.places.Map(CreatePlace);
-      model.transitions.Map(CreateTran);
+      def methods = model.transitions.Map(CreateTran);
+      def a = model.vars.KeyValuePairs.Map(CreateVars);
+      model.ml_decls.Map(CreateDecls);
     }
   }
 }

@@ -140,6 +140,7 @@ namespace PetriNetLib
     mutable arcs        : array[Arc];
     public  vars        : Hashtable[string, ColourSet] = Hashtable();
     public  colour_sets : Hashtable[string, ColourSet] = Hashtable();
+    [Accessor]
     mutable ml_decls    : list[PExpr];
     name : string;
     tree_places : list[CpnTree.Place];
@@ -148,41 +149,44 @@ namespace PetriNetLib
     tree_decls  : list[CpnDecl];
     
     
-    matrix_len         : array[int] = array[];
-    mutable input_matrix       : array[3, Arc];//List[List[List[Arc]]];
-    mutable output_matrix      : array[3, Arc];
-    mutable incidence_matrix   : array[3, int];
+    mutable matrix_len         : array[int];
+    mutable input_matrix       : array[2, Arc];//List[List[List[Arc]]];
+    mutable output_matrix      : array[2, Arc];
+    mutable incidence_matrix   : array[2, int];
     colours            : list[Colour] = [];
     converter          : Converter = Converter();
     
     public InputTransitionArcs(tran : Transition) : list[Place * Arc]
     {
-      OutputArcs()
-      .Where((_, t, _) => t == tran : object)
-      .Map((p, _, a) => (p, a))//GroupBy((_, t, _) => t).Map(x => (x.Key, x.Map((p, _, a) => (p, a))));
+      //foreach (p in places with i)
+      //{
+      //  output_matrix[i, tran.idx]
+      //}
+      places.MapIndex((p, i) => (p, output_matrix[i, tran.idx])).Filter((_, a) => a != null)
+      //OutputArcs()
+      //.Where((_, t, _) => t == tran : object)
+      //.Map((p, _, a) => (p, a))//GroupBy((_, t, _) => t).Map(x => (x.Key, x.Map((p, _, a) => (p, a))));
     }
     
     public OutputTransitionArcs(tran : Transition) : list[Place * Arc]
     {
-      InputArcs()
-      .Where((_, t, _) => t == tran : object)
-      .Map((p, _, a) => (p, a))//GroupBy((_, t, _) => t).Map(x => (x.Key, x.Map((p, _, a) => (p, a))));
+      places.MapIndex((p, i) => (p, input_matrix[i, tran.idx])).Filter((_, a) => a != null)
+      //InputArcs()
+      //.Where((_, t, _) => t == tran : object)
+      //.Map((p, _, a) => (p, a))//GroupBy((_, t, _) => t).Map(x => (x.Key, x.Map((p, _, a) => (p, a))));
     }
     
     public InputArcs() : IEnumerable[Place * Transition * Arc]
     {
-        foreach (c in Enumerable.Range(0, colours.Length))
-        {
-          foreach (p in Enumerable.Range(0, places.Length))
+          foreach (_ in places with p)
           {
-            foreach (t in Enumerable.Range(0, transitions.Length))
+            foreach (_ in transitions with t)
             {
-              def arc = input_matrix[p, t, c];
+              def arc = input_matrix[p, t];
               if (arc != null)
                 yield (places[p], transitions[t], arc) else ()
             }
           }
-        }
     }
 
     TranOutputArcs(tran : Transition) : IEnumerable[Place * Arc]
@@ -193,14 +197,15 @@ namespace PetriNetLib
     
     public OutputArcs() : IEnumerable[Place * Transition * Arc]
     {
-        foreach (c in Enumerable.Range(0, colours.Length))
-          foreach (p in Enumerable.Range(0, places.Length))
-            foreach (t in Enumerable.Range(0, transitions.Length))
+          foreach (_ in places with p)
+          {
+            foreach (_ in transitions with t)
             {
-              def arc = output_matrix[p, t, c];
+              def arc = output_matrix[p, t];
               when (arc != null)
                 yield (places[p], transitions[t], arc)
             }
+          }
     }
     
     //arcs               : List[List[Arc]] = List();
@@ -225,26 +230,26 @@ namespace PetriNetLib
     
     BuildMatrix() : void
     {
-      def arcs    = arcs.Length;
+      //def arcs    = arcs.Length;
       def places = places.Length;
       def tran   = transitions.Length;
       
       
-      when (matrix_len.Length == 0 || matrix_len[0] != places || matrix_len[1] != tran || matrix_len[2] != arcs)
+      when (matrix_len == null || matrix_len[0] != places || matrix_len[1] != tran)
       {
-        input_matrix = array(places, tran, arcs);
-        output_matrix = array(places, tran, arcs);
-        incidence_matrix = array(places, tran, arcs);
+        input_matrix = array(places, tran);
+        output_matrix = array(places, tran);
+        incidence_matrix = array(places, tran);
       }
       
       for (mutable p = 0; p < places; p++)
         for (mutable t = 0; t < tran; t++)
-          for (mutable a = 0; a < arcs; a++)
           {
-            def output = if (output_matrix[p, t, a] != null) 1 else 0; 
-            def input = if (input_matrix[p, t, a] != null) 1 else 0; 
-            incidence_matrix[p, t, a] = output - input;
+            def output = if (output_matrix[p, t] != null) 1 else 0; 
+            def input = if (input_matrix[p, t] != null) 1 else 0; 
+            incidence_matrix[p, t] = output - input;
           }
+      matrix_len = array[places, tran];
       //}
     }
     
@@ -318,9 +323,9 @@ namespace PetriNetLib
         match (f, t)
         {
           | (ArcSource.PlaceEnd(p), ArcSource.TransitionEnd(t)) =>
-              output_matrix[p.idx, t.idx, i] = a;
+              output_matrix[p.idx, t.idx] = a;
           | (ArcSource.TransitionEnd(t), ArcSource.PlaceEnd(p)) =>
-              input_matrix[p.idx, t.idx, i] = a;
+              input_matrix[p.idx, t.idx] = a;
           | _ => ()
         }
       }

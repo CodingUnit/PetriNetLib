@@ -13,53 +13,63 @@ namespace PetriNetModel
     buf : List[int] = List();
   }
   
-  class RandomQueue[T]
+  interface ITokenContainer[T]
   {
-    queue   : List[T];
-    elems   : BitArray;
+    Add(tok : T) : void;
     
-    public Add(elem : T) : void
+    AddMany(tok : array[T]) : void;
+    
+    Have(tok : array[T]) : bool;
+    
+    HaveTokens : bool
     {
+      get;
+    }
+    
+    GetMany(tok : array[T]) : array[T];
+    
+    Get() : T;
+  }
+  
+  
+  class TokenQueue[T] : ITokenContainer[T]
+  {
+    public Add(tok : T) : void {}
+    
+    public AddMany(tok : array[T]) : void {}
+    
+    public Have(tok : array[T]) : bool {false}
+    
+    public HaveTokens : bool
+    {
+      get {false}
+    }
+    
+    public GetMany(tok : array[T]) : array[T]
+    {
+      throw NotImplementedException()
     }
     
     public Get() : T
     {
       default(T)
     }
-    
-    public HaveElems : bool
-    {
-      get
-      {
-        false
-      }
-    }
   }
   
-  public class Place[T]
+  class RandomArray[T] : ITokenContainer[T]
   {
-    tokens : array[T];
+    queue   : List[T];
+    elems   : BitArray;
     
+    public Add(tok : T) : void {}
     
-    public Add(tok : T) : void
-    {
-    }
+    public AddMany(tok : array[T]) : void {}
     
-    public AddMany(tok : array[T]) : void
-    {
-    }
-    
-    public Have(tok : array[T]) : bool
-    {
-      false
-    }
+    public Have(tok : array[T]) : bool {false}
     
     public HaveTokens : bool
     {
-      get
-      {
-        false
-      }
+      get {false}
     }
     
     public GetMany(tok : array[T]) : array[T]
@@ -70,6 +80,69 @@ namespace PetriNetModel
     public Get() : T
     {
       default(T)
+    }
+  }
+  
+  class MultiSet[T] : ITokenContainer[T]
+  {
+    public Add(tok : T) : void {}
+    
+    public AddMany(tok : array[T]) : void {}
+    
+    public Have(tok : array[T]) : bool {false}
+    
+    public HaveTokens : bool
+    {
+      get {false}
+    }
+    
+    public GetMany(tok : array[T]) : array[T]
+    {
+      array[]
+    }
+    
+    public Get() : T
+    {
+      default(T)
+    }
+  }
+  
+  public class Place[T]
+  {
+    tokens : ITokenContainer[T];
+    
+    
+    public Add(tok : T) : void
+    {
+      tokens.Add(tok)
+    }
+    
+    public AddMany(tok : array[T]) : void
+    {
+      tokens.AddMany(tok)
+    }
+    
+    public Have(tok : array[T]) : bool
+    {
+      tokens.Have(tok)
+    }
+    
+    public HaveTokens : bool
+    {
+      get
+      {
+        tokens.HaveTokens
+      }
+    }
+    
+    public GetMany(tok : array[T]) : array[T]
+    {
+      tokens.GetMany(tok)
+    }
+    
+    public Get() : T
+    {
+      tokens.Get()
     }
   }
 }
