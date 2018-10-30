@@ -31,7 +31,7 @@ namespace PetriNetLib
     
     public init_mark : PExpr;
     public tree      : CpnTree.Place;
-    public net       : PetriNet;
+    public net       : PetriNetProcessor;
       
     public override GetHashCode() : int
     {
@@ -58,7 +58,7 @@ namespace PetriNetLib
     public time_expr : PExpr;
     public code_segment : PExpr;
     public priority : int;
-    public net : PetriNet;
+    public net : PetriNetProcessor;
     
     public OutputPlaces : list[Place * Arc]
     {
@@ -133,7 +133,21 @@ namespace PetriNetLib
   //  }
   //}
   
-  class PetriNet
+  public class PetriNet
+  {
+    public Process(file : string) : void
+    {
+      def parser = Parser();
+      parser.Parse(file);
+      def file = System.IO.Path.GetFileNameWithoutExtension(file);
+      def proc = PetriNetProcessor(file, parser.Places, parser.Transitions, parser.Arcs, parser.Decls);
+      proc.Process();
+      def gen = Generator(proc.OutModel, proc);
+      gen.Generate();
+    }
+  }
+  
+  class PetriNetProcessor
   {
     mutable places      : array[Place];
     mutable transitions : array[Transition];
@@ -148,12 +162,21 @@ namespace PetriNetLib
     tree_arcs   : list[CpnTree.Arc];
     tree_decls  : list[CpnDecl];
     
+    public OutModel : OutModel
+    {
+      [Memoize]
+      get
+      {
+        OutModel(places, transitions, arcs, vars, colour_sets, ml_decls)
+      }
+    }
     
     mutable matrix_len         : array[int];
     mutable input_matrix       : array[2, Arc];//List[List[List[Arc]]];
     mutable output_matrix      : array[2, Arc];
     mutable incidence_matrix   : array[2, int];
     colours            : list[Colour] = [];
+    [Accessor]
     converter          : Converter = Converter();
     
     public InputTransitionArcs(tran : Transition) : list[Place * Arc]

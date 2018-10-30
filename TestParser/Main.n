@@ -13,10 +13,8 @@ module Program
   Main() : void
   {
     WriteLine("Hi!");
-    def parser = Parser();
-    parser.Parse("DiningPhilosophers.cpn");
-    def net = PetriNet(parser.Places, parser.Transitions, parser.Arcs, parser.Decls);
-    net.Process();
+    def net = PetriNet();
+    net.Process("DiningPhilosophers.cpn");
     _ = ReadLine();
   }
 }

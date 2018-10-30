@@ -13,6 +13,7 @@ namespace PetriNetLib
   /// <summary>
   /// Description of OutModel.
   /// </summary>
+  [Record]
   class OutModel
   {
     public places      : array[Place];

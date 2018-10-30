@@ -6,7 +6,9 @@ using Nemerle.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Nemerle.Compiler;
 using Nemerle.Compiler.Parsetree;
+using Nemerle.Compiler.Typedtree;
 using CommonLib.Macros;
 
 namespace PetriNetLib
@@ -17,7 +19,16 @@ namespace PetriNetLib
   class Generator
   {
     model : OutModel;
-    proc : PetriNet;
+    proc : PetriNetProcessor;
+    converter : Converter;
+    compiler : CompilerHost = CompilerHost();
+    
+    public this(model : OutModel, proc : PetriNetProcessor)
+    {
+      this.model = model;
+      this.proc = proc;
+      this.converter = proc.Converter;
+    }
     
     GetTypeExpr(p : ColourSet) : PExpr
     {
@@ -32,8 +43,10 @@ namespace PetriNetLib
                 | "bool"   => <[ bool ]>
                 | "unit"   => <[ void ]>
               }
+        
         | ColourSet(_, Product(vals))  => def vals = vals.Map(x => <[ $(TypeFromStr(x)) ]>);
                                           <[ (..$vals) ]>
+        | ColourSet(n, Index)
         | ColourSet(n, Enum)           => <[ $(n : usesite) ]>
         | ColourSet(_, List(t, _))     => 
             def inner = t |> TypeFromStr;
@@ -156,7 +169,7 @@ namespace PetriNetLib
     CreateTran(tran : Transition) : ClassMember
     {
       def name = tran.name;
-      def body = CreateTranBody(tran);
+      def body = CreateTranBody(tran);      
       <[
          decl: public $(name : usesite)() : void
                {
@@ -179,18 +192,72 @@ namespace PetriNetLib
             {
               ..$body
             }
-          ]>                              => <[decl: $(n : usesite)(..$parms)
+          ]>                              => 
+          def typer = Typer(compiler.CoreEnv);
+          def te = typer.TypeExpr(expr);
+          match (te)
+          {
+            | TExpr.DefFunctionsIn(h :: _, _) => def ret = h.ReturnType;
+                                                <[decl: $(n : usesite)(..$parms) : $(ret : typed)
                                                      {
                                                        ..$body
                                                      }]>
+          }
+          
+    }
+    
+    CreateColourSet(col : ColourSet) : ClassMember
+    {
+      | ColourSet(n, Colour.Index(mn, mx, _)) => def eval(m)
+                                                 {
+                                                    def expr = converter.ParseML(m);
+                                                    match (expr)
+                                                    {
+                                                      | <[$(n : int)]>  => n
+                                                      | <[$(name : usesite) ]> => 
+                                                                           def match_var(x)
+                                                                           {
+                                                                             | <[ def $(n : usesite) = $_]> => n == name 
+                                                                             | _                            => false
+                                                                           }
+                                                                           
+                                                                           match (model.ml_decls.Find(match_var))
+                                                                           {
+                                                                             | Some(<[ def $(_ : usesite) = $(v : int)]>) => v
+                                                                             | _                                  => throw InvalidOperationException()
+                                                                           }
+                                                    }
+                                                 }
+                                                 def mn = mn |> eval;
+                                                 def mx = mx |> eval;
+                                                  <[decl: [Record]
+                                                      class $(n : usesite)
+                                                      {
+                                                        public static min : int = $(mn : int);
+                                                        public static max : int = $(mx : int);
+                                                        public num : int;
+                                                        
+                                                        public static all() : array[$(n : usesite)]
+                                                        {
+                                                          Enumerable.Range(min, max).Select($(n : usesite))
+                                                        }
+                                                      }
+                                                     ]>
+      | ColourSet(n, Colour.Enum(vals)) => def vals = vals.Map(x => <[decl: | $(x : usesite) ]>);
+                                           <[decl: enum $(n : usesite)
+                                           {
+                                             ..$vals
+                                           }]>
+      | _ => null
     }
     
     public Generate() : void
     {
+      model.colour_sets.Values.Map(CreateColourSet);
       def fields = model.places.Map(CreatePlace);
       def methods = model.transitions.Map(CreateTran);
       def a = model.vars.KeyValuePairs.Map(CreateVars);
-      model.ml_decls.Map(CreateDecls);
+      def decls = model.ml_decls.Map(CreateDecl);
     }
   }
 }
