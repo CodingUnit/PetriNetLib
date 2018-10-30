@@ -100,11 +100,21 @@ namespace PetriNetLib
     //                                    }
     //}
     
-    GetTokenExpr(expr : PExpr) : list[PExpr]
+    GetTokenExpr(expr : PExpr) : PExpr
     {
-      | <[ $(count : int) ` $expr ]> => Enumerable.Repeat(expr, count).NToList()
-      | <[ $left %++ $right ]>       => GetTokenExpr(left) + GetTokenExpr(right)
-      | _                            => [expr]
+      def loop(e)
+      {
+        | <[ $(count : int) ` $expr ]> => Enumerable.Repeat(expr, count).NToList()
+        | <[ $left %++ $right ]>       => loop(left) + loop(right)
+        | _                            => [expr]
+      }
+      
+      match (loop(expr))
+      {
+        | [<[$_(..$_)]> as e] => e
+        | e                   => <[array[..$e]]>
+      }
+      
     }
     
     CreateTranBody(tran : Transition) : PExpr
@@ -118,7 +128,7 @@ namespace PetriNetLib
         if (a.expr |> IsTokenExpr)
         {
           def tok = GetTokenExpr(a.expr);
-          <[ $(name : usesite).Have(..$tok) ]>
+          <[ $(name : usesite).Have($tok) ]>
         } else
         {
           <[ $(name : usesite).HaveTokens ]>
@@ -131,7 +141,7 @@ namespace PetriNetLib
         if (a.expr |> IsTokenExpr)
         {
           def expr = GetTokenExpr(a.expr);
-          <[ $(name : usesite).GetMany(array[..$expr])]>
+          <[ $(name : usesite).GetMany($expr)]>
         } else
         {
           <[def $(a.expr) = $(name : usesite).Get()]>
@@ -148,7 +158,7 @@ namespace PetriNetLib
           | <[ $(_ : usesite) ]> as e      => <[ $(name : usesite).Add($e)]>
           | <[ $(_ : int) ` $_ ]> 
           | <[ $_ %++ $_ ]>                => def expr = GetTokenExpr(a.expr);
-                                              <[ $(name : usesite).AddMany(array[..$expr])]>
+                                              <[ $(name : usesite).AddMany($expr)]>
           
         }
       }
@@ -158,10 +168,11 @@ namespace PetriNetLib
       def run_body = input.Map(create_run_body);
       def out_body = output.Map(create_out);
       <[ 
-         when ($checks)
+         match ($checks)
          {
-           {..$run_body}
-           {..$out_body}
+           | true => {..$run_body}
+                     {..$out_body}
+           | _    => ()
          }
        ]>
     }
@@ -193,21 +204,49 @@ namespace PetriNetLib
               ..$body
             }
           ]>                              => 
-          def typer = Typer(compiler.CoreEnv);
-          def te = typer.TypeExpr(expr);
-          match (te)
-          {
-            | TExpr.DefFunctionsIn(h :: _, _) => def ret = h.ReturnType;
-                                                <[decl: $(n : usesite)(..$parms) : $(ret : typed)
-                                                     {
-                                                       ..$body
-                                                     }]>
-          }
+          //def typer = Typer(compiler.CoreEnv);
+          //def te = typer.TypeExpr(expr);
+          //match (te)
+          //{
+          //  | TExpr.DefFunctionsIn(h :: _, _) => def ret = h.ReturnType;
+            def ret = CalcReturnType(body);
+                                                <[decl: $(n : usesite)(..$parms) : $(ret)
+                                                  {
+                                                    ..$body
+                                                  }]>
+          //}
           
+    }
+    
+    TypeOfExpr(expr : PExpr) : PExpr
+    {
+      | <[ $(_ : int)]>       => <[ int ]>
+      | <[ $(_ : string)]>    => <[ string ]>
+      | <[ $(_ : double)]>    => <[ double ]>
+      | <[ $(_ : bool)]>      => <[ double ]>
+      | <[ $(_ : int) ` $t ]> => def t = TypeOfExpr(t); <[ array[$t] ]>
+      | <[ $(n : usesite) ]>  => null//model.ml_decls.Find();
+    }
+    
+    CalcReturnType(expr : list[PExpr]) : PExpr
+    {
+      def last = expr.Last();
+      last |> TypeOfExpr
+      //match (last)
+      //{
+      //  | <[ $(_ : int) ` $t ]> => TypeOfExpr(t)
+      //}
     }
     
     CreateColourSet(col : ColourSet) : ClassMember
     {
+      | ColourSet(n, Colour.Record(vals))     =>  def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
+                                                  def fields = fields.Map((n, t) => <[decl: $(n : usesite) : $t]>);
+                                                  <[decl: [Record] class $(n : usesite)
+                                                         {
+                                                           ..$fields
+                                                         }
+                                                  ]>
       | ColourSet(n, Colour.Index(mn, mx, _)) => def eval(m)
                                                  {
                                                     def expr = converter.ParseML(m);
@@ -253,7 +292,7 @@ namespace PetriNetLib
     
     public Generate() : void
     {
-      model.colour_sets.Values.Map(CreateColourSet);
+      def sets = model.colour_sets.Values.Map(CreateColourSet);
       def fields = model.places.Map(CreatePlace);
       def methods = model.transitions.Map(CreateTran);
       def a = model.vars.KeyValuePairs.Map(CreateVars);
