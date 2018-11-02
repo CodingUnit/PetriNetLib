@@ -25,6 +25,9 @@ namespace PetriNetLib
     | SubsetBy { name : string; by : string}
     | SubsetWith { name : string; with_list : list[string]}
     | Enum {vals : list[string]}
+    | Unit {with_new_name : string}
+    | Bool {with_new : (string * string)}
+    | Integer {with_range : (string * string)}
     | Simple {type : string}
     | StringWith { str_with : char * char; str_and : option[char * char];} 
   }

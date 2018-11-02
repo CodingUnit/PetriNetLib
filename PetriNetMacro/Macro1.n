@@ -1,0 +1,44 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Compiler;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using PetriNetLib;
+using Nemerle.Compiler.Parsetree;
+
+namespace PetriNetLib
+{
+  [MacroUsage(MacroPhase.WithTypedMembers, MacroTargets.Class)]
+  macro PetriNet(ty : TypeBuilder, body : PExpr, params other : array[PExpr])
+  {
+     Helper.ParseAndGenerate(ty, Macros.ImplicitCTX(), body, other);
+  }
+
+  class Helper
+  {
+    public static ParseAndGenerate(ty : TypeBuilder, typer : Typer, expr : PExpr, other : array[PExpr]) : void
+    {
+      //Macros.DefineCTX(typer);
+      assert2(false);
+      //def b = <[ a + 1 ]>;
+      //    def expr1 = <[
+      //      //def $(n : usesite)(..$parms)
+      //      {
+      //        def a = 2;
+      //        a + 1
+      //      }
+      //    ]>;
+      //def expr1 = typer.TypeExpr(expr1);
+      match (expr)
+      {
+        | <[$(str : string)]> => PetriNet.Process(ty, typer, str)
+        | _                   => ()
+      }
+      
+    }
+  }
+}

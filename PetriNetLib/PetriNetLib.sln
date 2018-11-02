@@ -13,6 +13,8 @@ Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "CpnParser", "CpnParser\CpnP
 EndProject
 Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "PetriNetModel", "..\PetriNetModel\PetriNetModel.nproj", "{9756A67B-F1A6-4C59-A9A6-45492777B4AC}"
 EndProject
+Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "PetriNetMacro", "..\PetriNetMacro\PetriNetMacro.nproj", "{FBC98ADB-2E81-4E65-AF74-4A6601BB4649}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -72,6 +74,16 @@ Global
 		{9756A67B-F1A6-4C59-A9A6-45492777B4AC}.OPC|Any CPU.Build.0 = Release|Any CPU
 		{9756A67B-F1A6-4C59-A9A6-45492777B4AC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9756A67B-F1A6-4C59-A9A6-45492777B4AC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FBC98ADB-2E81-4E65-AF74-4A6601BB4649}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FBC98ADB-2E81-4E65-AF74-4A6601BB4649}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FBC98ADB-2E81-4E65-AF74-4A6601BB4649}.LIBS|Any CPU.ActiveCfg = Release|Any CPU
+		{FBC98ADB-2E81-4E65-AF74-4A6601BB4649}.LIBS|Any CPU.Build.0 = Release|Any CPU
+		{FBC98ADB-2E81-4E65-AF74-4A6601BB4649}.NViewer|Any CPU.ActiveCfg = Release|Any CPU
+		{FBC98ADB-2E81-4E65-AF74-4A6601BB4649}.NViewer|Any CPU.Build.0 = Release|Any CPU
+		{FBC98ADB-2E81-4E65-AF74-4A6601BB4649}.OPC|Any CPU.ActiveCfg = Release|Any CPU
+		{FBC98ADB-2E81-4E65-AF74-4A6601BB4649}.OPC|Any CPU.Build.0 = Release|Any CPU
+		{FBC98ADB-2E81-4E65-AF74-4A6601BB4649}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FBC98ADB-2E81-4E65-AF74-4A6601BB4649}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

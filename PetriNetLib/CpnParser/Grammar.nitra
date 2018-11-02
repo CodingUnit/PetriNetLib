@@ -24,9 +24,9 @@ namespace CpnML.Grammar
       | FloatingNumber
       | String
       | Boolean
+      | EmptyMultiSet = "empty"
       //| Char
       | NilList = "nil"
-      | EmptyToken = "empty"
     }
 
     //token Char = '#' '"' Any '"';
@@ -54,10 +54,10 @@ namespace CpnML.Grammar
         syntax Elem = Name=AnyIdentifier '=' Expr;
       }
       | List = '[' (Expr;",")* ']'      
-      | Let = "let" Expr* "in" Expr* "end"
-      | Match = "case" Expr "of" (Case;"|")*
+      | Let = "let" Val+ "in" Expr "end"  
+      | Match = "case" Expr "of" (Case;"|")+
       {
-        syntax Case = Expr "=>" Expr;
+        syntax Case = Pat=Expr "=>" Expr=Expr;
       }
       | Var = Identifier
       | Lambda = Name=Identifier Parms=AnyIdentifier* "=>" Expr
@@ -67,11 +67,13 @@ namespace CpnML.Grammar
 	    precedence Union:
       | SetUnion = Expr "++" Expr// ^ Oper
 		  | SetDiff  = Expr "--" Expr
-		  
+		  | SetUnequal = Expr "<>" "<>" Expr
+      | SetUpper = Expr ">>" Expr
+      | SetLower = Expr "<<" Expr
       precedence Func:
 	    | FuncCall   = Name=(Identifier;'.')+ Parms=(Expr ^ Func)+
       precedence Token:
-      | TokenExpr = Integer '`' Expr// ^ Oper
+      | MultiSetConstr = Integer '`' Expr// ^ Oper
 		  
       //| RecordAccess = !Char '#' AnyIdentifier Expr            
       precedence Conditional:
@@ -124,17 +126,16 @@ namespace CpnML.Grammar
       }
     }
 
+    syntax Val = "val" Name=Identifier Type? '=' Expr ';'?;
+
 	  syntax Declaration
     {
-      | Val  = "val" Name=Identifier Type? '=' Expr ';'?
+      | Val
+      | Var = "var" Names=(Identifier;",")+ Type ';'
       | Func
-      
-      | FunMatch = !Func "fun" MatchCase+
+      | FunMatch = !Func "fun" MatchCase "|" (MatchCase;"|")+
       {
-        syntax MatchCase = Name=Identifier Case "|" (Case;"|")+
-        {
-          syntax Case = Expr '=' Expr;
-        }
+        syntax MatchCase = Name=Identifier Pat=Expr '=' Expr=Expr;
       }
     }
 

@@ -21,10 +21,14 @@ namespace PetriNetLib
     model : OutModel;
     proc : PetriNetProcessor;
     converter : Converter;
-    compiler : CompilerHost = CompilerHost();
+    typer : Typer;
+    typebuilder : TypeBuilder;
+    //compiler : CompilerHost = CompilerHost();
     
     public this(model : OutModel, proc : PetriNetProcessor)
     {
+      this.typer = proc.Typer;
+      this.typebuilder = proc.Typebuilder;
       this.model = model;
       this.proc = proc;
       this.converter = proc.Converter;
@@ -204,17 +208,26 @@ namespace PetriNetLib
               ..$body
             }
           ]>                              => 
-          //def typer = Typer(compiler.CoreEnv);
-          //def te = typer.TypeExpr(expr);
-          //match (te)
-          //{
-          //  | TExpr.DefFunctionsIn(h :: _, _) => def ret = h.ReturnType;
-            def ret = CalcReturnType(body);
-                                                <[decl: $(n : usesite)(..$parms) : $(ret)
+          
+          //def parms = <[parameter: a]> :: [];
+          //def n = "abc";
+          //def b = <[ a + 1 ]>;
+          //def expr = <[
+          //  //def $(n : usesite)(..$parms)
+          //  {
+          //    def a = 2;
+          //    $b
+          //  }
+          //]>;
+          def te = typer.TypeExpr(expr);
+          match (te)
+          {
+            | TExpr.DefFunctionsIn(h :: _, _) => def ret = h.ReturnType;
+                                                <[decl: $(n : usesite)(..$parms) : $(ret : typed)
                                                   {
                                                     ..$body
                                                   }]>
-          //}
+          }
           
     }
     

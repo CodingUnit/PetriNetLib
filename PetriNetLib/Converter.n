@@ -22,7 +22,7 @@ namespace PetriNetLib
     file : string;
     parserHost : ParseSession;
     msg : Nitra.ProjectSystem.CompilerMessageList;
-    host : CompilerHost = CompilerHost();
+    //host : CompilerHost = CompilerHost();
     
     public this()
     {

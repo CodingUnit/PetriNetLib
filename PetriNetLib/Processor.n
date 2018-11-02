@@ -10,6 +10,7 @@ using System.Linq;
 using System.Collections.Immutable;
 using CommonLib.Macros;
 using Nemerle.Compiler.Parsetree;
+using Nemerle.Compiler;
 
 namespace PetriNetLib
 {
@@ -135,12 +136,12 @@ namespace PetriNetLib
   
   public class PetriNet
   {
-    public Process(file : string) : void
+    public static Process(ty : TypeBuilder, typer : Typer, file : string) : void
     {
       def parser = Parser();
       parser.Parse(file);
       def file = System.IO.Path.GetFileNameWithoutExtension(file);
-      def proc = PetriNetProcessor(file, parser.Places, parser.Transitions, parser.Arcs, parser.Decls);
+      def proc = PetriNetProcessor(file, typer, ty, parser.Places, parser.Transitions, parser.Arcs, parser.Decls);
       proc.Process();
       def gen = Generator(proc.OutModel, proc);
       gen.Generate();
@@ -161,6 +162,10 @@ namespace PetriNetLib
     tree_tran   : list[CpnTree.Transition];
     tree_arcs   : list[CpnTree.Arc];
     tree_decls  : list[CpnDecl];
+    [Accessor]
+    typer : Typer;
+    [Accessor]
+    typebuilder : TypeBuilder;
     
     public OutModel : OutModel
     {
@@ -265,24 +270,26 @@ namespace PetriNetLib
         incidence_matrix = array(places, tran);
       }
       
-      for (mutable p = 0; p < places; p++)
-        for (mutable t = 0; t < tran; t++)
-          {
-            def output = if (output_matrix[p, t] != null) 1 else 0; 
-            def input = if (input_matrix[p, t] != null) 1 else 0; 
-            incidence_matrix[p, t] = output - input;
-          }
+      //for (mutable p = 0; p < places; p++)
+      //  for (mutable t = 0; t < tran; t++)
+      //    {
+      //      def output = if (output_matrix[p, t] != null) 1 else 0; 
+      //      def input = if (input_matrix[p, t] != null) 1 else 0; 
+      //      incidence_matrix[p, t] = output - input;
+      //    }
       matrix_len = array[places, tran];
       //}
     }
     
-    public this(name : string, places : list[CpnTree.Place], tran : list[CpnTree.Transition], arcs : list[CpnTree.Arc], decls : list[CpnDecl])
+    public this(name : string, ty : Typer, typebuilder : TypeBuilder, places : list[CpnTree.Place], tran : list[CpnTree.Transition], arcs : list[CpnTree.Arc], decls : list[CpnDecl])
     {
       this.name = name;
       tree_places = places;
       tree_tran = tran;
       tree_arcs = arcs;
       tree_decls = decls;
+      typer = ty;
+      this.typebuilder = typebuilder;
     }
     
     public Process() : void
@@ -345,14 +352,12 @@ namespace PetriNetLib
       {
         match (f, t)
         {
-          | (ArcSource.PlaceEnd(p), ArcSource.TransitionEnd(t)) =>
-              output_matrix[p.idx, t.idx] = a;
-          | (ArcSource.TransitionEnd(t), ArcSource.PlaceEnd(p)) =>
-              input_matrix[p.idx, t.idx] = a;
+          | (ArcSource.PlaceEnd(p), ArcSource.TransitionEnd(t)) => output_matrix[p.idx, t.idx] = a;
+          | (ArcSource.TransitionEnd(t), ArcSource.PlaceEnd(p)) => input_matrix[p.idx, t.idx] = a;
           | _ => ()
         }
       }
-      BuildMatrix();
+      //BuildMatrix();
     }
     
     

@@ -5,18 +5,19 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>b1416c2d-41f3-48fb-897c-db60958423df</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <ProjectGuid>fbc98adb-2e81-4e65-af74-4a6601bb4649</ProjectGuid>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TestParser</RootNamespace>
-    <AssemblyName>TestParser</AssemblyName>
+    <RootNamespace>PetriNetMacro</RootNamespace>
+    <AssemblyName>PetriNetMacro</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <NoStdLib>true</NoStdLib>
     <NemerleVersion>Net-4.0</NemerleVersion>
     <NemerleBinPathRoot Condition=" '$(NemerleBinPathRoot)' == '' ">$(ProgramFiles)\Nemerle</NemerleBinPathRoot>
     <Nemerle Condition=" '$(Nemerle)' == '' ">$(NemerleBinPathRoot)\$(NemerleVersion)</Nemerle>
-    <Name>TestParser</Name>
+    <Name>PetriNetMacro</Name>
+    <DocumentationFile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -25,6 +26,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <RunDebugger>true</RunDebugger>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugSymbols>false</DebugSymbols>
@@ -37,11 +39,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
-    <Reference Include="Nemerle.Compiler, Version=1.2.0.550, Culture=neutral, PublicKeyToken=5291d186334f6101">
-      <Name>Nemerle.Compiler</Name>
-      <AssemblyName>Nemerle.Compiler.dll</AssemblyName>
-      <HintPath>C:\Program Files (x86)\Nemerle\Net-4.0\Nemerle.Compiler.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -57,33 +54,26 @@
     <Reference Include="Nemerle">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>$(Nemerle)\Nemerle.dll</HintPath>
-      <Private>True</Private>
+    </Reference>
+    <Reference Include="Nemerle.Compiler">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(Nemerle)\Nemerle.Compiler.dll</HintPath>
     </Reference>
     <MacroReference Include="Nemerle.Linq">
       <HintPath>$(Nemerle)\Nemerle.Linq.dll</HintPath>
     </MacroReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Main.n" />
+    <Compile Include="Macro1.n" />
     <Compile Include="Properties\AssemblyInfo.n" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\PetriNetLib\CpnParser\CpnParser.nproj">
-      <Name>CpnParser</Name>
-      <Project>{5bd4c7c7-4cce-4159-9acb-c3f324431ef7}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <ProjectReference Include="..\PetriNetLib\PetriNetLib.nproj">
       <Name>PetriNetLib</Name>
       <Project>{2edff5c5-d99f-4416-96e2-c5b4a4f18247}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\PetriNetMacro\PetriNetMacro.nproj">
-      <Name>PetriNetMacro</Name>
-      <Project>{fbc98adb-2e81-4e65-af74-4a6601bb4649}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
@@ -91,6 +81,7 @@
   <!--
 		To modify your build process, add your task inside one of the targets below and uncomment it. 
 		Other similar extension points exist, see Microsoft.Common.targets.
+
 	<Target Name="BeforeBuild">
 	</Target>
 	<Target Name="AfterBuild">
