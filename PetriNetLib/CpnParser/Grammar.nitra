@@ -66,10 +66,13 @@ namespace CpnML.Grammar
       | Delay
 	    precedence Union:
       | SetUnion = Expr "++" Expr// ^ Oper
-		  | SetDiff  = Expr "--" Expr
-		  | SetUnequal = Expr "<>" "<>" Expr
+      | SetDiff  = Expr "--" Expr
+	  | SetUnequal = Expr "<>" "<>" Expr
       | SetUpper = Expr ">>" Expr
       | SetLower = Expr "<<" Expr
+	  | SetUpperEqual = Expr ">>==" Expr
+      | SetLowerEqual = Expr "<<==" Expr
+	  | SetScalarMult = Expr "**" Expr
       precedence Func:
 	    | FuncCall   = Name=(Identifier;'.')+ Parms=(Expr ^ Func)+
       precedence Token:
@@ -128,7 +131,7 @@ namespace CpnML.Grammar
 
     syntax Val = "val" Name=Identifier Type? '=' Expr ';'?;
 
-	  syntax Declaration
+	syntax Declaration
     {
       | Val
       | Var = "var" Names=(Identifier;",")+ Type ';'

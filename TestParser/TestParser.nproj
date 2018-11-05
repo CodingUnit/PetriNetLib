@@ -86,6 +86,11 @@
       <Project>{fbc98adb-2e81-4e65-af74-4a6601bb4649}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\PetriNetModel\PetriNetModel.nproj">
+      <Name>PetriNetModel</Name>
+      <Project>{9756a67b-f1a6-4c59-a9a6-45492777b4ac}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(Nemerle)\Nemerle.MSBuild.targets" />
   <!--

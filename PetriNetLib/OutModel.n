@@ -22,6 +22,12 @@ namespace PetriNetLib
     public vars        : Hashtable[string, ColourSet] = Hashtable();
     public colour_sets : Hashtable[string, ColourSet] = Hashtable();
     public ml_decls    : list[PExpr];
+    
+    public GetIndex(name : string) : option[string * string]
+    {
+      def index = colour_sets.Fold([], (x, a) => if (x.Value is ColourSet(n, Colour.Index(id = i))) (n, i) :: a else a);
+      index.Find((_, n) => name == n)
+    }
   }
   
 }

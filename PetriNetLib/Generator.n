@@ -10,6 +10,7 @@ using Nemerle.Compiler;
 using Nemerle.Compiler.Parsetree;
 using Nemerle.Compiler.Typedtree;
 using CommonLib.Macros;
+using PetriNetModel;
 
 namespace PetriNetLib
 {
@@ -23,6 +24,7 @@ namespace PetriNetLib
     converter : Converter;
     typer : Typer;
     typebuilder : TypeBuilder;
+    mutable typing_method : MethodBuilder;
     //compiler : CompilerHost = CompilerHost();
     
     public this(model : OutModel, proc : PetriNetProcessor)
@@ -73,6 +75,7 @@ namespace PetriNetLib
     CreatePlace(place : Place) : ClassMember
     {
       def name = place.name;
+      def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
       def type = GetTypeExpr(place.colour);
       <[decl: $(name : usesite) : PetriNetModel.Place.[$type] = PetriNetModel.Place()]>
     }
@@ -83,26 +86,25 @@ namespace PetriNetLib
       | _                    => true
     }
     
-    //class a : IEqualityComparer[PExpr]
-    //{
-    //  public override GetHashCode() : int
-    //  {
-    //  }
-      
-    //  public override Equals(left : PExpr, right : PExpr) : bool
-    //  {
-    //  }
-    //}
+    CreateDummyMethod() : void
+    {
+      def meth = typebuilder.DefineAndReturn(<[decl: TypingMethod() : void {}]>);
+      typing_method = meth :> MethodBuilder;
+    }
     
-    //EvalTokenExpr(expr : PExpr) : PExpr
-    //{
-    //  | <[ $(lit : int)]>            => expr
-    //  | <[ $(count : int) ` $expr ]> => expr
-    //  | <[ $left %++ $right ]>       => match (left, right)
-    //                                    {// int, real, string, tuple,
-    //                                      | (<[ $(count : int) ` $expr ]>, <[ $(count2 : int) ` $expr2 ]>) =>
-    //                                    }
-    //}
+    CreateOperators() : void
+    {
+      def token_op = <[decl: public static @`[T](count : int, tok : T) : IEnumerable[T]
+                             {
+                               Enumerable.Repeat(tok, count)
+                             }]>;
+     typebuilder.DefineWithSource(token_op);
+     def token_combine_op = <[decl: public static @%++[T](tok1 : IEnumerable[T], tok2 : IEnumerable[T]) : IEnumerable[T]
+                             {
+                               tok1.Union(tok2)
+                             }]>;
+     typebuilder.DefineWithSource(token_combine_op);
+    }
     
     GetTokenExpr(expr : PExpr) : PExpr
     {
@@ -116,7 +118,7 @@ namespace PetriNetLib
       match (loop(expr))
       {
         | [<[$_(..$_)]> as e] => e
-        | e                   => <[array[..$e]]>
+        | e                   => <[IEnumerable[..$e]]>
       }
       
     }
@@ -184,6 +186,7 @@ namespace PetriNetLib
     CreateTran(tran : Transition) : ClassMember
     {
       def name = tran.name;
+      
       def body = CreateTranBody(tran);      
       <[
          decl: public $(name : usesite)() : void
@@ -198,37 +201,80 @@ namespace PetriNetLib
       def type = GetTypeExpr(type);
       <[decl: $(name : usesite) : $type]>
     }
+     
+    CreateVals(expr : PExpr) : ClassMember
+    {
+      | <[ def $(name : usesite) = $val]> => 
+          def type = typer.TypeExpr(val);
+          def ty = type.ty;
+          <[ decl: $(name : usesite) : $(ty : typed) = $val ]>
+          
+      | _ => null
+    }
+    
+    ProcessFun(expr : PExpr) : PExpr
+    {
+      | <[ def $(n : usesite)(..$parms) { ..$body } ]> => 
+      
+            def proc_parm(p, (parm, e))
+            {
+              match (p)
+              {
+                | <[parameter: $(n : usesite) : Index.[$(type : usesite)]]> => 
+                  match (model.GetIndex(type))
+                  {
+                    | Some((t, _)) => (<[parameter: $(n : usesite) : $(t : usesite)]> :: parm, <[def $(n : usesite) = $(n : usesite).num ]> :: e)
+                    | _            => (parm, e)
+                  }
+                  
+              }
+            }
+      
+            def expr = <[ {..$body} ]>;
+            def (parms, expr) = parms.Fold(([], expr :: []), proc_parm);
+            def parms = parms.Rev();
+            def expr = <[ {..$expr} ]>;
+      
+          
+      def process(_, b, e)
+      {
+        if (b)
+        match (e)
+        {
+          | <[ $(n : usesite)($p)]> => match (model.GetIndex(n))
+                                       {
+                                         | Some((t, _)) => <[ $(t : usesite)($p)]>
+                                         | _            => e
+                                       }
+          | e => e                              
+        } else e
+      }
+      
+      def expr = Macros.TraverseExpr(None(), expr, false, process);
+      <[ def $(n : usesite)(..$parms) { $expr } ]>
+    }
     
     CreateDecl(expr : PExpr) : ClassMember
     {
-      | <[ def $(name : usesite) = $val]> => <[decl: $(name : usesite) = $val]>
-      | <[
-            def $(n : usesite)(..$parms)
-            {
-              ..$body
-            }
-          ]>                              => 
+      
+      | <[ def $(_ : usesite)(..$_) { ..$_ } ]> => 
           
-          //def parms = <[parameter: a]> :: [];
-          //def n = "abc";
-          //def b = <[ a + 1 ]>;
-          //def expr = <[
-          //  //def $(n : usesite)(..$parms)
-          //  {
-          //    def a = 2;
-          //    $b
-          //  }
-          //]>;
-          def te = typer.TypeExpr(expr);
-          match (te)
+          def func = ProcessFun(expr);
+          def ty = Typer(typing_method);
+          def te = ty.TypeExpr(func);
+          match (func)
           {
-            | TExpr.DefFunctionsIn(h :: _, _) => def ret = h.ReturnType;
-                                                <[decl: $(n : usesite)(..$parms) : $(ret : typed)
-                                                  {
-                                                    ..$body
-                                                  }]>
-          }
-          
+            | <[ def $(n : usesite)(..$parms) { ..$expr } ]> =>
+                match (te)
+                {
+                  | TExpr.DefFunctionsIn(h :: _, _) => def ret = h.ReturnType;
+                                                      <[decl: $(n : usesite)(..$parms) : $(ret : typed)
+                                                        {
+                                                          ..$expr
+                                                        }]>
+                }
+        }
+      | _ => null
     }
     
     TypeOfExpr(expr : PExpr) : PExpr
@@ -237,21 +283,11 @@ namespace PetriNetLib
       | <[ $(_ : string)]>    => <[ string ]>
       | <[ $(_ : double)]>    => <[ double ]>
       | <[ $(_ : bool)]>      => <[ double ]>
-      | <[ $(_ : int) ` $t ]> => def t = TypeOfExpr(t); <[ array[$t] ]>
-      | <[ $(n : usesite) ]>  => null//model.ml_decls.Find();
+      | <[ $(_ : int) ` $t ]> => def t = TypeOfExpr(t); <[ IEnumerable[$t] ]>
+      | <[ $(_ : usesite) ]>  => null//model.ml_decls.Find();
     }
     
-    CalcReturnType(expr : list[PExpr]) : PExpr
-    {
-      def last = expr.Last();
-      last |> TypeOfExpr
-      //match (last)
-      //{
-      //  | <[ $(_ : int) ` $t ]> => TypeOfExpr(t)
-      //}
-    }
-    
-    CreateColourSet(col : ColourSet) : ClassMember
+    CreateColourSet(col : ColourSet) : ClassMember.TypeDeclaration
     {
       | ColourSet(n, Colour.Record(vals))     =>  def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
                                                   def fields = fields.Map((n, t) => <[decl: $(n : usesite) : $t]>);
@@ -289,7 +325,7 @@ namespace PetriNetLib
                                                         public static max : int = $(mx : int);
                                                         public num : int;
                                                         
-                                                        public static all() : array[$(n : usesite)]
+                                                        public static all() : IEnumerable[$(n : usesite)]
                                                         {
                                                           Enumerable.Range(min, max).Select($(n : usesite))
                                                         }
@@ -302,14 +338,41 @@ namespace PetriNetLib
                                            }]>
       | _ => null
     }
+
+    CreateInitMarking(pl : Place) : PExpr
+    {
+      <[]>
+    }
+    
+    public PhaseTwo() : void
+    {
+      /*
+      [assembly: OperatorAttribute("Nemerle.Core", "*",  false, 260, 261)]
+[assembly: OperatorAttribute("Nemerle.Core", "/",  false, 260, 261)]
+[assembly: OperatorAttribute("Nemerle.Core", "+",  false, 240, 241)]
+      */
+      CreateDummyMethod();
+      def methods = model.transitions.MapToList(CreateTran);
+      def vals = model.ml_decls.Map(CreateVals).Filter(_ != null);
+      foreach (m in vals) typebuilder.DefineWithSource(m);
+      def decls = model.ml_decls.Map(CreateDecl).Filter(_ != null);
+      def decls = decls + methods;
+      foreach (m in decls) typebuilder.DefineWithSource(m);
+      typebuilder.Compile()
+    }
     
     public Generate() : void
     {
-      def sets = model.colour_sets.Values.Map(CreateColourSet);
-      def fields = model.places.Map(CreatePlace);
-      def methods = model.transitions.Map(CreateTran);
-      def a = model.vars.KeyValuePairs.Map(CreateVars);
-      def decls = model.ml_decls.Map(CreateDecl);
+      
+      CreateOperators();
+      //assert2(false);
+      def sets = model.colour_sets.Values.Map(CreateColourSet).Filter(_ != null);
+      foreach (m in sets) typebuilder.DefineNestedTypeWithSource(m).Compile();
+      def fields = model.places.MapToList(CreatePlace);
+      def marking = model.places.MapToList(CreateInitMarking);
+      def vars = model.vars.KeyValuePairs.MapToList(CreateVars);
+      def members = fields + vars;
+      foreach (m in members) typebuilder.DefineWithSource(m);
     }
   }
 }
