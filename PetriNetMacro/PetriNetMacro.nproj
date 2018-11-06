@@ -26,7 +26,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <RunDebugger>true</RunDebugger>
+    <RunDebugger>false</RunDebugger>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugSymbols>false</DebugSymbols>
@@ -74,6 +74,11 @@
     <ProjectReference Include="..\PetriNetLib\PetriNetLib.nproj">
       <Name>PetriNetLib</Name>
       <Project>{2edff5c5-d99f-4416-96e2-c5b4a4f18247}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\PetriNetModel\PetriNetModel.nproj">
+      <Name>PetriNetModel</Name>
+      <Project>{9756a67b-f1a6-4c59-a9a6-45492777b4ac}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>

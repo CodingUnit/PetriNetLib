@@ -8,25 +8,25 @@ using System.Linq;
 
 namespace PetriNetModel
 {
-  class BitArray
+  class BitIEnumerable
   {
     buf : List[int] = List();
   }
   
-  interface ITokenContainer[T]
+  public interface ITokenContainer[T]
   {
     Add(tok : T) : void;
     
-    AddMany(tok : array[T]) : void;
+    AddMany(tok : IEnumerable[T]) : void;
     
-    Have(tok : array[T]) : bool;
+    Have(tok : IEnumerable[T]) : bool;
     
     HaveTokens : bool
     {
       get;
     }
     
-    GetMany(tok : array[T]) : array[T];
+    GetMany(tok : IEnumerable[T]) : IEnumerable[T];
     
     Get() : T;
   }
@@ -36,16 +36,16 @@ namespace PetriNetModel
   {
     public Add(tok : T) : void {}
     
-    public AddMany(tok : array[T]) : void {}
+    public AddMany(tok : IEnumerable[T]) : void {}
     
-    public Have(tok : array[T]) : bool {false}
+    public Have(tok : IEnumerable[T]) : bool {false}
     
     public HaveTokens : bool
     {
       get {false}
     }
     
-    public GetMany(tok : array[T]) : array[T]
+    public GetMany(tok : IEnumerable[T]) : IEnumerable[T]
     {
       throw NotImplementedException()
     }
@@ -56,25 +56,25 @@ namespace PetriNetModel
     }
   }
   
-  class RandomArray[T] : ITokenContainer[T]
+  class RandomIEnumerable[T] : ITokenContainer[T]
   {
     queue   : List[T];
-    elems   : BitArray;
+    elems   : BitIEnumerable;
     
     public Add(tok : T) : void {}
     
-    public AddMany(tok : array[T]) : void {}
+    public AddMany(tok : IEnumerable[T]) : void {}
     
-    public Have(tok : array[T]) : bool {false}
+    public Have(tok : IEnumerable[T]) : bool {false}
     
     public HaveTokens : bool
     {
       get {false}
     }
     
-    public GetMany(tok : array[T]) : array[T]
+    public GetMany(tok : IEnumerable[T]) : IEnumerable[T]
     {
-      array[]
+      Enumerable.Empty()
     }
     
     public Get() : T
@@ -83,22 +83,75 @@ namespace PetriNetModel
     }
   }
   
-  class MultiSet[T] : ITokenContainer[T]
+  class HashMultiSet[T]
   {
+    table : array[Entry];
+    
+    [Record]
+    class Entry
+    {
+      public key   : T;
+      public count : int;
+     
+      public Empty : bool
+      {
+        get
+        {
+          count == 0
+        }
+      }
+    }
+    
+    Prime : int;
+    
+    hash1(x : T) : int
+    {
+      x.GetHashCode() % table.Length
+    }
+    
+    hash2(x : T) : int
+    {
+      Prime - (x.GetHashCode() % Prime)
+    }
+    
+    public FindEntry(k : T) : bool
+    {
+      def probePoint = hash1(k);
+      def incr = hash2(k);
+      
+      def loop(point)
+      {
+          def entry = table[point];
+          if (entry == null || entry.Empty || !entry.key.Equals(k)) loop((point + incr) % table.Length) else true
+      }
+    
+      
+      loop(probePoint)
+    }
+  }
+  
+  public class MultiSet[T] : ITokenContainer[T]
+  {
+    table : HashMultiSet[T];
+    
+    public this(en : IEnumerable[T])
+    {
+    }
+    
     public Add(tok : T) : void {}
     
-    public AddMany(tok : array[T]) : void {}
+    public AddMany(tok : IEnumerable[T]) : void {}
     
-    public Have(tok : array[T]) : bool {false}
+    public Have(tok : IEnumerable[T]) : bool {false}
     
     public HaveTokens : bool
     {
       get {false}
     }
     
-    public GetMany(tok : array[T]) : array[T]
+    public GetMany(tok : IEnumerable[T]) : IEnumerable[T]
     {
-      array[]
+      Enumerable.Empty()
     }
     
     public Get() : T
@@ -107,22 +160,27 @@ namespace PetriNetModel
     }
   }
   
+  [Record]
   public class Place[T]
   {
     tokens : ITokenContainer[T];
     
+    public this(en : IEnumerable[T])
+    {
+      tokens = MultiSet(en)
+    }
     
     public Add(tok : T) : void
     {
       tokens.Add(tok)
     }
     
-    public AddMany(tok : array[T]) : void
+    public Add(tok : IEnumerable[T]) : void
     {
       tokens.AddMany(tok)
     }
     
-    public Have(tok : array[T]) : bool
+    public Have(tok : IEnumerable[T]) : bool
     {
       tokens.Have(tok)
     }
@@ -135,7 +193,7 @@ namespace PetriNetModel
       }
     }
     
-    public GetMany(tok : array[T]) : array[T]
+    public GetMany(tok : IEnumerable[T]) : IEnumerable[T]
     {
       tokens.GetMany(tok)
     }

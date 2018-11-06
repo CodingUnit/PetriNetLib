@@ -65,7 +65,7 @@ namespace PetriNetLib
            }
            <[ $path(..$parms)]>
                                                                             
-      | TokenExpr(Integer = i, Expr = e) => 
+      | MultiSetConstr(Integer = i, Expr = e) => 
           def count = expr.GetText(i) |> int.Parse;
           def expr = GetExpr(e);
           <[ $(count : int) ` $expr ]>
@@ -81,7 +81,7 @@ namespace PetriNetLib
           def e = GetExpr(e);
           <[ if ($c) $t else $e]>
           
-      | Declaration(Declaration = MainParseTree.Declaration.Val(Name = name, TypeOptData = _t, Expr = l)) => 
+      | Declaration(Declaration = MainParseTree.Declaration.Val(Val = MainParseTree.Val(Name = name, TypeOptData = _t, Expr = l))) => 
       
                def name = name.IdentifierBodyData;
                def val = GetExpr(l);

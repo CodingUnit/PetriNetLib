@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using PetriNetLib;
+using PetriNetModel;
 using Nemerle.Compiler.Parsetree;
 
 namespace PetriNetLib
@@ -15,15 +16,21 @@ namespace PetriNetLib
   [MacroUsage(MacroPhase.WithTypedMembers, MacroTargets.Class)]
   macro PetriNet(ty : TypeBuilder, body : PExpr, params other : array[PExpr])
   {
-     Helper.ParseAndGenerate(ty, Macros.ImplicitCTX(), body, other);
+     Helper.ParseAndGenerate2(ty, Macros.ImplicitCTX(), body, other);
   }
 
+  [MacroUsage(MacroPhase.BeforeTypedMembers, MacroTargets.Class)]
+  macro PetriNet(ty : TypeBuilder, body : PExpr, params other : array[PExpr])
+  {
+     Helper.ParseAndGenerate(ty, Macros.ImplicitCTX(), body, other);
+  }
+  
   class Helper
   {
     public static ParseAndGenerate(ty : TypeBuilder, typer : Typer, expr : PExpr, other : array[PExpr]) : void
     {
       //Macros.DefineCTX(typer);
-      assert2(false);
+      //assert2(false);
       //def b = <[ a + 1 ]>;
       //    def expr1 = <[
       //      //def $(n : usesite)(..$parms)
@@ -33,11 +40,30 @@ namespace PetriNetLib
       //      }
       //    ]>;
       //def expr1 = typer.TypeExpr(expr1);
+      def net = PetriNet();
       match (expr)
       {
-        | <[$(str : string)]> => PetriNet.Process(ty, typer, str)
+        | <[$(str : string)]> => net.Process(ty, typer, str)
         | _                   => ()
       }
+      
+    }
+    
+    public static ParseAndGenerate2(ty : TypeBuilder, typer : Typer, expr : PExpr, other : array[PExpr]) : void
+    {
+      //Macros.DefineCTX(typer);
+      assert2(false);
+      def gen = ty.UserData["PetriNetGen"] :> PetriNet;
+      gen.PhaseTwo();
+      //def b = <[ a + 1 ]>;
+      //    def expr1 = <[
+      //      //def $(n : usesite)(..$parms)
+      //      {
+      //        def a = 2;
+      //        a + 1
+      //      }
+      //    ]>;
+      //def expr1 = typer.TypeExpr(expr1);
       
     }
   }

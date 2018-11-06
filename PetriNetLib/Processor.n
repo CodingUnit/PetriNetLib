@@ -136,15 +136,24 @@ namespace PetriNetLib
   
   public class PetriNet
   {
-    public static Process(ty : TypeBuilder, typer : Typer, file : string) : void
+    mutable gen : Generator;
+    mutable proc : PetriNetProcessor;
+    
+    public PhaseTwo() : void
+    {
+      gen.PhaseTwo()
+    }
+    
+    public Process(ty : TypeBuilder, typer : Typer, file : string) : void
     {
       def parser = Parser();
       parser.Parse(file);
       def file = System.IO.Path.GetFileNameWithoutExtension(file);
-      def proc = PetriNetProcessor(file, typer, ty, parser.Places, parser.Transitions, parser.Arcs, parser.Decls);
+      proc = PetriNetProcessor(file, typer, ty, parser.Places, parser.Transitions, parser.Arcs, parser.Decls);
       proc.Process();
-      def gen = Generator(proc.OutModel, proc);
+      gen = Generator(proc.OutModel, proc);
       gen.Generate();
+      ty.UserData["PetriNetGen"] = this;
     }
   }
   
@@ -300,11 +309,11 @@ namespace PetriNetLib
       def create_place(p)
       {
         | CpnTree.Place(n, id, t, i) =>
-        def col = colour_sets[t];
-        def expr = i |> converter.ParseML;
-        def place = Place(pidx, id, n, col, expr, p, this);
-        pidx += 1;
-        place
+            def col = colour_sets[t];
+            def expr = i |> converter.ParseML;
+            def place = Place(pidx, id, n, col, expr, p, this);
+            pidx += 1;
+            place
       }
       
       def create_tran(t)
