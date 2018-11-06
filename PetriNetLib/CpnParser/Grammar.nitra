@@ -25,11 +25,11 @@ namespace CpnML.Grammar
       | String
       | Boolean
       | EmptyMultiSet = "empty"
-      //| Char
+      | Char
       | NilList = "nil"
     }
 
-    //token Char = '#' '"' Any '"';
+    token Char = '#' '"' Any '"';
 
     syntax IndexVar = Name=Identifier '(' Idx=Expr')';
 
@@ -41,7 +41,11 @@ namespace CpnML.Grammar
       | Real   = "real"
       | String = "string"
     }
-    syntax Delay = '@' '+' Expr;
+    syntax Delay 
+    {
+      | AddTime = '@' '+' Expr
+      | AddTimeAlt = '@' '@' '+' Expr
+    }
 
 	  syntax Expr
     {
@@ -65,14 +69,18 @@ namespace CpnML.Grammar
 	    | DelayExpr = Expr Delay
       | Delay
 	    precedence Union:
+      | TimedSetUnion = Expr "+++" Expr// ^ Oper
       | SetUnion = Expr "++" Expr// ^ Oper
       | SetDiff  = Expr "--" Expr
-	  | SetUnequal = Expr "<>" "<>" Expr
+	    | SetUnequal = Expr "<>" "<>" Expr
       | SetUpper = Expr ">>" Expr
       | SetLower = Expr "<<" Expr
-	  | SetUpperEqual = Expr ">>==" Expr
+	    | SetUpperEqual = Expr ">>==" Expr
       | SetLowerEqual = Expr "<<==" Expr
-	  | SetScalarMult = Expr "**" Expr
+      | SetUpperEqualAlt = Expr ">>=" Expr
+      | SetLowerEqualAlt = Expr "<<=" Expr
+	    | SetScalarMult    = Expr "**" Expr
+      | SetScalarMultAlt = Expr "*" Expr
       precedence Func:
 	    | FuncCall   = Name=(Identifier;'.')+ Parms=(Expr ^ Func)+
       precedence Token:

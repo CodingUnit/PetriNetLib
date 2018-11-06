@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
-<!-- <!DOCTYPE workspaceElements PUBLIC "-//CPN//DTD CPNXML 1.0//EN" "http://cpntools.org/DTD/6/cpn.dtd"> -->
+<!DOCTYPE workspaceElements PUBLIC "-//CPN//DTD CPNXML 1.0//EN" "http://cpntools.org/DTD/6/cpn.dtd">
 
 <workspaceElements>
   <generator tool="CPN Tools"
@@ -31,7 +31,10 @@
         <id>p</id>
       </var>
       <ml id="ID1369">fun Chopsticks(ph(i)) = 
-1`cs(i) ++ 1`cs(if i=n then 1 else i+1);</ml>
+1`cs(i) ++ 1`cs(if i=n then 1 else i+1);
+        <layout>fun Chopsticks(ph(i)) = 
+1`cs(i) ++ 1`cs(if i=n then 1 else i+1);</layout>
+      </ml>
       <color id="ID1412325687">
         <id>U</id>
         <unit>
@@ -48,6 +51,42 @@
         <id>a</id>
         <layout>var a : PH;</layout>
       </var>
+      <color id="ID1412328420">
+        <id>PH2</id>
+        <alias>
+          <id>PH</id>
+        </alias>
+        <layout>colset PH2 = PH;</layout>
+      </color>
+      <color id="ID1412328694">
+        <id>NEWINT</id>
+        <int>
+          <with>
+            <ml>1</ml>
+            <ml>12</ml>
+          </with>
+        </int>
+        <layout>colset NEWINT = int with 1..12;</layout>
+      </color>
+      <color id="ID1412328980">
+        <id>VOID</id>
+        <unit>
+          <with>
+            <id>pumpkin</id>
+          </with>
+        </unit>
+        <layout>colset VOID = unit with pumpkin;</layout>
+      </color>
+      <color id="ID1412329277">
+        <id>BOOL</id>
+        <bool>
+          <with>
+            <id>no</id>
+            <id>yes</id>
+          </with>
+        </bool>
+        <layout>colset BOOL = bool with (no, yes);</layout>
+      </color>
     </globbox>
     <page id="ID1293">
       <pageattr name="Page"/>
@@ -119,12 +158,12 @@
                  h="40.000000"/>
         <token x="-10.000000"
                y="0.000000"/>
-        <marking x="2.000000"
-                 y="-26.000000"
+        <marking x="10.000000"
+                 y="-22.000000"
                  hidden="false">
           <snap snap_id="0"
-                anchor.horizontal="0"
-                anchor.vertical="0"/>
+                anchor.horizontal="1"
+                anchor.vertical="3"/>
         </marking>
         <type id="ID1374">
           <posattr x="2.500000"
@@ -226,7 +265,7 @@ Chopsticks</text>
              h="41.000000"/>
         <binding x="7.000000"
                  y="-3.000000"/>
-        <cond id="ID3066">
+        <cond id="ID1412326507">
           <posattr x="-83.500000"
                    y="180.500000"/>
           <fillattr colour="White"
@@ -529,9 +568,22 @@ Chopsticks</text>
           <textattr colour="Black"
                     bold="false"/>
         </bendpoint>
+        <bendpoint id="ID1412326832"
+                   serial="2">
+          <posattr x="115.000000"
+                   y="25.000000"/>
+          <fillattr colour="White"
+                    pattern="Solid"
+                    filled="false"/>
+          <lineattr colour="Black"
+                    thick="0"
+                    type="Solid"/>
+          <textattr colour="Black"
+                    bold="false"/>
+        </bendpoint>
         <annot id="ID1415">
-          <posattr x="106.000000"
-                   y="-34.000000"/>
+          <posattr x="102.000000"
+                   y="-43.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -895,14 +947,14 @@ Chopsticks</text>
     </options>
     <binders>
       <cpnbinder id="ID3171"
-                 x="425"
+                 x="458"
                  y="101"
                  width="496"
                  height="456">
         <sheets>
           <cpnsheet id="ID3159"
-                    panx="-66.000000"
-                    pany="115.000000"
+                    panx="-62.000000"
+                    pany="117.000000"
                     zoom="1.000000"
                     instance="ID3073">
             <zorder>
@@ -999,6 +1051,10 @@ Chopsticks</text>
         <IndexNode expanded="true"/>
         <IndexNode expanded="false"/>
         <IndexNode expanded="false"/>
+        <IndexNode expanded="true"/>
+        <IndexNode expanded="true"/>
+        <IndexNode expanded="true"/>
+        <IndexNode expanded="true"/>
         <IndexNode expanded="true"/>
         <IndexNode expanded="true"/>
         <IndexNode expanded="true"/>

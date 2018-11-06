@@ -25,13 +25,12 @@ namespace PetriNetLib
     | SubsetBy { name : string; by : string}
     | SubsetWith { name : string; with_list : list[string]}
     | Enum {vals : list[string]}
-    | Unit {with_new_name : string}
-    | Bool {with_new : (string * string)}
-    | Integer {with_range : (string * string)}
+    | Unit {with_new_name : option[string]}
+    | Bool {with_new : option[string * string]}
+    | Integer {with_range : option[string * string]}
     | Simple {type : string}
     | Alias {name : string}
     | String { str_with : char * char; str_and : option[char * char];} 
-    | Alias {name : string}
   }
   
   [Record]
@@ -168,6 +167,11 @@ namespace PetriNetLib
           def type  = col.GetOneText("index", "id");
           Colour.Index(range[0], range[1], type)
         } else 
+        if (col.Contains("alias"))
+        {
+          def alias = col.GetOneText("alias", "id");
+          Colour.Alias(alias)
+        } else
         if (col.Contains("product"))
         {
           def vals = col.Get("product", "id");
@@ -192,9 +196,18 @@ namespace PetriNetLib
           def en = col.GetText("enum", "id");
           Colour.Enum(en.NToList())
         } else
-        if (col.Contains("unit"))   Colour.Simple("unit") else
+        if (col.Contains("unit"))
+        {
+          def new_name = col.GetOneTextOpt("int", "with", "id");
+          Colour.Unit(new_name)
+        } else
         if (col.Contains("bool"))   Colour.Simple("bool")   else
-        if (col.Contains("int"))    Colour.Simple("int")    else
+        if (col.Contains("int"))    
+        {
+          def wit = col.GetText("int", "with", "ml").ToArray();
+          def wit = if (wit.IsEmpty()) None() else (wit[0], wit[1]) |> Some;
+          Colour.Integer(wit)
+        } else
         if (col.Contains("intinf")) Colour.Simple("intinf") else
         if (col.Contains("time"))   Colour.Simple("time")   else
         if (col.Contains("real"))   Colour.Simple("real")   else

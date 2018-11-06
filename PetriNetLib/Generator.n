@@ -286,9 +286,10 @@ namespace PetriNetLib
       | <[ $(_ : int) ` $t ]> => def t = TypeOfExpr(t); <[ IEnumerable[$t] ]>
       | <[ $(_ : usesite) ]>  => null//model.ml_decls.Find();
     }
-    
+
     CreateColourSet(col : ColourSet) : ClassMember.TypeDeclaration
     {
+      | ColourSet(n, Colour.Alias(new_name))  => ClassMember.TypeDeclaration.TypeDeclaration(TopDeclaration.Alias(n |> Name, <[ $(new_name : usesite) ]>))
       | ColourSet(n, Colour.Record(vals))     =>  def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
                                                   def fields = fields.Map((n, t) => <[decl: $(n : usesite) : $t]>);
                                                   <[decl: [Record] class $(n : usesite)
@@ -339,9 +340,27 @@ namespace PetriNetLib
       | _ => null
     }
 
+    enum TDestCont
+    {
+      | MultiSet
+      | RandomEnumerable
+      | TokenQueue
+      | SortedSet
+    }
+    
+    DestContainerType() : TDestCont
+    {
+      TDestCont.MultiSet
+    }
+    
     CreateInitMarking(pl : Place) : PExpr
     {
-      <[]>
+      def fold(expr)
+      {
+        <[]>
+      }
+      
+      fold(pl.init_mark)
     }
     
     public PhaseTwo() : void
