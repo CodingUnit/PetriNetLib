@@ -29,6 +29,7 @@ namespace PetriNetLib
     | Bool {with_new : (string * string)}
     | Integer {with_range : (string * string)}
     | Simple {type : string}
+    | Alias {name : string}
     | StringWith { str_with : char * char; str_and : option[char * char];} 
   }
   
