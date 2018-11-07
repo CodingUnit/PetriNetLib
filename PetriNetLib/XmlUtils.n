@@ -1,0 +1,112 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Xml;
+
+namespace PetriNetLib
+{
+  /// <summary>
+  /// Description of XmlUtils.
+  /// </summary>
+  public class XmlUtils
+  {
+
+    public static Get(this xml : XmlDocument, params path : array[string]) : IEnumerable[XmlElement]
+    {
+      Get(xml.ChildNodes.OfType(), path)
+    }
+
+    public static GetChilds(this xml : XmlDocument, params path : array[string]) : IEnumerable[XmlElement]
+    {
+      Get(xml.ChildNodes.OfType(), path).SelectMany(x => x.ChildNodes.OfType())
+    }
+
+    public static GetChilds(this xml : XmlElement, params path : array[string]) : IEnumerable[XmlElement]
+    {
+      Get(xml.ChildNodes.OfType(), path).SelectMany(x => x.ChildNodes.OfType())
+    }
+
+    public static Contains(this path : XmlElement, elem : string) : bool
+    {
+      path.ChildNodes.OfType().Exists(x : XmlElement => x.Name == elem)
+    }
+
+    public static GetText(this parent : XmlElement, params elem : array[string]) : array[string]
+    {
+      Get(parent, elem).MapToArray(x => x.InnerText)
+    }
+
+    public static GetAttrText(this parent : XmlElement, elem : string) : string
+    {
+      GetOneAttr(parent, elem).Value
+    }
+
+    public static GetOneText(this parent : XmlElement, params elem : array[string]) : string
+    {
+      GetOne(parent, elem).InnerText
+    }
+
+    public static GetOneTextOpt(this parent : XmlElement, params elem : array[string]) : option[string]
+    {
+      GetOneOpt(parent, elem).Map(_.InnerText)
+    }
+
+    public static GetText(this parent : IEnumerable[XmlElement], params elem : array[string]) : IEnumerable[string]
+    {
+      parent.Get(elem).Select(_.InnerText)
+    }
+
+    public static GetFirstChildText(this parent : IEnumerable[XmlElement], params elem : array[string]) : IEnumerable[string]
+    {
+      parent.Get(elem).Select(x => x.FirstChild.InnerText)
+    }
+
+    public static GetOneAttr(this parent : XmlElement, elem : string) : XmlAttribute
+    {
+      parent.Attributes.OfType().Filter(x : XmlAttribute => x.Name == elem).First()
+    }
+
+    public static GetOne(this parent : XmlElement, params elem : array[string]) : XmlElement
+    {
+      parent.Get(elem).First()
+    }
+
+    public static GetOneOpt(this parent : XmlElement, params elem : array[string]) : option[XmlElement]
+    {
+      def lst = parent.Get(elem);
+      if (lst.IsEmpty()) None() else lst.First() |> Some
+    }
+
+    public static GetChilds(this path : IEnumerable[XmlElement], params elem : array[string]) : IEnumerable[XmlElement]
+    {
+      Get(path, elem).SelectMany(x => x.ChildNodes.OfType())
+    }
+
+    public static Get(this path : IEnumerable[XmlElement], params elem : array[string]) : IEnumerable[XmlElement]
+    {
+      def loop(p, child : IEnumerable[XmlElement])
+      {
+        match (p)
+        {
+          | []           => Enumerable.Empty()
+          | head :: []   => child.Where(x => x.Name == head)
+          | head :: tail => def inner = child.Filter(x => x.Name == head);
+                            inner.SelectMany(x => loop(tail, x.ChildNodes.OfType()))
+        }
+      }
+
+      loop(elem.NToList(), path)
+    }
+
+    public static Get(this path : XmlElement, params elem : array[string]) : IEnumerable[XmlElement]
+    {
+      Get(path.ChildNodes.OfType(), elem)
+    }
+
+  }
+}

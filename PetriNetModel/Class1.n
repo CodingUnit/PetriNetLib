@@ -213,16 +213,16 @@ namespace PetriNetModel
     }
   }
   
-  [Record]
-  public class Place[T, TCont] where TCont : ITokenContainer[T]
+  public class Place[T]
   {
     tokens : ITokenContainer[T];
     
-    public this() {}
+    public this() {tokens = MultiSet()}
+    public this(cont : ITokenContainer[T]) {tokens = cont}
     
-    public this(en : IEnumerable[T])
+    public this(en : IEnumerable[T], cont : ITokenContainer[T])
     {
-      tokens = tokens.Create(en)
+      tokens = cont.Create(en)
     }
     
     public Add(tok : T) : void

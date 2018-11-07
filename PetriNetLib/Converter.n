@@ -59,9 +59,8 @@ namespace PetriNetLib
            def path = match (path)
            {
              | [p] => p
-             | lst => def path = lst.ChopLast();
-                      def last = lst.Last();
-                      <[ (..$path).$last ]>
+             | lst => lst.Fold(null, (x, a) => if (a != null) <[ $a.$x ]> else x)
+                      
            }
            <[ $path(..$parms)]>
                                                                             
@@ -81,30 +80,15 @@ namespace PetriNetLib
           def e = GetExpr(e);
           <[ if ($c) $t else $e]>
           
-      | Declaration(Declaration = MainParseTree.Declaration.Val(Val = MainParseTree.Val(Name = name, TypeOptData = _t, Expr = l))) => 
-      
-               def name = name.IdentifierBodyData;
-               def val = GetExpr(l);
-               <[ def $(name : usesite) = $val]>
-               
-      | Declaration(Declaration = Declaration.Func(Func = MainParseTree.Func(Name = n, TypeOpt = t, ParmsData = (p, _), BodyData = (b, _)))) => 
+      | Func(Name = n, TypeOpt = t, ParmsData = (p, _), BodyData = (b, _)) => 
            
           def get_parm(p)
           {
-            | MainParseTree.Func.Nested.Parm.Var(Identifier = n, TypeOpt = t) => 
-              <[parameter: $(n.GetText() : usesite) ]>
-            | MainParseTree.Func.Nested.Parm.IndexVar(IndexVar = IndexVar(Name = n, Idx = i)) =>
-              def e = GetExpr(i);
-              match (e)
-              {
-                | <[ $(i : usesite)]> =>
-                    def n = n.GetText();
-                    <[parameter: $(i : usesite) : Index.[$(n : usesite)]]>
-              }
-            
+            | <[ $(n : usesite)]> => <[parameter: $(n : usesite) ]>
+            | <[ $(n : usesite)($(i : usesite))]> => <[parameter: $(i : usesite) : Index.[$(n : usesite)]]>
           }
         
-          def parms = p.Map(get_parm);
+          def parms = p.Map(x => x |> GetExpr |> get_parm);
           def n = n.GetText();
           def body = b.Map(GetExpr);
           <[
@@ -113,7 +97,12 @@ namespace PetriNetLib
               ..$body
             }
           ]>
-          
+      | Declaration(Declaration = MainParseTree.Declaration.Val(Val = MainParseTree.Val(Name = name, TypeOptData = _t, Expr = l))) => 
+      
+               def name = name.IdentifierBodyData;
+               def val = GetExpr(l);
+               <[ def $(name : usesite) = $val]>
+               
        | Equal(Expr1 = left, Expr2 = right) => <[ $(GetExpr(left)) == $(GetExpr(right))]>
        | Plus(Expr1 = left, Expr2 = right)  => <[ $(GetExpr(left)) + $(GetExpr(right))]>
        | Minus(Expr1 = left, Expr2 = right) => <[ $(GetExpr(left)) - $(GetExpr(right))]>
