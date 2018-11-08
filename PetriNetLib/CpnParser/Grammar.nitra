@@ -47,8 +47,10 @@ namespace CpnML.Grammar
       | AddTimeAlt = '@' '@' '+' Expr
     }
 
-	  syntax Expr
-    {
+	syntax ExprList = (Expr ";")+;
+
+	syntax Expr
+    {	  
       | Literal
       precedence Type:
       | TypeAnnot = Expr Type
@@ -97,17 +99,17 @@ namespace CpnML.Grammar
 		  | Equal    = Expr '=' Expr
       | NotEqual = Expr "<>" Expr
       precedence Relational:
-		  | Above	   = Expr '>' Expr
-		  | Below	   = Expr '<' Expr
-		  | AboveEqual = Expr ">=" Expr
-		  | BelowEqual = Expr "<=" Expr
+	  | Above	   = Expr '>' Expr
+	  | Below	   = Expr '<' Expr
+	  | AboveEqual = Expr ">=" Expr
+	  | BelowEqual = Expr "<=" Expr
       precedence Append:
       | Append  = Expr "@" Expr
       | Concat  = Expr '^' Expr
       | ListCombine = Expr "::" Expr
       precedence Additive:
-      | Plus	   = Expr '+' Expr
-		  | Minus    = Expr '-' Expr
+      | Plus	   = Expr ^ Additive '+' Expr
+	  | Minus    = Expr '-' Expr
       precedence MulDiv:
       | Multiply = Expr '*' Expr
       | Div      = Expr '/' Expr
@@ -124,18 +126,10 @@ namespace CpnML.Grammar
       | FigBraceExpr = '{' Expr '}'
       precedence Decl:
       | Declaration
+	  | Func = "fun" Name=Identifier '(' Parms=(Expr;",")* ')' Type? '=' Body=ExprList ^ Decl
     }
 
-    syntax Type = ":" TypeExpr;
-
-    syntax Func = "fun" Name=Identifier '(' Parms=(Parm;",")* ')' Type? '=' Body=(Expr;';')* ';'?
-    {
-      syntax Parm
-      {
-        | Var = Identifier Type?
-        | IndexVar
-      }
-    }
+    syntax Type = ":" TypeExpr;        
 
     syntax Val = "val" Name=Identifier Type? '=' Expr ';'?;
 
@@ -143,8 +137,8 @@ namespace CpnML.Grammar
     {
       | Val
       | Var = "var" Names=(Identifier;",")+ Type ';'
-      | Func
-      | FunMatch = !Func "fun" MatchCase "|" (MatchCase;"|")+
+      //| Func
+      | FunMatch = "fun" MatchCase "|" (MatchCase;"|")+
       {
         syntax MatchCase = Name=Identifier Pat=Expr '=' Expr=Expr;
       }
@@ -153,7 +147,8 @@ namespace CpnML.Grammar
 	  syntax LangExpr
 	  {
 		  //| Declaration = Declaration*
-		  | Expression = (Expr;";")*
+		  | Expr
+		  | ExprList
 	  }
   
   }

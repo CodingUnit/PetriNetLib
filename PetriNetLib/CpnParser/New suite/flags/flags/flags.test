@@ -1,1 +1,2 @@
-flags auto_initial flag2;
+﻿fun Chopsticks(ph(i)) = 
+1`cs(i) ++ 1`cs(if i=n then 1 else i+1);

@@ -233,25 +233,25 @@ namespace PetriNetLib
             def expr = <[ {..$body} ]>;
             def (parms, expr) = parms.Fold(([], expr :: []), proc_parm);
             def parms = parms.Rev();
-            def expr = <[ {..$expr} ]>;
+            //def expr = <[ {..$expr} ]>;
       
           
-      def process(_, b, e)
-      {
-        if (b)
-        match (e)
-        {
-          | <[ $(n : usesite)($p)]> => match (model.GetIndex(n))
-                                       {
-                                         | Some((t, _)) => <[ $(t : usesite)($p)]>
-                                         | _            => e
-                                       }
-          | e => e                              
-        } else e
-      }
+      //def process(_, b, e)
+      //{
+      //  if (b)
+      //  match (e)
+      //  {
+      //    | <[ $(n : usesite)($p)]> => match (model.GetIndex(n))
+      //                                 {
+      //                                   | Some((t, _)) => <[ $(t : usesite)($p)]>
+      //                                   | _            => e
+      //                                 }
+      //    | e => e                              
+      //  } else e
+      //}
       
-      def expr = Macros.TraverseExpr(None(), expr, false, process);
-      <[ def $(n : usesite)(..$parms) { $expr } ]>
+      //def expr = Macros.TraverseExpr(None(), expr, false, process);
+      <[ def $(n : usesite)(..$parms) { ..$expr } ]>
     }
     
     CreateDecl(expr : PExpr) : ClassMember
@@ -289,14 +289,19 @@ namespace PetriNetLib
 
     CreateColourSet(col : ColourSet) : ClassMember.TypeDeclaration
     {
-      | ColourSet(n, Colour.Alias(new_name))  => ClassMember.TypeDeclaration.TypeDeclaration(TopDeclaration.Alias(n |> Name, <[ $(new_name : usesite) ]>))
-      | ColourSet(n, Colour.Record(vals))     =>  def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
-                                                  def fields = fields.Map((n, t) => <[decl: $(n : usesite) : $t]>);
-                                                  <[decl: [Record] class $(n : usesite)
+      | ColourSet(n, Colour.Alias(new_name))  => def name = Macros.UseSiteSymbol(n);
+                                                 def mods = AttributesAndModifiers(NemerleModifiers.Private, []);
+                                                 def al = TopDeclaration.Alias(name, mods, Typarms.Empty, <[ $(new_name : usesite) ]>);
+                                                 def ty = al |> ClassMember.TypeDeclaration.TypeDeclaration;
+                                                 ty.SetEnv(typebuilder.GlobalEnv);
+                                                 ty
+      | ColourSet(n, Colour.Record(vals))     => def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
+                                                 def fields = fields.Map((n, t) => <[decl: $(n : usesite) : $t]>);
+                                                 <[decl: [Record] class $(n : usesite)
                                                          {
                                                            ..$fields
                                                          }
-                                                  ]>
+                                                 ]>
       | ColourSet(n, Colour.Index(mn, mx, _)) => def eval(m)
                                                  {
                                                     def expr = converter.ParseML(m);
@@ -353,14 +358,40 @@ namespace PetriNetLib
       TDestCont.MultiSet
     }
     
-    CreateInitMarking(pl : Place) : PExpr
+    CreateInitMarking(place : Place) : PExpr
     {
-      def fold(expr)
+      def combine(e1, e2)
       {
-        <[]>
+        | (<[Enumerable.Repeat($tok, $(n : int))]>, <[Enumerable.Repeat($tok2, $(n2 : int))]>) when (tok.Equals(tok2)) 
+            => <[Enumerable.Repeat($tok, $(n2 + n))]>
+        | (<[Enumerable.Repeat($(tok : int), $(n : int))]>, <[Enumerable.Repeat($(tok2 : int), $(n2 : int))]>)                         
+            => def val = Enumerable.Repeat(tok, n).Union(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : int)]>);
+               <[ array[..$val] ]>
+        | (<[Enumerable.Repeat($(tok : string), $(n : int))]>, <[Enumerable.Repeat($(tok2 : string), $(n2 : int))]>)                         
+            => def val = Enumerable.Repeat(tok, n).Union(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : string)]>);
+               <[ array[..$val] ]>
+        | (<[Enumerable.Repeat($(tok : double), $(n : int))]>, <[Enumerable.Repeat($(tok2 : double), $(n2 : int))]>)                         
+            => def val = Enumerable.Repeat(tok, n).Union(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : double)]>);
+               <[ array[..$val] ]>       
+        | _  //(<[Enumerable.Repeat($_, $(_ : int))]>, <[Enumerable.Repeat($_, $(_ : int))]>)                         
+            => <[ $e1.Union($e2)]> 
       }
       
-      fold(pl.init_mark)
+      def fold(expr)
+      {
+        match (expr)
+        {
+          //| <[ {..$e} ]>   => e.Fold(acc, fold)
+          | <[ 1 ` $tok]>             => <[ array[$tok] ]>
+          | <[ $(n : int) ` $tok]>    => <[ Enumerable.Repeat($tok, $n) ]>
+          | <[ $l %++ $r]>            => combine(fold(l), fold(r))
+          | e                         => e
+        }
+      }
+      
+      def mark = fold(place.init_mark);
+      def name = place.name;
+      <[ $(name : usesite).Add($mark)]>
     }
     
     public PhaseTwo() : void
@@ -384,13 +415,14 @@ namespace PetriNetLib
     {
       
       CreateOperators();
-      //assert2(false);
+      assert2(false);
       def sets = model.colour_sets.Values.Map(CreateColourSet).Filter(_ != null);
       foreach (m in sets) typebuilder.DefineNestedTypeWithSource(m).Compile();
       def fields = model.places.MapToList(CreatePlace);
       def marking = model.places.MapToList(CreateInitMarking);
+      def cons = <[decl: public this() {..$marking}]>;
       def vars = model.vars.KeyValuePairs.MapToList(CreateVars);
-      def members = fields + vars;
+      def members = cons :: fields + vars;
       foreach (m in members) typebuilder.DefineWithSource(m);
     }
   }
