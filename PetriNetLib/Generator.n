@@ -413,7 +413,6 @@ namespace PetriNetLib
     
     public Generate() : void
     {
-      
       CreateOperators();
       assert2(false);
       def sets = model.colour_sets.Values.Map(CreateColourSet).Filter(_ != null);

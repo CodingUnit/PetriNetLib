@@ -123,21 +123,25 @@ namespace CpnML.Grammar
       | BraceExpr = '(' Expr* ')'
       //| UnitVal = '(' ')'
       precedence FigBraces:
-      | FigBraceExpr = '{' Expr '}'
+      | FigBraceExpr = '{' Expr '}'   
       precedence Decl:
-      | Declaration
-	  | Func = "fun" Name=Identifier '(' Parms=(Expr;",")* ')' Type? '=' Body=ExprList ^ Decl
+      | LowerDecl
     }
 
     syntax Type = ":" TypeExpr;        
 
     syntax Val = "val" Name=Identifier Type? '=' Expr ';'?;
 
-	syntax Declaration
+    syntax LowerDecl
     {
       | Val
       | Var = "var" Names=(Identifier;",")+ Type ';'
-      //| Func
+    }
+
+	syntax Declaration
+    {
+      | LowerDecl
+      | Func = "fun" Name=Identifier '(' Parms=(Expr;",")* ')' Type? '=' Body=ExprList
       | FunMatch = "fun" MatchCase "|" (MatchCase;"|")+
       {
         syntax MatchCase = Name=Identifier Pat=Expr '=' Expr=Expr;
@@ -146,7 +150,7 @@ namespace CpnML.Grammar
 
 	  syntax LangExpr
 	  {
-		  //| Declaration = Declaration*
+		  | Decl = Declaration+
 		  | Expr
 		  | ExprList
 	  }
