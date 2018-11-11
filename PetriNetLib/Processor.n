@@ -195,99 +195,54 @@ namespace PetriNetLib
     
     public InputTransitionArcs(tran : Transition) : list[Place * Arc]
     {
-      //foreach (p in places with i)
-      //{
-      //  output_matrix[i, tran.idx]
-      //}
       places.MapIndex((p, i) => (p, output_matrix[i, tran.idx])).Filter((_, a) => a != null)
-      //OutputArcs()
-      //.Where((_, t, _) => t == tran : object)
-      //.Map((p, _, a) => (p, a))//GroupBy((_, t, _) => t).Map(x => (x.Key, x.Map((p, _, a) => (p, a))));
     }
     
     public OutputTransitionArcs(tran : Transition) : list[Place * Arc]
     {
       places.MapIndex((p, i) => (p, input_matrix[i, tran.idx])).Filter((_, a) => a != null)
-      //InputArcs()
-      //.Where((_, t, _) => t == tran : object)
-      //.Map((p, _, a) => (p, a))//GroupBy((_, t, _) => t).Map(x => (x.Key, x.Map((p, _, a) => (p, a))));
     }
     
     public InputArcs() : IEnumerable[Place * Transition * Arc]
     {
-          foreach (_ in places with p)
-          {
-            foreach (_ in transitions with t)
-            {
-              def arc = input_matrix[p, t];
-              if (arc != null)
-                yield (places[p], transitions[t], arc) else ()
-            }
-          }
+      foreach (_ in places with p)
+      {
+        foreach (_ in transitions with t)
+        {
+          def arc = input_matrix[p, t];
+          if (arc != null)
+            yield (places[p], transitions[t], arc) else ()
+        }
+      }
     }
 
-    TranOutputArcs(tran : Transition) : IEnumerable[Place * Arc]
-    {
-      null
-      //InputArcs.Where((_, t, _) => t : object == tran).Select((p, _, a) => (p, a))
-    }
-    
     public OutputArcs() : IEnumerable[Place * Transition * Arc]
     {
-          foreach (_ in places with p)
-          {
-            foreach (_ in transitions with t)
-            {
-              def arc = output_matrix[p, t];
-              when (arc != null)
-                yield (places[p], transitions[t], arc)
-            }
-          }
+      foreach (_ in places with p)
+      {
+        foreach (_ in transitions with t)
+        {
+          def arc = output_matrix[p, t];
+          when (arc != null)
+            yield (places[p], transitions[t], arc)
+        }
+      }
     }
-    
-    //arcs               : List[List[Arc]] = List();
-    //transition_input_matrix  : List[List[int]];
-    //transition_output_matrix : List[List[int]];
-    //place_arcs               : List[List[Arc]];
-    //transition_arcs          : List[List[Arc]];
-    
-    //place_idx : int;
-    //transition_idx : int;
-    //colour_idx : int;
-    
-    //GetEdgesNull(count : int) : List[List[Arc]]
-    //{
-    //  ListUtils.Init(count, _ => null).ToList()
-    //}
-    
-    //GetEmptyMatrix(count : int) : IEnumerable[List[List[Arc]]]
-    //{
-    //  Enumerable.Repeat(ListUtils.Init(places.Count, _ => null).ToList(), count)
-    //}
     
     BuildMatrix() : void
     {
-      //def arcs    = arcs.Length;
       def places = places.Length;
       def tran   = transitions.Length;
       
       
       when (matrix_len == null || matrix_len[0] != places || matrix_len[1] != tran)
       {
-        input_matrix = array(places, tran);
-        output_matrix = array(places, tran);
+        input_matrix     = array(places, tran);
+        output_matrix    = array(places, tran);
         incidence_matrix = array(places, tran);
       }
       
-      //for (mutable p = 0; p < places; p++)
-      //  for (mutable t = 0; t < tran; t++)
-      //    {
-      //      def output = if (output_matrix[p, t] != null) 1 else 0; 
-      //      def input = if (input_matrix[p, t] != null) 1 else 0; 
-      //      incidence_matrix[p, t] = output - input;
-      //    }
       matrix_len = array[places, tran];
-      //}
     }
     
     public this(name : string, ty : Typer, typebuilder : TypeBuilder, places : list[CpnTree.Place], tran : list[CpnTree.Transition], arcs : list[CpnTree.Arc], decls : list[CpnDecl])
@@ -342,6 +297,11 @@ namespace PetriNetLib
       def (color, decls) = tree_decls.PartitionType();
       foreach (d : CpnDecl.ColorSet in color)
       {
+        //match (d)
+        //{
+        //  | CpnDecl.ColorSet(n, Colour.Index(id = i)) => colour_sets[i] = ColourSet(i, Colour.Alias(n))
+        //  | _                                         => ()
+        //}
         colour_sets[d.name] = ColourSet(d.name, d.type)
       }
       

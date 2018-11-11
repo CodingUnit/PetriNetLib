@@ -79,25 +79,8 @@ namespace PetriNetLib
           def t = GetExpr(t);
           def e = GetExpr(e);
           <[ if ($c) $t else $e]>
-          
-      | Func(Name = n, TypeOpt = t, ParmsData = (p, _), BodyData = (b, _)) => 
-           
-          def get_parm(p)
-          {
-            | <[ $(n : usesite)]> => <[parameter: $(n : usesite) ]>
-            | <[ $(n : usesite)($(i : usesite))]> => <[parameter: $(i : usesite) : Index.[$(n : usesite)]]>
-          }
-        
-          def parms = p.Map(x => x |> GetExpr |> get_parm);
-          def n = n.GetText();
-          def body = b.Map(GetExpr);
-          <[
-            def $(n : usesite)(..$parms)
-            {
-              ..$body
-            }
-          ]>
-      | Declaration(Declaration = MainParseTree.Declaration.Val(Val = MainParseTree.Val(Name = name, TypeOptData = _t, Expr = l))) => 
+                
+      | LowerDecl(LowerDecl = MainParseTree.LowerDecl.Val(Val = MainParseTree.Val(Name = name, TypeOptData = _t, Expr = l)) ) => 
       
                def name = name.IdentifierBodyData;
                def val = GetExpr(l);
@@ -119,10 +102,43 @@ namespace PetriNetLib
     
     ConvertTree(tree : MainParseTree.LangExpr) : PExpr
     {
-      | LangExpr.Expression(ExprsData = ([d], _)) => d |> GetExpr
-      | LangExpr.Expression(ExprsData = (d, _)) => 
-          def e = d.Map(GetExpr);
-          <[ {..$e} ]>
+      | Decl(DeclarationsData = decls) => 
+           
+          def map_decls(x)
+          {
+            | MainParseTree.Declaration.Func(Name = n, TypeOpt = t, ParmsData = (p, _), Body = MainParseTree.ExprList(ExprsData = b)) => 
+              def get_parm(p)
+              {
+                | <[ $(n : usesite)]>                 => <[parameter: $(n : usesite) ]>
+                | <[ $(n : usesite)($(i : usesite))]> => <[parameter: $(i : usesite) : Index.[$(n : usesite)]]>
+              }
+        
+              def parms = p.Map(x => x |> GetExpr |> get_parm);
+              def n = n.GetText();
+              def body = b.Map(GetExpr);
+              <[
+                def $(n : usesite)(..$parms)
+                {
+                  ..$body
+                }
+                
+              ]>
+          }
+          
+          match (decls.Map(map_decls))
+          {
+            | [e] => e
+            | e   => <[ {..$e}]>
+          }
+          
+      | Expr(Expr = e) => e |> GetExpr
+      | ExprList(ExprList = MainParseTree.ExprList(ExprsData = b)) => 
+          match (b.Map(GetExpr))
+          {
+            | [e] => e
+            | e   => <[ {..$e} ]>
+          }
+          
     }
     
     public ParseML(text : string) : PExpr

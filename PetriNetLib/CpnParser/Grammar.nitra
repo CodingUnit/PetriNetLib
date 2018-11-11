@@ -130,12 +130,12 @@ namespace CpnML.Grammar
 
     syntax Type = ":" TypeExpr;        
 
-    syntax Val = "val" Name=Identifier Type? '=' Expr ';'?;
+    syntax Val = "val" Name=Identifier Type? '=' Expr;
 
     syntax LowerDecl
     {
       | Val
-      | Var = "var" Names=(Identifier;",")+ Type ';'
+      | Var = "var" Names=(Identifier;",")+ Type
     }
 
 	syntax Declaration

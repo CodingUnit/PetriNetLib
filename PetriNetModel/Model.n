@@ -123,13 +123,13 @@ namespace PetriNetModel
   
   class HashMultiSet[T]
   {
-    table : array[Entry];
+    mutable table : array[Entry] = array(32);
     
     [Record]
     class Entry
     {
       public key   : T;
-      public count : int;
+      public count : int {get;set;}
      
       public Empty : bool
       {
@@ -142,6 +142,19 @@ namespace PetriNetModel
     
     Prime : int;
     
+    Resize(size : int) : void
+    {
+      Array.Resize(ref table, size)
+    }
+    
+    public this()
+    {
+    }
+    
+    public this(vals : IEnumerable[T])
+    {
+    }
+    
     hash1(x : T) : int
     {
       x.GetHashCode() % table.Length
@@ -152,7 +165,29 @@ namespace PetriNetModel
       Prime - (x.GetHashCode() % Prime)
     }
     
-    public FindEntry(k : T) : bool
+    public Add(k : T, count : int = 1) : void
+    {
+      def (entry, point) = FindEntry(k);
+      if (entry != null)
+      {
+        entry.count += count;
+      } else
+      {
+        table[point] = Entry(k, count)
+      }
+    }
+    
+    public Remove(k : T, count : int = 1) : void
+    {
+      def (entry, _) = FindEntry(k);
+      when (entry != null)
+      {
+        if (entry.count > count)
+          entry.count -= count; else entry.count = 0;
+      }
+    }
+    
+    FindEntry(k : T) : Entry * int
     {
       def probePoint = hash1(k);
       def incr = hash2(k);
@@ -160,7 +195,7 @@ namespace PetriNetModel
       def loop(point)
       {
           def entry = table[point];
-          if (entry == null || entry.Empty || !entry.key.Equals(k)) loop((point + incr) % table.Length) else true
+          if (entry == null || entry.Empty || entry.key.Equals(k)) (entry, point) else loop((point + incr) % table.Length)
       }
     
       

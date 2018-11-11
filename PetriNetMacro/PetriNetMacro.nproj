@@ -64,7 +64,7 @@
     </MacroReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Macro1.n" />
+    <Compile Include="PetriNetMacro.n" />
     <Compile Include="Properties\AssemblyInfo.n" />
   </ItemGroup>
   <ItemGroup>

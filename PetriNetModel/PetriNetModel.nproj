@@ -59,7 +59,7 @@
     </MacroReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Class1.n" />
+    <Compile Include="Model.n" />
     <Compile Include="Properties\AssemblyInfo.n" />
   </ItemGroup>
   <ItemGroup>

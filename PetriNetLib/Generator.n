@@ -150,7 +150,7 @@ namespace PetriNetLib
           <[ $(name : usesite).GetMany($expr)]>
         } else
         {
-          <[def $(a.expr) = $(name : usesite).Get()]>
+          <[ $(a.expr) = $(name : usesite).Get()]>
         }
       }
       
@@ -199,7 +199,7 @@ namespace PetriNetLib
     CreateVars(name : string, type : ColourSet) : ClassMember
     {
       def type = GetTypeExpr(type);
-      <[decl: $(name : usesite) : $type]>
+      <[decl: mutable $(name : usesite) : $type]>
     }
      
     CreateVals(expr : PExpr) : ClassMember
@@ -287,14 +287,24 @@ namespace PetriNetLib
       | <[ $(_ : usesite) ]>  => null//model.ml_decls.Find();
     }
 
+    CreateColourSet2(col : ColourSet) : ClassMember.TypeDeclaration
+    {
+      | ColourSet(n, Colour.Index(_, _, i)) => 
+          <[decl: [Record]
+            class $(i : usesite) : $(n : usesite)
+            {
+                                                       
+            }
+            ]>;
+      | _ => null    
+    }
+    
     CreateColourSet(col : ColourSet) : ClassMember.TypeDeclaration
     {
       | ColourSet(n, Colour.Alias(new_name))  => def name = Macros.UseSiteSymbol(n);
                                                  def mods = AttributesAndModifiers(NemerleModifiers.Private, []);
                                                  def al = TopDeclaration.Alias(name, mods, Typarms.Empty, <[ $(new_name : usesite) ]>);
-                                                 def ty = al |> ClassMember.TypeDeclaration.TypeDeclaration;
-                                                 ty.SetEnv(typebuilder.GlobalEnv);
-                                                 ty
+                                                 al |> ClassMember.TypeDeclaration.TypeDeclaration;
       | ColourSet(n, Colour.Record(vals))     => def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
                                                  def fields = fields.Map((n, t) => <[decl: $(n : usesite) : $t]>);
                                                  <[decl: [Record] class $(n : usesite)
@@ -302,7 +312,7 @@ namespace PetriNetLib
                                                            ..$fields
                                                          }
                                                  ]>
-      | ColourSet(n, Colour.Index(mn, mx, _)) => def eval(m)
+      | ColourSet(n, Colour.Index(mn, mx, i)) => def eval(m)
                                                  {
                                                     def expr = converter.ParseML(m);
                                                     match (expr)
@@ -324,6 +334,8 @@ namespace PetriNetLib
                                                  }
                                                  def mn = mn |> eval;
                                                  def mx = mx |> eval;
+                                                 
+                                                     
                                                   <[decl: [Record]
                                                       class $(n : usesite)
                                                       {
@@ -389,9 +401,12 @@ namespace PetriNetLib
         }
       }
       
-      def mark = fold(place.init_mark);
-      def name = place.name;
-      <[ $(name : usesite).Add($mark)]>
+      if (place.init_mark == null) <[]> else
+      {
+        def mark = fold(place.init_mark);
+        def name = place.name;
+        <[ $(name : usesite).Add($mark)]>
+      }
     }
     
     public PhaseTwo() : void
@@ -416,6 +431,8 @@ namespace PetriNetLib
       CreateOperators();
       assert2(false);
       def sets = model.colour_sets.Values.Map(CreateColourSet).Filter(_ != null);
+      def sets2 = model.colour_sets.Values.Map(CreateColourSet2).Filter(_ != null);
+      def sets = sets + sets2;
       foreach (m in sets) typebuilder.DefineNestedTypeWithSource(m).Compile();
       def fields = model.places.MapToList(CreatePlace);
       def marking = model.places.MapToList(CreateInitMarking);
