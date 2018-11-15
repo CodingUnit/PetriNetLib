@@ -5,6 +5,7 @@ using Nemerle.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Random;
 
 namespace PetriNetModel
 {
@@ -28,7 +29,7 @@ namespace PetriNetModel
       get;
     }
     
-    GetMany(tok : IEnumerable[T]) : IEnumerable[T];
+    GetMany(tok : IEnumerable[T]) : void;
     
     Get() : T;
   }
@@ -123,7 +124,29 @@ namespace PetriNetModel
   
   class HashMultiSet[T]
   {
-    mutable table : array[Entry] = array(32);
+    mutable buckets : array[Entry] = array(32);
+    
+    public Buckets : int
+    {
+      get
+      {
+        buckets.Length
+      }
+    }
+    
+    public Count : int
+    {
+      get;
+      private set;
+    }
+    
+    factor : double
+    {
+      get
+      {
+        1.0 * Count / buckets.Length
+      }
+    }
     
     [Record]
     class Entry
@@ -140,11 +163,16 @@ namespace PetriNetModel
       }
     }
     
-    Prime : int;
-    
-    Resize(size : int) : void
+    Rehash() : void
     {
-      Array.Resize(ref table, size)
+      def old = buckets;
+      buckets = array(buckets.Length * 2);
+      foreach (bucket in old)
+      {
+        | null 
+        | Entry(Empty = true)       => ()
+        | Entry(key = k, count = c) => Add(k, c)
+      }
     }
     
     public this()
@@ -153,16 +181,46 @@ namespace PetriNetModel
     
     public this(vals : IEnumerable[T])
     {
+      foreach (item in vals)
+      {
+        Add(item)
+      }
     }
     
     hash1(x : T) : int
     {
-      x.GetHashCode() % table.Length
+      x.GetHashCode() % buckets.Length
     }
     
     hash2(x : T) : int
     {
-      Prime - (x.GetHashCode() % Prime)
+      def prime = buckets.Length - 1;
+      prime - (x.GetHashCode() % prime)
+    }
+    
+    public ElementAtPos(pos : int) : T
+    {
+      def end = pos;
+      
+      def loop(i, c)            
+      {
+        if (c == 0 && i == buckets.Length) loop(0, 1) else
+        if (c == 1 && i == end) default(T) else
+        match (buckets[i])
+        {
+          | null
+          | Entry(Empty = true) => loop(i + 1, c)
+          | e                   => e.count--;e.key
+        }
+      }
+      
+      loop(pos % buckets.Length, 0)
+    }
+    
+    public Contains(k : T, count : int = 1) : bool
+    {
+      def (e, _) = FindEntry(k);
+      e != null && !e.Empty && e.count >= count
     }
     
     public Add(k : T, count : int = 1) : void
@@ -173,7 +231,9 @@ namespace PetriNetModel
         entry.count += count;
       } else
       {
-        table[point] = Entry(k, count)
+        buckets[point] = Entry(k, count);
+        Count++;
+        when (factor >= 0.75) Rehash();
       }
     }
     
@@ -194,18 +254,19 @@ namespace PetriNetModel
       
       def loop(point)
       {
-          def entry = table[point];
+          def entry = buckets[point];
           if (entry == null || entry.Empty || entry.key.Equals(k)) (entry, point) else loop((point + incr) % table.Length)
       }
     
-      
       loop(probePoint)
     }
+    
   }
   
   public class MultiSet[T] : ITokenContainer[T]
   {
     table : HashMultiSet[T] = HashMultiSet();
+    rnd : Random = Random();
     
     public Create() : ITokenContainer[T]
     {
@@ -226,25 +287,38 @@ namespace PetriNetModel
     {
     }
     
-    public Add(tok : T) : void {}
+    public Add(tok : T) : void {table.Add(tok)}
     
-    public AddMany(tok : IEnumerable[T]) : void {}
+    public AddMany(tok : IEnumerable[T]) : void 
+    {
+      foreach (t in tok)
+      {
+        table.Add(t)
+      }
+    }
     
-    public Have(tok : IEnumerable[T]) : bool {false}
+    public Have(tok : IEnumerable[T]) : bool 
+    {
+      tok.All(x => table.Contains(x))// table.Contains()
+    }
     
     public HaveTokens : bool
     {
-      get {false}
+      get {table.Count != 0}
     }
     
-    public GetMany(tok : IEnumerable[T]) : IEnumerable[T]
+    public GetMany(tok : IEnumerable[T]) : void
     {
-      Enumerable.Empty()
+      foreach (t in tok)
+      {
+        table.Remove(t)
+      }
     }
     
     public Get() : T
     {
-      default(T)
+      def pos = rnd.Next(table.Buckets);
+      table.ElementAtPos(pos)
     }
   }
   
