@@ -22,6 +22,7 @@ namespace PetriNetModel
     
     AddMany(tok : IEnumerable[T]) : void;
     
+    Have(num : int) : option[T];
     Have(tok : IEnumerable[T]) : bool;
     
     HaveTokens : bool
@@ -29,6 +30,7 @@ namespace PetriNetModel
       get;
     }
     
+    GetMany(key : T, num : int) : void;
     GetMany(tok : IEnumerable[T]) : void;
     
     Get() : T;
@@ -64,7 +66,7 @@ namespace PetriNetModel
       get {false}
     }
     
-    public GetMany(tok : IEnumerable[T]) : IEnumerable[T]
+    public GetMany(tok : IEnumerable[T]) : void
     {
       throw NotImplementedException()
     }
@@ -75,19 +77,19 @@ namespace PetriNetModel
     }
   }
   
-  class RandomIEnumerable[T] : ITokenContainer[T]
+  class RandomArray[T] : ITokenContainer[T]
   {
     queue   : List[T];
     elems   : BitIEnumerable;
     
     public Create() : ITokenContainer[T]
     {
-      RandomIEnumerable()
+      RandomArray()
     }
     
     public Create(en : IEnumerable[T]) : ITokenContainer[T]
     {
-      RandomIEnumerable(en)
+      RandomArray(en)
     }
     
     public this(en : IEnumerable[T])
@@ -111,9 +113,8 @@ namespace PetriNetModel
       get {false}
     }
     
-    public GetMany(tok : IEnumerable[T]) : IEnumerable[T]
+    public GetMany(tok : IEnumerable[T]) : void
     {
-      Enumerable.Empty()
     }
     
     public Get() : T
@@ -122,9 +123,61 @@ namespace PetriNetModel
     }
   }
   
-  class HashMultiSet[T]
+  
+  class RQueue[T]
   {
-    mutable buckets : array[Entry] = array(32);
+    queue : List[T] = List();
+    mutable wi : int;
+    mutable ri : int;
+    
+    public Enqueue(elem : T) : void
+    {
+      queue[wi] = elem;
+      wi++;
+    }
+    
+    public Deque() : T
+    {
+      def val = queue[ri];
+      ri++;
+      val
+    }
+    
+    public Peek() : T
+    {
+      queue[ri]
+    }
+    
+    public Item[index : int] : T
+    {
+      get
+      {
+        queue[index]
+      }
+      set
+      {
+        queue[index] = value
+      }
+    }
+  }
+  
+  class HashMultiSet[T]// : IEnumerable[T * int]
+  {
+    mutable buckets : array[Bucket] = array(32);
+    //class Enumerator : IEnumerator[T * int]
+    //{
+    //  public MoveNext() : bool
+    //  {
+    //  }
+      
+    //  public Current : T * int
+    //  {
+    //    get
+    //    {
+          
+    //    }
+    //  }
+    //}
     
     public Buckets : int
     {
@@ -133,6 +186,10 @@ namespace PetriNetModel
         buckets.Length
       }
     }
+    
+    //public GetEnumerator() : IEnumerator[T * int]
+    //{
+    //}
     
     public Count : int
     {
@@ -149,7 +206,7 @@ namespace PetriNetModel
     }
     
     [Record]
-    class Entry
+    class Bucket
     {
       public key   : T;
       public count : int {get;set;}
@@ -170,8 +227,8 @@ namespace PetriNetModel
       foreach (bucket in old)
       {
         | null 
-        | Entry(Empty = true)       => ()
-        | Entry(key = k, count = c) => Add(k, c)
+        | Bucket(Empty = true)       => ()
+        | Bucket(key = k, count = c) => Add(k, c)
       }
     }
     
@@ -198,6 +255,29 @@ namespace PetriNetModel
       prime - (x.GetHashCode() % prime)
     }
     
+    public ContainsCount(count : int) : option[T]
+    {
+      def en = buckets.AsEnumerable().GetEnumerator();
+      
+      def loop()
+      {
+        match (en.Current)
+        {
+          | null
+          | Bucket(Empty = true) => if (en.MoveNext()) loop() else None()
+          | n                    => if (n.count >= count)
+                                    {
+                                      Some(n.key)
+                                    } else 
+                                    {
+                                      if (en.MoveNext()) loop() else None()
+                                    }
+        }
+      }
+      
+      loop();
+    }
+    
     public ElementAtPos(pos : int) : T
     {
       def end = pos;
@@ -209,7 +289,7 @@ namespace PetriNetModel
         match (buckets[i])
         {
           | null
-          | Entry(Empty = true) => loop(i + 1, c)
+          | Bucket(Empty = true) => loop(i + 1, c)
           | e                   => e.count--;e.key
         }
       }
@@ -231,7 +311,7 @@ namespace PetriNetModel
         entry.count += count;
       } else
       {
-        buckets[point] = Entry(k, count);
+        buckets[point] = Bucket(k, count);
         Count++;
         when (factor >= 0.75) Rehash();
       }
@@ -247,7 +327,7 @@ namespace PetriNetModel
       }
     }
     
-    FindEntry(k : T) : Entry * int
+    FindEntry(k : T) : Bucket * int
     {
       def probePoint = hash1(k);
       def incr = hash2(k);
@@ -255,7 +335,7 @@ namespace PetriNetModel
       def loop(point)
       {
           def entry = buckets[point];
-          if (entry == null || entry.Empty || entry.key.Equals(k)) (entry, point) else loop((point + incr) % table.Length)
+          if (entry == null || entry.Empty || entry.key.Equals(k)) (entry, point) else loop((point + incr) % buckets.Length)
       }
     
       loop(probePoint)
@@ -266,7 +346,7 @@ namespace PetriNetModel
   public class MultiSet[T] : ITokenContainer[T]
   {
     table : HashMultiSet[T] = HashMultiSet();
-    rnd : Random = Random();
+    rnd   : Random = Random();
     
     public Create() : ITokenContainer[T]
     {
@@ -302,9 +382,19 @@ namespace PetriNetModel
       tok.All(x => table.Contains(x))// table.Contains()
     }
     
+    public Have(num : int) : option[T]
+    {
+      table.ContainsCount(num)
+    }
+    
     public HaveTokens : bool
     {
       get {table.Count != 0}
+    }
+    
+    public GetMany(key : T, num : int) : void
+    {
+      table.Remove(key, num)
     }
     
     public GetMany(tok : IEnumerable[T]) : void
@@ -320,14 +410,20 @@ namespace PetriNetModel
       def pos = rnd.Next(table.Buckets);
       table.ElementAtPos(pos)
     }
+    
+    public override ToString() : string
+    {
+      
+    }
   }
   
   public class Place[T]
   {
     tokens : ITokenContainer[T];
     
-    public this() {tokens = MultiSet()}
-    public this(cont : ITokenContainer[T]) {tokens = cont}
+    public Name : string;
+    public this(name : string) {Name =  name;tokens = MultiSet()}
+    public this(name : string, cont : ITokenContainer[T]) {tokens = cont; Name = name;}
     
     public this(en : IEnumerable[T], cont : ITokenContainer[T])
     {
@@ -357,7 +453,7 @@ namespace PetriNetModel
       }
     }
     
-    public GetMany(tok : IEnumerable[T]) : IEnumerable[T]
+    public GetMany(tok : IEnumerable[T]) : void
     {
       tokens.GetMany(tok)
     }
@@ -365,6 +461,11 @@ namespace PetriNetModel
     public Get() : T
     {
       tokens.Get()
+    }
+    
+    public override ToString() : string
+    {
+      $"$Name{$tokens}"
     }
   }
 }

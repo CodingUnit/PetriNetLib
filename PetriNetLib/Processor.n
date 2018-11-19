@@ -117,27 +117,21 @@ namespace PetriNetLib
     | TypeTokenNotCompat {incol : Colour; outcol : Colour;place : Place}
   }
   
-  //[Lens]
-  //[Record]
-  //public class TransitionExecContext
-  //{
-  //  public binding : Hashtable[string, Token];
-  //  public tokens  : list[Token];
-  //  public error   : list[ExecError];
-    
-  //  public all_getted_tokens : list[Token]
-  //  {
-  //    get
-  //    {
-  //      []
-  //    }
-  //  }
-  //}
+  [Flags]
+  public enum PetriNetFlags
+  {
+    | Debug = 1
+  }
   
   public class PetriNet
   {
     mutable gen : Generator;
     mutable proc : PetriNetProcessor;
+    
+    [FlagAccessor(
+                  Debug
+                )]
+    public Flags : PetriNetFlags;
     
     public PhaseTwo() : void
     {
