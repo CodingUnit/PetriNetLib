@@ -77,7 +77,7 @@ namespace PetriNetLib
       def name = place.name;
       def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
       def type = GetTypeExpr(place.colour);
-      <[decl: $(name : usesite) : PetriNetModel.Place.[$type] = PetriNetModel.Place()]>
+      <[decl: $(name : usesite) : PetriNetModel.Place.[$type] = PetriNetModel.Place($(name : string))]>
     }
     
     IsTokenExpr(expr : PExpr) : bool
@@ -98,12 +98,12 @@ namespace PetriNetLib
                              {
                                Enumerable.Repeat(tok, count)
                              }]>;
-     typebuilder.DefineWithSource(token_op);
+     _ = typebuilder.DefineWithSource(token_op);
      def token_combine_op = <[decl: public static @%++[T](tok1 : IEnumerable[T], tok2 : IEnumerable[T]) : IEnumerable[T]
                              {
                                tok1.Union(tok2)
                              }]>;
-     typebuilder.DefineWithSource(token_combine_op);
+     _ = typebuilder.DefineWithSource(token_combine_op);
     }
     
     GetTokenExpr(expr : PExpr) : PExpr
@@ -169,8 +169,25 @@ namespace PetriNetLib
         }
       }
       
+      def sort_func((_, x), (_, y))
+      {
+        match (x.expr, y.expr)
+        {
+          | (<[ $_(..$_) ]>, <[ $_(..$_) ]>) => 0
+          | (_, <[ $_(..$_) ]>)              => 1
+          | (<[ $_(..$_) ]>, _)              => -1
+          | _                                => 0
+        }
+      }
+      
+      def create_bind(x)
+      {
+      }
+      
+      def input = input.Sort(sort_func);
       def checks = input.Map(create_check);
-      def checks = checks.Reduce((x, y) => <[ $x && $y]>);
+      def binding = input.Map(create_bind);
+      //def checks = checks.Reduce((x, y) => <[ $x && $y]>);
       def run_body = input.Map(create_run_body);
       def out_body = output.Map(create_out);
       <[ 
@@ -343,6 +360,11 @@ namespace PetriNetLib
                                                         public static max : int = $(mx : int);
                                                         public num : int;
                                                         
+                                                        public override GetHashCode() : int 
+                                                        {
+                                                          $(n : string).GetHashCode() + num * 33175
+                                                        }
+                                                        
                                                         public static all() : IEnumerable[$(n : usesite)]
                                                         {
                                                           Enumerable.Range(min, max).Select($(n : usesite))
@@ -419,17 +441,17 @@ namespace PetriNetLib
       CreateDummyMethod();
       def methods = model.transitions.MapToList(CreateTran);
       def vals = model.ml_decls.Map(CreateVals).Filter(_ != null);
-      foreach (m in vals) typebuilder.DefineWithSource(m);
+      foreach (m in vals) _ = typebuilder.DefineWithSource(m);
       def decls = model.ml_decls.Map(CreateDecl).Filter(_ != null);
       def decls = decls + methods;
-      foreach (m in decls) typebuilder.DefineWithSource(m);
+      foreach (m in decls) _ = typebuilder.DefineWithSource(m);
       typebuilder.Compile()
     }
     
     public Generate() : void
     {
       CreateOperators();
-      assert2(false);
+      //assert2(false);
       def sets = model.colour_sets.Values.Map(CreateColourSet).Filter(_ != null);
       def sets2 = model.colour_sets.Values.Map(CreateColourSet2).Filter(_ != null);
       def sets = sets + sets2;
@@ -439,7 +461,7 @@ namespace PetriNetLib
       def cons = <[decl: public this() {..$marking}]>;
       def vars = model.vars.KeyValuePairs.MapToList(CreateVars);
       def members = cons :: fields + vars;
-      foreach (m in members) typebuilder.DefineWithSource(m);
+      foreach (m in members) _ = typebuilder.DefineWithSource(m);
     }
   }
 }

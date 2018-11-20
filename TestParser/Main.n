@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Console;
 using System.Linq;
 using PetriNetLib;
+using System.Reactive.Linq;
+using System.Reactive;
 
 module Program
 {
@@ -15,9 +17,28 @@ module Program
   {
   }
   
+  Put() : void
+  {
+    net.PutDownChopsticks();
+    Console.WriteLine(net.ToString())
+  }
+  
+  Take() : void
+  {
+    net.TakeChopsticks();
+    Console.WriteLine(net.ToString())
+  }
+  
+  mutable net : DiningPhilosophers;
+  
   Main() : void
   {
+    def ran = Random();
     WriteLine("Hi!");
+    net = DiningPhilosophers();
+    _ = Observable.Interval(TimeSpan.FromMilliseconds(1000)).Subscribe(_ => Put());
+    _ = Observable.Interval(TimeSpan.FromMilliseconds(1333)).Subscribe(_ => Take());
+    //net.
     //def net = PetriNet();
     //net.Process("DiningPhilosophers.cpn");
     _ = ReadLine();

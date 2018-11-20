@@ -1,0 +1,35 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace PetriNetModel
+{
+ public interface ITokenContainer[T]
+  {
+    Create() : ITokenContainer[T];
+    Create(en : IEnumerable[T]) : ITokenContainer[T];
+    Add(tok : T) : void;
+    
+    AddMany(tok : IEnumerable[T]) : void;
+    
+    Have(num : int) : bool;
+    Have(tok : IEnumerable[T]) : bool;
+    
+    Peek() : T;
+    HaveTokens : bool
+    {
+      get;
+    }
+    
+    GetMany(num : int) : IEnumerable[T];
+    GetMany(tok : IEnumerable[T]) : void;
+    
+    Get(elem : T) : void;
+    Get() : T;
+  }
+}

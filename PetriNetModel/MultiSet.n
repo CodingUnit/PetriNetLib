@@ -1,0 +1,102 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace PetriNetModel
+{
+  public class MultiSet[T] : ITokenContainer[T]
+  {
+    table : HashMultiSet[T] = HashMultiSet();
+    rnd   : Random = Random();
+
+    public Create() : ITokenContainer[T]
+    {
+      MultiSet()
+    }
+
+    public Create(en : IEnumerable[T]) : ITokenContainer[T]
+    {
+      MultiSet(en)
+    }
+
+    public this(en : IEnumerable[T])
+    {
+      AddMany(en)
+    }
+
+    public this()
+    {
+    }
+
+    public Add(tok : T) : void {table.Add(tok)}
+
+    public AddMany(tok : IEnumerable[T]) : void 
+    {
+      foreach (t in tok)
+      {
+        table.Add(t)
+      }
+    }
+
+    public Have(tok : IEnumerable[T]) : bool 
+    {
+      tok.All(x => table.Contains(x))// table.Contains()
+    }
+
+    public Have(num : int) : bool
+    {
+      table.Exists((_, c) => c >= num)
+    }
+
+    public HaveTokens : bool
+    {
+      get {table.Count != 0}
+    }
+
+    public GetMany(num : int) : IEnumerable[T]
+    {
+      def tokens = table.Where((_, c) => c >= num).ToArray();
+      def idx = rnd.Next(tokens.Length);
+      def key = tokens[idx][0];
+      table.Remove(key, num);
+      Enumerable.Repeat(key, num)
+    }
+
+    public GetMany(tok : IEnumerable[T]) : void
+    {
+      foreach (t in tok)
+      {
+        table.Remove(t)
+      }
+    }
+
+    public Peek() : T
+    {
+      def pos = rnd.Next(table.Count);
+      table.ElementAtPos(pos)
+    }
+    
+    public Get(elem : T) : void
+    {
+      table.Remove(elem)
+    }
+    
+    public Get() : T
+    {
+      def elem = Peek();
+      table.Remove(elem);
+      elem
+    }
+
+    public override ToString() : string
+    {
+      def tokens = table.Select((x : T, c : int) => $"$c`$x");
+      string.Join("++", tokens)
+    }
+  }
+}

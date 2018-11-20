@@ -1,0 +1,182 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace PetriNetModel
+{
+  public class HashMultiSet[T] : IEnumerable[T * int]
+  {
+    mutable buckets : array[Bucket] = array(32);
+    items : RQueue[Bucket] = RQueue(32);
+    
+    [Record]
+    class Enumerator : IEnumerator[T * int]
+    {
+      en : IEnumerator[Bucket];
+      
+      public Dispose() : void {en.Dispose()}
+      public Reset() : void
+      {
+        en.Reset()
+      }
+      
+      public MoveNext() : bool
+      {
+        en.MoveNext()
+      }
+      
+      public Current : T * int
+      {
+        get
+        {
+          def cur = en.Current;
+          (cur.key, cur.count)
+        }
+      }
+    }
+    
+    public GetEnumerator() : IEnumerator[T * int]
+    {
+      Enumerator(items.GetEnumerator())
+    }
+    
+    public Count : int
+    {
+      get
+      {
+        items.Count
+      }
+    }
+    
+    factor : double
+    {
+      get
+      {
+        1.0 * Count / buckets.Length
+      }
+    }
+    
+    [Record]
+    class Bucket
+    {
+      public key   : T;
+      public count : int {get;set;}
+     
+      public IndexInItems : int {get;set;}
+      public IndexInBuckets : int {get;set;}
+      public Empty : bool
+      {
+        get
+        {
+          count == 0
+        }
+      }
+    }
+    
+    Rehash() : void
+    {
+      buckets = array(buckets.Length * 2);
+      items.Resize(buckets.Length);
+      //items = RQueue(buckets.Length * 2);
+      foreach (bucket in items)
+      {
+        AddInternal(bucket)
+      }
+    }
+    
+    public this()
+    {
+    }
+    
+    public this(vals : IEnumerable[T])
+    {
+      foreach (item in vals)
+      {
+        Add(item)
+      }
+    }
+    
+    hash1(x : T) : int
+    {
+      x.GetHashCode() % buckets.Length
+    }
+    
+    hash2(x : T) : int
+    {
+      def prime = buckets.Length - 1;
+      prime - (x.GetHashCode() % prime)
+    }
+    
+    public ElementAtPos(pos : int) : T
+    {
+      items[pos].key
+    }
+    
+    public Contains(k : T, count : int = 1) : bool
+    {
+      def (e, _) = FindEntry(k);
+      e != null && !e.Empty && e.count >= count
+    }
+    
+    AddInternal(bucket : Bucket) : void
+    {
+      def (_, point) = FindEntry(bucket.key);
+      //def bucket = Bucket(k, count, items.WriteIndex, point);
+      bucket.IndexInBuckets = point;
+      buckets[point] = bucket;
+    }
+    
+    public Add(k : T, count : int = 1) : void
+    {
+      def (entry, point) = FindEntry(k);
+      if (entry != null)
+      {
+        entry.count += count;
+      } else
+      {
+        def bucket = Bucket(k, count, items.WriteIndex, point);
+        buckets[point] = bucket;
+        items.Enqueue(bucket);
+        when (factor >= 0.75) Rehash();
+      }
+    }
+    
+    public Remove(k : T, count : int = 1) : void
+    {
+      def (entry, point) = FindEntry(k);
+      when (entry != null)
+      {
+        if (entry.count > count)
+        {
+          entry.count -= count;
+        } else 
+        {
+          buckets[point] = null;
+          def new_elem = items.Deque();
+          new_elem.IndexInItems = entry.IndexInItems;
+          items[entry.IndexInItems] = new_elem;
+        }
+      }
+    }
+    
+    FindEntry(k : T) : Bucket * int
+    {
+      def probePoint = hash1(k);
+      def incr = hash2(k);
+      
+      def loop(point)
+      {
+        def entry = buckets[point];
+        if (entry == null || entry.Empty || entry.key.Equals(k)) (entry, point) else loop((point + incr) % buckets.Length)
+      }
+    
+      loop(probePoint)
+    }
+    
+  }
+}

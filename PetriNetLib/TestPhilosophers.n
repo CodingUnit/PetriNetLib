@@ -9,6 +9,7 @@ using System.Linq;
 using CommonLib.Macros;
 using System.Reactive;
 using System.Reactive.Linq;
+using PetriNetModel;
 
 namespace PetriNetLib
 {
@@ -132,9 +133,11 @@ namespace PetriNetLib
   /// </summary>
   public class TestPhilosophers
   {
-    think      : Think            = Think();
-    chopsticks : UnusedChopsticks = UnusedChopsticks();
-    eat        : Eat              = Eat();
+    think      : Place.[Ph] = Place("Think");
+    chopsticks : Place.[Cs] = Place("UnusedChopsticks");
+    eat        : Place.[Ph] = Place("Eating");
+    
+    mutable p : Ph;
     
     Chopsticks(p : Ph) : IEnumerable[Cs]
     {
@@ -145,12 +148,22 @@ namespace PetriNetLib
     
     public TakeChopSticks() : void
     {
-      match (think.marking)
+      when (think.HaveTokens)
       {
-        | [] => ()
-        | p :: _ => def cs = Chopsticks(p);
-                    when (!chopsticks.Get(cs).IsEmpty()) think.Get() |> eat.Add
+        p = think.Peek();
+        when (chopsticks.Have(Chopsticks(p)))
+        {
+          think.Get(p);
+          chopsticks.Get(cs);
+          eat.Add(p);
+        }
       }
+      //match (think.marking)
+      //{
+      //  | [] => ()
+      //  | p :: _ => def cs = Chopsticks(p);
+      //              when (!chopsticks.Get(cs).IsEmpty()) think.Get() |> eat.Add
+      //}
     }
     
     public PutDownChopSticks() : void

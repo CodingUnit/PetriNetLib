@@ -1,0 +1,74 @@
+﻿using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Random;
+
+namespace PetriNetModel
+{
+  
+  public class Place[T]
+  {
+    tokens : ITokenContainer[T];
+    
+    public Name : string;
+    public this(name : string) {Name =  name;tokens = MultiSet()}
+    public this(name : string, cont : ITokenContainer[T]) {tokens = cont; Name = name;}
+    
+    public this(en : IEnumerable[T], cont : ITokenContainer[T])
+    {
+      tokens = cont.Create(en)
+    }
+    
+    public Add(tok : T) : void
+    {
+      tokens.Add(tok)
+    }
+    
+    public Add(tok : IEnumerable[T]) : void
+    {
+      tokens.AddMany(tok)
+    }
+    
+    public Have(tok : IEnumerable[T]) : bool
+    {
+      tokens.Have(tok)
+    }
+    
+    public HaveTokens : bool
+    {
+      get
+      {
+        tokens.HaveTokens
+      }
+    }
+    
+    public Get(tok : IEnumerable[T]) : void
+    {
+      tokens.GetMany(tok)
+    }
+    
+    public Peek() : T
+    {
+      tokens.Peek()
+    }
+    
+    public Get(elem : T) : void
+    {
+      tokens.Get(elem)
+    }
+  
+    public Get() : T
+    {
+      tokens.Get()
+    }
+    
+    public override ToString() : string
+    {
+      $"$Name{$tokens}"
+    }
+  }
+}

@@ -1,0 +1,125 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace PetriNetModel
+{
+ class BitIEnumerable
+  {
+    buf : List[int] = List();
+  }
+  
+  
+  //class TokenQueue[T] : ITokenContainer[T]
+  //{
+  //  public Create() : ITokenContainer[T]
+  //  {
+  //    TokenQueue()
+  //  }
+    
+  //  public Create(en : IEnumerable[T]) : ITokenContainer[T]
+  //  {
+  //    TokenQueue(en)
+  //  }
+    
+  //  public this() {}
+  //  public this(en : IEnumerable[T])
+  //  {
+      
+  //  }
+    
+  //  public Add(tok : T) : void {}
+    
+  //  public AddMany(tok : IEnumerable[T]) : void {}
+    
+  //  public Have(tok : IEnumerable[T]) : bool {false}
+    
+  //  public Have(num : int) : bool
+  //  {
+  //    false
+  //  }
+    
+  //  public HaveTokens : bool
+  //  {
+  //    get {false}
+  //  }
+    
+  //  public GetMany(tok : IEnumerable[T]) : void
+  //  {
+  //    throw NotImplementedException()
+  //  }
+    
+  //  public GetMany(num : int) : IEnumerable[T]
+  //  {
+  //    throw NotImplementedException()
+  //  }
+    
+  //  public Get() : T
+  //  {
+  //    default(T)
+  //  }
+  //}
+  
+  //class RandomArray[T] : ITokenContainer[T]
+  //{
+  //  queue   : List[T];
+  //  elems   : BitIEnumerable;
+    
+  //  public Create() : ITokenContainer[T]
+  //  {
+  //    RandomArray()
+  //  }
+    
+  //  public Create(en : IEnumerable[T]) : ITokenContainer[T]
+  //  {
+  //    RandomArray(en)
+  //  }
+    
+  //  public this(en : IEnumerable[T])
+  //  {
+      
+  //  }
+    
+  //  public this()
+  //  {
+      
+  //  }
+    
+  //  public Add(tok : T) : void {}
+    
+  //  public AddMany(tok : IEnumerable[T]) : void {}
+    
+  //  public Have(tok : IEnumerable[T]) : bool {false}
+    
+  //  public Have(num : int) : bool
+  //  {
+  //    false
+  //  }
+    
+  //  public HaveTokens : bool
+  //  {
+  //    get {false}
+  //  }
+    
+  //  public GetMany(num : int) : IEnumerable[T]
+  //  {
+  //    throw NotImplementedException()
+  //  }
+    
+  //  public GetMany(tok : IEnumerable[T]) : void
+  //  {
+  //  }
+    
+  //  public Get() : T
+  //  {
+  //    default(T)
+  //  }
+  //}
+  
+  
+}
