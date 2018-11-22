@@ -113,6 +113,12 @@
     <Compile Include="Generator.n">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="GenTran.n">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="InArcBinding.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="OutModel.n">
       <SubType>Code</SubType>
     </Compile>

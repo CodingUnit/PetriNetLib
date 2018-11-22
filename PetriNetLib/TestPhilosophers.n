@@ -151,7 +151,8 @@ namespace PetriNetLib
       when (think.HaveTokens)
       {
         p = think.Peek();
-        when (chopsticks.Have(Chopsticks(p)))
+        def cs = Chopsticks(p);
+        when (chopsticks.Have(cs))
         {
           think.Get(p);
           chopsticks.Get(cs);
@@ -168,7 +169,7 @@ namespace PetriNetLib
     
     public PutDownChopSticks() : void
     {
-      when (eat.HaveToken)
+      when (eat.HaveTokens)
       {
         def p = eat.Get();
         p |> think.Add;

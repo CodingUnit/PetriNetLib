@@ -15,7 +15,7 @@ namespace CommonLib.Macros
   /// </summary>
   public module BitUtils
   {
-    
+
     public SetAll[T](this lst : BitArray, coll : IEnumerable[T], setter : T -> int) : void
     {
       coll.Iter(x => lst.Set(setter(x), true))
@@ -25,39 +25,55 @@ namespace CommonLib.Macros
     {
       a.Or(b)
     }
-    
+
     public @&=(a : BitArray, b : BitArray) : BitArray
     {
       a.And(b)
     }
-    
+
     public @~=(a : BitArray) : BitArray
     {
       a.Not()
     }
-    
+
     public @|(a : BitArray, b : BitArray) : BitArray
     {
       def bits = BitArray(a);
       bits.Or(b)
     }
-    
+
     public @&(a : BitArray, b : BitArray) : BitArray
     {
       def bits = BitArray(a);
       bits.And(b)
     }
-    
+
     public @~(a : BitArray) : BitArray
     {
       def bits = BitArray(a);
       bits.Not()
     }
-    
+
     public MakeLong(lo : uint, hi : uint) : ulong
     {
       def hi  = hi :> ulong;
       lo | (hi << 32)
     }
+
+    //public LeadingZeros(x : int) : int
+    //{
+    //  const int numIntBits = sizeof(int) * 8; //compile time constant
+    //  x |= x >> 1; 
+    //  x |= x >> 2;
+    //  x |= x >> 4;
+    //  x |= x >> 8;
+    //  x |= x >> 16;
+    //  x -= x >> 1 & 0x55555555;
+    //  x = (x >> 2 & 0x33333333) + (x & 0x33333333);
+    //  x = (x >> 4) + x & 0x0f0f0f0f;
+    //  x += x >> 8;
+    //  x += x >> 16;
+    //  return numIntBits - (x & 0x0000003f); //subtract # of 1s from 32
+    //}
   }
 }

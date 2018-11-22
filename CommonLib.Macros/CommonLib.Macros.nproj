@@ -164,6 +164,9 @@
     <Compile Include="GetBytes.n">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="HashMultiSet.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Ifvalue.n">
       <SubType>Code</SubType>
     </Compile>
@@ -232,6 +235,9 @@
       <SubType>Code</SubType>
     </None>
     <Compile Include="ReactiveProperty.n">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="RQueue.n">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Serialization.n">

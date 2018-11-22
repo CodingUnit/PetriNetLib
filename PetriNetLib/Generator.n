@@ -17,7 +17,7 @@ namespace PetriNetLib
   /// <summary>
   /// Description of Generator.
   /// </summary>
-  class Generator
+  partial class Generator
   {
     model : OutModel;
     proc : PetriNetProcessor;
@@ -106,7 +106,7 @@ namespace PetriNetLib
      _ = typebuilder.DefineWithSource(token_combine_op);
     }
     
-    GetTokenExpr(expr : PExpr) : PExpr
+    internal static GetTokenExpr(expr : PExpr) : PExpr
     {
       def loop(e)
       {
@@ -123,82 +123,6 @@ namespace PetriNetLib
       
     }
     
-    CreateTranBody(tran : Transition) : PExpr
-    {
-      def input = tran.InputPlaces;
-      def output = tran.OutputPlaces;
-      
-      def create_check(p, a)
-      {
-        def name = p.name;
-        if (a.expr |> IsTokenExpr)
-        {
-          def tok = GetTokenExpr(a.expr);
-          <[ $(name : usesite).Have($tok) ]>
-        } else
-        {
-          <[ $(name : usesite).HaveTokens ]>
-        }
-      }
-      
-      def create_run_body(p, a)
-      {
-        def name = p.name;
-        if (a.expr |> IsTokenExpr)
-        {
-          def expr = GetTokenExpr(a.expr);
-          <[ $(name : usesite).GetMany($expr)]>
-        } else
-        {
-          <[ $(a.expr) = $(name : usesite).Get()]>
-        }
-      }
-      
-      def create_out(p, a)
-      {
-        def name = p.name;
-        match (a.expr)
-        {
-          | <[ 1 ` $e ]>
-          | <[ $_(..$_)]> as e                                    
-          | <[ $(_ : usesite) ]> as e      => <[ $(name : usesite).Add($e)]>
-          | <[ $(_ : int) ` $_ ]> 
-          | <[ $_ %++ $_ ]>                => def expr = GetTokenExpr(a.expr);
-                                              <[ $(name : usesite).AddMany($expr)]>
-          
-        }
-      }
-      
-      def sort_func((_, x), (_, y))
-      {
-        match (x.expr, y.expr)
-        {
-          | (<[ $_(..$_) ]>, <[ $_(..$_) ]>) => 0
-          | (_, <[ $_(..$_) ]>)              => 1
-          | (<[ $_(..$_) ]>, _)              => -1
-          | _                                => 0
-        }
-      }
-      
-      def create_bind(x)
-      {
-      }
-      
-      def input = input.Sort(sort_func);
-      def checks = input.Map(create_check);
-      def binding = input.Map(create_bind);
-      //def checks = checks.Reduce((x, y) => <[ $x && $y]>);
-      def run_body = input.Map(create_run_body);
-      def out_body = output.Map(create_out);
-      <[ 
-         match ($checks)
-         {
-           | true => {..$run_body}
-                     {..$out_body}
-           | _    => ()
-         }
-       ]>
-    }
     
     CreateTran(tran : Transition) : ClassMember
     {
@@ -247,27 +171,10 @@ namespace PetriNetLib
               }
             }
       
-            def expr = <[ {..$body} ]>;
-            def (parms, expr) = parms.Fold(([], expr :: []), proc_parm);
-            def parms = parms.Rev();
-            //def expr = <[ {..$expr} ]>;
-      
+      def expr = <[ {..$body} ]>;
+      def (parms, expr) = parms.Fold(([], expr :: []), proc_parm);
+      def parms = parms.Rev();
           
-      //def process(_, b, e)
-      //{
-      //  if (b)
-      //  match (e)
-      //  {
-      //    | <[ $(n : usesite)($p)]> => match (model.GetIndex(n))
-      //                                 {
-      //                                   | Some((t, _)) => <[ $(t : usesite)($p)]>
-      //                                   | _            => e
-      //                                 }
-      //    | e => e                              
-      //  } else e
-      //}
-      
-      //def expr = Macros.TraverseExpr(None(), expr, false, process);
       <[ def $(n : usesite)(..$parms) { ..$expr } ]>
     }
     
@@ -360,9 +267,20 @@ namespace PetriNetLib
                                                         public static max : int = $(mx : int);
                                                         public num : int;
                                                         
+                                                        public override Equals(obj : object) : bool
+                                                        {
+                                                          | $(n : usesite) as o => o.num == num
+                                                          | _                   => false
+                                                        }
+                                                        
                                                         public override GetHashCode() : int 
                                                         {
-                                                          $(n : string).GetHashCode() + num * 33175
+                                                          num
+                                                        }
+                                                        
+                                                        public override ToString() : string
+                                                        {
+                                                          $(n : string) + $"($num)"
                                                         }
                                                         
                                                         public static all() : IEnumerable[$(n : usesite)]
@@ -448,6 +366,22 @@ namespace PetriNetLib
       typebuilder.Compile()
     }
     
+    CreateToString() : ClassMember
+    {
+      def strings = model.places.Map(x => <[ $(x.name : usesite).ToString() ]>);
+      <[decl: public override ToString() : string 
+      { 
+        def str = array[..$strings];
+        string.Join(";\n", str)
+      }]>
+    }
+    
+    CreateCons() : ClassMember
+    {
+      def marking = model.places.MapToList(CreateInitMarking);
+      <[decl: public this() {..$marking}]>;
+    }
+    
     public Generate() : void
     {
       CreateOperators();
@@ -457,10 +391,11 @@ namespace PetriNetLib
       def sets = sets + sets2;
       foreach (m in sets) typebuilder.DefineNestedTypeWithSource(m).Compile();
       def fields = model.places.MapToList(CreatePlace);
-      def marking = model.places.MapToList(CreateInitMarking);
-      def cons = <[decl: public this() {..$marking}]>;
+      def cons = CreateCons();
+      def tostring = CreateToString();
+      
       def vars = model.vars.KeyValuePairs.MapToList(CreateVars);
-      def members = cons :: fields + vars;
+      def members = tostring :: cons :: fields + vars;
       foreach (m in members) _ = typebuilder.DefineWithSource(m);
     }
   }

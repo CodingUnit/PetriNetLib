@@ -1,0 +1,108 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+using Nemerle.Compiler.Parsetree;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace PetriNetLib
+{
+  /// <summary>
+  /// Description of GenTran.
+  /// </summary>
+  partial class Generator
+  {
+    CreateTranBody(tran : Transition) : PExpr
+    {
+      def input  = tran.InputPlaces;
+      def output = tran.OutputPlaces;
+      
+      def create_out(p, a)
+      {
+        def name = p.name;
+        match (a.expr)
+        {
+          | <[ 1 ` $e ]>
+          | <[ $_(..$_)]> as e                                    
+          | <[ $(_ : usesite) ]> as e      => <[ $(name : usesite).Add($e)]>
+          | <[ $(_ : int) ` $_ ]> 
+          | <[ $_ %++ $_ ]>                => def expr = GetTokenExpr(a.expr);
+                                              <[ $(name : usesite).Add($expr)]>
+          
+        }
+      }
+      
+      def input = input.Map((x, a) => InArcBinding(x, [], false, a.expr));
+      foreach (i in input)
+      {
+        match (i.expr)
+        {
+          | <[ $_(..$p) ]> => foreach (p in p)
+                              {
+                                | <[ $(n : usesite)]> => match (input.Find(x => x.var == n))
+                                                         {
+                                                           | Some(x) => i.Depends ::= x;x.NeedBinding = true;
+                                                           | _       => ()
+                                                         }
+                                | _                   => ()
+                              }
+          | _ => ()
+        }
+      }
+      
+      def eval(inp, res)
+      {
+        match (inp)
+        {
+          | []           => res
+          | head :: tail => match (head.Depends)
+                            {
+                              | []   => eval(tail, head :: res)
+                              | lst  => def res = eval(lst, res.Except(lst).NToList());
+                                        eval(tail.Except(res).NToList(), head :: res)
+                            }
+                            
+        }
+      }
+      
+      def out_body = output.Map(create_out);
+      
+      def extract = input.Map(_.extract_expr);
+      
+      def fold(x, a)
+      {
+        if (a == null)
+        {
+          <[  $(x.before_bind_expr);
+              match ($(x.check_expr))
+              {
+               | true => $(x.bind_expr);
+                         {..$extract}
+                         {..$out_body}
+               | _    => ()
+             }
+          ]>
+        } else
+        {
+          <[  $(x.before_bind_expr);
+              match ($(x.check_expr))
+              {
+               | true => $(x.bind_expr);
+                         $a
+               | _    => ()
+              }
+          ]>
+        }
+      }
+      
+      
+      def input = eval(input, []);
+      
+      input.Fold(null, fold);
+    }
+    
+  }
+}

@@ -96,7 +96,7 @@ namespace PetriNetModel
     public override ToString() : string
     {
       def tokens = table.Select((x : T, c : int) => $"$c`$x");
-      string.Join("++", tokens)
+      string.Join(" ++ ", tokens)
     }
   }
 }
