@@ -21,9 +21,8 @@ namespace CommonLib.Macros
     
     public Enqueue(elem : T) : void
     {
-      queue[write_index] = elem;
-      write_index++;
-      when (write_index == queue.Length) write_index = 0;
+      def idx = ThreadSafeUtils.LockFreeUpdateValRet(ref write_index, _ + 1);
+      queue[idx % queue.Length] = elem;
     }
     
     public Resize(size : int) : void
@@ -31,21 +30,33 @@ namespace CommonLib.Macros
       Array.Resize(ref queue, size)
     }
     
+    public Empty : bool
+    {
+      get
+      {
+        Count == 0
+      }
+    }
+    
     public GetEnumerator() : IEnumerator[T] 
     {
-      for (mutable i = read_index; i != write_index; )
+      for (mutable i = read_index; i != write_index; i++)
       {
-        yield queue[i];
-        i++;
-        when (i == queue.Length) i = 0;
+        yield queue[i % queue.Length];
       }
+    }
+    
+    public Clear() : void
+    {
+      write_index = 0;
+      read_index = 0;
     }
     
     public Deque() : T
     {
-      def val = queue[read_index];
-      read_index++;
-      when (read_index == queue.Length) read_index = 0;
+      def idx = ThreadSafeUtils.LockFreeUpdateValRet(ref read_index, _ + 1);
+      def val = queue[idx % queue.Length];
+      queue[idx % queue.Length] = default(T);
       val
     }
     
@@ -53,14 +64,13 @@ namespace CommonLib.Macros
     {
       get
       {
-        def diff = write_index - read_index;
-        if (diff < 0) diff + queue.Length else diff
+        write_index - read_index
       }
     }
     
     public Peek() : T
     {
-      queue[read_index]
+      queue[read_index % queue.Length]
     }
     
     public ElementAtPos(index : int) : T
@@ -72,11 +82,11 @@ namespace CommonLib.Macros
     {
       get
       {
-        queue[index]
+        queue[index % queue.Length]
       }
       set
       {
-        queue[index] = value
+        queue[index % queue.Length] = value
       }
     }
   }

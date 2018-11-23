@@ -390,6 +390,7 @@ namespace PetriNetLib
       def sets2 = model.colour_sets.Values.Map(CreateColourSet2).Filter(_ != null);
       def sets = sets + sets2;
       foreach (m in sets) typebuilder.DefineNestedTypeWithSource(m).Compile();
+      
       def fields = model.places.MapToList(CreatePlace);
       def cons = CreateCons();
       def tostring = CreateToString();

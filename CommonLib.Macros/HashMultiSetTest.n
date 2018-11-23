@@ -1,0 +1,56 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Threading;
+
+namespace CommonLib.Macros
+{
+  /// <summary>
+  /// Description of HashMultiSetTest.
+  /// </summary>
+  class HashMultiSetTest
+  {
+    set : HashMultiSet[int] = HashMultiSet();
+    
+    public TestConcurrent() : bool
+    {
+      def rnd = Random();
+      mutable sum_err = 0;
+      
+      def check()
+      {
+        def val = rnd.Next(10);
+        def old_vals = set.ToArray();
+        def sum_old = old_vals.Fold(0, ((_, c), a) => c + a);
+        def old = HashMultiSet(old_vals);
+        set.Add(val);
+        when (set.AllCount != old.AllCount + val)
+        {
+          Interlocked.Increment(ref sum_err);
+        }
+      }
+      
+      def task1 = Task.Factory.StartNew(_ => check());
+      def task2 = Task.Factory.StartNew(_ => check());
+      def task3 = Task.Factory.StartNew(_ => check());
+      // 3 threads
+      // 1 - 10
+      // sum
+      // old + new - change
+      // count
+      // all_count
+    }
+    
+    public TestMany() : bool
+    {
+      // many values add
+    }
+    
+  }
+}

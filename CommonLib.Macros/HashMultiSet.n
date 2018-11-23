@@ -13,10 +13,10 @@ namespace CommonLib.Macros
   class Bucket[T]
   {
     public key   : T;
-    public count : int {get;set;}
-     
+    public mutable count : int;
+
     public IndexInItems : int {get;set;}
-    public IndexInBuckets : int {get;set;}
+    //public IndexInBuckets : int {get;set;}
     public Empty : bool
     {
       get
@@ -24,23 +24,33 @@ namespace CommonLib.Macros
         count == 0
       }
     }
-      
+
     public override ToString() : string
     {
       $"($key, $count)"
     }
   }
-    
+
   public class HashMultiSet[T] : IEnumerable[T * int]
   {
     mutable buckets : array[Bucket[T]]  = array(32);
     items           : RQueue[Bucket[T]] = RQueue(32);
-    
+    add_rem_queue   : RQueue[T * int * bool] = RQueue(10);
+    mutable locked  : int;
+
     public GetEnumerator() : IEnumerator[T * int]
     {
       foreach (cur in items)
       {
         yield (cur.key, cur.count)
+      }
+    }
+
+    public AllCount : int
+    {
+      get
+      {
+        items.Fold(0, (x, a) => x.count + a)
       }
     }
     
@@ -51,29 +61,19 @@ namespace CommonLib.Macros
         items.Count
       }
     }
-    
+
     factor : double
     {
       get
       {
         1.0 * Count / buckets.Length
       }
-    }
-    
-    Rehash() : void
-    {
-      buckets = array(buckets.Length * 2);
-      items.Resize(buckets.Length);
-      foreach (bucket in items)
-      {
-        AddInternal(bucket)
-      }
-    }
-    
+    }    
+
     public this()
     {
     }
-    
+
     public this(vals : IEnumerable[T])
     {
       foreach (item in vals)
@@ -81,85 +81,135 @@ namespace CommonLib.Macros
         Add(item)
       }
     }
-    
+
     hash1(x : T) : int
     {
       x.GetHashCode() % buckets.Length
     }
-    
+
     hash2(x : T) : int
     {
       def prime = buckets.Length - 1;
       prime - (x.GetHashCode() % prime)
     }
-    
+
     public ElementAtPos(pos : int) : T
     {
       items.ElementAtPos(pos).key
     }
-    
+
     public Contains(k : T, count : int = 1) : bool
     {
-      def (e, _) = FindEntry(k);
+      def (e, _) = FindEntry(k, buckets);
       e != null && !e.Empty && e.count >= count
-    }
+    }    
+
     
-    AddInternal(bucket : Bucket[T]) : void
+
+    Rehash() : array[Bucket[T]]
     {
-      def (_, point) = FindEntry(bucket.key);
-      bucket.IndexInBuckets = point;
-      buckets[point] = bucket;
+      def new_buckets = array(buckets.Length * 2);
+      items.Resize(new_buckets.Length);
+
+      foreach (bucket in items)
+      {
+        def (_, point) = FindEntry(bucket.key, new_buckets);
+        new_buckets[point] = bucket;
+      }
+      new_buckets
     }
-    
+
     public Add(k : T, count : int = 1) : void
     {
-      def (entry, point) = FindEntry(k);
-      if (entry != null)
+      if (!ThreadSafeUtils.CAS(ref locked, 0, 1)) 
       {
-        entry.count += count;
+        add_rem_queue.Enqueue((k, count, true))
       } else
       {
-        def bucket = Bucket(k, count, items.WriteIndex, point);
-        buckets[point] = bucket;
-        items.Enqueue(bucket);
-        when (factor >= 0.75) Rehash();
+        def (entry, point) = FindEntry(k);
+        if (entry != null)
+        {
+          entry.count += count;
+        } else
+        {
+
+          def bucket = Bucket(k, count, items.WriteIndex);
+          items.Enqueue(bucket);
+          buckets[point] = bucket;
+
+          when (factor >= 0.75) buckets = Rehash();
+
+        }
       }
+      locked = 0;
+      QueueCheck()
     }
-    
-    public Remove(k : T, count : int = 1) : void
+
+    QueueCheck() : void
     {
-      def (entry, point) = FindEntry(k);
-      when (entry != null)
+      while (!add_rem_queue.Empty)
       {
-        if (entry.count > count)
+        match (add_rem_queue.Deque())
         {
-          entry.count -= count;
-        } else 
-        {
-          buckets[point] = null;
-          def new_elem = items.Deque();
-          when (entry.IndexInItems >= items.ReadIndex)
-          {
-            new_elem.IndexInItems = entry.IndexInItems;
-            items[entry.IndexInItems] = new_elem;
-          }
+          | (k, c, true)  => Add(k, c)
+          | (k, c, false) => Remove(k, c)
         }
       }
     }
-    
-    FindEntry(k : T) : Bucket[T] * int
+  
+    public Remove(k : T, count : int = 1) : void
     {
+      if (!ThreadSafeUtils.CAS(ref locked, 0, 1)) 
+      {
+        add_rem_queue.Enqueue((k, count, false))
+      } else
+      {
+        def (entry, point) = FindEntry(k);
+        when (entry != null)
+        {
+          if (entry.count > count)
+          {
+            entry.count -= count;
+          } else 
+          {
+            buckets[point] = null;
+            def new_elem = items.Deque();
+            when (entry.IndexInItems >= items.ReadIndex)
+            {
+              new_elem.IndexInItems = entry.IndexInItems;
+              items[entry.IndexInItems] = new_elem;
+            }
+          }
+        }
+      }
+      locked = 0;
+      QueueCheck();
+    }
+
+    FindEntry(k : T, buck : array[Bucket[T]] = null) : Bucket[T] * int
+    {
+      def buckets = buckets ?? buck;
       def probePoint = hash1(k);
       def incr       = hash2(k);
-      
+
       def loop(point)
       {
         def entry = buckets[point];
         if (entry == null || entry.Empty || entry.key.Equals(k)) (entry, point) else loop((point + incr) % buckets.Length)
       }
-    
+
       loop(probePoint)
     }
-    
+
+    public AllElements() : IEnumerable[T]
+    {
+      foreach (elem in items)
+      {
+        foreach (elem in Enumerable.Repeat(elem.key, elem.count))
+        {
+          yield elem
+        }
+      }
+    }
   }
 }
