@@ -6,6 +6,7 @@ using Nemerle.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace CommonLib.Macros
 {
@@ -21,13 +22,13 @@ namespace CommonLib.Macros
     
     public Enqueue(elem : T) : void
     {
-      def idx = ThreadSafeUtils.LockFreeUpdateValRet(ref write_index, _ + 1);
-      queue[idx % queue.Length] = elem;
+      _ = ThreadSafeUtils.LockFreeUpdateIntRet(ref write_index, y => {queue[y % queue.Length] = elem; y + 1});
     }
     
     public Resize(size : int) : void
     {
-      Array.Resize(ref queue, size)
+      Array.Resize(ref queue, size);
+      _ = ThreadSafeUtils.LockFreeUpdateIntRet(ref write_index, y => y);
     }
     
     public Empty : bool
@@ -54,10 +55,22 @@ namespace CommonLib.Macros
     
     public Deque() : T
     {
-      def idx = ThreadSafeUtils.LockFreeUpdateValRet(ref read_index, _ + 1);
-      def val = queue[idx % queue.Length];
-      queue[idx % queue.Length] = default(T);
+      mutable val;
+      _ = ThreadSafeUtils.LockFreeUpdateIntRet(ref read_index, x => 
+      {
+        val = queue[x % queue.Length]; 
+        queue[x % queue.Length] = default(T);
+        x + 1
+      });
       val
+    }
+    
+    public Full : bool
+    {
+      get
+      {
+        Count == queue.Length
+      }
     }
     
     public Count : int
@@ -86,7 +99,7 @@ namespace CommonLib.Macros
       }
       set
       {
-        queue[index % queue.Length] = value
+        _ = ThreadSafeUtils.LockFreeUpdateIntRet(ref write_index, x => {queue[index % queue.Length] = value; x});
       }
     }
   }

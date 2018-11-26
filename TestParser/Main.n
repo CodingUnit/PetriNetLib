@@ -9,7 +9,8 @@ using System.Linq;
 using PetriNetLib;
 using System.Reactive.Linq;
 using System.Reactive;
-
+using CommonLib.Macros;
+using System.Threading;
 module Program
 {
   [PetriNet("DiningPhilosophers.cpn")]
@@ -66,12 +67,15 @@ module Program
     //}
     
     //loop();
-    
+    def test = HashMultiSetTest();
+    _ = test.TestConcurrent();
+    while (true) {}
     _ = Observable.Interval(TimeSpan.FromMilliseconds(60)).Subscribe(_ => Put());
     _ = Observable.Interval(TimeSpan.FromMilliseconds(30)).Subscribe(_ => Take());
     //net.
     //def net = PetriNet();
     //net.Process("DiningPhilosophers.cpn");
+    
     _ = ReadLine();
   }
 }

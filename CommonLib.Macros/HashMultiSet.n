@@ -6,6 +6,7 @@ using Nemerle.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace CommonLib.Macros
 {
@@ -37,6 +38,7 @@ namespace CommonLib.Macros
     items           : RQueue[Bucket[T]] = RQueue(32);
     add_rem_queue   : RQueue[T * int * bool] = RQueue(10);
     mutable locked  : int;
+    mutable add_rem_locked : int;
 
     public GetEnumerator() : IEnumerator[T * int]
     {
@@ -53,7 +55,7 @@ namespace CommonLib.Macros
         items.Fold(0, (x, a) => x.count + a)
       }
     }
-    
+
     public Count : int
     {
       get
@@ -104,8 +106,6 @@ namespace CommonLib.Macros
       e != null && !e.Empty && e.count >= count
     }    
 
-    
-
     Rehash() : array[Bucket[T]]
     {
       def new_buckets = array(buckets.Length * 2);
@@ -115,7 +115,7 @@ namespace CommonLib.Macros
       {
         def (_, point) = FindEntry(bucket.key, new_buckets);
         new_buckets[point] = bucket;
-      }
+      }        
       new_buckets
     }
 
@@ -123,6 +123,10 @@ namespace CommonLib.Macros
     {
       if (!ThreadSafeUtils.CAS(ref locked, 0, 1)) 
       {
+        if (add_rem_queue.Full)
+        {
+          
+        } else
         add_rem_queue.Enqueue((k, count, true))
       } else
       {
@@ -134,33 +138,53 @@ namespace CommonLib.Macros
         {
 
           def bucket = Bucket(k, count, items.WriteIndex);
-          items.Enqueue(bucket);
-          buckets[point] = bucket;
 
-          when (factor >= 0.75) buckets = Rehash();
+          // если версия поменялась надо снова искать точку элемента
+          // если функция вызывалась уже из другого потока 
+          // и элемент мог добавиться в ту же точку
+          if (buckets[point] == null) // если нет элемента
+          {
+            buckets[point] = bucket; // добавляем
+            items.Enqueue(bucket);
+          } else // иначе
+          {
+            buckets[point].count += count; // добавляем количество к элементу
+          }
 
+          when (factor >= 0.75) 
+          {
+            buckets = Rehash();
+          }
         }
+        locked = 0;
+        QueueCheck();
       }
-      locked = 0;
-      QueueCheck()
     }
 
     QueueCheck() : void
     {
-      while (!add_rem_queue.Empty)
+      when (ThreadSafeUtils.CAS(ref add_rem_locked, 0, 1)) 
       {
-        match (add_rem_queue.Deque())
+        while (!add_rem_queue.Empty)
         {
-          | (k, c, true)  => Add(k, c)
-          | (k, c, false) => Remove(k, c)
+          match (add_rem_queue.Deque())
+          {
+            | (k, c, true)  => Add(k, c)
+            | (k, c, false) => Remove(k, c)
+          }
         }
+        add_rem_locked = 0;
       }
     }
-  
+
     public Remove(k : T, count : int = 1) : void
     {
       if (!ThreadSafeUtils.CAS(ref locked, 0, 1)) 
       {
+        if (add_rem_queue.Full)
+        {
+          
+        } else
         add_rem_queue.Enqueue((k, count, false))
       } else
       {
@@ -172,23 +196,27 @@ namespace CommonLib.Macros
             entry.count -= count;
           } else 
           {
+            // если элемент есть, поток мог уже удалить элемент 
             buckets[point] = null;
             def new_elem = items.Deque();
+              // из очереди удаляем из начала
             when (entry.IndexInItems >= items.ReadIndex)
             {
-              new_elem.IndexInItems = entry.IndexInItems;
+                // присваиваем новому элементу индекс удаленного
+              new_elem.IndexInItems     = entry.IndexInItems;
+                // заменяем элемент удаленный элементом из начала
               items[entry.IndexInItems] = new_elem;
             }
           }
         }
+        locked = 0;
+        QueueCheck();
       }
-      locked = 0;
-      QueueCheck();
     }
 
     FindEntry(k : T, buck : array[Bucket[T]] = null) : Bucket[T] * int
     {
-      def buckets = buckets ?? buck;
+      def buckets    = buckets ?? buck;
       def probePoint = hash1(k);
       def incr       = hash2(k);
 
@@ -197,6 +225,7 @@ namespace CommonLib.Macros
         def entry = buckets[point];
         if (entry == null || entry.Empty || entry.key.Equals(k)) (entry, point) else loop((point + incr) % buckets.Length)
       }
+
 
       loop(probePoint)
     }

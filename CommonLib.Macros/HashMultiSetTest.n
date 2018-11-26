@@ -14,7 +14,7 @@ namespace CommonLib.Macros
   /// <summary>
   /// Description of HashMultiSetTest.
   /// </summary>
-  class HashMultiSetTest
+  public class HashMultiSetTest
   {
     set : HashMultiSet[int] = HashMultiSet();
     
@@ -22,18 +22,33 @@ namespace CommonLib.Macros
     {
       def rnd = Random();
       mutable sum_err = 0;
+      mutable diff_err = 0;
       
       def check()
       {
-        def val = rnd.Next(10);
-        def old_vals = set.ToArray();
-        def sum_old = old_vals.Fold(0, ((_, c), a) => c + a);
+        while (true) {
+        def val = rnd.Next(100000);
+        def old_vals = set.AllElements().ToArray();
+        def sum_old = old_vals.Sum();
         def old = HashMultiSet(old_vals);
         set.Add(val);
-        when (set.AllCount != old.AllCount + val)
+        def new_vals = set.AllElements().ToArray();
+        def nsum = new_vals.Sum();
+        when (set.AllCount != old.AllCount + 1)
         {
-          Interlocked.Increment(ref sum_err);
+          _ = Interlocked.Increment(ref sum_err);
         }
+        when (sum_old + val != nsum)
+        {
+          _ = Interlocked.Increment(ref sum_err);
+        }
+        //def diff = new_vals.Except(old_vals).ToArray();
+        //def first = diff.First();
+        //when (first != val)
+        //{
+        //  _ = Interlocked.Increment(ref diff_err);
+        //}
+      }
       }
       
       def task1 = Task.Factory.StartNew(_ => check());
@@ -45,10 +60,12 @@ namespace CommonLib.Macros
       // old + new - change
       // count
       // all_count
+      false
     }
     
     public TestMany() : bool
     {
+      false
       // many values add
     }
     
