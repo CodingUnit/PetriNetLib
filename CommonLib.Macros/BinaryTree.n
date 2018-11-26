@@ -48,7 +48,15 @@ Since binary heaps are often used in algorithms that merely pop the highest (or 
     {
       when (index != 0) 
       {
+        def parent = (index - 1) / 2;
         
+        when (heap[parent].CompareTo(heap[index]) > 0)
+        {
+          def temp = heap[parent];
+          heap[parent] = heap[index];
+          heap[index] = temp;
+          BubbleUp(parent)
+        }
       }
     //if(index == 0)
     //    return;
@@ -67,11 +75,11 @@ Since binary heaps are often used in algorithms that merely pop the highest (or 
 
     public Insert(val : T) : void
     {
-      if (size == heap.Length - 1) DoubleSize();
+      when (size == heap.Length - 1) DoubleSize();
       def pos = size;
       heap[pos] = val;
 
-      BubbleUp();
+      BubbleUp(pos);
         /*
         public void insert(Comparable x)
 {
