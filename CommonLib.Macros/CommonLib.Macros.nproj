@@ -134,6 +134,9 @@
     <Compile Include="Beep.n">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="BinaryHeap.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="BitUtils.n">
       <SubType>Code</SubType>
     </Compile>

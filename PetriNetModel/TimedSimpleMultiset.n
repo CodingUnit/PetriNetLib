@@ -1,0 +1,38 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using CommonLib.Macros;
+
+namespace PetriNetModel
+{
+  [Record]
+  class TimedKey[T] : IComparable[TimedKey[T]]
+  {
+    public key : T;
+    public time : DateTime;
+    
+    public CompareTo(other : TimedKey[T]) : int
+    {
+      0
+    }
+  }
+  /// <summary>
+  /// Description of TimedSimpleMultiset.
+  /// </summary>
+  class TimedHeap[T] : ITokenContainer[T]
+  {
+    heap : BinaryHeap[TimedKey[T]] = BinaryHeap();
+    
+    span() : void
+    {
+      def time = TimeSpan();
+      def time = DateTime();
+    }
+    
+  }
+}
