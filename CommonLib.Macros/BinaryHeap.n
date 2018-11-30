@@ -17,10 +17,12 @@ namespace CommonLib.Macros
   {
     mutable heap : array[T] = array(32);
     [Accessor]
-    mutable size : int;
-    oper_queue   : RQueue[T * int] = RQueue(10);
+    mutable size     : int;
+    mutable size_end : int;
+    //mutable end_pos  : int;
+    //oper_queue   : RQueue[T * int] = RQueue(10);
     mutable locked       : int;
-    mutable add_rem_locked : int;
+    //mutable add_rem_locked : int;
     
     public GetEnumerator() : IEnumerator[T]
     {
@@ -104,6 +106,14 @@ namespace CommonLib.Macros
       }
     }
 
+    public Empty : bool
+    {
+      get
+      {
+        size == 0
+      }
+    }
+    
     public PeekAt(index : int) : T
     {
       heap[index]
@@ -111,17 +121,9 @@ namespace CommonLib.Macros
 
     public RemoveAt(index : int) : void
     {
-      if (!ThreadSafeUtils.CAS(ref locked, 0, 1)) 
-      {
-        oper_queue.Enqueue((default(T), index))
-      } else
-      {
-        heap[index] = heap[size - 1];
-        size--;
-        BubbleDown(index);
-        locked = 0;
-        QueueCheck();
-      }
+      def pos = ThreadSafeUtils.LockFreeUpdateValRet(ref size, _ - 1);
+      heap[index] = heap[pos - 1];
+      BubbleDown(index);
     }        
 
     public PeekMin() : T
@@ -136,17 +138,27 @@ namespace CommonLib.Macros
 
     QueueCheck() : void
     {
-      when (ThreadSafeUtils.CAS(ref add_rem_locked, 0, 1)) 
+      when (size_end != 0)
+      when (!ThreadSafeUtils.CAS(ref locked, 0, 1)) 
       {
-        while (!oper_queue.Empty)
+        def end = size_end;
+        def end_pos = size;
+        
+        def loop(pos)
         {
-          match (oper_queue.Deque())
+          when (pos < end_pos + end)
           {
-            | (k, -1) => Insert(k)
-            | (_, i)  => RemoveAt(i)
+            BubbleUp(pos);
+            loop(pos + 1)
           }
+          
         }
-        add_rem_locked = 0;
+        
+        loop(end_pos);
+        ThreadSafeUtils.LockFreeUpdateVal(ref size, _ + end);
+        ThreadSafeUtils.LockFreeUpdateVal(ref size_end, _ - end);//end_pos = size;
+        locked = 0;
+        QueueCheck();
       }
     }
     
@@ -154,13 +166,15 @@ namespace CommonLib.Macros
     {
       if (!ThreadSafeUtils.CAS(ref locked, 0, 1)) 
       {
-        oper_queue.Enqueue((val, -1))
+        ThreadSafeUtils.LockFreeUpdateVal(ref size_end, x => {heap[size + x] = val;x + 1})
+        //oper_queue.Enqueue((val, -1))
       } else
       {
-        when (size == heap.Length - 1) DoubleSize();
-        def pos = size;
+        //def pos = size;
+        //heap[pos] = val;
+        def pos = ThreadSafeUtils.LockFreeUpdateValRet(ref size, x => {when (size == heap.Length - 1) DoubleSize(); x + 1});
         heap[pos] = val;
-        size++;
+        //when (size_end == 0) end_pos = pos + 1;
         BubbleUp(pos);
         locked = 0;
         QueueCheck();

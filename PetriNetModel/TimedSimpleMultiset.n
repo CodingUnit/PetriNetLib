@@ -24,7 +24,7 @@ namespace PetriNetModel
   /// <summary>
   /// Description of TimedSimpleMultiset.
   /// </summary>
-  class TimedHeap[T] : ITokenContainer[T]
+  class TimedHeap[T] : ITokenContainer[TimedKey[T]]
   {
     heap : BinaryHeap[TimedKey[T]] = BinaryHeap();
     
@@ -34,5 +34,70 @@ namespace PetriNetModel
       def time = DateTime();
     }
     
+    public this() {}
+    public this(en : IEnumerable[TimedKey[T]])
+    {
+      heap = BinaryHeap(en.Select(TimedKey))
+    }
+    
+    public Create() : ITokenContainer[TimedKey[T]]
+    {
+      TimedHeap()
+    }
+    
+    public Create(en : IEnumerable[TimedKey[T]]) : ITokenContainer[TimedKey[T]]
+    {
+      TimedHeap(en)
+    }
+    
+    public EnabledTokens : IEnumerable[TimedKey[T]]
+    {
+      get
+      {
+        heap.Where(x => x.time >= DateTime.Now)
+      }
+    }
+    
+    public Add(tok : TimedKey[T]) : void
+    {
+      heap.Insert(tok)
+    }
+    
+    public AddMany(tok : IEnumerable[TimedKey[T]]) : void
+    {
+      foreach (t in tok)
+      {
+        heap.Insert(t)
+      }
+    }
+    
+    public Have(num : int) : bool
+    {
+      EnabledTokens.Count() >= num
+    }
+    
+    public Have(tok : IEnumerable[TimedKey[T]]) : bool
+    {
+      EnabledTokens.Intersect(tok).Count() == tok.Count()
+    }
+    
+    public Peek() : T
+    {
+      heap.PeekMin().key
+    }
+    
+    public HaveTokens : bool
+    {
+      get
+      {
+        !heap.Empty
+      }
+    }
+    
+    public GetMany(num : int) : IEnumerable[T];
+    public GetMany(tok : IEnumerable[T]) : void;
+    
+    public Get(elem : T) : void;
+    public Get() : T;
   }
 }
