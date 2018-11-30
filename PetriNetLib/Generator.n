@@ -294,15 +294,15 @@ namespace PetriNetLib
       | _ => null
     }
     
-    TypeOfExpr(expr : PExpr) : PExpr
-    {
-      | <[ $(_ : int)]>       => <[ int ]>
-      | <[ $(_ : string)]>    => <[ string ]>
-      | <[ $(_ : double)]>    => <[ double ]>
-      | <[ $(_ : bool)]>      => <[ double ]>
-      | <[ $(_ : int) ` $t ]> => def t = TypeOfExpr(t); <[ IEnumerable[$t] ]>
-      | <[ $(_ : usesite) ]>  => null//model.ml_decls.Find();
-    }
+    //TypeOfExpr(expr : PExpr) : PExpr
+    //{
+    //  | <[ $(_ : int)]>       => <[ int ]>
+    //  | <[ $(_ : string)]>    => <[ string ]>
+    //  | <[ $(_ : double)]>    => <[ double ]>
+    //  | <[ $(_ : bool)]>      => <[ double ]>
+    //  | <[ $(_ : int) ` $t ]> => def t = TypeOfExpr(t); <[ IEnumerable[$t] ]>
+    //  | <[ $(_ : usesite) ]>  => null//model.ml_decls.Find();
+    //}
 
     CreateColourSet2(col : ColourSet) : ClassMember.TypeDeclaration
     {
