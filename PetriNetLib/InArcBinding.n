@@ -1,0 +1,134 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+using Nemerle.Compiler.Parsetree;
+using Nemerle.Compiler;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace PetriNetLib
+{
+    [Record]
+    class InArcBinding
+    {
+      public place      : Place;
+      
+      public Depends     : list[InArcBinding] {get;set;}
+      public NeedBinding : bool {get;set;}
+      public name       : string
+      {
+        [Memoize]
+        get
+        {
+          place.name
+        }
+      }
+    
+      public expr       : PExpr;
+      
+      public var : string
+      {
+        [Memoize]
+        get
+        {
+          match (expr)
+          {
+            | <[ $(n : usesite) ]> => n
+            | _                    => null
+          }
+        }
+      }
+      
+      public before_bind_expr  : PExpr
+      {
+        [Memoize]
+        get
+        {
+          match (expr)
+          {
+            | <[ $(_ : usesite)(..$_) ]> => <[ def $(introduced_var : name) = $expr ]>
+            | _                          => <[]>
+          }
+        }
+      }
+      
+      public bind_expr  : PExpr
+      {
+        [Memoize]
+        get
+        {
+          if (NeedBinding)
+          {
+            match (expr)
+            {
+              | <[ $(_ : usesite)]> => <[ $expr = $(name : usesite).Peek() ]>
+              | _                   => <[]>
+            }
+          } else
+          {
+             <[]>
+          }
+        }
+      }
+      
+      public introduced_var : Name
+      {
+        [Memoize]
+        get
+        {
+          match (expr)
+          {
+            | <[ $(n : usesite)(..$_) ]> => Macros.NewSymbol(n.Substring(0, 2));
+            | _                          => null
+          }
+        }
+      }
+      
+      
+      public check_expr : PExpr
+      {
+        [Memoize]
+        get
+        {
+          match (expr)
+          {
+            | <[ $(_ : usesite)]> => <[ $(name : usesite).HaveTokens]>
+            | <[ $(_ : usesite)(..$_) ]> when introduced_var != null => 
+                <[ $(name : usesite).Have($(introduced_var : name)) ]>
+            | _                   => def tok = Generator.GetTokenExpr(expr);
+                                     <[ $(name : usesite).Have($tok) ]>
+          }
+          
+        }
+      }
+      
+      public extract_expr   : PExpr
+      {
+        [Memoize]
+        get
+        {
+          if (NeedBinding)
+          {
+            match (expr)
+            {
+              | <[ $(_ : usesite)]> => <[ $(name : usesite).Get($expr)]>
+              | _                   => <[]>
+            }
+          } else
+          {
+            match (expr)
+            {
+              | <[ $(_ : usesite)]> => <[ $expr = $(name : usesite).Get()]>
+              | <[ $(_ : usesite)(..$_) ]> when introduced_var != null => 
+                  <[ $(name : usesite).Get($(introduced_var : name)) ]>
+              | _                   => <[ $(name : usesite).Get() ]>
+            }
+          }
+        }
+      }
+      
+    }
+}

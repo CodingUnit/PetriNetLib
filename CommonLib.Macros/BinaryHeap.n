@@ -1,0 +1,184 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace CommonLib.Macros
+{
+
+  /// <summary>
+  /// Description of BinaryTree.
+  /// </summary>
+  public class BinaryHeap[T] : IEnumerable[T] where T : IComparable[T] 
+  {
+    mutable heap : array[T] = array(32);
+    [Accessor]
+    mutable size     : int;
+    mutable size_end : int;
+    //mutable end_pos  : int;
+    //oper_queue   : RQueue[T * int] = RQueue(10);
+    mutable locked       : int;
+    //mutable add_rem_locked : int;
+    
+    public GetEnumerator() : IEnumerator[T]
+    {
+      heap.Take(size).GetEnumerator()
+    }
+
+    DoubleSize() : void
+    {
+      Array.Resize(ref heap, heap.Length * 2);
+    }
+
+    public this() {}
+
+    public this(en : IEnumerable[T])
+    {
+      heap = en.ToArray();
+      size = heap.Length;
+      Heapify()
+    }
+
+    Heapify() : void
+    {
+      def loop(i)
+      {
+        when (i >= 0)
+        {
+          BubbleDown(i);
+          loop(i - 1)
+        }
+      }
+
+      loop(size - 1)
+    }
+
+    BubbleDown(index : int) : void
+    {
+      def length = size;
+      def leftChildIndex  = 2 * index + 1;
+      def rightChildIndex = 2 * index + 2;
+
+      when (leftChildIndex < length) 
+      {
+
+        mutable minIndex = index;
+
+        when (heap[index].CompareTo(heap[leftChildIndex]) > 0)
+        {
+          minIndex = leftChildIndex;
+        }
+
+        when (rightChildIndex < length && heap[minIndex].CompareTo(heap[rightChildIndex]) > 0)
+        {
+          minIndex = rightChildIndex;
+        }
+
+        when (minIndex != index)
+        {
+        //need to swap
+          def temp = heap[index];
+          heap[index] = heap[minIndex];
+          heap[minIndex] = temp;
+          BubbleDown(minIndex)
+        }
+
+      }
+    }
+
+    BubbleUp(index : int) : void
+    {
+      when (index != 0) 
+      {
+        def parent = (index - 1) / 2;
+
+        when (heap[parent].CompareTo(heap[index]) > 0)
+        {
+          def temp     = heap[parent];
+          heap[parent] = heap[index];
+          heap[index]  = temp;
+          BubbleUp(parent)
+        }
+      }
+    }
+
+    public Empty : bool
+    {
+      get
+      {
+        size == 0
+      }
+    }
+    
+    public PeekAt(index : int) : T
+    {
+      heap[index]
+    }
+
+    public RemoveAt(index : int) : void
+    {
+      def pos = ThreadSafeUtils.LockFreeUpdateValRet(ref size, _ - 1);
+      heap[index] = heap[pos - 1];
+      BubbleDown(index);
+    }        
+
+    public PeekMin() : T
+    {
+      heap[0]
+    }
+
+    public DeleteMin() : void
+    {
+      RemoveAt(0)
+    }
+
+    QueueCheck() : void
+    {
+      when (size_end != 0)
+      when (!ThreadSafeUtils.CAS(ref locked, 0, 1)) 
+      {
+        def end = size_end;
+        def end_pos = size;
+        
+        def loop(pos)
+        {
+          when (pos < end_pos + end)
+          {
+            BubbleUp(pos);
+            loop(pos + 1)
+          }
+          
+        }
+        
+        loop(end_pos);
+        ThreadSafeUtils.LockFreeUpdateVal(ref size, _ + end);
+        ThreadSafeUtils.LockFreeUpdateVal(ref size_end, _ - end);//end_pos = size;
+        locked = 0;
+        QueueCheck();
+      }
+    }
+    
+    public Insert(val : T) : void
+    {
+      if (!ThreadSafeUtils.CAS(ref locked, 0, 1)) 
+      {
+        ThreadSafeUtils.LockFreeUpdateVal(ref size_end, x => {heap[size + x] = val;x + 1})
+        //oper_queue.Enqueue((val, -1))
+      } else
+      {
+        //def pos = size;
+        //heap[pos] = val;
+        def pos = ThreadSafeUtils.LockFreeUpdateValRet(ref size, x => {when (size == heap.Length - 1) DoubleSize(); x + 1});
+        heap[pos] = val;
+        //when (size_end == 0) end_pos = pos + 1;
+        BubbleUp(pos);
+        locked = 0;
+        QueueCheck();
+      }
+    }
+  }
+}

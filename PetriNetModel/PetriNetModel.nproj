@@ -59,9 +59,6 @@
     </MacroReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="HashMultiSet.n">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="ITokenContainer.n">
       <SubType>Code</SubType>
     </Compile>
@@ -70,7 +67,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.n" />
-    <Compile Include="RQueue.n">
+    <Compile Include="TimedSimpleMultiset.n">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="TokenContainers.n">
@@ -79,6 +76,13 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CommonLib.Macros\CommonLib.Macros.nproj">
+      <Name>CommonLib.Macros</Name>
+      <Project>{5e9cfda7-975a-4ef5-a7e7-b638df3d19f7}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(Nemerle)\Nemerle.MSBuild.targets" />
   <!--

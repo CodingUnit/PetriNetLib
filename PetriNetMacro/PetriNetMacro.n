@@ -52,7 +52,7 @@ namespace PetriNetLib
     public static ParseAndGenerate2(ty : TypeBuilder, typer : Typer, expr : PExpr, other : array[PExpr]) : void
     {
       //Macros.DefineCTX(typer);
-      assert2(false);
+      //assert2(false);
       def gen = ty.UserData["PetriNetGen"] :> PetriNet;
       gen.PhaseTwo();
       //def b = <[ a + 1 ]>;
