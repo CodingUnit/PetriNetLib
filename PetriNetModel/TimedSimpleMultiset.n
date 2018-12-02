@@ -11,59 +11,70 @@ using CommonLib.Macros;
 namespace PetriNetModel
 {
   [Record]
-  class TimedKey[T] : IComparable[TimedKey[T]]
+  class Timed[T] : IComparable[Timed[T]]
   {
     public key : T;
     public time : DateTime;
     
-    public CompareTo(other : TimedKey[T]) : int
+    public override GetHashCode() : int
     {
-      0
+      key.GetHashCode() ^ time.GetHashCode()
+    }
+    
+    public CompareTo(other : Timed[T]) : int
+    {
+      time.CompareTo(other.time)
+    }
+    
+    public override Equals(obj : object) : bool
+    {
+      | Timed(k, t) => key.Equals(k) && time == t
+      | _           => false
+    }
+    
+    public override ToString() : string
+    {
+      $"$key @ $time"
     }
   }
   /// <summary>
   /// Description of TimedSimpleMultiset.
   /// </summary>
-  class TimedHeap[T] : ITokenContainer[TimedKey[T]]
+  class TimedHeap[T] : ITokenContainer[Timed[T]]
   {
-    heap : BinaryHeap[TimedKey[T]] = BinaryHeap();
-    
-    span() : void
-    {
-      def time = TimeSpan();
-      def time = DateTime();
-    }
+    heap : BinaryHeap[Timed[T]] = BinaryHeap();
+    rnd  : Random               = Random();
     
     public this() {}
-    public this(en : IEnumerable[TimedKey[T]])
+    public this(en : IEnumerable[Timed[T]])
     {
-      heap = BinaryHeap(en.Select(TimedKey))
+      heap = BinaryHeap(en)
     }
     
-    public Create() : ITokenContainer[TimedKey[T]]
+    public Create() : ITokenContainer[Timed[T]]
     {
       TimedHeap()
     }
     
-    public Create(en : IEnumerable[TimedKey[T]]) : ITokenContainer[TimedKey[T]]
+    public Create(en : IEnumerable[Timed[T]]) : ITokenContainer[Timed[T]]
     {
       TimedHeap(en)
     }
     
-    public EnabledTokens : IEnumerable[TimedKey[T]]
+    public EnabledTokens : IEnumerable[Timed[T]]
     {
       get
       {
-        heap.Where(x => x.time >= DateTime.Now)
+        heap.PeekFirstMin(Timed(default(T), DateTime.Now))
       }
     }
     
-    public Add(tok : TimedKey[T]) : void
+    public Add(tok : Timed[T]) : void
     {
       heap.Insert(tok)
     }
     
-    public AddMany(tok : IEnumerable[TimedKey[T]]) : void
+    public AddMany(tok : IEnumerable[Timed[T]]) : void
     {
       foreach (t in tok)
       {
@@ -76,28 +87,59 @@ namespace PetriNetModel
       EnabledTokens.Count() >= num
     }
     
-    public Have(tok : IEnumerable[TimedKey[T]]) : bool
+    public Have(tok : IEnumerable[Timed[T]]) : bool
     {
       EnabledTokens.Intersect(tok).Count() == tok.Count()
     }
     
-    public Peek() : T
+    public Peek() : Timed[T]
     {
-      heap.PeekMin().key
+      heap.PeekMin()
     }
     
     public HaveTokens : bool
     {
       get
       {
-        !heap.Empty
+        !EnabledTokens.IsEmpty()
       }
     }
     
-    public GetMany(num : int) : IEnumerable[T];
-    public GetMany(tok : IEnumerable[T]) : void;
+    public GetMany(num : int) : IEnumerable[Timed[T]]
+    {
+      def by_key = EnabledTokens.GroupBy(_.key);
+      def tokens = by_key.Where(x => x.Count() >= num).ToArray();
+      def idx    = rnd.Next(tokens.Length);
+      def tokens = tokens[idx];
+      foreach (elem in tokens) heap.Remove(elem);
+      tokens
+    }
     
-    public Get(elem : T) : void;
-    public Get() : T;
+    public GetMany(tok : IEnumerable[Timed[T]]) : void
+    {
+      foreach (elem in tok) heap.Remove(elem);
+    }
+    
+    public Get(elem : Timed[T]) : void
+    {
+      heap.Remove(elem);
+    }
+    
+    public Get() : Timed[T]
+    {
+      if (EnabledTokens.IsMoreThanOne())
+      {
+        def tokens = EnabledTokens.ToArray();
+        def idx = rnd.Next(tokens.Length);
+        def elem = tokens[idx];
+        heap.Remove(elem);
+        elem
+      } else 
+      {
+        def elem = heap.PeekMin();
+        heap.DeleteMin();
+        elem
+      }
+    }
   }
 }

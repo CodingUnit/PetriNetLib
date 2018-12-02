@@ -110,6 +110,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConvToCpp.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Generator.n">
       <SubType>Code</SubType>
     </Compile>

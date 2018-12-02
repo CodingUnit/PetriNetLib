@@ -114,6 +114,12 @@ namespace CommonLib.Macros
       }
     }
     
+    public Remove(elem : T) : void
+    {
+      def idx = IndexOf(elem);
+      RemoveAt(idx)
+    }
+    
     public PeekAt(index : int) : T
     {
       heap[index]
@@ -123,9 +129,76 @@ namespace CommonLib.Macros
     {
       def pos = ThreadSafeUtils.LockFreeUpdateValRet(ref size, _ - 1);
       heap[index] = heap[pos - 1];
-      BubbleDown(index);
+      BubbleDown(index)
     }        
 
+    public PeekFirstMin(max : T) : IEnumerable[T]
+    {
+      def loop(lev)
+      {
+        def start = 1 << lev - 1;
+        def count = 1 << lev;
+        def end = start + count;
+        mutable found = 0;
+        mutable break = 0;
+        for (mutable i = start; i < end && break == 0; i++)
+        {
+          if (i < heap.Length)
+          {
+            def elem = heap[i];
+            def comp = elem.CompareTo(max);
+            if (comp < 0) 
+            {
+              found++;
+              yield elem;
+            } else 
+            if (comp == 0) yield elem; else ();
+          } else break = 1;
+        }
+        if (found != 0) loop(lev + 1) else ()
+      }
+      
+      loop(0)
+      
+      //def items = System.Collections.Generic.Queue();
+      
+      //def comp_add(i)
+      //{
+      //  def elem = heap[i];
+      //  def comp = elem.CompareTo(max);
+      //  if (comp < 0)
+      //  {
+      //    items.Enqueue(i);
+      //    true
+      //  } else
+      //  if (comp == 0)
+      //  {
+      //    items.Enqueue(i | 0x40000000);
+      //    true
+      //  } else false
+      //}
+      
+      //def loop(i)
+      //{
+      //  when (comp_add(i))
+      //  {
+      //    def left = 2 * i + 1;
+      //    def right = 2 * i + 2;
+          
+      //    _ = comp_add(left);
+      //    _ = comp_add(right);
+      //  }
+      //  when (items.Count != 0)
+      //  {
+      //    def elem = items.Dequeue();
+      //    yield heap[elem & ~0x40000000];
+      //    when (elem & 0x40000000 == 0) loop(elem)
+      //  }
+      //}
+      
+      //loop(0)
+    }
+    
     public PeekMin() : T
     {
       heap[0]
@@ -155,7 +228,7 @@ namespace CommonLib.Macros
         }
         
         loop(end_pos);
-        ThreadSafeUtils.LockFreeUpdateVal(ref size, _ + end);
+        ThreadSafeUtils.LockFreeUpdateVal(ref size,     _ + end);
         ThreadSafeUtils.LockFreeUpdateVal(ref size_end, _ - end);//end_pos = size;
         locked = 0;
         QueueCheck();
@@ -166,8 +239,8 @@ namespace CommonLib.Macros
     {
       if (!ThreadSafeUtils.CAS(ref locked, 0, 1)) 
       {
-        ThreadSafeUtils.LockFreeUpdateVal(ref size_end, x => {heap[size + x] = val;x + 1})
-        //oper_queue.Enqueue((val, -1))
+        def idx = ThreadSafeUtils.LockFreeUpdateValRet(ref size_end, _ + 1);
+        heap[size + idx] = val;
       } else
       {
         //def pos = size;

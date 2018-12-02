@@ -1,0 +1,159 @@
+﻿language CPNML
+{
+  syntax module CpnML.Grammar.Main start rule LangExpr;
+  //syntax module Nemerle.Statechart.Grammar.Actions;
+  //syntax module Nemerle.Statechart.Grammar.Base;
+  //syntax module Nemerle.Statechart.Grammar.Events;
+  //syntax module Nemerle.Statechart.Grammar.PseudoStates;
+  //syntax module Nemerle.Statechart.Grammar.Regions;
+  //syntax module Nemerle.Statechart.Grammar.Targets;
+  //syntax module Nemerle.Statechart.Grammar.Transitions;
+}
+
+namespace CpnML.Grammar
+{
+
+  syntax module Main
+  {
+    using Base;
+	  using Nitra.Core;
+
+    syntax Literal
+    {
+      | Numeric
+      | FloatingNumber
+      | String
+      | Boolean
+      | EmptyMultiSet = "empty"
+      | Char
+      | NilList = "nil"
+    }
+
+    token Char = '#' '"' Any '"';
+
+    syntax IndexVar = Name=Identifier '(' Idx=Expr')';
+
+	  //syntax FuncCall
+
+    syntax TypeExpr
+    {
+      | Int    = "int"
+      | Real   = "real"
+      | String = "string"
+    }
+    syntax Delay 
+    {
+      | AddTime = '@' '+' Expr
+      | AddTimeAlt = '@' '@' '+' Expr
+    }
+
+	syntax ExprList = (Expr ";")+;
+
+	syntax Expr
+    {	  
+      | Literal
+      precedence Type:
+      | TypeAnnot = Expr Type
+	    //| Tuple = '(' Expr ',' Expr (',' Expr)* ')'
+      | Record = '{' (Elem;",")* '}'
+      {
+        syntax Elem = Name=AnyIdentifier '=' Expr;
+      }
+      | List = '[' (Expr;",")* ']'      
+      | Let = "let" Val+ "in" Expr "end"  
+      | Match = "case" Expr "of" (Case;"|")+
+      {
+        syntax Case = Pat=Expr "=>" Expr=Expr;
+      }
+      | Var = Identifier
+      | Lambda = Name=Identifier Parms=AnyIdentifier* "=>" Expr
+	    precedence ArcDelay:
+	    | DelayExpr = Expr Delay
+      | Delay
+	    precedence Union:
+      | TimedSetUnion = Expr "+++" Expr// ^ Oper
+      | SetUnion = Expr "++" Expr// ^ Oper
+      | SetDiff  = Expr "--" Expr
+	    | SetUnequal = Expr "<>" "<>" Expr
+      | SetUpper = Expr ">>" Expr
+      | SetLower = Expr "<<" Expr
+	    | SetUpperEqual = Expr ">>==" Expr
+      | SetLowerEqual = Expr "<<==" Expr
+      | SetUpperEqualAlt = Expr ">>=" Expr
+      | SetLowerEqualAlt = Expr "<<=" Expr
+	    | SetScalarMult    = Expr "**" Expr
+      | SetScalarMultAlt = Expr "*" Expr
+      precedence Func:
+	    | FuncCall   = Name=(Identifier;'.')+ Parms=(Expr ^ Func)+
+      precedence Token:
+      | MultiSetConstr = Integer '`' Expr// ^ Oper
+		  
+      //| RecordAccess = !Char '#' AnyIdentifier Expr            
+      precedence Conditional:
+      | If = "if" Cond=Expr ^ Conditional "then" Then=Expr "else" Else=Expr
+      precedence And:
+      | AndAlso = Expr "andalso" Expr
+      precedence Or:
+		  | OrElse  = Expr "orelse" Expr
+      precedence Equality:
+		  | Equal    = Expr '=' Expr
+      | NotEqual = Expr "<>" Expr
+      precedence Relational:
+	  | Above	   = Expr '>' Expr
+	  | Below	   = Expr '<' Expr
+	  | AboveEqual = Expr ">=" Expr
+	  | BelowEqual = Expr "<=" Expr
+      precedence Append:
+      | Append  = Expr "@" Expr
+      | Concat  = Expr '^' Expr
+      | ListCombine = Expr "::" Expr
+      precedence Additive:
+      | Plus	   = Expr ^ Additive '+' Expr
+	  | Minus    = Expr '-' Expr
+      precedence MulDiv:
+      | Multiply = Expr '*' Expr
+      | Div      = Expr '/' Expr
+      | IntDiv   = Expr "div" Expr
+      | Mod      = Expr "mod" Expr
+      precedence Not:
+      | Not     = "not" Expr
+      precedence Sharp:
+      | SharpOper = '#' Expr
+      precedence Braces:
+      | BraceExpr = '(' Expr* ')'
+      //| UnitVal = '(' ')'
+      precedence FigBraces:
+      | FigBraceExpr = '{' Expr '}'   
+      precedence Decl:
+      | LowerDecl
+    }
+
+    syntax Type = ":" TypeExpr;        
+
+    syntax Val = "val" Name=Identifier Type? '=' Expr;
+
+    syntax LowerDecl
+    {
+      | Val
+      | Var = "var" Names=(Identifier;",")+ Type
+    }
+
+	syntax Declaration
+    {
+      | LowerDecl
+      | Func = "fun" Name=Identifier '(' Parms=(Expr;",")* ')' Type? '=' Body=ExprList
+      | FunMatch = "fun" MatchCase "|" (MatchCase;"|")+
+      {
+        syntax MatchCase = Name=Identifier Pat=Expr '=' Expr=Expr;
+      }
+    }
+
+	  syntax LangExpr
+	  {
+		  | Decl = Declaration+
+		  | Expr
+		  | ExprList
+	  }
+  
+  }
+}

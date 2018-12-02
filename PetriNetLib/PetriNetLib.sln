@@ -15,6 +15,8 @@ Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "PetriNetModel", "..\PetriNe
 EndProject
 Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "PetriNetMacro", "..\PetriNetMacro\PetriNetMacro.nproj", "{FBC98ADB-2E81-4E65-AF74-4A6601BB4649}"
 EndProject
+Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "CppParser", "..\CppParser\CppParser.nproj", "{F5786DC6-5865-42FF-8D7E-526FB753821F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -84,6 +86,16 @@ Global
 		{FBC98ADB-2E81-4E65-AF74-4A6601BB4649}.OPC|Any CPU.Build.0 = Release|Any CPU
 		{FBC98ADB-2E81-4E65-AF74-4A6601BB4649}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FBC98ADB-2E81-4E65-AF74-4A6601BB4649}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5786DC6-5865-42FF-8D7E-526FB753821F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5786DC6-5865-42FF-8D7E-526FB753821F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5786DC6-5865-42FF-8D7E-526FB753821F}.LIBS|Any CPU.ActiveCfg = Release|Any CPU
+		{F5786DC6-5865-42FF-8D7E-526FB753821F}.LIBS|Any CPU.Build.0 = Release|Any CPU
+		{F5786DC6-5865-42FF-8D7E-526FB753821F}.NViewer|Any CPU.ActiveCfg = Release|Any CPU
+		{F5786DC6-5865-42FF-8D7E-526FB753821F}.NViewer|Any CPU.Build.0 = Release|Any CPU
+		{F5786DC6-5865-42FF-8D7E-526FB753821F}.OPC|Any CPU.ActiveCfg = Release|Any CPU
+		{F5786DC6-5865-42FF-8D7E-526FB753821F}.OPC|Any CPU.Build.0 = Release|Any CPU
+		{F5786DC6-5865-42FF-8D7E-526FB753821F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5786DC6-5865-42FF-8D7E-526FB753821F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
