@@ -14,46 +14,6 @@ using CommonLib.Macros;
 namespace PetriNetLib
 {
   
-  [Record]
-  public variant Colour
-  {
-    | List {type : string; with_range : int * int;}
-    | Union { types : list[string * string]}
-    | Product {tuple : list[string]}
-    | Record {vals : list[string * string]}
-    | Index {min : string; max : string;id : string}
-    | SubsetBy { name : string; by : string}
-    | SubsetWith { name : string; with_list : list[string]}
-    | Enum {vals : list[string]}
-    | Unit {with_new_name : option[string]}
-    | Bool {with_new : option[string * string]}
-    | Integer {with_range : option[string * string]}
-    | Simple {type : string}
-    | Alias {name : string}
-    | String { str_with : char * char; str_and : option[char * char];} 
-  }
-  
-  [Record]
-  public variant CpnDecl
-  {
-    | ML {str : string;}
-    | Var {id : string; type : string;}
-    | ColorSet
-    {
-      name : string;
-      type : Colour;
-    }
-  }
-  
-  [Record]
-  public variant CpnTree
-  {
-    | Declaration {decl : list[CpnDecl]}
-    | Place {name : string; id : string; type : string; init_mark : string;}
-    | Transition {name : string; id : string;guard : option[string];time : option[string];}
-    | Arc {text : string;from : string; to : string;p2t : bool;}
-  }
-  
   /// <summary>
   /// Description of Parser.
   /// </summary>
@@ -73,62 +33,64 @@ namespace PetriNetLib
     
     
     parse_color(col : XmlElement) : CpnDecl
+    {
+      def name = col.GetOneText("id");
+      def timed = col.GetOneTextOpt("timed");
+      def set = if (col.Contains("index"))
       {
-        def name = col.GetOneText("id");
-        def set = if (col.Contains("index"))
-        {
-          def range = col.GetText("index", "ml");
-          def type  = col.GetOneText("index", "id");
-          Colour.Index(range[0], range[1], type)
-        } else 
-        if (col.Contains("alias"))
-        {
-          def alias = col.GetOneText("alias", "id");
-          Colour.Alias(alias)
-        } else
-        if (col.Contains("product"))
-        {
-          def vals = col.Get("product", "id");
-          Colour.Product(vals.Map(_.InnerText))
-        } else
-        if (col.Contains("record"))
-        {
-          def fields = col.Get("record", "recordfield");
+        def range = col.GetText("index", "ml");
+        def type  = col.GetOneText("index", "id");
+        Colour.Index(range[0], range[1], type)
+      } else 
+      if (col.Contains("alias"))
+      {
+        def alias = col.GetOneText("alias", "id");
+        Colour.Alias(alias)
+      } else
+      if (col.Contains("product"))
+      {
+        def vals = col.Get("product", "id");
+        Colour.Product(vals.Map(_.InnerText))
+      } else
+      if (col.Contains("record"))
+      {
+        def fields = col.Get("record", "recordfield");
           
-          def get_fields(x)
-          {
-            def arr = x.GetText("id");
-            (arr[0], arr[1])
-          }
-          
-          def fields = fields.Map(get_fields);
-          Colour.Record(fields)
+        def get_fields(x)
+        {
+          def arr = x.GetText("id");
+          (arr[0], arr[1])
         }
-        else
-        if (col.Contains("enum"))
-        {
-          def en = col.GetText("enum", "id");
-          Colour.Enum(en.NToList())
-        } else
-        if (col.Contains("unit"))
-        {
-          def new_name = col.GetOneTextOpt("int", "with", "id");
-          Colour.Unit(new_name)
-        } else
-        if (col.Contains("bool"))   Colour.Simple("bool")   else
-        if (col.Contains("int"))    
-        {
-          def wit = col.GetText("int", "with", "ml").ToArray();
-          def wit = if (wit.IsEmpty()) None() else (wit[0], wit[1]) |> Some;
-          Colour.Integer(wit)
-        } else
-        if (col.Contains("intinf")) Colour.Simple("intinf") else
-        if (col.Contains("time"))   Colour.Simple("time")   else
-        if (col.Contains("real"))   Colour.Simple("real")   else
-        if (col.Contains("string")) Colour.Simple("string") else
-        null;
-        CpnDecl.ColorSet(name, set)
+          
+        def fields = fields.Map(get_fields);
+        Colour.Record(fields)
       }
+      else
+      if (col.Contains("enum"))
+      {
+        def en = col.GetText("enum", "id");
+        Colour.Enum(en.NToList())
+      } else
+      if (col.Contains("unit"))
+      {
+        def new_name = col.GetOneTextOpt("int", "with", "id");
+        Colour.Unit(new_name)
+      } else
+      if (col.Contains("bool"))   Colour.Simple("bool")   else
+      if (col.Contains("int"))    
+      {
+        def wit = col.GetText("int", "with", "ml").ToArray();
+        def wit = if (wit.IsEmpty()) None() else (wit[0], wit[1]) |> Some;
+        Colour.Integer(wit)
+      } else
+      if (col.Contains("intinf")) Colour.Simple("intinf") else
+      if (col.Contains("time"))   Colour.Simple("time")   else
+      if (col.Contains("real"))   Colour.Simple("real")   else
+      if (col.Contains("string")) Colour.Simple("string") else
+      null;
+      def set = if (timed.HasValue) Colour.Timed(set) else set;
+      CpnDecl.ColorSet(name, set)
+    }
       
     public Parse(file : string) : void
     {

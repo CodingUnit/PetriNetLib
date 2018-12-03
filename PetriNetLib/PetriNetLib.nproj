@@ -122,6 +122,12 @@
     <Compile Include="InArcBinding.n">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Model.n">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NetModel.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="OutModel.n">
       <SubType>Code</SubType>
     </Compile>

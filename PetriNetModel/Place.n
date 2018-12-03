@@ -18,6 +18,11 @@ namespace PetriNetModel
     public this(name : string) {Name =  name;tokens = MultiSet()}
     public this(name : string, cont : ITokenContainer[T]) {tokens = cont; Name = name;}
     
+    public this(cont : ITokenContainer[T])
+    {
+      tokens = cont
+    }
+    
     public this(en : IEnumerable[T], cont : ITokenContainer[T])
     {
       tokens = cont.Create(en)

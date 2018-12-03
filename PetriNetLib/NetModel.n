@@ -1,0 +1,161 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Nemerle.Compiler.Parsetree;
+using Nemerle.Compiler;
+
+namespace PetriNetLib
+{
+  [Record]
+  [Lens]
+  class Place
+  {
+    public idx    : int;
+    public id     : string;
+    public name   : string;
+    public colour : ColourSet;
+    
+    public init_mark : PExpr;
+    public tree      : CpnTree.Place;
+    public net       : PetriNetProcessor;
+    
+    public IsUnnamed : bool
+    {
+      [Memoize]
+      get
+      {
+        name == null
+      }
+    }
+    
+    static mutable unnamed_idx : int;
+    
+    public Name : string
+    {
+      [Memoize]
+      get
+      {
+        if (IsUnnamed)
+        {
+          def idx = unnamed_idx;
+          unnamed_idx++;
+          $"UnnamedPlace$idx"
+        } else
+        {
+          name
+        }
+      }
+    }
+    
+    public OutputTransitions : list[Transition * Arc]
+    {
+      [Memoize]
+      get
+      {
+        net.OutputPlaceArcs(this)
+      }
+    }
+    
+    public InputTransitions : list[Transition * Arc]
+    {
+      [Memoize]
+      get
+      {
+        net.InputPlaceArcs(this)
+      }
+    }
+    
+    public override GetHashCode() : int
+    {
+      idx
+    }
+  }
+  
+  //[Record]
+  //class TokenSet
+  //{
+  //  public num   : int;
+  //  public token : Token;
+  //}
+  
+  [Record]
+  [Lens]
+  class Transition
+  { 
+    public idx : int;
+    public id  : string;
+    public name : string;
+    public guard : PExpr;
+    
+    public time_expr : PExpr;
+    public code_segment : PExpr;
+    public priority : int;
+    public net : PetriNetProcessor;
+    
+    public OutputPlaces : list[Place * Arc]
+    {
+      [Memoize]
+      get
+      {
+        net.OutputTransitionArcs(this)
+      }
+    }
+    
+    public InputPlaces : list[Place * Arc]
+    {
+      [Memoize]
+      get
+      {
+        net.InputTransitionArcs(this)
+      }
+    }
+    
+    public override GetHashCode() : int
+    {
+      idx
+    }
+  }
+  
+  [Record]
+  variant ArcSource
+  {
+    | PlaceEnd      {place : Place}
+    | TransitionEnd {tran  : Transition}
+  }
+  
+  
+  [Record]
+  [Lens]
+  class Arc
+  { 
+    public expr : PExpr;
+    
+    public from : ArcSource;
+    public to   : ArcSource;
+  }
+  
+  [Record]
+  class ColourSet
+  {
+    public name : string;
+    public type : Colour;
+  }
+  
+  variant ExecError
+  {
+    | TokenConstantNotFound { place : Place; val : object }
+    | VarNotFound {name : string}
+    | TypeTokenNotCompat {incol : Colour; outcol : Colour;place : Place}
+  }
+  
+  [Flags]
+  public enum PetriNetFlags
+  {
+    | Debug = 1
+  }
+}

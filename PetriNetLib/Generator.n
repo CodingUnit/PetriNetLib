@@ -78,7 +78,15 @@ namespace PetriNetLib
       def name = place.name;
       def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
       def type = GetTypeExpr(place.colour);
-      <[decl: $(name : usesite) : PetriNetModel.Place.[$type] = PetriNetModel.Place($(name : string))]>
+      def dest_cont = match (DestContainerType(place))
+      {
+        | TDestCont.MultiSet  => <[ MultiSet() ]>
+        | RandomEnumerable    => <[ RandomArray() ]>
+        | SortedSet           => <[ SortedArray() ]>
+        | TokenQueue          => <[ TokenQueue() ]>
+        | TimedSimpleMultiset => <[ TimedSimpleMultiset() ]>
+      }
+      <[decl: $(name : usesite) : PetriNetModel.Place.[$type] = PetriNetModel.Place($(name : string), $dest_cont)]>
     }
     
     IsTokenExpr(expr : PExpr) : bool
@@ -295,7 +303,8 @@ namespace PetriNetLib
                                            {
                                              ..$vals
                                            }]>
-      | _ => null
+      | ColourSet(n, Colour.Timed(c))   => CreateColourSet(ColourSet(n, c))
+      | _                               => null
     }
 
     enum TDestCont
@@ -304,11 +313,31 @@ namespace PetriNetLib
       | RandomEnumerable
       | TokenQueue
       | SortedSet
+      | TimedSimpleMultiset
     }
     
-    DestContainerType() : TDestCont
+    NumberTokensGet(arc : Arc) : int
     {
-      TDestCont.MultiSet
+      match (arc.expr)
+      {
+        | <[ $(n : int) ` $_ ]>     => n
+        | <[ $(_ : usesite)]>       => 1
+        | _                         => -1
+      }
+    }
+    
+    DestContainerType(pl : Place) : TDestCont
+    {
+      match (pl.colour.type)
+      {
+        | Colour.Sorted => TDestCont.SortedSet
+        | Timed         => TDestCont.TimedSimpleMultiset
+        | Queue         => TDestCont.TokenQueue
+        | _             => def tran = pl.OutputTransitions;
+                           def one = tran.Select((_, x) => NumberTokensGet(x)).All(_ == 1);
+                           if (one) TDestCont.RandomEnumerable else TDestCont.MultiSet
+                          
+      }
     }
     
     CreateInitMarking(place : Place) : PExpr
@@ -332,14 +361,11 @@ namespace PetriNetLib
       
       def fold(expr)
       {
-        match (expr)
-        {
-          //| <[ {..$e} ]>   => e.Fold(acc, fold)
-          | <[ 1 ` $tok]>             => <[ array[$tok] ]>
-          | <[ $(n : int) ` $tok]>    => <[ Enumerable.Repeat($tok, $n) ]>
-          | <[ $l %++ $r]>            => combine(fold(l), fold(r))
-          | e                         => e
-        }
+        //| <[ {..$e} ]>   => e.Fold(acc, fold)
+        | <[ 1 ` $tok]>             => <[ array[$tok] ]>
+        | <[ $(n : int) ` $tok]>    => <[ Enumerable.Repeat($tok, $n) ]>
+        | <[ $l %++ $r]>            => combine(fold(l), fold(r))
+        | e                         => e
       }
       
       if (place.init_mark == null) <[]> else

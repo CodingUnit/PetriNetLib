@@ -1,6 +1,6 @@
 ﻿language CPNML
 {
-  syntax module CpnML.Grammar.Main start rule LangExpr;
+  syntax module Cpp.Grammar.CppGrammar start rule Declaration;
   //syntax module Nemerle.Statechart.Grammar.Actions;
   //syntax module Nemerle.Statechart.Grammar.Base;
   //syntax module Nemerle.Statechart.Grammar.Events;
@@ -10,150 +10,171 @@
   //syntax module Nemerle.Statechart.Grammar.Transitions;
 }
 
-namespace CpnML.Grammar
+namespace Cpp.Grammar
 {
 
-  syntax module Main
+ //using Nitra;
+
+syntax module CppGrammar
+{
+  literal Less                = "<";
+  literal Greater             = ">";
+  literal OpenBrace           = "(";
+  literal CloseBrace          = ")";
+  literal OpenBrace           = "{";
+  literal CloseBrace          = "}";
+  literal OpenSquareBrace     = "[";
+  literal CloseSquareBrace    = "]";
+  literal SingleQuote         = "\'";
+  literal Quote               = "\"";
+  literal Semicolon           = ";";
+  literal Comma               = ",";
+  literal Dot                 = ".";
+  literal Colon               = ":";
+  literal Question            = "?";
+  literal At                  = "@";
+  literal AliasSeparator      = "::";
+  literal Assign              = "=";
+  literal Prefix              = "\\u";
+  literal DodDot              = "..";
+  literal Op                  = "=>", "=", "*=", "/=", "%=", "+=", "-=", "<<=", ">>=", "&=", "^=", "|=", "??",
+                                "||", "&&", "|", "^", "&", "==", "!=", "<=", ">=", "<<", ">>", "+", "-", "!", "~", "++", "--", "*", "/", "%", "->";
+  literal Backslash           = "\\";
+  literal Epsilon             = "";
+
+  regex Any = ['\u0000'..'\uFFFF'];
+
+  [StartRule, ExplicitSpaces]
+  syntax CompilationUnit = s Expression !Any;
+
+  /////////////////////////////////////////////////////////
+  // Spacing
+
+  regex NewLineCharacter  = '\n' | '\r' | '\u2028' /*  line separator */ | '\u2029' /*  paragraph separator */;
+  regex NewLine  = "\r\n" | NewLineCharacter;
+  regex Whitespace = [Zs] | '\t' | '\v' | '\f' | '\uFEFF' | '\u0000';
+  regex Space = Whitespace | NewLine;
+  regex Spaces = Space+;
+
+  void s   = Spaces*;                     // optional spacer
+  void S   = !IdentifierPartCharacters s; // identifier break spacer
+
+  marker i;     // increase a indent
+  marker d;     // decrease a indent
+  marker nl;    // optional spacer and plase for \n while pretty printing
+  marker inl;   // i + nl
+  marker sm;    // optional spacer and prefer to print space while pretty printing
+
+  keyword regex ['A'..'Z', 'a'..'z', '_'..'_']+ rule S;
+
+  alias Name                = Identifier;
+  alias QualifiedName       = QualifiedIdentifier;
+  alias Char                = Any;
+  alias Comma               = ","?;
+
+  // Spacing
+  /////////////////////////////////////////////////////////
+
+  /////////////////////////////////////////////////////////
+  // Identifiers
+
+  [ExplicitSpaces, SuppressTrailingSpaces]
+  syntax Identifier           = IdentifierBody s;
+  syntax QualifiedIdentifier  = (Identifier; "::")+;
+
+  regex LetterCharacter           = [Lu, Ll, Lt, Lm, Lo, Nl];//['A'..'Z', 'a'..'z', 'а'..'я', 'А'..'Я', 'і'];//
+  regex CombiningCharacter        = [Mn, Mc];
+  regex DecimalDigitCharacter     = [Nd];
+  regex ConnectingCharacter       = [Pc];
+  regex FormattingCharacter       = [Cf];
+
+  regex IdentifierStartCharacter  = LetterCharacter | "_";
+  regex IdentifierPartCharacters  = LetterCharacter | DecimalDigitCharacter | ConnectingCharacter | CombiningCharacter | FormattingCharacter;
+  regex IdentifierBody            = IdentifierStartCharacter IdentifierPartCharacters*;
+
+  // Identifiers
+  /////////////////////////////////////////////////////////
+
+  /////////////////////////////////////////////////////////
+  // Literals
+
+  regex DecimalDigit                        = ['0'..'9'];
+  regex HexDigit                            = ['0'..'9', 'a'..'f', 'A'..'F'];
+  regex IntegerTypeSuffixTerminal           = ('U' | 'u') ('l' | 'L')? | ('l' | 'L') ('U' | 'u')?;
+  regex IntegerTypeSuffix                   = IntegerTypeSuffixTerminal; // "UL" | "ul" | "uL" | "Ul" | "LU" | "lu" | "Lu" | "lU" | "U" | "u" | "L" | "l";
+  regex DecimalIntegerLiteral               = DecimalDigit+ IntegerTypeSuffix?;
+  regex HexadecimalIntegerLiteral           = ("0x" | "0X") HexDigit+ IntegerTypeSuffix?;
+  regex IntegerLiteral                      = HexadecimalIntegerLiteral | DecimalIntegerLiteral;
+
+  ////////////////////////////////////////////////////////////////////////////////////
+  // Type
+
+  /*syntax Type
   {
-    using Base;
-	  using Nitra.Core;
+    | QualifiedTypeName = QualifiedName;
 
-    syntax Literal
-    {
-      | Numeric
-      | FloatingNumber
-      | String
-      | Boolean
-      | EmptyMultiSet = "empty"
-      | Char
-      | NilList = "nil"
-    }
+    precedence FunctionType:
+    | FunctionType      = Type ^ FunctionType "(" (Type; ",")* ")";
+  }*/
 
-    token Char = '#' '"' Any '"';
+  ////////////////////////////////////////////////////////////////////////////////////
+  // Expressions
 
-    syntax IndexVar = Name=Identifier '(' Idx=Expr')';
+  syntax Expression
+  {
+    | IdentifierExpression             = QualifiedName;
+    | IntegerLiteralExpression         = IntegerLiteral;
 
-	  //syntax FuncCall
+    | QualifiedNameExpression          = QualifiedName; // simple-name || member-access
+    | ParenthesizedExpression          = "(" Expression ")"; // parenthesized-expression
+    | Cast                             = "(" Type ")" Expression;
 
-    syntax TypeExpr
-    {
-      | Int    = "int"
-      | Real   = "real"
-      | String = "string"
-    }
-    syntax Delay 
-    {
-      | AddTime = '@' '+' Expr
-      | AddTimeAlt = '@' '@' '+' Expr
-    }
-
-	syntax ExprList = (Expr ";")+;
-
-	syntax Expr
-    {	  
-      | Literal
-      precedence Type:
-      | TypeAnnot = Expr Type
-	    //| Tuple = '(' Expr ',' Expr (',' Expr)* ')'
-      | Record = '{' (Elem;",")* '}'
-      {
-        syntax Elem = Name=AnyIdentifier '=' Expr;
-      }
-      | List = '[' (Expr;",")* ']'      
-      | Let = "let" Val+ "in" Expr "end"  
-      | Match = "case" Expr "of" (Case;"|")+
-      {
-        syntax Case = Pat=Expr "=>" Expr=Expr;
-      }
-      | Var = Identifier
-      | Lambda = Name=Identifier Parms=AnyIdentifier* "=>" Expr
-	    precedence ArcDelay:
-	    | DelayExpr = Expr Delay
-      | Delay
-	    precedence Union:
-      | TimedSetUnion = Expr "+++" Expr// ^ Oper
-      | SetUnion = Expr "++" Expr// ^ Oper
-      | SetDiff  = Expr "--" Expr
-	    | SetUnequal = Expr "<>" "<>" Expr
-      | SetUpper = Expr ">>" Expr
-      | SetLower = Expr "<<" Expr
-	    | SetUpperEqual = Expr ">>==" Expr
-      | SetLowerEqual = Expr "<<==" Expr
-      | SetUpperEqualAlt = Expr ">>=" Expr
-      | SetLowerEqualAlt = Expr "<<=" Expr
-	    | SetScalarMult    = Expr "**" Expr
-      | SetScalarMultAlt = Expr "*" Expr
-      precedence Func:
-	    | FuncCall   = Name=(Identifier;'.')+ Parms=(Expr ^ Func)+
-      precedence Token:
-      | MultiSetConstr = Integer '`' Expr// ^ Oper
-		  
-      //| RecordAccess = !Char '#' AnyIdentifier Expr            
-      precedence Conditional:
-      | If = "if" Cond=Expr ^ Conditional "then" Then=Expr "else" Else=Expr
-      precedence And:
-      | AndAlso = Expr "andalso" Expr
-      precedence Or:
-		  | OrElse  = Expr "orelse" Expr
-      precedence Equality:
-		  | Equal    = Expr '=' Expr
-      | NotEqual = Expr "<>" Expr
-      precedence Relational:
-	  | Above	   = Expr '>' Expr
-	  | Below	   = Expr '<' Expr
-	  | AboveEqual = Expr ">=" Expr
-	  | BelowEqual = Expr "<=" Expr
-      precedence Append:
-      | Append  = Expr "@" Expr
-      | Concat  = Expr '^' Expr
-      | ListCombine = Expr "::" Expr
-      precedence Additive:
-      | Plus	   = Expr ^ Additive '+' Expr
-	  | Minus    = Expr '-' Expr
-      precedence MulDiv:
-      | Multiply = Expr '*' Expr
-      | Div      = Expr '/' Expr
-      | IntDiv   = Expr "div" Expr
-      | Mod      = Expr "mod" Expr
-      precedence Not:
-      | Not     = "not" Expr
-      precedence Sharp:
-      | SharpOper = '#' Expr
-      precedence Braces:
-      | BraceExpr = '(' Expr* ')'
-      //| UnitVal = '(' ')'
-      precedence FigBraces:
-      | FigBraceExpr = '{' Expr '}'   
-      precedence Decl:
-      | LowerDecl
-    }
-
-    syntax Type = ":" TypeExpr;        
-
-    syntax Val = "val" Name=Identifier Type? '=' Expr;
-
-    syntax LowerDecl
-    {
-      | Val
-      | Var = "var" Names=(Identifier;",")+ Type
-    }
-
-	syntax Declaration
-    {
-      | LowerDecl
-      | Func = "fun" Name=Identifier '(' Parms=(Expr;",")* ')' Type? '=' Body=ExprList
-      | FunMatch = "fun" MatchCase "|" (MatchCase;"|")+
-      {
-        syntax MatchCase = Name=Identifier Pat=Expr '=' Expr=Expr;
-      }
-    }
-
-	  syntax LangExpr
-	  {
-		  | Decl = Declaration+
-		  | Expr
-		  | ExprList
-	  }
-  
+    precedence Invocation:
+    | Invocation                       = Expression ^ Invocation "(" (Expression; ",")* ")";
   }
+
+  syntax Modifier
+  {
+    | Public    = "public"
+    | Private   = "private"
+    | Protected = "protected"
+  }
+
+  syntax Specifier
+  {
+  }
+
+  syntax Type
+  {
+    | Void  = "void"
+    | Short = "short"
+    | Char  = "char"
+    | UnsignedChar = "unsigned" sm "char"
+    | Named = IdentifierBody
+  }
+
+  
+  syntax TypeDecl
+  {
+    | ClassDecl
+    | Method = Specifier RetType=Type Name=Identifier '(' Parms=Type* ')' sm Qualifier? nl '{' nl Body=Statement* nl '}' 
+    {
+      syntax Qualifier
+      {
+       | Const
+      }
+    }
+  }
+
+  syntax ClassDecl = "class" sm Name=Identifier sm Base? nl '{' i Body=TypeDecl* d nl '}'
+  {
+      syntax Base = ':' sm Modifier sm BaseClass=QualifiedName;
+  }
+
+  syntax Declaration
+  {
+    | Decl = "decl:" ClassDecl
+  }
+}
+
 }

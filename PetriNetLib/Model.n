@@ -1,0 +1,54 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace PetriNetLib
+{
+  [Record]
+  public variant Colour
+  {
+    | List {type : string; with_range : int * int;}
+    | Union { types : list[string * string]}
+    | Product {tuple : list[string]}
+    | Record {vals : list[string * string]}
+    | Index {min : string; max : string;id : string}
+    | SubsetBy { name : string; by : string}
+    | SubsetWith { name : string; with_list : list[string]}
+    | Enum {vals : list[string]}
+    | Unit {with_new_name : option[string]}
+    | Bool {with_new : option[string * string]}
+    | Integer {with_range : option[string * string]}
+    | Simple {type : string}
+    | Alias {name : string}
+    | String { str_with : char * char; str_and : option[char * char];} 
+    | Timed {col : Colour}
+    | Queue {type : Colour}
+    | Sorted {type : Colour}
+  }
+  
+  [Record]
+  public variant CpnDecl
+  {
+    | ML {str : string;}
+    | Var {id : string; type : string;}
+    | ColorSet
+    {
+      name : string;
+      type : Colour;
+    }
+  }
+  
+  [Record]
+  public variant CpnTree
+  {
+    | Declaration {decl : list[CpnDecl]}
+    | Place {name : string; id : string; type : string; init_mark : string;}
+    | Transition {name : string; id : string;guard : option[string];time : option[string];}
+    | Arc {text : string;from : string; to : string;p2t : bool;}
+  }
+}
