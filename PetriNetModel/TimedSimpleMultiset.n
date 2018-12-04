@@ -84,12 +84,13 @@ namespace PetriNetModel
     
     public Have(num : int) : bool
     {
-      EnabledTokens.Count() >= num
+      !EnabledTokens.GroupBy(x => x.key).Where(x => x.Count() >= num).IsEmpty()
     }
     
     public Have(tok : IEnumerable[Timed[T]]) : bool
     {
-      EnabledTokens.Intersect(tok).Count() == tok.Count()
+      tok.All(EnabledTokens.Contains)
+      //EnabledTokens.Intersect(tok).Count() == tok.Count()
     }
     
     public Peek() : Timed[T]
