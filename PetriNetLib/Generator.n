@@ -11,6 +11,9 @@ using Nemerle.Compiler.Parsetree;
 using Nemerle.Compiler.Typedtree;
 using CommonLib.Macros;
 using PetriNetModel;
+using System.Reactive.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace PetriNetLib
 {
@@ -26,6 +29,9 @@ namespace PetriNetLib
     typebuilder : TypeBuilder;
     mutable typing_method : MethodBuilder;
     //compiler : CompilerHost = CompilerHost();
+    mutable cons_expr : list[PExpr] = [];
+    mutable fields    : list[ClassMember] = [];
+    mutable init_body : list[PExpr] = [];
     
     public this(model : OutModel, proc : PetriNetProcessor)
     {
@@ -376,6 +382,74 @@ namespace PetriNetLib
       }
     }
     
+    
+    
+    CreateToString() : ClassMember
+    {
+      def strings = model.places.Map(x => <[ $(x.name : usesite).ToString() ]>);
+      <[decl: public override ToString() : string 
+      { 
+        def str = array[..$strings];
+        string.Join(";\n", str)
+      }]>
+    }
+    
+    CreateCons() : ClassMember
+    {
+      def marking = model.places.MapToList(CreateInitMarking);
+      if (model.IsTimed) <[decl: public this(time_step : int = 15) { {..$marking} {..$cons_expr} }]>; 
+      else <[decl: public this() { {..$marking} {..$cons_expr} }]>;
+    }
+    
+    CreateTimeScheduler() : ClassMember
+    {
+      def body = model.transitions.Where(_.IsTimed).Map(x => <[ $(x.name : usesite)() ]>);
+      cons_expr ::= <[ time_cancel = time_cancel_source.Token; scheduler = Task(_ => TimeStep(), time_cancel)]>;
+      fields ::= <[decl: mutable scheduler : Task ]>;
+      fields ::= <[decl: public Dispose() : void {time_cancel.Cancel(); try {scheduler.Wait() } catch {| AggregateException => ()} finally {time_cancel_source.Dispose}}]>;
+      fields ::= <[decl: mutable time_cancel_source : CancellationTokenSource = CancellationTokenSource()]>;
+      fields ::= <[decl: mutable time_cancel : CancellationToken]>;
+      init_body ::= <[scheduler.Start()]>;
+      //Observable.Interval
+      <[decl: public TimeStep() : void
+      {
+        if (time_cancel.IsCancellationRequested)
+          token.ThrowIfCancellationRequested(); else
+        {..$body}
+      }]>
+    }
+    
+    CreateStartMethod() : ClassMember
+    {
+      <[decl: public Initiate() : void
+      {
+        {..$init_body}
+      }]>
+    }
+    
+    public Generate() : void
+    {
+      typebuilder.AddImplementedInterface(<[ IDisposable ]>);
+      CreateOperators();
+      //assert2(false);
+      def sets = model.colour_sets.Values.Map(CreateColourSet).Filter(_ != null);
+      def sets2 = model.colour_sets.Values.Map(CreateColourSet2).Filter(_ != null);
+      def sets = sets + sets2;
+      foreach (m in sets) typebuilder.DefineNestedTypeWithSource(m).Compile();
+      
+      def fields = model.places.MapToList(CreatePlace);
+      def vars = model.vars.KeyValuePairs.MapToList(CreateVars);
+      
+      def time_sched = if (model.IsTimed) CreateTimeScheduler() else null;
+      def cons = CreateCons();
+      def tostring = CreateToString();
+      def start = CreateStartMethod();
+      
+      def members = start :: tostring :: cons :: fields + vars;
+      def members = if (time_sched != null) time_sched :: members else members;
+      foreach (m in members) _ = typebuilder.DefineWithSource(m);
+    }
+    
     public PhaseTwo() : void
     {
       /*
@@ -391,40 +465,6 @@ namespace PetriNetLib
       def decls = decls + methods;
       foreach (m in decls) _ = typebuilder.DefineWithSource(m);
       typebuilder.Compile()
-    }
-    
-    CreateToString() : ClassMember
-    {
-      def strings = model.places.Map(x => <[ $(x.name : usesite).ToString() ]>);
-      <[decl: public override ToString() : string 
-      { 
-        def str = array[..$strings];
-        string.Join(";\n", str)
-      }]>
-    }
-    
-    CreateCons() : ClassMember
-    {
-      def marking = model.places.MapToList(CreateInitMarking);
-      <[decl: public this() {..$marking}]>;
-    }
-    
-    public Generate() : void
-    {
-      CreateOperators();
-      //assert2(false);
-      def sets = model.colour_sets.Values.Map(CreateColourSet).Filter(_ != null);
-      def sets2 = model.colour_sets.Values.Map(CreateColourSet2).Filter(_ != null);
-      def sets = sets + sets2;
-      foreach (m in sets) typebuilder.DefineNestedTypeWithSource(m).Compile();
-      
-      def fields = model.places.MapToList(CreatePlace);
-      def cons = CreateCons();
-      def tostring = CreateToString();
-      
-      def vars = model.vars.KeyValuePairs.MapToList(CreateVars);
-      def members = tostring :: cons :: fields + vars;
-      foreach (m in members) _ = typebuilder.DefineWithSource(m);
     }
   }
 }

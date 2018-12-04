@@ -198,15 +198,18 @@ namespace CommonLib.Macros
           {
             // если элемент есть, поток мог уже удалить элемент 
             buckets[point] = null;
-            def new_elem = items.Deque();
-              // из очереди удаляем из начала
-            when (entry.IndexInItems >= items.ReadIndex)
-            {
-                // присваиваем новому элементу индекс удаленного
-              new_elem.IndexInItems     = entry.IndexInItems;
-                // заменяем элемент удаленный элементом из начала
-              items[entry.IndexInItems] = new_elem;
-            }
+            def new_elem = items.Remove(entry.IndexInItems);
+            new_elem.IndexInItems = entry.IndexInItems;
+            //  // из очереди удаляем из начала
+            //when (entry.IndexInItems >= items.ReadIndex)
+            //{
+              
+            //    // присваиваем новому элементу индекс удаленного
+            //  items[entry.IndexInItems] = new_elem.IndexInItems
+            //  = entry.IndexInItems;
+            //    // заменяем элемент удаленный элементом из начала
+            //  items[entry.IndexInItems] = new_elem;
+            //}
           }
         }
         locked = 0;

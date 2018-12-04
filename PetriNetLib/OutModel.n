@@ -23,6 +23,15 @@ namespace PetriNetLib
     public colour_sets : Hashtable[string, ColourSet] = Hashtable();
     public ml_decls    : list[PExpr];
     
+    public IsTimed : bool
+    {
+      [Memoize]
+      get
+      {
+        places.Exists(_.IsTimed)
+      }
+    }
+    
     public GetIndex(name : string) : option[string * string]
     {
       def index = colour_sets.Fold([], (x, a) => if (x.Value is ColourSet(n, Colour.Index(id = i))) (n, i) :: a else a);

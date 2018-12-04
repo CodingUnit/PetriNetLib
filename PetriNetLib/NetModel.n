@@ -8,11 +8,12 @@ using System.Collections.Generic;
 using System.Linq;
 using Nemerle.Compiler.Parsetree;
 using Nemerle.Compiler;
+using CommonLib.Macros;
 
 namespace PetriNetLib
 {
   [Record]
-  [Lens]
+  //[Lens]
   class Place
   {
     public idx    : int;
@@ -23,6 +24,15 @@ namespace PetriNetLib
     public init_mark : PExpr;
     public tree      : CpnTree.Place;
     public net       : PetriNetProcessor;
+    
+    public IsTimed : bool
+    {
+      [Memoize]
+      get
+      {
+        colour is ColourSet(_, Timed)
+      }
+    }
     
     public IsUnnamed : bool
     {
@@ -96,6 +106,16 @@ namespace PetriNetLib
     public code_segment : PExpr;
     public priority : int;
     public net : PetriNetProcessor;
+    
+    public IsTimed : bool
+    {
+      [Memoize]
+      get
+      {
+        InputPlaces.Exists((x, _) => x.IsTimed)
+        //colour is ColourSet(_, Timed)
+      }
+    }
     
     public OutputPlaces : list[Place * Arc]
     {

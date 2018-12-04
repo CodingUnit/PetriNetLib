@@ -81,6 +81,23 @@ namespace CommonLib.Macros
       }
     }
     
+    // remove element deque from begin and set to this element
+    public Remove(index : int) : T
+    {
+      def new_elem = Deque();
+      def elem = queue[index];
+        // из очереди удаляем из начала
+      when (index >= read_index)
+      {
+          // присваиваем новому элементу индекс удаленного
+        //new_elem.IndexInItems     = entry.IndexInItems;
+          // заменяем элемент удаленный элементом из начала
+        //items[entry.IndexInItems] = new_elem;
+        queue[index] = new_elem
+      }
+      elem
+    }
+    
     public Peek() : T
     {
       queue[read_index % queue.Length]
