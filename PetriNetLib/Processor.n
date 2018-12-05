@@ -46,8 +46,14 @@ namespace PetriNetLib
       proc = PetriNetProcessor(file, typer, ty, parser.Places, parser.Transitions, parser.Arcs, parser.Decls);
       proc.Process();
       gen = Generator(proc.OutModel, proc);
-      gen.Generate();
+      gen.PhaseOne();
       ty.UserData["PetriNetGen"] = this;
+    }
+    
+    public MainGen() : void
+    {
+      gen = Generator(proc.OutModel, proc);
+      gen.Generate();
     }
   }
   

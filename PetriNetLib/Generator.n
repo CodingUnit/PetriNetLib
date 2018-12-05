@@ -81,8 +81,8 @@ namespace PetriNetLib
     
     CreatePlace(place : Place) : ClassMember
     {
-      def name = place.name;
-      def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
+      def name = place.Name;
+      //def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
       def type = GetTypeExpr(place.colour);
       def dest_cont = match (DestContainerType(place))
       {
@@ -397,25 +397,57 @@ namespace PetriNetLib
     CreateCons() : ClassMember
     {
       def marking = model.places.MapToList(CreateInitMarking);
-      if (model.IsTimed) <[decl: public this(time_step : int = 15) { {..$marking} {..$cons_expr} }]>; 
+      fields ::= <[decl: time_step : int]>;
+      if (model.IsTimed) <[decl: public this(time_step : int = 15) { {..$marking} {..$cons_expr} this.time_step = time_step}]>; 
       else <[decl: public this() { {..$marking} {..$cons_expr} }]>;
     }
     
-    CreateTimeScheduler() : ClassMember
+    CreateTimeMethods() : ClassMember
     {
       def body = model.transitions.Where(_.IsTimed).Map(x => <[ $(x.name : usesite)() ]>);
-      cons_expr ::= <[ time_cancel = time_cancel_source.Token; scheduler = Task(_ => TimeStep(), time_cancel)]>;
-      fields ::= <[decl: mutable scheduler : Task ]>;
-      fields ::= <[decl: public Dispose() : void {time_cancel.Cancel(); try {scheduler.Wait() } catch {| AggregateException => ()} finally {time_cancel_source.Dispose}}]>;
-      fields ::= <[decl: mutable time_cancel_source : CancellationTokenSource = CancellationTokenSource()]>;
-      fields ::= <[decl: mutable time_cancel : CancellationToken]>;
-      init_body ::= <[scheduler.Start()]>;
-      //Observable.Interval
+      def next = model.places.Where(_.IsTimed).Map(x => <[ $(x.name : usesite).NextTokenDelay ]>);
+      //cons_expr ::= <[ time_cancel = time_cancel_source.Token; scheduler = Task(_ => TimeStep(), time_cancel)]>;
+      //fields ::= <[decl: mutable scheduler : Task ]>;
+      //fields ::= <[decl: public Dispose() : void {time_cancel.Cancel(); try {scheduler.Wait() } catch {| AggregateException => ()} finally {time_cancel_source.Dispose()}}]>;
+      //fields ::= <[decl: time_cancel_source : CancellationTokenSource = CancellationTokenSource()]>;
+      //fields ::= <[decl: mutable time_cancel : CancellationToken]>;
+      //init_body ::= <[scheduler.Start()]>;
+      def next = next.Map(x => <[ min = PetriNetUtils.TimeMin(min, $x); ]>);
+      fields ::= <[decl: public GetNextTime() : DateTime
+                   {
+                     mutable min : DateTime;
+                     {..$next}
+                     min
+                   }]>;
       <[decl: public TimeStep() : void
       {
-        if (time_cancel.IsCancellationRequested)
-          token.ThrowIfCancellationRequested(); else
         {..$body}
+      }]>
+    }
+    
+    CreateStepMethod() : ClassMember
+    {
+      def body = model.transitions.Where(x => x.IsImmediate && !x.IsTimed).Map(x => <[ $(x.name : usesite)() ]>);
+      cons_expr ::= <[ main_cancel_token = main_cancel_source.Token; main_task = Task(_ => Step(), main_cancel)]>;
+      fields ::= <[decl: mutable main_task : Task ]>;
+      fields ::= <[decl: public Dispose() : void 
+                  {
+                    main_cancel.Cancel(); 
+                    try {main_task.Wait() } 
+                    catch {| AggregateException => ()} 
+                    finally {main_cancel_source.Dispose()}
+                  }]>;
+      fields ::= <[decl: main_cancel : CancellationTokenSource = CancellationTokenSource()]>;
+      fields ::= <[decl: mutable main_cancel_token : CancellationToken]>;
+      init_body ::= <[main_task.Start()]>;
+      
+      <[decl: public Step() : void
+      {
+        if (main_cancel_token.IsCancellationRequested)
+          main_cancel_token.ThrowIfCancellationRequested(); else
+        {..$body}
+        Thread.Sleep(time_step);
+        Step()
       }]>
     }
     
@@ -428,8 +460,7 @@ namespace PetriNetLib
     }
     
     public Generate() : void
-    {
-      typebuilder.AddImplementedInterface(<[ IDisposable ]>);
+    {      
       CreateOperators();
       //assert2(false);
       def sets = model.colour_sets.Values.Map(CreateColourSet).Filter(_ != null);
@@ -437,17 +468,24 @@ namespace PetriNetLib
       def sets = sets + sets2;
       foreach (m in sets) typebuilder.DefineNestedTypeWithSource(m).Compile();
       
-      def fields = model.places.MapToList(CreatePlace);
+      def places = model.places.MapToList(CreatePlace);
       def vars = model.vars.KeyValuePairs.MapToList(CreateVars);
       
-      def time_sched = if (model.IsTimed) CreateTimeScheduler() else null;
+      def time_sched = if (model.IsTimed) CreateTimeMethods() else null;
       def cons = CreateCons();
       def tostring = CreateToString();
       def start = CreateStartMethod();
+      def step = CreateStepMethod();
       
-      def members = start :: tostring :: cons :: fields + vars;
+      def members = step :: start :: tostring :: cons :: fields + places + vars;
       def members = if (time_sched != null) time_sched :: members else members;
       foreach (m in members) _ = typebuilder.DefineWithSource(m);
+    }
+    
+    public PhaseOne() : void
+    {
+      typebuilder.AddImplementedInterface(<[ IDisposable ]>);
+      typebuilder.AddImplementedInterface(if (model.IsTimed) <[ ITimedPetriNet ]> else <[ IPetriNet ]>);
     }
     
     public PhaseTwo() : void

@@ -153,7 +153,10 @@ syntax module CppGrammar
     | Named = IdentifierBody
   }
 
-  
+  syntax Statement
+  {
+  }
+
   syntax TypeDecl
   {
     | ClassDecl
@@ -161,7 +164,7 @@ syntax module CppGrammar
     {
       syntax Qualifier
       {
-       | Const
+       | Const = "const"
       }
     }
   }

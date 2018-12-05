@@ -1,0 +1,22 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace PetriNetModel
+{
+  /// <summary>
+  /// Description of PetriNetUtils.
+  /// </summary>
+  public class PetriNetUtils
+  {
+    public static TimeMin(time1 : DateTime, time2 : DateTime) : DateTime
+    {
+      if (time1 < time2) time1 else time2
+    }
+  }
+}

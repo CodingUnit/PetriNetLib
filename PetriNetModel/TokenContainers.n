@@ -155,7 +155,7 @@ namespace PetriNetModel
   //  }
   //}
 
-  class RandomArray[T] : IIndexedTokenContainer[T]
+  public class RandomArray[T] : IIndexedTokenContainer[T]
   {
     queue   : RQueue[T] = RQueue(32);
     //elems   : BitEnumerable = BitEnumerable();

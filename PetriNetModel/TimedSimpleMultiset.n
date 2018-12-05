@@ -106,6 +106,18 @@ namespace PetriNetModel
       }
     }
     
+    public NextTokenDelay : TimeSpan
+    {
+      get
+      {
+        if (HaveTokens)
+        {
+          def min = Peek();
+          min.time - DateTime.Now
+        } else TimeSpan.MaxValue
+      }
+    }
+    
     public GetMany(num : int) : IEnumerable[Timed[T]]
     {
       def by_key = EnabledTokens.GroupBy(_.key);

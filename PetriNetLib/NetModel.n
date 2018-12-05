@@ -25,40 +25,45 @@ namespace PetriNetLib
     public tree      : CpnTree.Place;
     public net       : PetriNetProcessor;
     
+    public Name : string
+    {
+      [Memoize]
+      get
+      {
+        match (name.LastIndexOf("]"))
+        {
+          | -1 => name
+          | n  => name.Substring(n + 1)
+        }
+      }
+    }
+    
+    public Attributes : list[string]
+    {
+      [Memoize]
+      get
+      {
+        def loop(name, res)
+        {
+          def start_idx = name.IndexOf("]");
+          if (start_idx != -1)
+          {
+            def idx = name.IndexOf("]");
+            def attr = name.Substring(start_idx, idx - start_idx);
+            loop(name.Substring(idx + 1), attr :: res)
+          } else res
+        }
+        
+        loop(name, [])
+      }
+    }
+    
     public IsTimed : bool
     {
       [Memoize]
       get
       {
         colour is ColourSet(_, Timed)
-      }
-    }
-    
-    public IsUnnamed : bool
-    {
-      [Memoize]
-      get
-      {
-        name == null
-      }
-    }
-    
-    static mutable unnamed_idx : int;
-    
-    public Name : string
-    {
-      [Memoize]
-      get
-      {
-        if (IsUnnamed)
-        {
-          def idx = unnamed_idx;
-          unnamed_idx++;
-          $"UnnamedPlace$idx"
-        } else
-        {
-          name
-        }
       }
     }
     
@@ -117,6 +122,15 @@ namespace PetriNetLib
       }
     }
     
+    public IsImmediate : bool
+    {
+      [Memoize]
+      get
+      {
+        IsUnnamed || guard is <[ immediate ]>
+      }
+    }
+    
     public OutputPlaces : list[Place * Arc]
     {
       [Memoize]
@@ -132,6 +146,34 @@ namespace PetriNetLib
       get
       {
         net.InputTransitionArcs(this)
+      }
+    }
+    
+    public IsUnnamed : bool
+    {
+      [Memoize]
+      get
+      {
+        name == null
+      }
+    }
+    
+    static mutable unnamed_idx : int;
+    
+    public Name : string
+    {
+      [Memoize]
+      get
+      {
+        if (IsUnnamed)
+        {
+          def idx = unnamed_idx;
+          unnamed_idx++;
+          $"UnnamedTransition$idx"
+        } else
+        {
+          name
+        }
       }
     }
     

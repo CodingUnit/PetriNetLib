@@ -1,0 +1,58 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Threading;
+using System.Reactive.Linq;
+
+namespace PetriNetModel
+{
+  /// <summary>
+  /// Description of TimeScheduler.
+  /// </summary>
+  public class TimeScheduler
+  {
+    mutable task : Task;
+    cancel_source : CancellationTokenSource = CancellationTokenSource();
+    mutable cancel_token  : CancellationToken;
+    time_step : int;
+    mutable next_time : DateTime;
+    
+    net : ITimedPetriNet;
+    
+    public this(net : ITimedPetriNet, time_step : int)
+    {
+      this.net = net;
+      next_time = DateTime.MinValue;
+      this.time_step = time_step;
+    }
+    
+    public Start() : void
+    {
+      cancel_token = cancel_source.Token;
+      task = Task(Step, cancel_token);
+    }
+    
+    public Step() : void
+    {
+      if (cancel_token.IsCancellationRequested)
+      {
+        cancel_token.ThrowIfCancellationRequested()
+      } else
+      {
+        when (DateTime.Now >= next_time)
+        {
+          net.TimeStep();
+          next_time = net.GetNextTime();
+        }
+        Thread.Sleep(time_step);
+      }
+      Step()
+    }
+  }
+}

@@ -17,7 +17,7 @@ namespace CommonLib.Macros
     public mutable count : int;
 
     public IndexInItems : int {get;set;}
-    //public IndexInBuckets : int {get;set;}
+    public IndexInBuckets : int {get;set;}
     public Empty : bool
     {
       get
@@ -36,7 +36,7 @@ namespace CommonLib.Macros
   {
     mutable buckets : array[Bucket[T]]  = array(32);
     items           : RQueue[Bucket[T]] = RQueue(32);
-    add_rem_queue   : RQueue[T * int * bool] = RQueue(10);
+    add_rem_queue   : RQueue[T * int * int * bool] = RQueue(10);
     mutable locked  : int;
     mutable add_rem_locked : int;
 
@@ -114,6 +114,7 @@ namespace CommonLib.Macros
       foreach (bucket in items)
       {
         def (_, point) = FindEntry(bucket.key, new_buckets);
+        bucket.IndexInBuckets = point;
         new_buckets[point] = bucket;
       }        
       new_buckets
@@ -127,7 +128,7 @@ namespace CommonLib.Macros
         {
           
         } else
-        add_rem_queue.Enqueue((k, count, true))
+        add_rem_queue.Enqueue((k, count, -1, true))
       } else
       {
         def (entry, point) = FindEntry(k);
@@ -137,7 +138,7 @@ namespace CommonLib.Macros
         } else
         {
 
-          def bucket = Bucket(k, count, items.WriteIndex);
+          def bucket = Bucket(k, count, items.WriteIndex, point);
 
           // если версия поменялась надо снова искать точку элемента
           // если функция вызывалась уже из другого потока 
@@ -169,14 +170,56 @@ namespace CommonLib.Macros
         {
           match (add_rem_queue.Deque())
           {
-            | (k, c, true)  => Add(k, c)
-            | (k, c, false) => Remove(k, c)
+            | (k, c, -1, true)  => Add(k, c)
+            | (k, c, -1, false) => Remove(k, c)
+            | (_, c, i, false)  => RemovePos(i, c)
           }
         }
         add_rem_locked = 0;
       }
     }
 
+    public RemovePos(idx : int, count : int = 1) : void
+    {
+      if (!ThreadSafeUtils.CAS(ref locked, 0, 1)) 
+      {
+        if (add_rem_queue.Full)
+        {
+          
+        } else
+        add_rem_queue.Enqueue((default(T), count, idx, false))
+      } else
+      {
+        def point = items[idx].IndexInBuckets;
+        def entry = buckets[point];
+        when (entry != null)
+        {
+          if (entry.count > count)
+          {
+            entry.count -= count;
+          } else 
+          {
+            // если элемент есть, поток мог уже удалить элемент 
+            buckets[point] = null;
+            def new_elem = items.Remove(idx);
+            new_elem.IndexInItems = entry.IndexInItems;
+            //  // из очереди удаляем из начала
+            //when (entry.IndexInItems >= items.ReadIndex)
+            //{
+              
+            //    // присваиваем новому элементу индекс удаленного
+            //  items[entry.IndexInItems] = new_elem.IndexInItems
+            //  = entry.IndexInItems;
+            //    // заменяем элемент удаленный элементом из начала
+            //  items[entry.IndexInItems] = new_elem;
+            //}
+          }
+        }
+        locked = 0;
+        QueueCheck();
+      }
+    }
+    
     public Remove(k : T, count : int = 1) : void
     {
       if (!ThreadSafeUtils.CAS(ref locked, 0, 1)) 
@@ -185,7 +228,7 @@ namespace CommonLib.Macros
         {
           
         } else
-        add_rem_queue.Enqueue((k, count, false))
+        add_rem_queue.Enqueue((k, count, -1, false))
       } else
       {
         def (entry, point) = FindEntry(k);
@@ -243,5 +286,7 @@ namespace CommonLib.Macros
         }
       }
     }
+    
+    
   }
 }
