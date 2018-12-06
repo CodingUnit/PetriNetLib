@@ -22,7 +22,14 @@ namespace CommonLib.Macros
     
     public Enqueue(elem : T) : void
     {
-      _ = ThreadSafeUtils.LockFreeUpdateIntRet(ref write_index, y => {queue[y % queue.Length] = elem; y + 1});
+      def write(i)
+      {
+        when (i == queue.Length) Resize(queue.Length * 2);
+        queue[i % queue.Length] = elem; 
+        i + 1
+      }
+      
+      _ = ThreadSafeUtils.LockFreeUpdateIntRet(ref write_index, write);
     }
     
     public Resize(size : int) : void
@@ -65,6 +72,28 @@ namespace CommonLib.Macros
       val
     }
     
+    public DequeIfExist(ret : ref T) : bool
+    {
+      mutable val;
+      mutable ok = false;
+      _ = ThreadSafeUtils.LockFreeUpdateIntRet(ref read_index, x => 
+      {
+        if (Empty) 
+        {
+          ok = false;
+          x
+        } else
+        {
+          val = queue[x % queue.Length]; 
+          ok = true;
+          queue[x % queue.Length] = default(T);
+          x + 1
+        }
+      });
+      ret = val;
+      ok
+    }
+    
     public Full : bool
     {
       get
@@ -81,21 +110,37 @@ namespace CommonLib.Macros
       }
     }
     
+    // return absolute index of element
+    public FindIndexOf(elem : T) : int
+    {
+      def loop(i)
+      {
+        if (i == write_index) -1 else
+        if (queue[i].Equals(elem)) i else loop(i + 1)
+      }
+      
+      loop(read_index)
+    }
+    
+    // remove element deque from begin and set to this element with absolute index
+    public RemoveAbs(index : int) : T
+    {
+      def new_elem = Deque();
+      
+        // из очереди удаляем из начала
+      if (index >= read_index)
+      {
+          // присваиваем новому элементу индекс удаленного
+        def elem = queue[index];
+        queue[index] = new_elem;
+        elem
+      } else new_elem
+    }
+    
     // remove element deque from begin and set to this element
     public Remove(index : int) : T
     {
-      def new_elem = Deque();
-      def elem = queue[index];
-        // из очереди удаляем из начала
-      when (index >= read_index)
-      {
-          // присваиваем новому элементу индекс удаленного
-        //new_elem.IndexInItems     = entry.IndexInItems;
-          // заменяем элемент удаленный элементом из начала
-        //items[entry.IndexInItems] = new_elem;
-        queue[index] = new_elem
-      }
-      elem
+      RemoveAbs((index + read_index) % queue.Length)
     }
     
     public Peek() : T
@@ -118,6 +163,12 @@ namespace CommonLib.Macros
       {
         _ = ThreadSafeUtils.LockFreeUpdateIntRet(ref write_index, x => {queue[index % queue.Length] = value; x});
       }
+    }
+    
+    public override ToString() : string
+    {
+      def en = this.AsEnumerable();
+      $<#..$(en; ",")#>
     }
   }
 }

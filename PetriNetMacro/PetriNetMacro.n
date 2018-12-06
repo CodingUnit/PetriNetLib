@@ -37,7 +37,7 @@ namespace PetriNetLib
     {
       //Macros.DefineCTX(typer);
       //assert2(false);
-      def net = PetriNet();
+      def net = PetriNetCompiler();
       match (expr)
       {
         | <[$(str : string)]> => net.Process(ty, typer, str)
@@ -59,7 +59,7 @@ namespace PetriNetLib
       //      }
       //    ]>;
       //def expr1 = typer.TypeExpr(expr1);
-      def gen = ty.UserData["PetriNetGen"] :> PetriNet;
+      def gen = ty.UserData["PetriNetGen"] :> PetriNetCompiler;
       gen.MainGen();
     }
     
@@ -67,7 +67,7 @@ namespace PetriNetLib
     {
       //Macros.DefineCTX(typer);
       //assert2(false);
-      def gen = ty.UserData["PetriNetGen"] :> PetriNet;
+      def gen = ty.UserData["PetriNetGen"] :> PetriNetCompiler;
       gen.PhaseTwo();
       //def b = <[ a + 1 ]>;
       //    def expr1 = <[

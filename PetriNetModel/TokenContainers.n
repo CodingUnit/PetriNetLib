@@ -218,8 +218,8 @@ namespace PetriNetModel
       def elem = with_n_tok[idx];
       foreach (e in elem)
       {
-        def index = queue.IndexOf(e);
-        _ = queue.Remove(index)
+        def index = queue.FindIndexOf(e);
+        _ = queue.RemoveAbs(index)
         //queue[index] = default(T);
         //elems.Set(index, false);
       }
@@ -230,7 +230,7 @@ namespace PetriNetModel
     {
       foreach (e in tok)
       {
-        _ = queue.Remove(e)
+        _ = queue.RemoveAbs(e)
         //queue[index] = default(T);
         //elems.Set(index, false);
       }
@@ -240,8 +240,8 @@ namespace PetriNetModel
     {
       foreach (e in tok)
       {
-        def index = queue.IndexOf(e);
-        _ = queue.Remove(index)
+        def index = queue.FindIndexOf(e);
+        _ = queue.RemoveAbs(index)
         //queue[index] = default(T);
         //elems.Set(index, false);
       }
@@ -257,8 +257,8 @@ namespace PetriNetModel
     
     public Get(elem : T) : void
     {
-      def idx = queue.IndexOf(elem);
-      _ = queue.Remove(idx)
+      def idx = queue.FindIndexOf(elem);
+      _ = queue.RemoveAbs(idx)
       //queue[idx] = default(T);
       //elems.Set(idx, false);
     }
@@ -266,13 +266,14 @@ namespace PetriNetModel
     public PeekIndexed() : T * int
     {
       def idx = queue.Count |> rnd.Next;
+      def idx = queue.ReadIndex + idx;
       //def idx = elems.FindNearestSet(idx);
       (queue[idx], idx)
     }
     
     public Get(idx : int) : void
     {
-      _ = queue.Remove(idx)
+      _ = queue.RemoveAbs(idx)
       //queue[idx] = default(T);
       //elems.Set(idx, false);
     }
@@ -281,6 +282,13 @@ namespace PetriNetModel
     {
       def idx = queue.Count |> rnd.Next;
       queue.Remove(idx);
+    }
+    
+    public override ToString() : string
+    {
+      def tokens = queue.GroupBy(x => x);
+      def tokens = tokens.Select(x => $"$(x.Count())`$(x.Key)");
+      string.Join(" ++ ", tokens)
     }
   }
 

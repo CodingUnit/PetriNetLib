@@ -317,11 +317,6 @@ namespace CommonLib.Macros
         public override DequeueRight() : Deque[T] { Empty() }
       }
       
-      GetEnumerable() : IEnumerable[T]
-      {
-        null
-      }
-      
       public GetEnumerator() : IEnumerator[T]
       {
         null

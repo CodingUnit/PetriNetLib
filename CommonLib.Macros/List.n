@@ -1440,7 +1440,7 @@ namespace CommonLib.Macros
       loop(0)
     }
 
-    public IndexOf[T](this lst : IEnumerable[T], obj : T) : int where T : class
+    public IndexOf[T](this lst : IEnumerable[T], obj : T) : int
     {
       def en = lst.GetEnumerator();
 
@@ -1448,7 +1448,7 @@ namespace CommonLib.Macros
       {
         if (en.MoveNext()) 
         {
-          if (en.Current : object == obj) i else loop(i + 1)
+          if (en.Current.Equals(obj)) i else loop(i + 1)
         } else -1
       }
 

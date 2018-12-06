@@ -23,7 +23,7 @@ namespace PetriNetLib
   
   
   
-  public class PetriNet
+  public class PetriNetCompiler
   {
     mutable gen : Generator;
     mutable proc : PetriNetProcessor;

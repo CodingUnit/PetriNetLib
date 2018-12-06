@@ -141,13 +141,20 @@ namespace PetriNetLib
     
     CreateTran(tran : Transition) : ClassMember
     {
-      def name = tran.name;
+      def name = tran.Name;
       
       def body = CreateTranBody(tran);      
       <[
          decl: public $(name : usesite)() : void
                {
-                 $body
+                 if (!ThreadSafeUtils.CAS(ref locked, 0, 1))
+                 {
+                   tran_queue.Enqueue($(name : usesite))
+                 } else
+                 {
+                  $body;
+                  locked = 0;
+                 }
                }
        ]>
     }
@@ -397,8 +404,7 @@ namespace PetriNetLib
     CreateCons() : ClassMember
     {
       def marking = model.places.MapToList(CreateInitMarking);
-      fields ::= <[decl: time_step : int]>;
-      if (model.IsTimed) <[decl: public this(time_step : int = 15) { {..$marking} {..$cons_expr} this.time_step = time_step}]>; 
+      if (model.IsTimed || model.IsHaveImmediateTransitions) <[decl: public this(time_step : int = 15) { base(time_step);{..$marking} {..$cons_expr}}]>; 
       else <[decl: public this() { {..$marking} {..$cons_expr} }]>;
     }
     
@@ -415,7 +421,7 @@ namespace PetriNetLib
       def next = next.Map(x => <[ min = PetriNetUtils.TimeMin(min, $x); ]>);
       fields ::= <[decl: public GetNextTime() : DateTime
                    {
-                     mutable min : DateTime;
+                     mutable min : DateTime = DateTime.MaxValue;
                      {..$next}
                      min
                    }]>;
@@ -425,30 +431,24 @@ namespace PetriNetLib
       }]>
     }
     
-    CreateStepMethod() : ClassMember
+    CreateStepMethod() : void
     {
       def body = model.transitions.Where(x => x.IsImmediate && !x.IsTimed).Map(x => <[ $(x.name : usesite)() ]>);
-      cons_expr ::= <[ main_cancel_token = main_cancel_source.Token; main_task = Task(_ => Step(), main_cancel)]>;
-      fields ::= <[decl: mutable main_task : Task ]>;
-      fields ::= <[decl: public Dispose() : void 
-                  {
-                    main_cancel.Cancel(); 
-                    try {main_task.Wait() } 
-                    catch {| AggregateException => ()} 
-                    finally {main_cancel_source.Dispose()}
-                  }]>;
-      fields ::= <[decl: main_cancel : CancellationTokenSource = CancellationTokenSource()]>;
-      fields ::= <[decl: mutable main_cancel_token : CancellationToken]>;
-      init_body ::= <[main_task.Start()]>;
-      
-      <[decl: public Step() : void
+      if (body.IsEmpty()) 
       {
-        if (main_cancel_token.IsCancellationRequested)
-          main_cancel_token.ThrowIfCancellationRequested(); else
-        {..$body}
-        Thread.Sleep(time_step);
-        Step()
-      }]>
+        fields ::= <[decl: public Dispose() : void
+        {
+        }]>;
+        fields ::= <[decl: public Step() : void
+        {
+        }]>
+      }else 
+      {
+        fields ::= <[decl: public override TransitionStep() : void
+        {
+          {..$body}
+        }]>
+      }
     }
     
     CreateStartMethod() : ClassMember
@@ -457,6 +457,15 @@ namespace PetriNetLib
       {
         {..$init_body}
       }]>
+    }
+    
+    CreateTranQueue() : void
+    {
+      fields ::= <[decl: tran_queue : RQueue[Action] = RQueue(32);]>;
+      fields ::= <[decl: CheckQueue() : void
+                         {
+                           
+                         }]>
     }
     
     public Generate() : void
@@ -472,12 +481,13 @@ namespace PetriNetLib
       def vars = model.vars.KeyValuePairs.MapToList(CreateVars);
       
       def time_sched = if (model.IsTimed) CreateTimeMethods() else null;
-      def cons = CreateCons();
-      def tostring = CreateToString();
-      def start = CreateStartMethod();
-      def step = CreateStepMethod();
+      CreateStepMethod();
       
-      def members = step :: start :: tostring :: cons :: fields + places + vars;
+      def tostring = CreateToString();
+      def start    = CreateStartMethod();
+      def cons     = CreateCons();
+      
+      def members = start :: tostring :: cons :: fields + places + vars;
       def members = if (time_sched != null) time_sched :: members else members;
       foreach (m in members) _ = typebuilder.DefineWithSource(m);
     }
@@ -485,7 +495,8 @@ namespace PetriNetLib
     public PhaseOne() : void
     {
       typebuilder.AddImplementedInterface(<[ IDisposable ]>);
-      typebuilder.AddImplementedInterface(if (model.IsTimed) <[ ITimedPetriNet ]> else <[ IPetriNet ]>);
+      typebuilder.AddImplementedInterface(if (model.IsTimed) <[ ITimedPetriNet ]> 
+                                          else if (model.IsHaveImmediateTransitions) <[PetriNet]> else <[ IPetriNet ]>);
     }
     
     public PhaseTwo() : void

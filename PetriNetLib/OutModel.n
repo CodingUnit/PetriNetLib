@@ -32,6 +32,15 @@ namespace PetriNetLib
       }
     }
     
+    public IsHaveImmediateTransitions : bool
+    {
+      [Memoize]
+      get
+      {
+        transitions.Exists(x => x.IsImmediate)
+      }
+    }
+    
     public GetIndex(name : string) : option[string * string]
     {
       def index = colour_sets.Fold([], (x, a) => if (x.Value is ColourSet(n, Colour.Index(id = i))) (n, i) :: a else a);

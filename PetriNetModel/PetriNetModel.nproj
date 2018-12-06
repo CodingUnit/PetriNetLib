@@ -98,6 +98,9 @@
     <Compile Include="ITokenContainer.n">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="PetriNet.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="PetriNetUtils.n">
       <SubType>Code</SubType>
     </Compile>

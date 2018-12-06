@@ -67,9 +67,9 @@ module Program
     //}
     
     //loop();
-    def test = HashMultiSetTest();
-    _ = test.TestConcurrent();
-    while (true) {}
+    //def test = HashMultiSetTest();
+    //_ = test.TestConcurrent();
+    //while (true) {}
     _ = Observable.Interval(TimeSpan.FromMilliseconds(60)).Subscribe(_ => Put());
     _ = Observable.Interval(TimeSpan.FromMilliseconds(30)).Subscribe(_ => Take());
     //net.

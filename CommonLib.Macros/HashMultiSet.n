@@ -38,7 +38,7 @@ namespace CommonLib.Macros
     items           : RQueue[Bucket[T]] = RQueue(32);
     add_rem_queue   : RQueue[T * int * int * bool] = RQueue(10);
     mutable locked  : int;
-    mutable add_rem_locked : int;
+    //mutable add_rem_locked : int;
 
     public GetEnumerator() : IEnumerator[T * int]
     {
@@ -164,18 +164,15 @@ namespace CommonLib.Macros
 
     QueueCheck() : void
     {
-      when (ThreadSafeUtils.CAS(ref add_rem_locked, 0, 1)) 
+      mutable val;
+      while (add_rem_queue.DequeIfExist(ref val))
       {
-        while (!add_rem_queue.Empty)
+        match (val)
         {
-          match (add_rem_queue.Deque())
-          {
-            | (k, c, -1, true)  => Add(k, c)
-            | (k, c, -1, false) => Remove(k, c)
-            | (_, c, i, false)  => RemovePos(i, c)
-          }
+          | (k, c, -1, true)  => Add(k, c)
+          | (k, c, -1, false) => Remove(k, c)
+          | (_, c, i, false)  => RemovePos(i, c)
         }
-        add_rem_locked = 0;
       }
     }
 
@@ -201,7 +198,7 @@ namespace CommonLib.Macros
           {
             // если элемент есть, поток мог уже удалить элемент 
             buckets[point] = null;
-            def new_elem = items.Remove(idx);
+            def new_elem = items.RemoveAbs(idx);
             new_elem.IndexInItems = entry.IndexInItems;
             //  // из очереди удаляем из начала
             //when (entry.IndexInItems >= items.ReadIndex)
@@ -241,18 +238,10 @@ namespace CommonLib.Macros
           {
             // если элемент есть, поток мог уже удалить элемент 
             buckets[point] = null;
-            def new_elem = items.Remove(entry.IndexInItems);
-            new_elem.IndexInItems = entry.IndexInItems;
-            //  // из очереди удаляем из начала
-            //when (entry.IndexInItems >= items.ReadIndex)
-            //{
-              
-            //    // присваиваем новому элементу индекс удаленного
-            //  items[entry.IndexInItems] = new_elem.IndexInItems
-            //  = entry.IndexInItems;
-            //    // заменяем элемент удаленный элементом из начала
-            //  items[entry.IndexInItems] = new_elem;
-            //}
+            def idx = entry.IndexInItems;
+            _ = items.RemoveAbs(idx);
+            when (idx >= items.ReadIndex)
+              items[idx].IndexInItems = idx;
           }
         }
         locked = 0;
