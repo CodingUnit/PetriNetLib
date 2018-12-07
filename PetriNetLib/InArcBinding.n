@@ -64,7 +64,7 @@ namespace PetriNetLib
           {
             match (expr)
             {
-              | <[ $(_ : usesite)]> => <[ $expr = $(name : usesite).Peek() ]>
+              | <[ $(_ : usesite)]> => <[ def $expr = $(name : usesite).Peek() ]>
               | _                   => <[]>
             }
           } else
@@ -121,7 +121,7 @@ namespace PetriNetLib
           {
             match (expr)
             {
-              | <[ $(_ : usesite)]> => <[ $expr = $(name : usesite).Get()]>
+              | <[ $(_ : usesite)]> => <[ def $expr = $(name : usesite).Get()]>
               | <[ $(_ : usesite)(..$_) ]> when introduced_var != null => 
                   <[ $(name : usesite).Get($(introduced_var : name)) ]>
               | _                   => <[ $(name : usesite).Get() ]>

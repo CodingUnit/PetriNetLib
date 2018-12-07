@@ -35,62 +35,6 @@
         <layout>fun Chopsticks(ph(i)) = 
 1`cs(i) ++ 1`cs(if i=n then 1 else i+1);</layout>
       </ml>
-      <color id="ID1412325687">
-        <id>U</id>
-        <unit>
-          <with>
-            <id>one_name</id>
-          </with>
-        </unit>
-        <layout>colset U = unit with one_name;</layout>
-      </color>
-      <var id="ID1412325764">
-        <type>
-          <id>CS</id>
-        </type>
-        <id>a</id>
-        <layout>var a : CS;</layout>
-      </var>
-      <color id="ID1412328420">
-        <id>PH2</id>
-        <alias>
-          <id>PH</id>
-        </alias>
-        <layout>colset PH2 = PH;</layout>
-      </color>
-      <color id="ID1412328694">
-        <id>NEWINT</id>
-        <int>
-          <with>
-            <ml>1</ml>
-            <ml>12</ml>
-          </with>
-        </int>
-        <layout>colset NEWINT = int with 1..12;</layout>
-      </color>
-      <color id="ID1412328980">
-        <id>VOID</id>
-        <timed/>
-        <unit>
-          <with>
-            <id>pumpkin</id>
-          </with>
-        </unit>
-        <layout>colset VOID = unit with pumpkin timed;</layout>
-      </color>
-      <color id="ID1412329277">
-        <id>BOOL</id>
-        <bool>
-          <with>
-            <id>no</id>
-            <id>yes</id>
-          </with>
-        </bool>
-        <layout>colset BOOL = bool with (no, yes);</layout>
-      </color>
-      <ml id="ID1412330354">val debug  = 1;
-        <layout>val debug  = 1;</layout>
-      </ml>
     </globbox>
     <page id="ID1293">
       <pageattr name="Page"/>
@@ -691,22 +635,17 @@ Chopsticks</text>
           <text>&lt;same as model&gt;</text>
         </value>
       </option>
-      <option name="extensions.10005.enable">
-        <value>
-          <boolean>true</boolean>
-        </value>
-      </option>
       <option name="extensions.10011.enable">
         <value>
           <boolean>true</boolean>
         </value>
       </option>
-      <option name="extensions.10008.enable">
+      <option name="extensions.10003.enable">
         <value>
           <boolean>true</boolean>
         </value>
       </option>
-      <option name="extensions.10003.enable">
+      <option name="extensions.10008.enable">
         <value>
           <boolean>true</boolean>
         </value>
@@ -721,17 +660,22 @@ Chopsticks</text>
           <boolean>true</boolean>
         </value>
       </option>
-      <option name="extensions.10007.enable">
-        <value>
-          <boolean>true</boolean>
-        </value>
-      </option>
       <option name="extensions.10004.enable">
         <value>
           <boolean>true</boolean>
         </value>
       </option>
+      <option name="extensions.10005.enable">
+        <value>
+          <boolean>true</boolean>
+        </value>
+      </option>
       <option name="extensions.10002.enable">
+        <value>
+          <boolean>true</boolean>
+        </value>
+      </option>
+      <option name="extensions.10007.enable">
         <value>
           <boolean>true</boolean>
         </value>
@@ -1048,13 +992,6 @@ Chopsticks</text>
         <IndexNode expanded="true"/>
         <IndexNode expanded="false"/>
         <IndexNode expanded="false"/>
-        <IndexNode expanded="true"/>
-        <IndexNode expanded="true"/>
-        <IndexNode expanded="true"/>
-        <IndexNode expanded="true"/>
-        <IndexNode expanded="true"/>
-        <IndexNode expanded="true"/>
-        <IndexNode expanded="true"/>
         <IndexNode expanded="true"/>
       </IndexNode>
       <IndexNode expanded="false"/>

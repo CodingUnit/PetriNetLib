@@ -11,6 +11,9 @@ using System.Reactive.Linq;
 using System.Reactive;
 using CommonLib.Macros;
 using System.Threading;
+using System.IO;
+using System.Diagnostics;
+
 module Program
 {
   [PetriNet("DiningPhilosophers.cpn")]
@@ -22,17 +25,25 @@ module Program
   {
     Console.WriteLine("Put Down");
     net.PutDownChopsticks();
-    Console.WriteLine(net.ToString() + "\n-----");
+    lock (net)
+    {
+      Trace.WriteLine(net.ToString() + "\n-----");
+    }
   }
   
   Take() : void
   {
     Console.WriteLine("Take");
     net.TakeChopsticks();
-    Console.WriteLine(net.ToString() + "\n-----");
+    lock (net)
+    {
+      Trace.WriteLine(net.ToString() + "\n-----");
+      //file.WriteLine("")
+    }
   }
   
   mutable net : DiningPhilosophers;
+  file : FileStream;
   
   Main() : void
   {
@@ -40,7 +51,6 @@ module Program
     WriteLine("Hi!");
     net = DiningPhilosophers();
     def time = DateTime.Now;
-    
     //mutable next_put = time + TimeSpan.FromMilliseconds(ran.Next(2000, 4000));
     //mutable next_take = time + TimeSpan.FromMilliseconds(ran.Next(1000, 2000));
     //def loop()
@@ -65,12 +75,17 @@ module Program
     //  //}
     //  loop()
     //}
-    
+    def writer = File.CreateText("out.txt");
+    Trace.Listeners.Add(TextWriterTraceListener(Console.Out)); //Trace.WriteLine("Hello World");
+    Trace.Listeners.Add(TextWriterTraceListener(writer));
+    //file = File.OpenWrite("out.txt");
     //loop();
     //def test = HashMultiSetTest();
     //_ = test.TestConcurrent();
     //while (true) {}
-    _ = Observable.Interval(TimeSpan.FromMilliseconds(60)).Subscribe(_ => Put());
+    //Console.Out = writer;
+    Console.WriteLine(net.ToString() + "\n-----");
+    _ = Observable.Interval(TimeSpan.FromMilliseconds(130)).Subscribe(_ => Put());
     _ = Observable.Interval(TimeSpan.FromMilliseconds(30)).Subscribe(_ => Take());
     //net.
     //def net = PetriNet();

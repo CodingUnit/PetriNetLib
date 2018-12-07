@@ -109,6 +109,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.n" />
+    <Compile Include="TimedPetriNet.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="TimedSimpleMultiset.n">
       <SubType>Code</SubType>
     </Compile>

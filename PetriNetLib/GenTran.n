@@ -76,12 +76,11 @@ namespace PetriNetLib
       {
         if (a == null)
         {
+          def body = x.bind_expr :: extract + out_body;
           <[  $(x.before_bind_expr);
               match ($(x.check_expr))
               {
-               | true => $(x.bind_expr);
-                         {..$extract}
-                         {..$out_body}
+               | true => {..$body}
                | _    => ()
              }
           ]>

@@ -8,19 +8,22 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using CommonLib.Macros;
 
 namespace PetriNetModel
 {
   /// <summary>
   /// Description of PetriNet.
   /// </summary>
-  public class PetriNet : IPetriNet
+  public class PetriNet : IPetriNet, IDisposable
   {
     mutable main_task : Task;
     mutable time_step : int;
     main_cancel : CancellationTokenSource = CancellationTokenSource();
     mutable main_cancel_token : CancellationToken;
-
+    mutable locked : int;
+    tran_queue : RQueue[Action] = RQueue(32);
+    
     public this(step : int = 15)
     {
       time_step = step;
@@ -28,6 +31,40 @@ namespace PetriNetModel
       main_task = Task(_ => Step(), main_cancel)
     }
     
+    public static @`[T](count : int, tok : T) : IEnumerable[T]
+    {
+      Enumerable.Repeat(tok, count)
+    }
+    
+    public static @%++[T](tok1 : IEnumerable[T], tok2 : IEnumerable[T]) : IEnumerable[T]
+    {
+      tok1.Union(tok2)
+    }
+    
+    protected Lock(act : Action) : bool
+    {
+       if (!ThreadSafeUtils.CAS(ref locked, 0, 1))
+       {
+          tran_queue.Enqueue(act);
+          false
+       } else true
+    }
+    
+    protected Unlock() : void
+    {
+      locked = 0;
+      CheckQueue()
+    }
+    
+    CheckQueue() : void
+    {
+      mutable val;
+      while (tran_queue.DequeIfExist(ref val))
+      {
+        val()
+      }
+    }
+                         
     public virtual TransitionStep() : void
     {
     }

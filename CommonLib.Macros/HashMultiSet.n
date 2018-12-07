@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Nemerle.Macro;
 
 namespace CommonLib.Macros
 {
@@ -138,7 +139,7 @@ namespace CommonLib.Macros
         } else
         {
 
-          def bucket = Bucket(k, count, items.WriteIndex, point);
+          def bucket = Bucket(k, count, items.NextFreeIndex, point);
 
           // если версия поменялась надо снова искать точку элемента
           // если функция вызывалась уже из другого потока 
@@ -200,16 +201,6 @@ namespace CommonLib.Macros
             buckets[point] = null;
             def new_elem = items.RemoveAbs(idx);
             new_elem.IndexInItems = entry.IndexInItems;
-            //  // из очереди удаляем из начала
-            //when (entry.IndexInItems >= items.ReadIndex)
-            //{
-              
-            //    // присваиваем новому элементу индекс удаленного
-            //  items[entry.IndexInItems] = new_elem.IndexInItems
-            //  = entry.IndexInItems;
-            //    // заменяем элемент удаленный элементом из начала
-            //  items[entry.IndexInItems] = new_elem;
-            //}
           }
         }
         locked = 0;
@@ -240,8 +231,8 @@ namespace CommonLib.Macros
             buckets[point] = null;
             def idx = entry.IndexInItems;
             _ = items.RemoveAbs(idx);
-            when (idx >= items.ReadIndex)
-              items[idx].IndexInItems = idx;
+            def item = items[idx];
+            when (item != null) item.IndexInItems = idx;
           }
         }
         locked = 0;

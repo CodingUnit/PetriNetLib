@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using CommonLib.Macros;
+using System.Diagnostics;
 
 namespace PetriNetModel
 {
@@ -252,13 +253,17 @@ namespace PetriNetModel
       def idx = queue.Count |> rnd.Next;
       //_ = queue.RemoveFromIndexAndMoveBegin(index)
       //def idx = elems.FindNearestSet(idx);
-      queue[idx]
+      queue.ElementAtPos(idx)
     }
     
     public Get(elem : T) : void
     {
       def idx = queue.FindIndexOf(elem);
-      _ = queue.RemoveAbs(idx)
+      _ = queue.RemoveAbs(idx);
+      //when (!elem.Equals(el))
+      //{
+      //  Trace.WriteLine("Error")
+      //}
       //queue[idx] = default(T);
       //elems.Set(idx, false);
     }

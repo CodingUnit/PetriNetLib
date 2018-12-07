@@ -107,19 +107,19 @@ namespace PetriNetLib
       typing_method = meth :> MethodBuilder;
     }
     
-    CreateOperators() : void
-    {
-      def token_op = <[decl: public static @`[T](count : int, tok : T) : IEnumerable[T]
-                             {
-                               Enumerable.Repeat(tok, count)
-                             }]>;
-     _ = typebuilder.DefineWithSource(token_op);
-     def token_combine_op = <[decl: public static @%++[T](tok1 : IEnumerable[T], tok2 : IEnumerable[T]) : IEnumerable[T]
-                             {
-                               tok1.Union(tok2)
-                             }]>;
-     _ = typebuilder.DefineWithSource(token_combine_op);
-    }
+    //CreateOperators() : void
+    //{
+    //  def token_op = <[decl: public static @`[T](count : int, tok : T) : IEnumerable[T]
+    //                         {
+    //                           Enumerable.Repeat(tok, count)
+    //                         }]>;
+    // _ = typebuilder.DefineWithSource(token_op);
+    // def token_combine_op = <[decl: public static @%++[T](tok1 : IEnumerable[T], tok2 : IEnumerable[T]) : IEnumerable[T]
+    //                         {
+    //                           tok1.Union(tok2)
+    //                         }]>;
+    // _ = typebuilder.DefineWithSource(token_combine_op);
+    //}
     
     internal static GetTokenExpr(expr : PExpr) : PExpr
     {
@@ -147,23 +147,20 @@ namespace PetriNetLib
       <[
          decl: public $(name : usesite)() : void
                {
-                 if (!ThreadSafeUtils.CAS(ref locked, 0, 1))
-                 {
-                   tran_queue.Enqueue($(name : usesite))
-                 } else
+                 when (Lock($(name : usesite)))
                  {
                   $body;
-                  locked = 0;
+                  Unlock();
                  }
                }
        ]>
     }
     
-    CreateVars(name : string, type : ColourSet) : ClassMember
-    {
-      def type = GetTypeExpr(type);
-      <[decl: mutable $(name : usesite) : $type]>
-    }
+    //CreateVars(name : string, type : ColourSet) : ClassMember
+    //{
+    //  def type = GetTypeExpr(type);
+    //  <[decl: mutable $(name : usesite) : $type]>
+    //}
      
     CreateVals(expr : PExpr) : ClassMember
     {
@@ -436,12 +433,12 @@ namespace PetriNetLib
       def body = model.transitions.Where(x => x.IsImmediate && !x.IsTimed).Map(x => <[ $(x.name : usesite)() ]>);
       if (body.IsEmpty()) 
       {
-        fields ::= <[decl: public Dispose() : void
-        {
-        }]>;
-        fields ::= <[decl: public Step() : void
-        {
-        }]>
+        //fields ::= <[decl: public Dispose() : void
+        //{
+        //}]>;
+        //fields ::= <[decl: public Step() : void
+        //{
+        //}]>
       }else 
       {
         fields ::= <[decl: public override TransitionStep() : void
@@ -459,18 +456,23 @@ namespace PetriNetLib
       }]>
     }
     
-    CreateTranQueue() : void
-    {
-      fields ::= <[decl: tran_queue : RQueue[Action] = RQueue(32);]>;
-      fields ::= <[decl: CheckQueue() : void
-                         {
-                           
-                         }]>
-    }
+    //CreateTranQueue() : void
+    //{
+    //  fields ::= <[decl: mutable locked : int]>;
+    //  fields ::= <[decl: tran_queue : RQueue[Action] = RQueue(32);]>;
+    //  fields ::= <[decl: CheckQueue() : void
+    //                     {
+    //                       mutable val;
+    //                       while (tran_queue.DequeIfExist(ref val))
+    //                       {
+    //                         val()
+    //                       }
+    //                     }]>
+    //}
     
     public Generate() : void
     {      
-      CreateOperators();
+      //CreateOperators();
       //assert2(false);
       def sets = model.colour_sets.Values.Map(CreateColourSet).Filter(_ != null);
       def sets2 = model.colour_sets.Values.Map(CreateColourSet2).Filter(_ != null);
@@ -478,25 +480,26 @@ namespace PetriNetLib
       foreach (m in sets) typebuilder.DefineNestedTypeWithSource(m).Compile();
       
       def places = model.places.MapToList(CreatePlace);
-      def vars = model.vars.KeyValuePairs.MapToList(CreateVars);
+      //def vars = model.vars.KeyValuePairs.MapToList(CreateVars);
       
       def time_sched = if (model.IsTimed) CreateTimeMethods() else null;
       CreateStepMethod();
       
+      //CreateTranQueue();
       def tostring = CreateToString();
       def start    = CreateStartMethod();
       def cons     = CreateCons();
       
-      def members = start :: tostring :: cons :: fields + places + vars;
+      def members = start :: tostring :: cons :: fields + places;// + vars;
       def members = if (time_sched != null) time_sched :: members else members;
       foreach (m in members) _ = typebuilder.DefineWithSource(m);
     }
     
     public PhaseOne() : void
     {
-      typebuilder.AddImplementedInterface(<[ IDisposable ]>);
-      typebuilder.AddImplementedInterface(if (model.IsTimed) <[ ITimedPetriNet ]> 
-                                          else if (model.IsHaveImmediateTransitions) <[PetriNet]> else <[ IPetriNet ]>);
+      //typebuilder.AddImplementedInterface(<[ IDisposable ]>);
+      typebuilder.AddImplementedInterface(if (model.IsTimed) <[ TimedPetriNet ]> 
+                                          else <[PetriNet]>);
     }
     
     public PhaseTwo() : void
