@@ -84,7 +84,7 @@ namespace PetriNetLib
       def name = place.Name;
       //def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
       def type = GetTypeExpr(place.colour);
-      def dest_cont = match (DestContainerType(place))
+      def dest_cont = match (place.DestContainerType)
       {
         | TDestCont.MultiSet  => <[ MultiSet() ]>
         | RandomEnumerable    => <[ RandomArray() ]>
@@ -315,40 +315,7 @@ namespace PetriNetLib
                                            }]>
       | ColourSet(n, Colour.Timed(c))   => CreateColourSet(ColourSet(n, c))
       | _                               => null
-    }
-
-    enum TDestCont
-    {
-      | MultiSet
-      | RandomEnumerable
-      | TokenQueue
-      | SortedSet
-      | TimedSimpleMultiset
-    }
-    
-    NumberTokensGet(arc : Arc) : int
-    {
-      match (arc.expr)
-      {
-        | <[ $(n : int) ` $_ ]>     => n
-        | <[ $(_ : usesite)]>       => 1
-        | _                         => -1
-      }
-    }
-    
-    DestContainerType(pl : Place) : TDestCont
-    {
-      match (pl.colour.type)
-      {
-        | Colour.Sorted => TDestCont.SortedSet
-        | Timed         => TDestCont.TimedSimpleMultiset
-        | Queue         => TDestCont.TokenQueue
-        | _             => def tran = pl.OutputTransitions;
-                           def one = tran.Select((_, x) => NumberTokensGet(x)).All(_ == 1);
-                           if (one) TDestCont.RandomEnumerable else TDestCont.MultiSet
-                          
-      }
-    }
+    }    
     
     CreateInitMarking(place : Place) : PExpr
     {

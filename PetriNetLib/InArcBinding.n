@@ -64,7 +64,9 @@ namespace PetriNetLib
           {
             match (expr)
             {
-              | <[ $(_ : usesite)]> => <[ def $expr = $(name : usesite).Peek() ]>
+              | <[ $(n : usesite)]> => if (place.IsIndexedContainer) 
+                                       <[ def ($expr, $($"$(n)_idx" : usesite)) = $(name : usesite).PeekIndexed() ]> else
+                                       <[ def $expr = $(name : usesite).Peek() ]>
               | _                   => <[]>
             }
           } else
@@ -114,17 +116,20 @@ namespace PetriNetLib
           {
             match (expr)
             {
-              | <[ $(_ : usesite)]> => <[ $(name : usesite).Get($expr)]>
+              | <[ $(n : usesite)]> => if (place.IsIndexedContainer) 
+                                       <[ $(name : usesite).GetIndexed($($"$(n)_idx" : usesite))]> else 
+                                       <[ $(name : usesite).Get($expr)]>
               | _                   => <[]>
             }
           } else
           {
             match (expr)
             {
-              | <[ $(_ : usesite)]> => <[ def $expr = $(name : usesite).Get()]>
-              | <[ $(_ : usesite)(..$_) ]> when introduced_var != null => 
-                  <[ $(name : usesite).Get($(introduced_var : name)) ]>
-              | _                   => <[ $(name : usesite).Get() ]>
+              | <[ $(_ : usesite)]>        => <[ def $expr = $(name : usesite).Get()]>
+              | <[ $(_ : usesite)(..$_) ]> 
+                when introduced_var != null  
+                                           => <[ $(name : usesite).Get($(introduced_var : name)) ]>
+              | _                          => <[ $(name : usesite).Get() ]>
             }
           }
         }

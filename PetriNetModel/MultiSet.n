@@ -10,7 +10,7 @@ using CommonLib.Macros;
 
 namespace PetriNetModel
 {
-  public class MultiSet[T] : ITokenContainer[T], IIndexedTokenContainer[T]
+  public class MultiSet[T] : ITokenContainer[T]
   {
     table : HashMultiSet[T] = HashMultiSet();
     rnd   : Random = Random();
@@ -100,7 +100,7 @@ namespace PetriNetModel
       (table.ElementAtPos(pos), pos)
     }
 
-    public Get(idx : int) : void
+    public GetIndexed(idx : int) : void
     {
       table.RemovePos(idx)
     }

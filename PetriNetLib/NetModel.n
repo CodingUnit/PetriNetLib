@@ -12,6 +12,16 @@ using CommonLib.Macros;
 
 namespace PetriNetLib
 {
+
+  enum TDestCont
+  {
+    | MultiSet
+    | RandomEnumerable
+    | TokenQueue
+    | SortedSet
+    | TimedSimpleMultiset
+  }
+
   [Record]
   //[Lens]
   class Place
@@ -20,11 +30,43 @@ namespace PetriNetLib
     public id     : string;
     public name   : string;
     public colour : ColourSet;
-    
+
     public init_mark : PExpr;
     public tree      : CpnTree.Place;
     public net       : PetriNetProcessor;
+
+    public IsIndexedContainer : bool
+    {
+      [Memoize]
+      get
+      {
+        match (DestContainerType)
+        {
+          | TDestCont.RandomEnumerable
+          | TDestCont.MultiSet          => true
+          | _                           => false
+        }
+      }
+    }
     
+    public DestContainerType : TDestCont
+    {
+      [Memoize]
+      get
+      {
+        match (colour.type)
+        {
+          | Colour.Sorted => TDestCont.SortedSet
+          | Timed         => TDestCont.TimedSimpleMultiset
+          | Queue         => TDestCont.TokenQueue
+          | _             => def tran = OutputTransitions;
+                             def one = tran.Select((_, x) => x.NumberTokensGet).All(_ == 1);
+                             if (one) TDestCont.RandomEnumerable else TDestCont.MultiSet
+
+        }
+      }
+    }
+
     public Name : string
     {
       [Memoize]
@@ -37,7 +79,7 @@ namespace PetriNetLib
         }
       }
     }
-    
+
     public Attributes : list[string]
     {
       [Memoize]
@@ -53,11 +95,11 @@ namespace PetriNetLib
             loop(name.Substring(idx + 1), attr :: res)
           } else res
         }
-        
+
         loop(name, [])
       }
     }
-    
+
     public IsTimed : bool
     {
       [Memoize]
@@ -66,7 +108,7 @@ namespace PetriNetLib
         colour is ColourSet(_, Timed)
       }
     }
-    
+
     public OutputTransitions : list[Transition * Arc]
     {
       [Memoize]
@@ -75,7 +117,7 @@ namespace PetriNetLib
         net.OutputPlaceArcs(this)
       }
     }
-    
+
     public InputTransitions : list[Transition * Arc]
     {
       [Memoize]
@@ -84,20 +126,20 @@ namespace PetriNetLib
         net.InputPlaceArcs(this)
       }
     }
-    
+
     public override GetHashCode() : int
     {
       idx
     }
   }
-  
+
   //[Record]
   //class TokenSet
   //{
   //  public num   : int;
   //  public token : Token;
   //}
-  
+
   [Record]
   [Lens]
   class Transition
@@ -106,12 +148,12 @@ namespace PetriNetLib
     public id  : string;
     public name : string;
     public guard : PExpr;
-    
+
     public time_expr : PExpr;
     public code_segment : PExpr;
     public priority : int;
     public net : PetriNetProcessor;
-    
+
     public IsTimed : bool
     {
       [Memoize]
@@ -121,7 +163,7 @@ namespace PetriNetLib
         //colour is ColourSet(_, Timed)
       }
     }
-    
+
     public IsImmediate : bool
     {
       [Memoize]
@@ -130,7 +172,7 @@ namespace PetriNetLib
         IsUnnamed || guard is <[ immediate ]>
       }
     }
-    
+
     public OutputPlaces : list[Place * Arc]
     {
       [Memoize]
@@ -139,7 +181,7 @@ namespace PetriNetLib
         net.OutputTransitionArcs(this)
       }
     }
-    
+
     public InputPlaces : list[Place * Arc]
     {
       [Memoize]
@@ -148,7 +190,7 @@ namespace PetriNetLib
         net.InputTransitionArcs(this)
       }
     }
-    
+
     public IsUnnamed : bool
     {
       [Memoize]
@@ -157,9 +199,9 @@ namespace PetriNetLib
         name == null
       }
     }
-    
+
     static mutable unnamed_idx : int;
-    
+
     public Name : string
     {
       [Memoize]
@@ -176,45 +218,59 @@ namespace PetriNetLib
         }
       }
     }
-    
+
     public override GetHashCode() : int
     {
       idx
     }
   }
-  
+
   [Record]
   variant ArcSource
   {
     | PlaceEnd      {place : Place}
     | TransitionEnd {tran  : Transition}
   }
-  
-  
+
+
   [Record]
   [Lens]
   class Arc
   { 
     public expr : PExpr;
-    
+
     public from : ArcSource;
     public to   : ArcSource;
+
+    public NumberTokensGet : int
+    {
+      [Memoize]
+      get
+      {
+        match (expr)
+        {
+          | <[ $(n : int) ` $_ ]>     => n
+          | <[ $(_ : usesite)]>       => 1
+          | _                         => -1
+        }
+      }
+    }
   }
-  
+
   [Record]
   class ColourSet
   {
     public name : string;
     public type : Colour;
   }
-  
+
   variant ExecError
   {
     | TokenConstantNotFound { place : Place; val : object }
     | VarNotFound {name : string}
     | TypeTokenNotCompat {incol : Colour; outcol : Colour;place : Place}
   }
-  
+
   [Flags]
   public enum PetriNetFlags
   {

@@ -154,5 +154,20 @@ namespace PetriNetModel
         elem
       }
     }
+    
+    public PeekIndexed() : Timed[T] * int
+    {
+      throw NotImplementedException()
+    }
+    
+    public GetIndexed(idx : int) : void
+    {
+      throw NotImplementedException()
+    }
+    
+    public GetManyIndexed(tok : IEnumerable[int]) : void
+    {
+      throw NotImplementedException()
+    }
   }
 }

@@ -156,7 +156,7 @@ namespace PetriNetModel
   //  }
   //}
 
-  public class RandomArray[T] : IIndexedTokenContainer[T]
+  public class RandomArray[T] : ITokenContainer[T]
   {
     queue   : RQueue[T] = RQueue(32);
     //elems   : BitEnumerable = BitEnumerable();
@@ -276,7 +276,7 @@ namespace PetriNetModel
       (queue[idx], idx)
     }
     
-    public Get(idx : int) : void
+    public GetIndexed(idx : int) : void
     {
       _ = queue.RemoveAbs(idx)
       //queue[idx] = default(T);

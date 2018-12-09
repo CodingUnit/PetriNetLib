@@ -71,6 +71,21 @@ namespace PetriNetModel
       tokens.Get()
     }
     
+    public PeekIndexed() : T * int
+    {
+      tokens.PeekIndexed()
+    }
+    
+    public GetIndexed(idx : int) : void
+    {
+      tokens.GetIndexed(idx)
+    }
+    
+    public GetManyIndexed(tok : IEnumerable[int]) : void
+    {
+      tokens.GetManyIndexed(tok)
+    }
+    
     public override ToString() : string
     {
       $"$Name{$tokens}"

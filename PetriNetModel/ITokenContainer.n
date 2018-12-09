@@ -31,13 +31,10 @@ namespace PetriNetModel
 
     Get(elem : T) : void;
     Get() : T;
-  }
-  
-  public interface IIndexedTokenContainer[T] : ITokenContainer[T]
-  {
     PeekIndexed() : T * int;
 
-    Get(idx : int) : void;
+    GetIndexed(idx : int) : void;
     GetManyIndexed(tok : IEnumerable[int]) : void;
   }
+  
 }
