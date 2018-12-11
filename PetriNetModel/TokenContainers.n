@@ -271,7 +271,7 @@ namespace PetriNetModel
     public PeekIndexed() : T * int
     {
       def idx = queue.Count |> rnd.Next;
-      def idx = queue.ReadIndex + idx;
+      def idx = queue.RealIndex(idx);
       //def idx = elems.FindNearestSet(idx);
       (queue[idx], idx)
     }

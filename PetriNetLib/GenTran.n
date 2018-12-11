@@ -20,7 +20,7 @@ namespace PetriNetLib
       def input  = tran.InputPlaces;
       def output = tran.OutputPlaces;
       
-      def create_out(p, a)
+      def create_add(p, a)
       {
         def name = p.name;
         match (a.expr)
@@ -35,7 +35,7 @@ namespace PetriNetLib
         }
       }
       
-      def input = input.Map((x, a) => InArcBinding(x, [], false, a.expr));
+      def input = input.Map((x, a) => InArcBinding(x, tran, [], false, a.expr));
       foreach (i in input)
       {
         match (i.expr)
@@ -68,30 +68,31 @@ namespace PetriNetLib
         }
       }
       
-      def out_body = output.Map(create_out);
+      def add_body = output.Map(create_add);
       
       def extract = input.Map(_.extract_expr);
+      def guard   = x => if (tran.guard is <[]>) x else <[ when ($(tran.guard)) {..$x}]> :: [];
       
       def fold(x, a)
       {
         if (a == null)
         {
-          def body = x.bind_expr :: extract + out_body;
+          def body = extract + add_body;
+          def guard_and_body = guard(body);
           <[  $(x.before_bind_expr);
-              match ($(x.check_expr))
+              when ($(x.check_expr))
               {
-               | true => {..$body}
-               | _    => ()
+               $(x.bind_expr);
+               {..$guard_and_body}
              }
           ]>
         } else
         {
           <[  $(x.before_bind_expr);
-              match ($(x.check_expr))
+              when ($(x.check_expr))
               {
-               | true => $(x.bind_expr);
-                         $a
-               | _    => ()
+               $(x.bind_expr);
+               $a
               }
           ]>
         }

@@ -7,7 +7,7 @@ Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "CommonLib.Macros", "..\Comm
 EndProject
 Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "PetriNetLib", "PetriNetLib.nproj", "{2EDFF5C5-D99F-4416-96E2-C5B4A4F18247}"
 EndProject
-Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "TestParser", "..\TestParser\TestParser.nproj", "{B1416C2D-41F3-48FB-897C-DB60958423DF}"
+Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "DiningPhilosophers", "..\TestParser\DiningPhilosophers.nproj", "{B1416C2D-41F3-48FB-897C-DB60958423DF}"
 EndProject
 Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "CpnParser", "CpnParser\CpnParser.nproj", "{5BD4C7C7-4CCE-4159-9ACB-C3F324431EF7}"
 EndProject
@@ -18,6 +18,8 @@ EndProject
 Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "CppParser", "..\CppParser\CppParser.nproj", "{F5786DC6-5865-42FF-8D7E-526FB753821F}"
 EndProject
 Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "CppParserPrinter", "..\CppParserPrinter\CppParserPrinter.nproj", "{44DB92CA-F807-45AF-B498-9B87DDC761BD}"
+EndProject
+Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "time_example1", "..\time_example1\time_example1.nproj", "{B16C2C19-8DA4-43C0-91C8-05F67FE9D151}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -108,6 +110,16 @@ Global
 		{44DB92CA-F807-45AF-B498-9B87DDC761BD}.OPC|Any CPU.Build.0 = Release|Any CPU
 		{44DB92CA-F807-45AF-B498-9B87DDC761BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{44DB92CA-F807-45AF-B498-9B87DDC761BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B16C2C19-8DA4-43C0-91C8-05F67FE9D151}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B16C2C19-8DA4-43C0-91C8-05F67FE9D151}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B16C2C19-8DA4-43C0-91C8-05F67FE9D151}.LIBS|Any CPU.ActiveCfg = Release|Any CPU
+		{B16C2C19-8DA4-43C0-91C8-05F67FE9D151}.LIBS|Any CPU.Build.0 = Release|Any CPU
+		{B16C2C19-8DA4-43C0-91C8-05F67FE9D151}.NViewer|Any CPU.ActiveCfg = Release|Any CPU
+		{B16C2C19-8DA4-43C0-91C8-05F67FE9D151}.NViewer|Any CPU.Build.0 = Release|Any CPU
+		{B16C2C19-8DA4-43C0-91C8-05F67FE9D151}.OPC|Any CPU.ActiveCfg = Release|Any CPU
+		{B16C2C19-8DA4-43C0-91C8-05F67FE9D151}.OPC|Any CPU.Build.0 = Release|Any CPU
+		{B16C2C19-8DA4-43C0-91C8-05F67FE9D151}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B16C2C19-8DA4-43C0-91C8-05F67FE9D151}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

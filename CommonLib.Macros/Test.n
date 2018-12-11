@@ -60,7 +60,7 @@ namespace CommonLib.Macros
       public PostOrderEnumerableTest() : void
       {
         def _tree = TestTree;
-        TreeUtils.GetPostOrderEnumerable(TestTree, _.childs).Map(x => x.ToString());
+        _ = TreeUtils.GetPostOrderEnumerable(TestTree, _.childs).Map(x => x.ToString());
       }
   }
 }

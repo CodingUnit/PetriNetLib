@@ -61,9 +61,8 @@ namespace PetriNetLib
                                           <[ (..$vals) ]>
         | ColourSet(n, Index)
         | ColourSet(n, Enum)           => <[ $(n : usesite) ]>
-        | ColourSet(_, List(t, _))     => 
-            def inner = t |> TypeFromStr;
-            <[ list[$inner]]>
+        | ColourSet(_, List(t, _))     => def inner = t |> TypeFromStr;
+                                          <[ list[$inner]]>
     }
       
     TypeFromStr(str : string) : PExpr
@@ -72,7 +71,7 @@ namespace PetriNetLib
       | "int"    => <[ int ]>
       | "intinf" => <[ IntInf ]>
       | "real"   => <[ double ]>
-      | "time"   => <[ Time ]>
+      | "time"   => <[ TimeSpan ]>
       | "bool"   => <[ bool ]>
       | "unit"   => <[ void ]>
       | str      => proc.colour_sets[str] |> GetTypeExpr

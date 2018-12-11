@@ -5,18 +5,19 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>2edff5c5-d99f-4416-96e2-c5b4a4f18247</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>b1416c2d-41f3-48fb-897c-db60958423df</ProjectGuid>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PetriNetLib</RootNamespace>
-    <AssemblyName>PetriNetLib</AssemblyName>
+    <RootNamespace>TestParser</RootNamespace>
+    <AssemblyName>TestParser</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <NoStdLib>true</NoStdLib>
     <NemerleVersion>Net-4.0</NemerleVersion>
     <NemerleBinPathRoot Condition=" '$(NemerleBinPathRoot)' == '' ">$(ProgramFiles)\Nemerle</NemerleBinPathRoot>
     <Nemerle Condition=" '$(Nemerle)' == '' ">$(NemerleBinPathRoot)\$(NemerleVersion)</Nemerle>
-    <Name>PetriNetLib</Name>
+    <Name>DiningPhilosophers</Name>
+    <DocumentationFile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -25,6 +26,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <RunDebugger>false</RunDebugger>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugSymbols>false</DebugSymbols>
@@ -42,57 +44,44 @@
       <AssemblyName>Nemerle.Compiler.dll</AssemblyName>
       <HintPath>C:\Program Files (x86)\Nemerle\Net-4.0\Nemerle.Compiler.dll</HintPath>
     </Reference>
-    <Reference Include="Nitra.Compiler, Version=1.0.9999.0, Culture=neutral, PublicKeyToken=e080a9c724e2bfcd">
-      <Name>Nitra.Compiler</Name>
-      <AssemblyName>Nitra.Compiler.dll</AssemblyName>
-      <HintPath>C:\Program Files (x86)\nitra\Nitra.Compiler.dll</HintPath>
-    </Reference>
-    <Reference Include="Nitra.Runtime, Version=1.0.9999.0, Culture=neutral, PublicKeyToken=e080a9c724e2bfcd">
-      <Name>Nitra.Runtime</Name>
-      <AssemblyName>Nitra.Runtime.dll</AssemblyName>
-      <HintPath>C:\Program Files (x86)\nitra\Nitra.Runtime.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
-    <Reference Include="System.Collections.Immutable, Version=1.1.37.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <Name>System.Collections.Immutable</Name>
-      <AssemblyName>System.Collections.Immutable.dll</AssemblyName>
-      <HintPath>packages\System.Collections.Immutable.1.1.37\lib\dotnet\System.Collections.Immutable.dll</HintPath>
-    </Reference>
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Reactive.Core, Version=3.0.1000.0, Culture=neutral, PublicKeyToken=94bc3704cddfc263">
       <Name>System.Reactive.Core</Name>
       <AssemblyName>System.Reactive.Core.dll</AssemblyName>
-      <HintPath>packages\System.Reactive.Core.3.1.1\lib\net45\System.Reactive.Core.dll</HintPath>
+      <HintPath>..\PetriNetLib\packages\System.Reactive.Core.3.1.1\lib\net45\System.Reactive.Core.dll</HintPath>
     </Reference>
     <Reference Include="System.Reactive.Interfaces, Version=3.0.1000.0, Culture=neutral, PublicKeyToken=94bc3704cddfc263">
       <Name>System.Reactive.Interfaces</Name>
       <AssemblyName>System.Reactive.Interfaces.dll</AssemblyName>
-      <HintPath>packages\System.Reactive.Interfaces.3.1.1\lib\net45\System.Reactive.Interfaces.dll</HintPath>
+      <HintPath>..\PetriNetLib\packages\System.Reactive.Interfaces.3.1.1\lib\net45\System.Reactive.Interfaces.dll</HintPath>
     </Reference>
     <Reference Include="System.Reactive.Linq, Version=3.0.1000.0, Culture=neutral, PublicKeyToken=94bc3704cddfc263">
       <Name>System.Reactive.Linq</Name>
       <AssemblyName>System.Reactive.Linq.dll</AssemblyName>
-      <HintPath>packages\System.Reactive.Linq.3.1.1\lib\net45\System.Reactive.Linq.dll</HintPath>
+      <HintPath>..\PetriNetLib\packages\System.Reactive.Linq.3.1.1\lib\net45\System.Reactive.Linq.dll</HintPath>
     </Reference>
     <Reference Include="System.Reactive.PlatformServices, Version=3.0.1000.0, Culture=neutral, PublicKeyToken=94bc3704cddfc263">
       <Name>System.Reactive.PlatformServices</Name>
       <AssemblyName>System.Reactive.PlatformServices.dll</AssemblyName>
-      <HintPath>packages\System.Reactive.PlatformServices.3.1.1\lib\net45\System.Reactive.PlatformServices.dll</HintPath>
+      <HintPath>..\PetriNetLib\packages\System.Reactive.PlatformServices.3.1.1\lib\net45\System.Reactive.PlatformServices.dll</HintPath>
     </Reference>
     <Reference Include="System.Reactive.Windows.Threading, Version=3.0.1000.0, Culture=neutral, PublicKeyToken=94bc3704cddfc263">
       <Name>System.Reactive.Windows.Threading</Name>
       <AssemblyName>System.Reactive.Windows.Threading.dll</AssemblyName>
-      <HintPath>packages\System.Reactive.Windows.Threading.3.1.1\lib\net45\System.Reactive.Windows.Threading.dll</HintPath>
+      <HintPath>..\PetriNetLib\packages\System.Reactive.Windows.Threading.3.1.1\lib\net45\System.Reactive.Windows.Threading.dll</HintPath>
     </Reference>
     <Reference Include="System.Windows">
       <Name>System.Windows</Name>
       <HintPath>C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5\System.Windows.dll</HintPath>
     </Reference>
     <Reference Include="System.Xml.Linq">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Data.DataSetExtensions">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
@@ -110,41 +99,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ConvToCpp.n">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Generator.n">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="GenTran.n">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="InArcBinding.n">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Model.n">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="NetModel.n">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="OutModel.n">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Processor.n" />
-    <Compile Include="Converter.n">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Parser.n">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="Main.n" />
     <Compile Include="Properties\AssemblyInfo.n" />
-    <Compile Include="TestPhilosophers.n">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="XmlUtils.n">
-      <SubType>Code</SubType>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
@@ -155,14 +111,24 @@
       <Project>{5e9cfda7-975a-4ef5-a7e7-b638df3d19f7}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\PetriNetLib\CpnParser\CpnParser.nproj">
+      <Name>CpnParser</Name>
+      <Project>{5bd4c7c7-4cce-4159-9acb-c3f324431ef7}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\PetriNetLib\PetriNetLib.nproj">
+      <Name>PetriNetLib</Name>
+      <Project>{2edff5c5-d99f-4416-96e2-c5b4a4f18247}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\PetriNetMacro\PetriNetMacro.nproj">
+      <Name>PetriNetMacro</Name>
+      <Project>{fbc98adb-2e81-4e65-af74-4a6601bb4649}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\PetriNetModel\PetriNetModel.nproj">
       <Name>PetriNetModel</Name>
       <Project>{9756a67b-f1a6-4c59-a9a6-45492777b4ac}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="CpnParser\CpnParser.nproj">
-      <Name>CpnParser</Name>
-      <Project>{5bd4c7c7-4cce-4159-9acb-c3f324431ef7}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
@@ -175,7 +141,6 @@
   <!--
 		To modify your build process, add your task inside one of the targets below and uncomment it. 
 		Other similar extension points exist, see Microsoft.Common.targets.
-
 	<Target Name="BeforeBuild">
 	</Target>
 	<Target Name="AfterBuild">

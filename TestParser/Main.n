@@ -43,53 +43,18 @@ module Program
   }
   
   mutable net : DiningPhilosophers;
-  file : FileStream;
   
   Main() : void
   {
-    def ran = Random();
     WriteLine("Hi!");
     net = DiningPhilosophers();
     def time = DateTime.Now;
-    //mutable next_put = time + TimeSpan.FromMilliseconds(ran.Next(2000, 4000));
-    //mutable next_take = time + TimeSpan.FromMilliseconds(ran.Next(1000, 2000));
-    //def loop()
-    //{
-    //  def time = DateTime.Now;
-    //  when (next_put < time)
-    //  {
-    //    next_put = time + TimeSpan.FromMilliseconds(ran.Next(2000, 4000));
-    //    Put()
-    //  }
-    //  when (next_take < time)
-    //  {
-    //    next_take = time + TimeSpan.FromMilliseconds(ran.Next(1000, 2000));
-    //    Take()
-    //  }
-    //  //def key = Console.Read();
-    //  //match (key)
-    //  //{
-    //  //  | 1  => _ = ReadLine();loop()
-    //  //  | 2 => ()
-    //  //  | _                 => loop()
-    //  //}
-    //  loop()
-    //}
     def writer = File.CreateText("out.txt");
-    Trace.Listeners.Add(TextWriterTraceListener(Console.Out)); //Trace.WriteLine("Hello World");
-    Trace.Listeners.Add(TextWriterTraceListener(writer));
-    //file = File.OpenWrite("out.txt");
-    //loop();
-    //def test = HashMultiSetTest();
-    //_ = test.TestConcurrent();
-    //while (true) {}
-    //Console.Out = writer;
+    _ = Trace.Listeners.Add(TextWriterTraceListener(Console.Out)); //Trace.WriteLine("Hello World");
+    _ = Trace.Listeners.Add(TextWriterTraceListener(writer));
     Console.WriteLine(net.ToString() + "\n-----");
     _ = Observable.Interval(TimeSpan.FromMilliseconds(130)).Subscribe(_ => Put());
     _ = Observable.Interval(TimeSpan.FromMilliseconds(30)).Subscribe(_ => Take());
-    //net.
-    //def net = PetriNet();
-    //net.Process("DiningPhilosophers.cpn");
     
     _ = ReadLine();
   }

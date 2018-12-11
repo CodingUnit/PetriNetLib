@@ -16,6 +16,7 @@ namespace PetriNetLib
     {
       public place      : Place;
       
+      public transition : Transition;
       public Depends     : list[InArcBinding] {get;set;}
       public NeedBinding : bool {get;set;}
       public name       : string
@@ -88,7 +89,6 @@ namespace PetriNetLib
           }
         }
       }
-      
       
       public check_expr : PExpr
       {

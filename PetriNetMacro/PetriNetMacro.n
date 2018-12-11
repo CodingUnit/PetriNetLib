@@ -38,9 +38,19 @@ namespace PetriNetLib
       //Macros.DefineCTX(typer);
       //assert2(false);
       def net = PetriNetCompiler();
+      mutable page = null;
+      
+      def get_opts(o)
+      {
+        | <[ debug ]>          => assert2(false);
+        | <[ $(n : usesite) ]> => page = n
+        | _                    => ()
+      }
+      
       match (expr)
       {
-        | <[$(str : string)]> => net.Process(ty, typer, str)
+        | <[$(str : string)]> => foreach (o in other) get_opts(o);
+                                 net.Process(ty, typer, str, page)
         | _                   => ()
       }
       

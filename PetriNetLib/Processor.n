@@ -38,9 +38,9 @@ namespace PetriNetLib
       gen.PhaseTwo()
     }
     
-    public Process(ty : TypeBuilder, typer : Typer, file : string) : void
+    public Process(ty : TypeBuilder, typer : Typer, file : string, page : string) : void
     {
-      def parser = Parser();
+      def parser = Parser(page);
       parser.Parse(file);
       def file = System.IO.Path.GetFileNameWithoutExtension(file);
       proc = PetriNetProcessor(file, typer, ty, parser.Places, parser.Transitions, parser.Arcs, parser.Decls);
@@ -184,11 +184,12 @@ namespace PetriNetLib
       
       def create_tran(t)
       {
-        | CpnTree.Transition(n, id, g, t) =>
+        | CpnTree.Transition(n, id, g, t, c) =>
         
             def guard = g.MapDefault(converter.ParseML, <[]>);
             def time  = t.MapDefault(converter.ParseML, <[]>);
-            def tran = Transition(tidx, id, n, guard, time, null, 0, this);
+            def code  = c.MapDefault(converter.ParseML, <[]>);
+            def tran = Transition(tidx, id, n, guard, time, code, 0, this);
             tidx += 1;
             tran
       }
@@ -208,11 +209,6 @@ namespace PetriNetLib
       def (color, decls) = tree_decls.PartitionType();
       foreach (d : CpnDecl.ColorSet in color)
       {
-        //match (d)
-        //{
-        //  | CpnDecl.ColorSet(n, Colour.Index(id = i)) => colour_sets[i] = ColourSet(i, Colour.Alias(n))
-        //  | _                                         => ()
-        //}
         colour_sets[d.name] = ColourSet(d.name, d.type)
       }
       
@@ -234,7 +230,7 @@ namespace PetriNetLib
         {
           | (ArcSource.PlaceEnd(p), ArcSource.TransitionEnd(t)) => output_matrix[p.idx, t.idx] = a;
           | (ArcSource.TransitionEnd(t), ArcSource.PlaceEnd(p)) => input_matrix[p.idx, t.idx] = a;
-          | _ => ()
+          | _                                                   => ()
         }
       }
       //BuildMatrix();

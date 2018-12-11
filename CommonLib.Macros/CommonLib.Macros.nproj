@@ -170,9 +170,6 @@
     <Compile Include="HashMultiSet.n">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="HashMultiSetTest.n">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="Ifvalue.n">
       <SubType>Code</SubType>
     </Compile>

@@ -18,7 +18,7 @@ namespace CommonLib.Macros
     mutable heap : array[T] = array(32);
     [Accessor]
     mutable size     : int;
-    mutable size_end : int;
+    mutable size_end : int = 0;
     //mutable end_pos  : int;
     //oper_queue   : RQueue[T * int] = RQueue(10);
     mutable locked       : int;

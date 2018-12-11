@@ -172,7 +172,8 @@ namespace CommonLib.Macros
         {
           | (k, c, -1, true)  => Add(k, c)
           | (k, c, -1, false) => Remove(k, c)
-          | (_, c, i, false)  => RemovePos(i, c)
+          | (_, c,  i, false) => RemovePos(i, c)
+          | _                 => ()
         }
       }
     }

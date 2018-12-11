@@ -110,6 +110,10 @@ namespace CommonLib.Macros
       }
     }
     
+    public RealIndex(idx : int) : int
+    {
+      (read_index + idx) % queue.Length
+    }
     // return absolute index of element
     public FindIndexOf(elem : T) : int
     {

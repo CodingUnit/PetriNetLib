@@ -86,7 +86,7 @@ namespace PetriNetModel
       }
     }
     
-    public Start() : void
+    public virtual Start() : void
     {
       main_task.Start()
     }

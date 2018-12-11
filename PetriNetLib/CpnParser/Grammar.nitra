@@ -65,11 +65,17 @@ namespace CpnML.Grammar
       {
         syntax Case = Pat=Expr "=>" Expr=Expr;
       }
+      | GlobAssign = Identifier ":=" Expr
+      | GlobInc    = "inc" Identifier
+      | GlobDec    = "dec" Identifier
+      | RefConstr  = "ref" Expr
+      | RefContents = "!" Identifier
       | Var = Identifier
       | Lambda = Name=Identifier Parms=AnyIdentifier* "=>" Expr
 	    precedence ArcDelay:
 	    | DelayExpr = Expr Delay
       | Delay
+      | AtTime  = Expr "@" Expr
 	    precedence Union:
       | TimedSetUnion = Expr "+++" Expr// ^ Oper
       | SetUnion = Expr "++" Expr// ^ Oper
@@ -86,7 +92,7 @@ namespace CpnML.Grammar
       precedence Func:
 	    | FuncCall   = Name=(Identifier;'.')+ Parms=(Expr ^ Func)+
       precedence Token:
-      | MultiSetConstr = Integer '`' Expr// ^ Oper
+      | MultiSetConstr = Expr '`' Expr// ^ Oper
 		  
       //| RecordAccess = !Char '#' AnyIdentifier Expr            
       precedence Conditional:
@@ -99,17 +105,17 @@ namespace CpnML.Grammar
 		  | Equal    = Expr '=' Expr
       | NotEqual = Expr "<>" Expr
       precedence Relational:
-	  | Above	   = Expr '>' Expr
-	  | Below	   = Expr '<' Expr
-	  | AboveEqual = Expr ">=" Expr
-	  | BelowEqual = Expr "<=" Expr
-      precedence Append:
-      | Append  = Expr "@" Expr
+	    | Above	   = Expr '>' Expr
+	    | Below	   = Expr '<' Expr
+	    | AboveEqual = Expr ">=" Expr
+	    | BelowEqual = Expr "<=" Expr
+      precedence Append:    
+      | Append  = Expr "^^" Expr
       | Concat  = Expr '^' Expr
       | ListCombine = Expr "::" Expr
       precedence Additive:
       | Plus	   = Expr ^ Additive '+' Expr
-	  | Minus    = Expr '-' Expr
+	    | Minus    = Expr '-' Expr
       precedence MulDiv:
       | Multiply = Expr '*' Expr
       | Div      = Expr '/' Expr
@@ -138,10 +144,13 @@ namespace CpnML.Grammar
       | Var = "var" Names=(Identifier;",")+ Type
     }
 
-	syntax Declaration
+	  syntax Declaration
     {
       | LowerDecl
-      | Func = "fun" Name=Identifier '(' Parms=(Expr;",")* ')' Type? '=' Body=ExprList
+      | GlobRef  = "globref" Name=Identifier "=" Expr
+      | PageRef  = "pageref" Name=Identifier "=" Expr
+      | InstRef  = "instref" Name=Identifier "=" Expr
+      | Func     = "fun" Name=Identifier '(' Parms=(Expr;",")* ')' Type? '=' Body=ExprList
       | FunMatch = "fun" MatchCase "|" (MatchCase;"|")+
       {
         syntax MatchCase = Name=Identifier Pat=Expr '=' Expr=Expr;

@@ -24,6 +24,8 @@ namespace PetriNetLib
     [Accessor]
     mutable decls : list[CpnDecl];
     
+    page : string;
+    
     [Accessor]
     mutable places : list[CpnTree.Place];
     [Accessor]
@@ -31,6 +33,10 @@ namespace PetriNetLib
     [Accessor]
     mutable arcs : list[CpnTree.Arc];
     
+    public this(page : string)
+    {
+      this.page = page;
+    }
     
     parse_color(col : XmlElement) : CpnDecl
     {
@@ -92,6 +98,37 @@ namespace PetriNetLib
       CpnDecl.ColorSet(name, set)
     }
       
+    get_place(p : XmlElement) : CpnTree.Place
+    {
+      def id = p.GetAttrText("id");
+      def name = p.GetOneText("text");
+      def type = p.GetOneText("type", "text");
+      def initmark = p.GetOneText("initmark", "text");
+      def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
+      CpnTree.Place(name, id, type, initmark)
+    }
+      
+      get_tran(p : XmlElement) : CpnTree.Transition
+      {
+        def id = p.GetAttrText("id");
+        def name = p.GetOneText("text");
+        def guard = p.GetOneTextOpt("cond", "text");
+        def time  = p.GetOneTextOpt("time", "text");
+        def code  = p.GetOneTextOpt("code", "text");
+        def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
+        CpnTree.Transition(name, id, guard, time, code)
+      }
+      
+      get_arc(a : XmlElement) : CpnTree.Arc
+      {
+        def annot = a.GetOneText("annot", "text");
+        def p2t   = a.GetAttrText("orientation") == "PtoT";
+        def trans  = a.GetOne("transend").GetAttrText("idref");
+        def place  = a.GetOne("placeend").GetAttrText("idref");
+        def (from, to) = if (p2t) (place, trans) else (trans, place);
+        CpnTree.Arc(annot, from, to, p2t)
+      }
+      
     public Parse(file : string) : void
     {
       xml = XmlDocument();
@@ -106,43 +143,20 @@ namespace PetriNetLib
       
       decls += color.Map(parse_color);
       
-      def get_places(p)
-      {
-        def id = p.GetAttrText("id");
-        def name = p.GetOneText("text");
-        def type = p.GetOneText("type", "text");
-        def initmark = p.GetOneText("initmark", "text");
-        def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
-        CpnTree.Place(name, id, type, initmark)
-      }
       
-      def get_tran(p)
-      {
-        def id = p.GetAttrText("id");
-        def name = p.GetOneText("text");
-        def guard = p.GetOneTextOpt("cond", "text");
-        def time  = p.GetOneTextOpt("time", "text");
-        def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
-        CpnTree.Transition(name, id, guard, time)
-      }
-      
-      def get_arc(a)
-      {
-        def annot = a.GetOneText("annot", "text");
-        def p2t   = a.GetAttrText("orientation") == "PtoT";
-        def trans  = a.GetOne("transend").GetAttrText("idref");
-        def place  = a.GetOne("placeend").GetAttrText("idref");
-        def (from, to) = if (p2t) (place, trans) else (trans, place);
-        CpnTree.Arc(annot, from, to, p2t)
-      }
       
       decls += color.Map(parse_color);
       //decls = idx_color.Map((x, r, i) => CpnDecl.ColorSet(x.InnerText, Color.Index(r.First().InnerText |> int.Parse, r.Skip(1).First().InnerText |> int.Parse, i.First().InnerText)));
       def var = var_tags.Map(x => CpnDecl.Var(x.GetOneText("id"), x.GetOneText("type", "id")));
       decls += var;
-      def page = xml.GetChilds("workspaceElements", "cpnet", "page");
+      def pages = xml.Get("workspaceElements", "cpnet", "page");
+      def page  = if (page != null) 
+      {
+        pages.Filter(x => x.GetOne("pageattr").GetAttrText("name") == page)
+      } else pages;
+      def page = page.GetChilds();
       def places = page.Get("place");
-      this.places = places.Map(get_places);
+      this.places = places.Map(get_place);
       def tran   = page.Get("trans");
       transitions   = tran.Map(get_tran);
       arcs          = page.Get("arc").Map(get_arc);

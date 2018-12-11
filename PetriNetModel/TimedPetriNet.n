@@ -14,5 +14,22 @@ namespace PetriNetModel
   /// </summary>
   public class TimedPetriNet : PetriNet
   {
+    start_time : DateTime;
+    
+    public this()
+    {
+      start_time = DateTime.Now;
+    }
+    
+    public time() : TimeSpan
+    {
+      DateTime.Now - start_time
+    }
+    
+    public override Start() : void
+    {
+      
+      base.Start();
+    }
   }
 }

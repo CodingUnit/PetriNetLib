@@ -86,18 +86,24 @@ namespace PetriNetLib
                def val = GetExpr(l);
                <[ def $(name : usesite) = $val]>
                
-       | Equal(Expr1 = left, Expr2 = right) => <[ $(GetExpr(left)) == $(GetExpr(right))]>
-       | Plus(Expr1 = left, Expr2 = right)  => <[ $(GetExpr(left)) + $(GetExpr(right))]>
-       | Minus(Expr1 = left, Expr2 = right) => <[ $(GetExpr(left)) - $(GetExpr(right))]>
-       | NotEqual(Expr1 = left, Expr2 = right)  => <[ $(GetExpr(left)) != $(GetExpr(right))]>
-       | Above(Expr1 = left, Expr2 = right) => <[ $(GetExpr(left)) > $(GetExpr(right))]>
-       | Below(Expr1 = left, Expr2 = right)  => <[ $(GetExpr(left)) < $(GetExpr(right))]>
-       | AboveEqual(Expr1 = left, Expr2 = right) => <[ $(GetExpr(left)) >= $(GetExpr(right))]>
-       | BelowEqual(Expr1 = left, Expr2 = right)  => <[ $(GetExpr(left)) <= $(GetExpr(right))]>
-       | Append(Expr1 = left, Expr2 = right) => <[ $(GetExpr(left)) + $(GetExpr(right))]>
-       | Concat(Expr1 = left, Expr2 = right)  => <[ $(GetExpr(left)) + $(GetExpr(right))]>
-       | ListCombine(Expr1 = left, Expr2 = right) => <[ $(GetExpr(left)) :: $(GetExpr(right))]>
-       | Multiply(Expr1 = left, Expr2 = right)  => <[ $(GetExpr(left)) * $(GetExpr(right))]>
+      | Equal(Expr1 = left, Expr2 = right)       => <[ $(GetExpr(left)) == $(GetExpr(right))]>
+      | Plus(Expr1 = left, Expr2 = right)        => <[ $(GetExpr(left)) + $(GetExpr(right))]>
+      | Minus(Expr1 = left, Expr2 = right)       => <[ $(GetExpr(left)) - $(GetExpr(right))]>
+      | NotEqual(Expr1 = left, Expr2 = right)    => <[ $(GetExpr(left)) != $(GetExpr(right))]>
+      | Above(Expr1 = left, Expr2 = right)       => <[ $(GetExpr(left)) > $(GetExpr(right))]>
+      | Below(Expr1 = left, Expr2 = right)       => <[ $(GetExpr(left)) < $(GetExpr(right))]>
+      | AboveEqual(Expr1 = left, Expr2 = right)  => <[ $(GetExpr(left)) >= $(GetExpr(right))]>
+      | BelowEqual(Expr1 = left, Expr2 = right)  => <[ $(GetExpr(left)) <= $(GetExpr(right))]>
+      | Append(Expr1 = left, Expr2 = right)      => <[ $(GetExpr(left)) + $(GetExpr(right))]>
+      | Concat(Expr1 = left, Expr2 = right)      => <[ $(GetExpr(left)) + $(GetExpr(right))]>
+      | ListCombine(Expr1 = left, Expr2 = right) => <[ $(GetExpr(left)) :: $(GetExpr(right))]>
+      | Multiply(Expr1 = left, Expr2 = right)    => <[ $(GetExpr(left)) * $(GetExpr(right))]>
+      | BraceExpr(ExprsData = [])                => <[ () ]>
+      | AtTime(Expr1 = left, Expr2 = right)      => <[ $(GetExpr(left)) %@ $(GetExpr(right)) ]>
+      | Delay(Delay = MainParseTree.Delay.AddTime(Expr = e))
+      | Delay(Delay = MainParseTree.Delay.AddTimeAlt(Expr = e))     => <[ @Delay($(GetExpr(e)))]>
+      | DelayExpr(Expr = e, Delay = MainParseTree.Delay.AddTime(Expr = delay))
+      | DelayExpr(Expr = e, Delay = MainParseTree.Delay.AddTimeAlt(Expr = delay))     => <[ $(GetExpr(e)) %@+ $(GetExpr(delay)) ]>
     }
     
     ConvertTree(tree : MainParseTree.LangExpr) : PExpr
