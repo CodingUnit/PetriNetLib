@@ -89,7 +89,7 @@ namespace PetriNetLib
         | RandomEnumerable    => <[ RandomArray() ]>
         | SortedSet           => <[ SortedArray() ]>
         | TokenQueue          => <[ TokenQueue() ]>
-        | TimedSimpleMultiset => <[ TimedSimpleMultiset() ]>
+        | TimedSimpleMultiset => <[ TimedHeap() ]>
       }
       <[decl: $(name : usesite) : PetriNetModel.Place.[$type] = PetriNetModel.Place($(name : string), $dest_cont)]>
     }

@@ -14,7 +14,7 @@ namespace PetriNetModel
   class Timed[T] : IComparable[Timed[T]]
   {
     public key : T;
-    public time : DateTime;
+    public time : TimeSpan;
     
     public override GetHashCode() : int
     {
@@ -44,28 +44,30 @@ namespace PetriNetModel
   {
     heap : BinaryHeap[Timed[T]] = BinaryHeap();
     rnd  : Random               = Random();
+    net  : TimedPetriNet;
     
-    public this() {}
-    public this(en : IEnumerable[Timed[T]])
+    public this(net : TimedPetriNet) {this.net = net}
+    public this(net : TimedPetriNet, en : IEnumerable[Timed[T]])
     {
-      heap = BinaryHeap(en)
+      this.net = net;
+      heap = BinaryHeap(en);
     }
     
     public Create() : ITokenContainer[Timed[T]]
     {
-      TimedHeap()
+      TimedHeap(net)
     }
     
     public Create(en : IEnumerable[Timed[T]]) : ITokenContainer[Timed[T]]
     {
-      TimedHeap(en)
+      TimedHeap(net, en)
     }
     
     public EnabledTokens : IEnumerable[Timed[T]]
     {
       get
       {
-        heap.PeekFirstMin(Timed(default(T), DateTime.Now))
+        heap.PeekFirstMin(Timed(default(T), net.time()))
       }
     }
     
@@ -113,7 +115,7 @@ namespace PetriNetModel
         if (HaveTokens)
         {
           def min = Peek();
-          min.time - DateTime.Now
+          min.time
         } else TimeSpan.MaxValue
       }
     }

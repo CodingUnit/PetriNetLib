@@ -92,7 +92,7 @@ namespace CpnML.Grammar
       precedence Func:
 	    | FuncCall   = Name=(Identifier;'.')+ Parms=(Expr ^ Func)+
       precedence Token:
-      | MultiSetConstr = Expr '`' Expr// ^ Oper
+      | MultiSetConstr = Expr '`' Expr 
 		  
       //| RecordAccess = !Char '#' AnyIdentifier Expr            
       precedence Conditional:
@@ -127,7 +127,6 @@ namespace CpnML.Grammar
       | SharpOper = '#' Expr
       precedence Braces:
       | BraceExpr = '(' Expr* ')'
-      //| UnitVal = '(' ')'
       precedence FigBraces:
       | FigBraceExpr = '{' Expr '}'   
       precedence Decl:

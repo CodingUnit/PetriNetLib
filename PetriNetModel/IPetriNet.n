@@ -11,8 +11,9 @@ namespace PetriNetModel
 {
   public interface ITimedPetriNet : IPetriNet
   {
+    time() : TimeSpan;
     TimeStep() : void;
-    GetNextTime() : DateTime;
+    GetNextTime() : TimeSpan;
   }
   
   /// <summary>

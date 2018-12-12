@@ -16,7 +16,7 @@ using System.Diagnostics;
 
 module Program
 {
-  [PetriNet("DiningPhilosophers.cpn")]
+  [PetriNet("DiningPhilosophers.cpn", debug)]
   class DiningPhilosophers
   {
   }

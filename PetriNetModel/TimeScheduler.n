@@ -21,14 +21,14 @@ namespace PetriNetModel
     cancel_source : CancellationTokenSource = CancellationTokenSource();
     mutable cancel_token  : CancellationToken;
     time_step : int;
-    mutable next_time : DateTime;
+    mutable next_time : TimeSpan;
     
     net : ITimedPetriNet;
     
     public this(net : ITimedPetriNet, time_step : int)
     {
       this.net = net;
-      next_time = DateTime.MinValue;
+      next_time = TimeSpan.MinValue;
       this.time_step = time_step;
     }
     
@@ -45,7 +45,7 @@ namespace PetriNetModel
         cancel_token.ThrowIfCancellationRequested()
       } else
       {
-        when (DateTime.Now >= next_time)
+        when (net.time() >= next_time)
         {
           net.TimeStep();
           next_time = net.GetNextTime();

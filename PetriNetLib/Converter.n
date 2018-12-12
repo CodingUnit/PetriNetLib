@@ -63,11 +63,16 @@ namespace PetriNetLib
                       
            }
            <[ $path(..$parms)]>
-                                                                            
-      | MultiSetConstr(Integer = i, Expr = e) => 
-          def count = expr.GetText(i) |> int.Parse;
+      
+      | MultiSetConstr(Expr1 = Literal(Literal = Literal.Numeric as i), Expr2 = e) => 
+          def count = i.Numeric.GetValue();
           def expr = GetExpr(e);
           <[ $(count : int) ` $expr ]>
+      | MultiSetConstr(Expr1 = i, Expr2 = e) => 
+          def count = GetExpr(i);
+          def expr  = GetExpr(e);
+          <[ $count ` $expr ]>
+      
       | SetUnion(Expr1 = left, Expr2 = right) => def left  = GetExpr(left);
                                                  def right = GetExpr(right);
                                                  <[ $left %++ $right ]>
