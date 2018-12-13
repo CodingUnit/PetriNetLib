@@ -36,6 +36,7 @@ namespace PetriNetLib
   {
     | ML {str : string;}
     | Var {id : string; type : string;}
+    | GlobRef {id : string; val : string;}
     | ColorSet
     {
       name : string;

@@ -19,6 +19,7 @@ namespace PetriNetLib
     {
       def input  = tran.InputPlaces;
       def output = tran.OutputPlaces;
+      def map = Hashtable();
       
       def create_add(p, a)
       {
@@ -36,6 +37,7 @@ namespace PetriNetLib
       }
       
       def input = input.Map((x, a) => InArcBinding(x, tran, [], false, a.expr));
+      
       foreach (i in input)
       {
         match (i.expr)
@@ -51,6 +53,7 @@ namespace PetriNetLib
                               }
           | _ => ()
         }
+        map[i.name] = i;
       }
       
       def eval(inp, res)

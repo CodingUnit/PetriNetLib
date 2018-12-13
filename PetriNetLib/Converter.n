@@ -134,6 +134,12 @@ namespace PetriNetLib
                 }
                 
               ]>
+             | Declaration.GlobRef(Name = n, Expr = e) 
+             | Declaration.PageRef(Name = n, Expr = e)
+             | Declaration.InstRef(Name = n, Expr = e) => 
+                def n = n.GetText();
+                def e = e |> GetExpr;
+                <[ $(n : usesite) = $e ]>
           }
           
           match (decls.Map(map_decls))

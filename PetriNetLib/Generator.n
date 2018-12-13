@@ -137,7 +137,6 @@ namespace PetriNetLib
       
     }
     
-    
     CreateTran(tran : Transition) : ClassMember
     {
       def name = tran.Name;
@@ -155,11 +154,13 @@ namespace PetriNetLib
        ]>
     }
     
-    //CreateVars(name : string, type : ColourSet) : ClassMember
-    //{
-    //  def type = GetTypeExpr(type);
-    //  <[decl: mutable $(name : usesite) : $type]>
-    //}
+    CreateGlobRef(name : string, val : PExpr) : ClassMember
+    {
+      def ty = Typer(typing_method);
+      def te = ty.TypeExpr(val);
+      
+      <[decl: mutable $(name : usesite) : $(te.ty : typed) = $val]>
+    }
      
     CreateVals(expr : PExpr) : ClassMember
     {
@@ -198,7 +199,6 @@ namespace PetriNetLib
     
     CreateDecl(expr : PExpr) : ClassMember
     {
-      
       | <[ def $(_ : usesite)(..$_) { ..$_ } ]> => 
           
           def func = ProcessFun(expr);
@@ -352,8 +352,6 @@ namespace PetriNetLib
       }
     }
     
-    
-    
     CreateToString() : ClassMember
     {
       def strings = model.places.Map(x => <[ $(x.name : usesite).ToString() ]>);
@@ -445,8 +443,7 @@ namespace PetriNetLib
       def sets = sets + sets2;
       foreach (m in sets) typebuilder.DefineNestedTypeWithSource(m).Compile();
       
-      def places = model.places.MapToList(CreatePlace);
-      //def vars = model.vars.KeyValuePairs.MapToList(CreateVars);
+      def places = model.places.MapToList(CreatePlace);      
       
       def time_sched = if (model.IsTimed) CreateTimeMethods() else null;
       CreateStepMethod();
@@ -456,7 +453,7 @@ namespace PetriNetLib
       def start    = CreateStartMethod();
       def cons     = CreateCons();
       
-      def members = start :: tostring :: cons :: fields + places;// + vars;
+      def members = start :: tostring :: cons :: fields + places;
       def members = if (time_sched != null) time_sched :: members else members;
       foreach (m in members) _ = typebuilder.DefineWithSource(m);
     }
@@ -482,6 +479,8 @@ namespace PetriNetLib
       def decls = model.ml_decls.Map(CreateDecl).Filter(_ != null);
       def decls = decls + methods;
       foreach (m in decls) _ = typebuilder.DefineWithSource(m);
+      def globrefs = model.glob_refs.KeyValuePairs.MapToList(CreateGlobRef);
+      foreach (m in globrefs) _ = typebuilder.DefineWithSource(m);
       typebuilder.Compile()
     }
   }

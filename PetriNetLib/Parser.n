@@ -13,91 +13,91 @@ using CommonLib.Macros;
 
 namespace PetriNetLib
 {
-  
+
   /// <summary>
   /// Description of Parser.
   /// </summary>
   public class Parser
   {
     mutable xml : XmlDocument;
-    
+
     [Accessor]
     mutable decls : list[CpnDecl];
-    
+
     page : string;
-    
+
     [Accessor]
     mutable places : list[CpnTree.Place];
     [Accessor]
     mutable transitions : list[CpnTree.Transition];
     [Accessor]
     mutable arcs : list[CpnTree.Arc];
-    
+
     public this(page : string)
     {
       this.page = page;
     }
-    
+
     parse_color(col : XmlElement) : CpnDecl
     {
       def name = col.GetOneText("id");
       def timed = col.GetOneTextOpt("timed");
       def set = if (col.Contains("index"))
-      {
-        def range = col.GetText("index", "ml");
-        def type  = col.GetOneText("index", "id");
-        Colour.Index(range[0], range[1], type)
-      } else 
-      if (col.Contains("alias"))
-      {
-        def alias = col.GetOneText("alias", "id");
-        Colour.Alias(alias)
-      } else
-      if (col.Contains("product"))
-      {
-        def vals = col.Get("product", "id");
-        Colour.Product(vals.Map(_.InnerText))
-      } else
-      if (col.Contains("record"))
-      {
-        def fields = col.Get("record", "recordfield");
-          
-        def get_fields(x)
-        {
-          def arr = x.GetText("id");
-          (arr[0], arr[1])
-        }
-          
-        def fields = fields.Map(get_fields);
-        Colour.Record(fields)
-      }
-      else
-      if (col.Contains("enum"))
-      {
-        def en = col.GetText("enum", "id");
-        Colour.Enum(en.NToList())
-      } else
-      if (col.Contains("unit"))
-      {
-        def new_name = col.GetOneTextOpt("int", "with", "id");
-        Colour.Unit(new_name)
-      } else
-      if (col.Contains("bool"))   Colour.Simple("bool")   else
-      if (col.Contains("int"))    
-      {
-        def wit = col.GetText("int", "with", "ml").ToArray();
-        def wit = if (wit.IsEmpty()) None() else (wit[0], wit[1]) |> Some;
-        Colour.Integer(wit)
-      } else
-      if (col.Contains("intinf")) Colour.Simple("intinf") else
-      if (col.Contains("time"))   Colour.Simple("time")   else
-      if (col.Contains("real"))   Colour.Simple("real")   else
-      if (col.Contains("string")) Colour.Simple("string") else
-      null;
+                 {
+                   def range = col.GetText("index", "ml");
+                   def type  = col.GetOneText("index", "id");
+                   Colour.Index(range[0], range[1], type)
+                 } else 
+                  if (col.Contains("alias"))
+                  {
+                    def alias = col.GetOneText("alias", "id");
+                    Colour.Alias(alias)
+                  } else
+                    if (col.Contains("product"))
+                    {
+                      def vals = col.Get("product", "id");
+                      Colour.Product(vals.Map(_.InnerText))
+                    } else
+                      if (col.Contains("record"))
+                      {
+                        def fields = col.Get("record", "recordfield");
+
+                        def get_fields(x)
+                        {
+                          def arr = x.GetText("id");
+                          (arr[0], arr[1])
+                        }
+
+                        def fields = fields.Map(get_fields);
+                        Colour.Record(fields)
+                      }
+                      else
+                        if (col.Contains("enum"))
+                        {
+                          def en = col.GetText("enum", "id");
+                          Colour.Enum(en.NToList())
+                        } else
+                          if (col.Contains("unit"))
+                          {
+                            def new_name = col.GetOneTextOpt("int", "with", "id");
+                            Colour.Unit(new_name)
+                          } else
+                            if (col.Contains("bool"))   Colour.Simple("bool")   else
+                              if (col.Contains("int"))    
+                              {
+                                def wit = col.GetText("int", "with", "ml").ToArray();
+                                def wit = if (wit.IsEmpty()) None() else (wit[0], wit[1]) |> Some;
+                                Colour.Integer(wit)
+                              } else
+                                if (col.Contains("intinf")) Colour.Simple("intinf") else
+                                  if (col.Contains("time"))   Colour.Simple("time")   else
+                                    if (col.Contains("real"))   Colour.Simple("real")   else
+                                      if (col.Contains("string")) Colour.Simple("string") else
+                                        null;
       def set = if (timed.HasValue) Colour.Timed(set) else set;
       CpnDecl.ColorSet(name, set)
     }
-      
+
     get_place(p : XmlElement) : CpnTree.Place
     {
       def id = p.GetAttrText("id");
@@ -107,28 +107,35 @@ namespace PetriNetLib
       def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
       CpnTree.Place(name, id, type, initmark)
     }
-      
-      get_tran(p : XmlElement) : CpnTree.Transition
-      {
-        def id = p.GetAttrText("id");
-        def name = p.GetOneText("text");
-        def guard = p.GetOneTextOpt("cond", "text");
-        def time  = p.GetOneTextOpt("time", "text");
-        def code  = p.GetOneTextOpt("code", "text");
-        def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
-        CpnTree.Transition(name, id, guard, time, code)
-      }
-      
-      get_arc(a : XmlElement) : CpnTree.Arc
-      {
-        def annot = a.GetOneText("annot", "text");
-        def p2t   = a.GetAttrText("orientation") == "PtoT";
-        def trans  = a.GetOne("transend").GetAttrText("idref");
-        def place  = a.GetOne("placeend").GetAttrText("idref");
-        def (from, to) = if (p2t) (place, trans) else (trans, place);
-        CpnTree.Arc(annot, from, to, p2t)
-      }
-      
+
+    get_tran(p : XmlElement) : CpnTree.Transition
+    {
+      def id = p.GetAttrText("id");
+      def name = p.GetOneText("text");
+      def guard = p.GetOneTextOpt("cond", "text");
+      def time  = p.GetOneTextOpt("time", "text");
+      def code  = p.GetOneTextOpt("code", "text");
+      def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
+      CpnTree.Transition(name, id, guard, time, code)
+    }
+
+    get_arc(a : XmlElement) : CpnTree.Arc
+    {
+      def annot = a.GetOneText("annot", "text");
+      def p2t   = a.GetAttrText("orientation") == "PtoT";
+      def trans  = a.GetOne("transend").GetAttrText("idref");
+      def place  = a.GetOne("placeend").GetAttrText("idref");
+      def (from, to) = if (p2t) (place, trans) else (trans, place);
+      CpnTree.Arc(annot, from, to, p2t)
+    }
+
+    parse_glob_ref(x : XmlElement) : CpnDecl
+    {
+      def id = x.GetOneText("id");
+      def value = x.GetOneText("ml");
+      CpnDecl.GlobRef(id, value)
+    }
+
     public Parse(file : string) : void
     {
       xml = XmlDocument();
@@ -139,21 +146,22 @@ namespace PetriNetLib
       def ml_decls = glob.GetFirstChildText("ml");
       decls = ml_decls.Map(x => CpnDecl.ML(x));
       def var_tags = glob.Get("var");
+      def glob_refs = glob.Get("globref").Concat(glob.Get("pageref")).Concat(glob.Get("instref"));
       def color = glob.Get("color");
-      
+
+      def glob_refs = glob_refs.Map(parse_glob_ref);
       decls += color.Map(parse_color);
-      
-      
-      
-      decls += color.Map(parse_color);
+      decls += glob_refs;
+
+
       //decls = idx_color.Map((x, r, i) => CpnDecl.ColorSet(x.InnerText, Color.Index(r.First().InnerText |> int.Parse, r.Skip(1).First().InnerText |> int.Parse, i.First().InnerText)));
       def var = var_tags.Map(x => CpnDecl.Var(x.GetOneText("id"), x.GetOneText("type", "id")));
       decls += var;
       def pages = xml.Get("workspaceElements", "cpnet", "page");
       def page  = if (page != null) 
-      {
-        pages.Filter(x => x.GetOne("pageattr").GetAttrText("name") == page)
-      } else pages;
+                   {
+                     pages.Filter(x => x.GetOne("pageattr").GetAttrText("name") == page)
+                   } else pages;
       def page = page.GetChilds();
       def places = page.Get("place");
       this.places = places.Map(get_place);

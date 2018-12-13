@@ -62,6 +62,7 @@ namespace PetriNetLib
     mutable places      : array[Place];
     mutable transitions : array[Transition];
     mutable arcs        : array[Arc];
+    public  glob_refs   : Hashtable[string, PExpr]     = Hashtable();
     public  vars        : Hashtable[string, ColourSet] = Hashtable();
     public  colour_sets : Hashtable[string, ColourSet] = Hashtable();
     [Accessor]
@@ -215,6 +216,8 @@ namespace PetriNetLib
       foreach (d in decls)
       {
         | CpnDecl.Var(i, c) => vars[i] = colour_sets[c]
+        | GlobRef(i, v)     => def expr = converter.ParseML(v);
+                               glob_refs[i] = expr
         | ML(str)           => def expr = converter.ParseML(str);
                                ml_decls ::= expr
         | _                 => ()

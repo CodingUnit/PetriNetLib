@@ -56,18 +56,52 @@ namespace PetriNetLib
         }
       }
       
+      public source_token : PExpr
+      {
+        get
+        {
+          if (place.IsTimed)
+          {
+            def name = $"$(name)_tok";
+            <[ $(name : usesite) ]>
+          } else
+          if (place.IsIndexedContainer)
+          {
+            <[ $(name : usesite).PeekIndexed() ]>
+          } else <[ $(name : usesite).Peek() ]>
+        }
+      }
+      
+      public timed_bind_expr : PExpr
+      {
+        get
+        {
+          if (place.IsTimed)
+          {
+            def name = $"$(name)_tok";
+            if (place.IsIndexedContainer) 
+              <[ def ($(name : usesite), $($"$(name)_idx" : usesite)) = $source_token ]> else
+              <[ def $(name : usesite) = $source_token ]>
+          } else
+          {
+            <[]>
+          }
+        }
+      }
+      
       public bind_expr  : PExpr
       {
         [Memoize]
         get
         {
+          
           if (NeedBinding)
           {
             match (expr)
             {
               | <[ $(n : usesite)]> => if (place.IsIndexedContainer) 
-                                       <[ def ($expr, $($"$(n)_idx" : usesite)) = $(name : usesite).PeekIndexed() ]> else
-                                       <[ def $expr = $(name : usesite).Peek() ]>
+                                       <[ def ($expr, $($"$(n)_idx" : usesite)) = $source_token ]> else
+                                       <[ def $expr = $source_token ]>
               | _                   => <[]>
             }
           } else

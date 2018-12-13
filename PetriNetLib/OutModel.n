@@ -20,6 +20,7 @@ namespace PetriNetLib
     public transitions : array[Transition];
     public arcs        : array[Arc];
     public vars        : Hashtable[string, ColourSet] = Hashtable();
+    public glob_refs   : Hashtable[string, PExpr]     = Hashtable();
     public colour_sets : Hashtable[string, ColourSet] = Hashtable();
     public ml_decls    : list[PExpr];
     
