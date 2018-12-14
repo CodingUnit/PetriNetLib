@@ -82,7 +82,7 @@ namespace PetriNetLib
       [Memoize]
       get
       {
-        OutModel(places, transitions, arcs, vars, colour_sets, ml_decls)
+        OutModel(places, transitions, arcs, vars, glob_refs, colour_sets, ml_decls)
       }
     }
     

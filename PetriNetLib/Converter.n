@@ -104,6 +104,8 @@ namespace PetriNetLib
       | ListCombine(Expr1 = left, Expr2 = right) => <[ $(GetExpr(left)) :: $(GetExpr(right))]>
       | Multiply(Expr1 = left, Expr2 = right)    => <[ $(GetExpr(left)) * $(GetExpr(right))]>
       | BraceExpr(ExprsData = [])                => <[ () ]>
+      | BraceExpr(ExprsData = e)                 => def e = e.Map(GetExpr);
+                                                    <[ (..$e)]>
       | AtTime(Expr1 = left, Expr2 = right)      => <[ $(GetExpr(left)) %@ $(GetExpr(right)) ]>
       | Delay(Delay = MainParseTree.Delay.AddTime(Expr = e))
       | Delay(Delay = MainParseTree.Delay.AddTimeAlt(Expr = e))     => <[ @Delay($(GetExpr(e)))]>

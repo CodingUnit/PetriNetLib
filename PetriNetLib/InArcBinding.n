@@ -18,7 +18,17 @@ namespace PetriNetLib
       
       public transition : Transition;
       public Depends     : list[InArcBinding] {get;set;}
-      public NeedBinding : bool {get;set;}
+      //public NeedBinding : bool {get;set;}
+      
+      public priority : int
+      {
+        [Memoize]
+        get
+        {
+          if (Depends == null || Depends.IsEmpty()) 0 else Depends.Max(_.priority)
+        }
+      }
+      
       public name       : string
       {
         [Memoize]
@@ -30,7 +40,7 @@ namespace PetriNetLib
     
       public expr       : PExpr;
       
-      public var : string
+      public bind_var : string
       {
         [Memoize]
         get
@@ -43,18 +53,18 @@ namespace PetriNetLib
         }
       }
       
-      public before_bind_expr  : PExpr
-      {
-        [Memoize]
-        get
-        {
-          match (expr)
-          {
-            | <[ $(_ : usesite)(..$_) ]> => <[ def $(introduced_var : name) = $expr ]>
-            | _                          => <[]>
-          }
-        }
-      }
+      //public before_bind_expr  : PExpr
+      //{
+      //  [Memoize]
+      //  get
+      //  {
+      //    match (expr)
+      //    {
+      //      | <[ $(_ : usesite)(..$_) ]> => <[ def $(introduced_var : name) = $expr ]>
+      //      | _                          => <[]>
+      //    }
+      //  }
+      //}
       
       public source_token : PExpr
       {
@@ -65,10 +75,11 @@ namespace PetriNetLib
             def name = $"$(name)_tok";
             <[ $(name : usesite) ]>
           } else
-          if (place.IsIndexedContainer)
-          {
-            <[ $(name : usesite).PeekIndexed() ]>
-          } else <[ $(name : usesite).Peek() ]>
+          //if (place.IsIndexedContainer)
+          //{
+            //<[ $(name : usesite).PeekIndexed() ]>
+          //} else 
+          <[ $(name : usesite).Peek() ]>
         }
       }
       
@@ -79,8 +90,8 @@ namespace PetriNetLib
           if (place.IsTimed)
           {
             def name = $"$(name)_tok";
-            if (place.IsIndexedContainer) 
-              <[ def ($(name : usesite), $($"$(name)_idx" : usesite)) = $source_token ]> else
+            //if (place.IsIndexedContainer) 
+              //<[ def ($(name : usesite), $($"$(name)_idx" : usesite)) = $source_token ]> else
               <[ def $(name : usesite) = $source_token ]>
           } else
           {
@@ -95,34 +106,34 @@ namespace PetriNetLib
         get
         {
           
-          if (NeedBinding)
-          {
+          //if (NeedBinding)
+          //{
             match (expr)
             {
               | <[ $(n : usesite)]> => if (place.IsIndexedContainer) 
                                        <[ def ($expr, $($"$(n)_idx" : usesite)) = $source_token ]> else
-                                       <[ def $expr = $source_token ]>
+                                       <[ def $expr = $(name : usesite).Peek() ]>
               | _                   => <[]>
             }
-          } else
-          {
+          //} else
+          //{
              <[]>
-          }
+          //}
         }
       }
       
-      public introduced_var : Name
-      {
-        [Memoize]
-        get
-        {
-          match (expr)
-          {
-            | <[ $(n : usesite)(..$_) ]> => Macros.NewSymbol(n.Substring(0, 2));
-            | _                          => null
-          }
-        }
-      }
+      //public introduced_var : Name
+      //{
+      //  [Memoize]
+      //  get
+      //  {
+      //    match (expr)
+      //    {
+      //      | <[ $(n : usesite)(..$_) ]> => Macros.NewSymbol(n.Substring(0, 2));
+      //      | _                          => null
+      //    }
+      //  }
+      //}
       
       public check_expr : PExpr
       {
@@ -132,8 +143,8 @@ namespace PetriNetLib
           match (expr)
           {
             | <[ $(_ : usesite)]> => <[ $(name : usesite).HaveTokens]>
-            | <[ $(_ : usesite)(..$_) ]> when introduced_var != null => 
-                <[ $(name : usesite).Have($(introduced_var : name)) ]>
+            //| <[ $(_ : usesite)(..$_) ]> =>//when introduced_var != null => 
+                //<[ $(name : usesite).Have($(introduced_var : name)) ]>
             | _                   => def tok = Generator.GetTokenExpr(expr);
                                      <[ $(name : usesite).Have($tok) ]>
           }
@@ -146,27 +157,36 @@ namespace PetriNetLib
         [Memoize]
         get
         {
-          if (NeedBinding)
-          {
+          //if (NeedBinding)
+          //{
+            if (place.IsTimed)
+            match (expr)
+            {
+              | <[ $(n : usesite)]> => //if (place.IsIndexedContainer) 
+                                       //<[ $(name : usesite).GetIndexed($($"$(n)_idx" : usesite))]> else 
+                                       <[ $(name : usesite).Get($expr)]>
+              | _                   => <[]>
+            } else
             match (expr)
             {
               | <[ $(n : usesite)]> => if (place.IsIndexedContainer) 
                                        <[ $(name : usesite).GetIndexed($($"$(n)_idx" : usesite))]> else 
                                        <[ $(name : usesite).Get($expr)]>
-              | _                   => <[]>
+              | _                   => <[ $(name : usesite).Get($expr)]>
+              //| _                      
             }
-          } else
-          {
-            match (expr)
-            {
-              | <[ $(_ : usesite)]>        => <[ def $expr = $(name : usesite).Get()]>
-              | <[ $(_ : usesite)(..$_) ]> 
-                when introduced_var != null  
-                                           => <[ $(name : usesite).Get($(introduced_var : name)) ]>
-              | _                          => <[ $(name : usesite).Get() ]>
-            }
-          }
-        }
+         }
+          //} else
+          //{
+          //  match (expr)
+          //  {
+          //    | <[ $(_ : usesite)]>        => <[ def $expr = $(name : usesite).Get()]>
+          //    | <[ $(_ : usesite)(..$_) ]> 
+          //      when introduced_var != null  
+          //                                 => <[ $(name : usesite).Get($(introduced_var : name)) ]>
+          //    | _                          => <[ $(name : usesite).Get() ]>
+          //  }
+          //}
       }
       
     }

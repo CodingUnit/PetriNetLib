@@ -51,7 +51,8 @@ namespace CpnML.Grammar
 
 	syntax Expr
     {	  
-      | Literal
+      precedence Literal:
+      | Literal = Literal
       precedence Type:
       | TypeAnnot = Expr Type
 	    //| Tuple = '(' Expr ',' Expr (',' Expr)* ')'
@@ -92,7 +93,7 @@ namespace CpnML.Grammar
       precedence Func:
 	    | FuncCall   = Name=(Identifier;'.')+ Parms=(Expr ^ Func)+
       precedence Token:
-      | MultiSetConstr = Expr '`' Expr 
+      | MultiSetConstr = Expr '`' Expr
 		  
       //| RecordAccess = !Char '#' AnyIdentifier Expr            
       precedence Conditional:
