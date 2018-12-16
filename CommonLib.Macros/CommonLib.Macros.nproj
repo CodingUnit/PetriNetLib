@@ -134,9 +134,6 @@
     <Compile Include="Beep.n">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="BinaryHeap.n">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="BitUtils.n">
       <SubType>Code</SubType>
     </Compile>
@@ -203,10 +200,16 @@
     <Compile Include="MathUtils.n">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="MaxBinaryHeap.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Memoize.n">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="MemoizedCalc.n">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="MinBinaryHeap.n">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="NeedChange.n">

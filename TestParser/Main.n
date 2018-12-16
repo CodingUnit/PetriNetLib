@@ -16,9 +16,17 @@ using System.Diagnostics;
 
 module Program
 {
-  [PetriNet("DiningPhilosophers.cpn", debug)]
+  [PetriNet("DiningPhilosophers.cpn")]
   class DiningPhilosophers
   {
+    //Chopsticks(i : PH) : IEnumerable[PH]
+    //{
+    //  def i = i.num;
+  
+    //  {
+    //    1 ` cs(i) %++ (1 ` cs, (if (i == n) 1; else i + 1))
+    //  }
+    //}
   }
   
   Put() : void

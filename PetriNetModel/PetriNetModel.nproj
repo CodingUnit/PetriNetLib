@@ -121,6 +121,9 @@
     <Compile Include="TokenContainers.n">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Types.n">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />

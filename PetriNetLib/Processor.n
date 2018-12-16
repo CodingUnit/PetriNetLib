@@ -187,7 +187,7 @@ namespace PetriNetLib
       {
         | CpnTree.Transition(n, id, g, t, c) =>
         
-            def guard = g.MapDefault(converter.ParseML, <[]>);
+            def guard = g.MapDefault(x => converter.ParseML(x.Trim('[', ']')), <[]>);
             def time  = t.MapDefault(converter.ParseML, <[]>);
             def code  = c.MapDefault(converter.ParseML, <[]>);
             def tran = Transition(tidx, id, n, guard, time, code, 0, this);

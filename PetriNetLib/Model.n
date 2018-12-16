@@ -9,6 +9,12 @@ using System.Linq;
 
 namespace PetriNetLib
 {
+  
+  //[assembly: Nemerle.Internal.OperatorAttribute ("Nemerle.Core", ".",     false, 285, 301)]
+  [assembly: Nemerle.Internal.OperatorAttribute("PetriNetLib", "@",  false, 260, 261)]
+  [assembly: Nemerle.Internal.OperatorAttribute("PetriNetLib", "`",  false, 240, 261)]
+  [assembly: Nemerle.Internal.OperatorAttribute("PetriNetLib", "@+",  false, 260, 261)]
+
   [Record]
   public variant Colour
   {

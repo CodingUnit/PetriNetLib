@@ -49,6 +49,8 @@ namespace CpnML.Grammar
 
 	syntax ExprList = (Expr ";")+;
 
+	syntax BraceFunc  = Name=(Identifier;'.')+ '(' Parms=(Expr)* ')';
+
 	syntax Expr
     {	  
       precedence Literal:
@@ -69,9 +71,9 @@ namespace CpnML.Grammar
       | GlobAssign = Identifier ":=" Expr
       | GlobInc    = "inc" Identifier
       | GlobDec    = "dec" Identifier
-      | RefConstr  = "ref" Expr
-      | RefContents = "!" Identifier
+      | RefConstr  = "ref" Expr      
       | Var = Identifier
+	  | RefContents = "!" Identifier
       | Lambda = Name=Identifier Parms=AnyIdentifier* "=>" Expr
 	    precedence ArcDelay:
 	    | DelayExpr = Expr Delay
@@ -91,10 +93,11 @@ namespace CpnML.Grammar
 	    | SetScalarMult    = Expr "**" Expr
       | SetScalarMultAlt = Expr "*" Expr
       precedence Func:
-	    | FuncCall   = Name=(Identifier;'.')+ Parms=(Expr ^ Func)+
+	    | FuncCall   = !BraceFunc Name=(Identifier;'.')+ Parms=(Expr)+// ^ Func)+
+		| BraceFunc      	  
       precedence Token:
-      | MultiSetConstr = Expr '`' Expr
-		  
+      | MultiSetConstr = Literal '`' Expr
+	      
       //| RecordAccess = !Char '#' AnyIdentifier Expr            
       precedence Conditional:
       | If = "if" Cond=Expr ^ Conditional "then" Then=Expr "else" Else=Expr
@@ -105,18 +108,19 @@ namespace CpnML.Grammar
       precedence Equality:
 		  | Equal    = Expr '=' Expr
       | NotEqual = Expr "<>" Expr
-      precedence Relational:
+	  precedence Relational:
 	    | Above	   = Expr '>' Expr
 	    | Below	   = Expr '<' Expr
 	    | AboveEqual = Expr ">=" Expr
 	    | BelowEqual = Expr "<=" Expr
+	  
       precedence Append:    
       | Append  = Expr "^^" Expr
       | Concat  = Expr '^' Expr
       | ListCombine = Expr "::" Expr
-      precedence Additive:
+	  precedence Additive:
       | Plus	   = Expr ^ Additive '+' Expr
-	    | Minus    = Expr '-' Expr
+	    | Minus    = Expr ^ Additive '-' Expr
       precedence MulDiv:
       | Multiply = Expr '*' Expr
       | Div      = Expr '/' Expr

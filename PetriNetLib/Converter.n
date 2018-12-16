@@ -47,7 +47,8 @@ namespace PetriNetLib
       | Literal as l => GetLiteral(l.Literal)
       | Var as v     => def name = v.Identifier.GetText();
                         <[ $(name : usesite) ]>
-      | FuncCall(NameData = (n, _), ParmsData = p) => 
+      | FuncCall(NameData = (n, _), ParmsData = p)
+      | BraceFunc(BraceFunc = MainParseTree.BraceFunc(NameData = (n, _), ParmsData = p)) => 
            def parms = match (p)
            {
              | [BraceExpr(Exprs = e)] => e
@@ -63,15 +64,15 @@ namespace PetriNetLib
                       
            }
            <[ $path(..$parms)]>
-      
-      | MultiSetConstr(Expr1 = Literal(Literal = Literal.Numeric as i), Expr2 = e) => 
+           
+      | MultiSetConstr(Literal = Literal.Numeric as i, Expr = e) => 
           def count = i.Numeric.GetValue();
           def expr = GetExpr(e);
           <[ $(count : int) ` $expr ]>
-      | MultiSetConstr(Expr1 = i, Expr2 = e) => 
-          def count = GetExpr(i);
-          def expr  = GetExpr(e);
-          <[ $count ` $expr ]>
+      //| MultiSetConstr(Expr1 = i, Expr2 = e) => 
+      //    def count = GetExpr(i);
+      //    def expr  = GetExpr(e);
+      //    <[ $count ` $expr ]>
       
       | SetUnion(Expr1 = left, Expr2 = right) => def left  = GetExpr(left);
                                                  def right = GetExpr(right);
@@ -111,6 +112,10 @@ namespace PetriNetLib
       | Delay(Delay = MainParseTree.Delay.AddTimeAlt(Expr = e))     => <[ @Delay($(GetExpr(e)))]>
       | DelayExpr(Expr = e, Delay = MainParseTree.Delay.AddTime(Expr = delay))
       | DelayExpr(Expr = e, Delay = MainParseTree.Delay.AddTimeAlt(Expr = delay))     => <[ $(GetExpr(e)) %@+ $(GetExpr(delay)) ]>
+      | GlobAssign(Identifier = i, Expr = e) => def i = i.GetText();
+                                                <[ $(i : usesite) = $(GetExpr(e)) ]>
+      | RefContents(Identifier = i)          => def i = i.GetText();
+                                                <[ $(i : usesite) ]>
     }
     
     ConvertTree(tree : MainParseTree.LangExpr) : PExpr

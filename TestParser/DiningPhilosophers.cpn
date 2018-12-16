@@ -31,7 +31,7 @@
         <id>p</id>
       </var>
       <ml id="ID1369">fun Chopsticks(ph(i)) = 
-1`cs(i) ++ (1`cs(if i=n then 1 else i+1));
+1`cs(i) ++ 1`cs(if i=n then 1 else i+1);
         <layout>fun Chopsticks(ph(i)) = 
 1`cs(i) ++ 1`cs(if i=n then 1 else i+1);</layout>
       </ml>

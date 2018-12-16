@@ -13,7 +13,7 @@ namespace CommonLib.Macros
   /// <summary>
   /// Description of BinaryTree.
   /// </summary>
-  public class BinaryHeap[T] : IEnumerable[T] where T : IComparable[T] 
+  public class MinBinaryHeap[T] : IEnumerable[T] where T : IComparable[T] 
   {
     mutable heap : array[T] = array(32);
     [Accessor]

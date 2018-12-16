@@ -7,6 +7,7 @@ using Nemerle.Compiler.Parsetree;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using PetriNetModel;
 
 namespace PetriNetLib
 {
@@ -21,18 +22,26 @@ namespace PetriNetLib
       def output = tran.OutputPlaces;
       def map    = Hashtable();
       
+      def unfold(e)
+      {
+        | <[ () ]> => <[ Unit.Instance ]>
+        | e        => e
+      }
+      
       def create_add(p, a)
       {
         def name = p.name;
         match (a.expr)
         {
+          | <[ () ]>                       => <[ $(name : usesite).Add(Unit.Instance) ]> 
+          | <[ $e %@+ $time]>              => <[ $(name : usesite).Add($(unfold(e)) %@+ $time)]>
           | <[ 1 ` $e ]>
           | <[ $_(..$_)]> as e                                    
           | <[ $(_ : usesite) ]> as e      => <[ $(name : usesite).Add($e)]>
           | <[ $(_ : int) ` $_ ]> 
           | <[ $_ %++ $_ ]>                => def expr = GetTokenExpr(a.expr);
                                               <[ $(name : usesite).Add($expr)]>
-          
+          | e                              => <[ $(name : usesite).Add($e)]>
         }
       }
       
@@ -46,7 +55,7 @@ namespace PetriNetLib
                               {
                                 | <[ $(n : usesite)]> => match (input.Find(x => x.bind_var == n))
                                                          {
-                                                           | Some(x) => i.Depends ::= x;//x.NeedBinding = true;
+                                                           | Some(x) => i.Depends ::= x;
                                                            | _       => ()
                                                          }
                                 | _                   => ()
@@ -56,22 +65,7 @@ namespace PetriNetLib
         map[i.name] = i;
       }
       
-      //def eval(inp, res)
-      //{
-      //  match (inp)
-      //  {
-      //    | []           => res
-      //    | head :: tail => match (head.Depends)
-      //                      {
-      //                        | []   => eval(tail, head :: res)
-      //                        | lst  => def res = eval(lst, res.Except(lst).NToList());
-      //                                  eval(tail.Except(res).NToList(), head :: res)
-      //                      }
-                            
-      //  }
-      //}
-      
-      def input    = input.Sort((x, y) => x.priority - y.priority); 
+      def input    = input.Sort((x, y) => y.priority - x.priority); 
       def add_body = output.Map(create_add);
       
       def extract = input.Map(_.extract_expr);
@@ -84,7 +78,6 @@ namespace PetriNetLib
       {
         if (a == null)
         {
-          
           <[  //$(x.before_bind_expr);
               when ($(x.check_expr))
               {

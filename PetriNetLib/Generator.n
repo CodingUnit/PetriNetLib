@@ -54,15 +54,16 @@ namespace PetriNetLib
                 | "real"   => <[ double ]>
                 | "time"   => <[ Time ]>
                 | "bool"   => <[ bool ]>
-                | "unit"   => <[ void ]>
               }
-        
-        | ColourSet(_, Product(vals))  => def vals = vals.Map(x => <[ $(TypeFromStr(x)) ]>);
-                                          <[ (..$vals) ]>
+        | ColourSet(_, Integer)       => <[ int ]>
+        | ColourSet(_, Unit(None()))  => <[ Unit ]>
+        | ColourSet(_, Unit(Some(t))) => <[ $(t : usesite) ]>
+        | ColourSet(_, Product(vals)) => def vals = vals.Map(x => <[ $(TypeFromStr(x)) ]>);
+                                         <[ (..$vals) ]>
         | ColourSet(n, Index)
-        | ColourSet(n, Enum)           => <[ $(n : usesite) ]>
-        | ColourSet(_, List(t, _))     => def inner = t |> TypeFromStr;
-                                          <[ list[$inner]]>
+        | ColourSet(n, Enum)          => <[ $(n : usesite) ]>
+        | ColourSet(_, List(t, _))    => def inner = t |> TypeFromStr;
+                                         <[ list[$inner]]>
     }
       
     TypeFromStr(str : string) : PExpr
@@ -73,7 +74,7 @@ namespace PetriNetLib
       | "real"   => <[ double ]>
       | "time"   => <[ TimeSpan ]>
       | "bool"   => <[ bool ]>
-      | "unit"   => <[ void ]>
+      | "unit"   => <[ Unit ]>
       | str      => proc.colour_sets[str] |> GetTypeExpr
       
     }
@@ -335,13 +336,21 @@ namespace PetriNetLib
             => <[ $e1.Union($e2)]> 
       }
       
+      def unfold(expr)
+      {
+        | <[ () ]> => <[ Unit.Instance ]>
+        | e        => e
+      }
+      
       def fold(expr)
       {
         //| <[ {..$e} ]>   => e.Fold(acc, fold)
-        | <[ 1 ` $tok]>             => <[ array[$tok] ]>
-        | <[ $(n : int) ` $tok]>    => <[ Enumerable.Repeat($tok, $n) ]>
-        | <[ $l %++ $r]>            => combine(fold(l), fold(r))
-        | e                         => e
+        | <[ 1 ` $tok %@ $time ]>             => <[ $(unfold(tok)) %@ $time ]>
+        | <[ 1 ` $tok]>                       => <[ $(unfold(tok)) ]>
+        | <[ $(n : int) ` $tok %@ $time ]>    => <[ Enumerable.Repeat($(unfold(tok)) %@ $time, $n) ]>
+        | <[ $(n : int) ` $tok]>              => <[ Enumerable.Repeat($(unfold(tok)), $n) ]>
+        | <[ $l %++ $r]>                      => combine(fold(l), fold(r))
+        | e                                   => unfold(e)
       }
       
       if (place.init_mark == null) <[]> else
@@ -373,12 +382,6 @@ namespace PetriNetLib
     {
       def body = model.transitions.Where(_.IsTimed).Map(x => <[ $(x.name : usesite)() ]>);
       def next = model.places.Where(_.IsTimed).Map(x => <[ $(x.name : usesite).NextTokenDelay ]>);
-      //cons_expr ::= <[ time_cancel = time_cancel_source.Token; scheduler = Task(_ => TimeStep(), time_cancel)]>;
-      //fields ::= <[decl: mutable scheduler : Task ]>;
-      //fields ::= <[decl: public Dispose() : void {time_cancel.Cancel(); try {scheduler.Wait() } catch {| AggregateException => ()} finally {time_cancel_source.Dispose()}}]>;
-      //fields ::= <[decl: time_cancel_source : CancellationTokenSource = CancellationTokenSource()]>;
-      //fields ::= <[decl: mutable time_cancel : CancellationToken]>;
-      //init_body ::= <[scheduler.Start()]>;
       def next = next.Map(x => <[ min = PetriNetUtils.TimeMin(min, $x); ]>);
       fields ::= <[decl: public GetNextTime() : DateTime
                    {
@@ -420,20 +423,6 @@ namespace PetriNetLib
       }]>
     }
     
-    //CreateTranQueue() : void
-    //{
-    //  fields ::= <[decl: mutable locked : int]>;
-    //  fields ::= <[decl: tran_queue : RQueue[Action] = RQueue(32);]>;
-    //  fields ::= <[decl: CheckQueue() : void
-    //                     {
-    //                       mutable val;
-    //                       while (tran_queue.DequeIfExist(ref val))
-    //                       {
-    //                         val()
-    //                       }
-    //                     }]>
-    //}
-    
     public Generate() : void
     {      
       //CreateOperators();
@@ -467,10 +456,7 @@ namespace PetriNetLib
     
     public PhaseTwo() : void
     {
-      /*
-      [assembly: OperatorAttribute("Nemerle.Core", "*",  false, 260, 261)]
-[assembly: OperatorAttribute("Nemerle.Core", "/",  false, 260, 261)]
-[assembly: OperatorAttribute("Nemerle.Core", "+",  false, 240, 241)]
+      /*      
       */
       CreateDummyMethod();
       def methods = model.transitions.MapToList(CreateTran);

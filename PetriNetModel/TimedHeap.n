@@ -11,7 +11,7 @@ using CommonLib.Macros;
 namespace PetriNetModel
 {
   [Record]
-  class Timed[T] : IComparable[Timed[T]]
+  public class Timed[T] : IComparable[Timed[T]]
   {
     public key : T;
     public time : TimeSpan;
@@ -32,6 +32,11 @@ namespace PetriNetModel
       | _           => false
     }
     
+    public Add(inc : int) : Timed[T]
+    {
+      Timed(key, time.Add(TimeSpan.FromMilliseconds(inc)))
+    }
+    
     public override ToString() : string
     {
       $"$key @ $time"
@@ -42,15 +47,15 @@ namespace PetriNetModel
   /// </summary>
   class TimedHeap[T] : ITokenContainer[Timed[T]]
   {
-    heap : BinaryHeap[Timed[T]] = BinaryHeap();
-    rnd  : Random               = Random();
+    heap : MinBinaryHeap[Timed[T]] = MinBinaryHeap();
+    rnd  : Random                  = Random();
     net  : TimedPetriNet;
     
     public this(net : TimedPetriNet) {this.net = net}
     public this(net : TimedPetriNet, en : IEnumerable[Timed[T]])
     {
       this.net = net;
-      heap = BinaryHeap(en);
+      heap = MinBinaryHeap(en);
     }
     
     public Create() : ITokenContainer[Timed[T]]
@@ -159,17 +164,26 @@ namespace PetriNetModel
     
     public PeekIndexed() : Timed[T] * int
     {
-      throw NotImplementedException()
+      def elem = heap.PeekMin();
+      (elem, 0)
     }
     
     public GetIndexed(idx : int) : void
     {
-      throw NotImplementedException()
+      heap.RemoveAt(idx);
     }
     
     public GetManyIndexed(tok : IEnumerable[int]) : void
     {
-      throw NotImplementedException()
+      foreach (i in tok)
+        heap.RemoveAt(i)
+    }
+    
+    public override ToString() : string
+    {
+      def tokens = heap.GroupBy(x => x);
+      def tokens = tokens.Select(x => $"$(x.Count())`$(x.Key.key) @ $(x.Key.time)");
+      string.Join(" ++ ", tokens)
     }
   }
 }

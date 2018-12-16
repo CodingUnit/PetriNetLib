@@ -31,5 +31,16 @@ namespace PetriNetModel
       
       base.Start();
     }
+    
+    public static @%@[T](token : T, time : int) : Timed[T]
+    {
+      Timed(token, TimeSpan.FromMilliseconds(time))
+    }
+    
+    public static @%@+[T](token : Timed[T], time : int) : Timed[T]
+    {
+      token.Add(time)
+    }
+    
   }
 }

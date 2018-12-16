@@ -196,7 +196,7 @@ namespace PetriNetLib
       [Memoize]
       get
       {
-        name == null
+        name == null || name.IsEmpty()
       }
     }
 
