@@ -43,9 +43,9 @@ namespace PetriNetLib
       this.converter = proc.Converter;
     }
     
-    GetTypeExpr(p : ColourSet) : PExpr
+    GetTypeExpr(p : Colour) : PExpr
     {
-        | ColourSet(_, Colour.Simple(type)) => 
+      | Colour.Simple(type) => 
               match (type)
               {
                 | "string" => <[ string ]>
@@ -55,15 +55,22 @@ namespace PetriNetLib
                 | "time"   => <[ Time ]>
                 | "bool"   => <[ bool ]>
               }
-        | ColourSet(_, Integer)       => <[ int ]>
-        | ColourSet(_, Unit(None()))  => <[ Unit ]>
-        | ColourSet(_, Unit(Some(t))) => <[ $(t : usesite) ]>
-        | ColourSet(_, Product(vals)) => def vals = vals.Map(x => <[ $(TypeFromStr(x)) ]>);
+        | Integer       => <[ int ]>
+        | Unit(None())  => <[ Unit ]>
+        | Unit(Some(t)) => <[ $(t : usesite) ]>
+        | Product(vals) => def vals = vals.Map(x => <[ $(TypeFromStr(x)) ]>);
                                          <[ (..$vals) ]>
+        | List(t, _)    => def inner = t |> TypeFromStr;
+                                         <[ list[$inner]]>
+    }
+    
+    GetTypeExpr(p : ColourSet) : PExpr
+    {
         | ColourSet(n, Index)
         | ColourSet(n, Enum)          => <[ $(n : usesite) ]>
-        | ColourSet(_, List(t, _))    => def inner = t |> TypeFromStr;
-                                         <[ list[$inner]]>
+        | ColourSet(_, Timed(p))      => def t = GetTypeExpr(p);
+                                         <[ Timed.[$t]]>
+        | ColourSet(_, p)             => GetTypeExpr(p)
     }
       
     TypeFromStr(str : string) : PExpr

@@ -93,8 +93,8 @@ namespace CpnML.Grammar
 	    | SetScalarMult    = Expr "**" Expr
       | SetScalarMultAlt = Expr "*" Expr
       precedence Func:
-	    | FuncCall   = !BraceFunc Name=(Identifier;'.')+ Parms=(Expr)+// ^ Func)+
-		| BraceFunc      	  
+	    | FuncCall   = Name=(Identifier;'.')+ !'(' Parms=(Expr)+// ^ Func)+
+		  | BraceFunc      	  
       precedence Token:
       | MultiSetConstr = Literal '`' Expr
 	      

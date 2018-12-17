@@ -60,6 +60,11 @@ namespace PetriNetLib
       }
     }
 
+    public static Contains(this parent : XmlElement, params elem : array[string]) : bool
+    {
+      GetOneOpt(parent, elem).HasValue
+    }
+    
     public static GetText(this parent : IEnumerable[XmlElement], params elem : array[string]) : IEnumerable[string]
     {
       parent.Get(elem).Select(_.InnerText)

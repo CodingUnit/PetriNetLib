@@ -41,7 +41,7 @@ namespace PetriNetLib
     parse_color(col : XmlElement) : CpnDecl
     {
       def name = col.GetOneText("id");
-      def timed = col.GetOneTextOpt("timed");
+      def timed = col.Contains("timed");
       def set = if (col.Contains("index"))
                  {
                    def range = col.GetText("index", "ml");
@@ -94,7 +94,7 @@ namespace PetriNetLib
                                     if (col.Contains("real"))   Colour.Simple("real")   else
                                       if (col.Contains("string")) Colour.Simple("string") else
                                         null;
-      def set = if (timed.HasValue) Colour.Timed(set) else set;
+      def set = if (timed) Colour.Timed(set) else set;
       CpnDecl.ColorSet(name, set)
     }
 

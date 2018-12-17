@@ -40,12 +40,13 @@ namespace PetriNetLib
       [Memoize]
       get
       {
-        match (DestContainerType)
-        {
-          | TDestCont.RandomEnumerable
-          | TDestCont.MultiSet          => true
-          | _                           => false
-        }
+        true
+        //match (DestContainerType)
+        //{
+        //  | TDestCont.RandomEnumerable
+        //  | TDestCont.MultiSet          => true
+        //  | _                           => false
+        //}
       }
     }
     
