@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Reactive.Linq;
+using System.Diagnostics;
 
 namespace PetriNetModel
 {
@@ -21,15 +22,22 @@ namespace PetriNetModel
     cancel_source : CancellationTokenSource = CancellationTokenSource();
     mutable cancel_token  : CancellationToken;
     time_step : int;
-    mutable next_time : TimeSpan;
+    mutable next_time : long;
+    static stopwatch : Stopwatch = Stopwatch();
     
     net : ITimedPetriNet;
+    
+    static this() {stopwatch.Start()}
     
     public this(net : ITimedPetriNet, time_step : int)
     {
       this.net = net;
-      next_time = TimeSpan.MinValue;
       this.time_step = time_step;
+    }
+    
+    public static time() : long
+    {
+      stopwatch.ElapsedMilliseconds
     }
     
     public Start() : void
@@ -45,7 +53,7 @@ namespace PetriNetModel
         cancel_token.ThrowIfCancellationRequested()
       } else
       {
-        when (net.time() >= next_time)
+        when (time() >= next_time)
         {
           net.TimeStep();
           next_time = net.GetNextTime();

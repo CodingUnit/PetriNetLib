@@ -185,7 +185,7 @@ namespace PetriNetLib
           match (expr)
           {
             //| <[ $e %@+ $time ]>  => <[]>
-            | <[ () ]>            => <[ $(name : usesite).Get()]>
+            | <[ () ]>            => <[ _ = $(name : usesite).Get()]>
             | <[ $(n : usesite)]> => if (place.IsIndexedContainer) 
                                      <[ $(name : usesite).GetIndexed($(idx_name(n) : usesite))]> else 
                                      <[ $(name : usesite).Get($expr)]>

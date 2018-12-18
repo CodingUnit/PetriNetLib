@@ -14,7 +14,7 @@ namespace PetriNetModel
   public class Timed[T] : IComparable[Timed[T]]
   {
     public key : T;
-    public time : TimeSpan;
+    public time : long;
     
     public override GetHashCode() : int
     {
@@ -34,7 +34,7 @@ namespace PetriNetModel
     
     public Add(inc : int) : Timed[T]
     {
-      Timed(key, time.Add(TimeSpan.FromMilliseconds(inc)))
+      Timed(key, time + inc)
     }
     
     public override ToString() : string
@@ -45,34 +45,32 @@ namespace PetriNetModel
   /// <summary>
   /// Description of TimedSimpleMultiset.
   /// </summary>
-  class TimedHeap[T] : ITokenContainer[Timed[T]]
+  public class TimedHeap[T] : ITokenContainer[Timed[T]]
   {
     heap : MinBinaryHeap[Timed[T]] = MinBinaryHeap();
     rnd  : Random                  = Random();
-    net  : TimedPetriNet;
     
-    public this(net : TimedPetriNet) {this.net = net}
-    public this(net : TimedPetriNet, en : IEnumerable[Timed[T]])
+    public this() {}
+    public this(en : IEnumerable[Timed[T]])
     {
-      this.net = net;
       heap = MinBinaryHeap(en);
     }
     
     public Create() : ITokenContainer[Timed[T]]
     {
-      TimedHeap(net)
+      TimedHeap()
     }
     
     public Create(en : IEnumerable[Timed[T]]) : ITokenContainer[Timed[T]]
     {
-      TimedHeap(net, en)
+      TimedHeap(en)
     }
     
     public EnabledTokens : IEnumerable[Timed[T]]
     {
       get
       {
-        heap.PeekFirstMin(Timed(default(T), net.time()))
+        heap.PeekFirstMin(Timed(default(T), TimeScheduler.time()))
       }
     }
     
@@ -113,7 +111,7 @@ namespace PetriNetModel
       }
     }
     
-    public NextTokenDelay : TimeSpan
+    public NextTokenDelay : long
     {
       get
       {
@@ -121,7 +119,7 @@ namespace PetriNetModel
         {
           def min = Peek();
           min.time
-        } else TimeSpan.MaxValue
+        } else long.MaxValue
       }
     }
     

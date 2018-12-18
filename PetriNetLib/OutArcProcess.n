@@ -1,0 +1,101 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Nemerle.Compiler.Parsetree;
+using Nemerle.Compiler;
+using PetriNetModel;
+
+namespace PetriNetLib
+{
+  /// <summary>
+  /// Description of OutArcProcess.
+  /// </summary>
+  [Record]
+  class OutArcProcess
+  {
+
+    public place      : Place;
+    public transition : Transition;
+    public arc        : Arc;
+
+    public name : string
+    {
+      get
+      {
+        place.name
+      }
+    }
+    
+    public expr : PExpr
+    {
+      [Memoize]
+      get
+      {
+        arc.expr
+      }
+    }
+
+    is_time_expr : bool
+    {
+      get
+      {
+        match (expr)
+        {
+          | <[ $_e %@ $_time]>               
+          | <[ $_e %@+ $_time]> => true
+          | _                   => false
+        }
+      }
+    }
+    
+    add_token_expr : PExpr
+    {
+      get
+      {
+        def unfold(e)
+        {
+          | <[ () ]> => <[ Unit.Instance ]>
+          | e        => e
+        }
+        
+        match (expr)
+        {
+          | <[ () ]>                       => <[ Unit.Instance ]> 
+          | <[ $e %@+ $time]>              => <[ $(unfold(e)) %@+ $time]>
+          | <[ $_ %++ $_ ]> as e           => Generator.GetTokenExpr(e)
+          | <[ 1 ` $e ]>
+          | <[ $_(..$_)]> as e
+          | <[ $(_ : usesite) ]> as e
+          | <[ $(_ : int) ` $_ ]> as e     
+          | e                              => e
+        }
+      }
+    }
+    
+    public add_token : PExpr
+    {
+      get
+      {
+        if (place.IsTimed)
+        {
+          if (is_time_expr)
+          {
+            <[ $(name : usesite).Add($add_token_expr)]>
+          } else
+          {
+            <[ $(name : usesite).Add(Timed($add_token_expr, time()))]>
+          }
+        } else
+        {
+          <[ $(name : usesite).Add($add_token_expr)]>
+        }
+      }
+      
+    }
+  }
+}

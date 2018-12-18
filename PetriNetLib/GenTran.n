@@ -20,30 +20,7 @@ namespace PetriNetLib
     {
       def input  = tran.InputPlaces;
       def output = tran.OutputPlaces;
-      def map    = Hashtable();
-      
-      def unfold(e)
-      {
-        | <[ () ]> => <[ Unit.Instance ]>
-        | e        => e
-      }
-      
-      def create_add(p, a)
-      {
-        def name = p.name;
-        match (a.expr)
-        {
-          | <[ () ]>                       => <[ $(name : usesite).Add(Unit.Instance) ]> 
-          | <[ $e %@+ $time]>              => <[ $(name : usesite).Add($(unfold(e)) %@+ $time)]>
-          | <[ 1 ` $e ]>
-          | <[ $_(..$_)]> as e                                    
-          | <[ $(_ : usesite) ]> as e      => <[ $(name : usesite).Add($e)]>
-          | <[ $(_ : int) ` $_ ]> 
-          | <[ $_ %++ $_ ]>                => def expr = GetTokenExpr(a.expr);
-                                              <[ $(name : usesite).Add($expr)]>
-          | e                              => <[ $(name : usesite).Add($e)]>
-        }
-      }
+      //def map    = Hashtable();
       
       def input = input.Map((x, a) => InArcBinding(x, tran, [], a.expr));
       
@@ -62,13 +39,14 @@ namespace PetriNetLib
                               }
           | _ => ()
         }
-        map[i.name] = i;
+        //map[i.name] = i;
       }
       
       def input    = input.Sort((x, y) => y.priority - x.priority); 
-      def add_body = output.Map(create_add);
+      def add_proc = output.Map((p, a) => OutArcProcess(p, tran, a));
       
       def extract = input.Map(_.extract_expr);
+      def add_body = add_proc.Map(_.add_token);
       def body = extract + add_body;
       def body = if (tran.guard is <[]>) body else 
                   <[ when ($(tran.guard)) {..$body}]> :: [];
@@ -78,7 +56,7 @@ namespace PetriNetLib
       {
         if (a == null)
         {
-          <[  //$(x.before_bind_expr);
+          <[  
               when ($(x.check_expr))
               {
                $(x.bind_expr);
@@ -87,7 +65,7 @@ namespace PetriNetLib
           ]>
         } else
         {
-          <[  //$(x.before_bind_expr);
+          <[  
               when ($(x.check_expr))
               {
                $(x.bind_expr);

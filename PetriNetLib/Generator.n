@@ -52,7 +52,7 @@ namespace PetriNetLib
                 | "int"    => <[ int ]>
                 | "intinf" => <[ IntInf ]>
                 | "real"   => <[ double ]>
-                | "time"   => <[ Time ]>
+                | "time"   => <[ long ]>
                 | "bool"   => <[ bool ]>
               }
         | Integer       => <[ int ]>
@@ -79,7 +79,7 @@ namespace PetriNetLib
       | "int"    => <[ int ]>
       | "intinf" => <[ IntInf ]>
       | "real"   => <[ double ]>
-      | "time"   => <[ TimeSpan ]>
+      | "time"   => <[ long ]>
       | "bool"   => <[ bool ]>
       | "unit"   => <[ Unit ]>
       | str      => proc.colour_sets[str] |> GetTypeExpr
@@ -113,20 +113,6 @@ namespace PetriNetLib
       def meth = typebuilder.DefineAndReturn(<[decl: TypingMethod() : void {}]>);
       typing_method = meth :> MethodBuilder;
     }
-    
-    //CreateOperators() : void
-    //{
-    //  def token_op = <[decl: public static @`[T](count : int, tok : T) : IEnumerable[T]
-    //                         {
-    //                           Enumerable.Repeat(tok, count)
-    //                         }]>;
-    // _ = typebuilder.DefineWithSource(token_op);
-    // def token_combine_op = <[decl: public static @%++[T](tok1 : IEnumerable[T], tok2 : IEnumerable[T]) : IEnumerable[T]
-    //                         {
-    //                           tok1.Union(tok2)
-    //                         }]>;
-    // _ = typebuilder.DefineWithSource(token_combine_op);
-    //}
     
     internal static GetTokenExpr(expr : PExpr) : PExpr
     {
@@ -227,16 +213,6 @@ namespace PetriNetLib
       | _ => null
     }
     
-    //TypeOfExpr(expr : PExpr) : PExpr
-    //{
-    //  | <[ $(_ : int)]>       => <[ int ]>
-    //  | <[ $(_ : string)]>    => <[ string ]>
-    //  | <[ $(_ : double)]>    => <[ double ]>
-    //  | <[ $(_ : bool)]>      => <[ double ]>
-    //  | <[ $(_ : int) ` $t ]> => def t = TypeOfExpr(t); <[ IEnumerable[$t] ]>
-    //  | <[ $(_ : usesite) ]>  => null//model.ml_decls.Find();
-    //}
-
     CreateColourSet2(col : ColourSet) : ClassMember.TypeDeclaration
     {
       | ColourSet(n, Colour.Index(_, _, i)) => 
@@ -368,35 +344,44 @@ namespace PetriNetLib
       }
     }
     
-    CreateToString() : ClassMember
+    CreateToString() : void
     {
       def strings = model.places.Map(x => <[ $(x.name : usesite).ToString() ]>);
-      <[decl: public override ToString() : string 
+      fields ::= <[decl: public override ToString() : string 
       { 
         def str = array[..$strings];
         string.Join(";\n", str)
       }]>
     }
     
-    CreateCons() : ClassMember
+    CreateCons() : void
     {
       def marking = model.places.MapToList(CreateInitMarking);
-      if (model.IsTimed || model.IsHaveImmediateTransitions) <[decl: public this(time_step : int = 15) { base(time_step);{..$marking} {..$cons_expr}}]>; 
+      fields ::= if (model.IsTimed || model.IsHaveImmediateTransitions) <[decl: public this(time_step : int = 15) { base(time_step);{..$marking} {..$cons_expr}}]>; 
       else <[decl: public this() { {..$marking} {..$cons_expr} }]>;
     }
     
-    CreateTimeMethods() : ClassMember
+    CreateTimeMethods() : void
     {
-      def body = model.transitions.Where(_.IsTimed).Map(x => <[ $(x.name : usesite)() ]>);
+      def body = model.transitions.Where(_.IsTimed).Map(x => <[ $(x.Name : usesite)() ]>);
       def next = model.places.Where(_.IsTimed).Map(x => <[ $(x.name : usesite).NextTokenDelay ]>);
-      def next = next.Map(x => <[ min = PetriNetUtils.TimeMin(min, $x); ]>);
-      fields ::= <[decl: public GetNextTime() : DateTime
+      
+      def time_body = match (next)
+      {
+        | [] => <[ long.MaxValue ]>
+        | [one] => one
+        | lst => def next = lst.Map(x => <[ min = PetriNetUtils.TimeMin(min, $x); ]>);
+                  <[
+                    mutable min = long.MaxValue;
+                    {..$next}
+                    min
+                  ]>
+      }
+      fields ::= <[decl: public override GetNextTime() : long
                    {
-                     mutable min : DateTime = DateTime.MaxValue;
-                     {..$next}
-                     min
+                     $time_body
                    }]>;
-      <[decl: public TimeStep() : void
+      fields ::= <[decl: public override TimeStep() : void
       {
         {..$body}
       }]>
@@ -405,26 +390,16 @@ namespace PetriNetLib
     CreateStepMethod() : void
     {
       def body = model.transitions.Where(x => x.IsImmediate && !x.IsTimed).Map(x => <[ $(x.name : usesite)() ]>);
-      if (body.IsEmpty()) 
+      when (!body.IsEmpty())
+      fields ::= <[decl: public override TransitionStep() : void
       {
-        //fields ::= <[decl: public Dispose() : void
-        //{
-        //}]>;
-        //fields ::= <[decl: public Step() : void
-        //{
-        //}]>
-      }else 
-      {
-        fields ::= <[decl: public override TransitionStep() : void
-        {
-          {..$body}
-        }]>
-      }
+        {..$body}
+      }]>
     }
     
-    CreateStartMethod() : ClassMember
+    CreateStartMethod() : void
     {
-      <[decl: public Initiate() : void
+      fields ::= <[decl: public Initiate() : void
       {
         {..$init_body}
       }]>
@@ -441,16 +416,15 @@ namespace PetriNetLib
       
       def places = model.places.MapToList(CreatePlace);      
       
-      def time_sched = if (model.IsTimed) CreateTimeMethods() else null;
+      when (model.IsTimed) CreateTimeMethods();
       CreateStepMethod();
       
       //CreateTranQueue();
-      def tostring = CreateToString();
-      def start    = CreateStartMethod();
-      def cons     = CreateCons();
+      CreateToString();
+      CreateStartMethod();
+      CreateCons();
       
-      def members = start :: tostring :: cons :: fields + places;
-      def members = if (time_sched != null) time_sched :: members else members;
+      def members = fields + places;
       foreach (m in members) _ = typebuilder.DefineWithSource(m);
     }
     
@@ -463,8 +437,6 @@ namespace PetriNetLib
     
     public PhaseTwo() : void
     {
-      /*      
-      */
       CreateDummyMethod();
       def methods = model.transitions.MapToList(CreateTran);
       def vals = model.ml_decls.Map(CreateVals).Filter(_ != null);

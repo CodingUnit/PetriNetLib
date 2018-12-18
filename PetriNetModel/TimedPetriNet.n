@@ -12,34 +12,43 @@ namespace PetriNetModel
   /// <summary>
   /// Description of TimedPetriNet.
   /// </summary>
-  public class TimedPetriNet : PetriNet
+  public abstract class TimedPetriNet : PetriNet, ITimedPetriNet
   {
-    start_time : DateTime;
+    scheduler : TimeScheduler;
     
-    public this()
+    public this(time_step : int)
     {
-      start_time = DateTime.Now;
+      scheduler = TimeScheduler(this, time_step);
     }
     
-    public time() : TimeSpan
+    public time() : long
     {
-      DateTime.Now - start_time
+      TimeScheduler.time()
     }
+    
+    public abstract TimeStep() : void;
+    
+    public abstract GetNextTime() : long;
     
     public override Start() : void
     {
-      
+      scheduler.Start();
       base.Start();
     }
     
     public static @%@[T](token : T, time : int) : Timed[T]
     {
-      Timed(token, TimeSpan.FromMilliseconds(time))
+      Timed(token, time)
     }
     
-    public static @%@+[T](token : Timed[T], time : int) : Timed[T]
+    //public static @%@+[T](token : T, time : int) : Timed[T]
+    //{
+    //  Timed(token, time)
+    //}
+    
+    public static @%@+[T](token : T, add : int) : Timed[T]
     {
-      token.Add(time)
+      Timed(token, TimeScheduler.time() + add)
     }
     
   }
