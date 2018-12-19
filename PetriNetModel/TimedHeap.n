@@ -45,7 +45,7 @@ namespace PetriNetModel
   /// <summary>
   /// Description of TimedSimpleMultiset.
   /// </summary>
-  public class TimedHeap[T] : ITokenContainer[Timed[T]]
+  public class TimedHeap[T] : ITimedTokenContainer[Timed[T]]
   {
     heap : MinBinaryHeap[Timed[T]] = MinBinaryHeap();
     rnd  : Random                  = Random();
@@ -95,6 +95,12 @@ namespace PetriNetModel
     public Have(tok : IEnumerable[Timed[T]]) : bool
     {
       tok.All(EnabledTokens.Contains)
+      //EnabledTokens.Intersect(tok).Count() == tok.Count()
+    }
+    
+    public Have(tok : Timed[T]) : bool
+    {
+      tok |> EnabledTokens.Contains
       //EnabledTokens.Intersect(tok).Count() == tok.Count()
     }
     

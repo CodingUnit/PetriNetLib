@@ -67,11 +67,6 @@
           <unit/>
           <layout>colset TIMEDVOID = unit timed;</layout>
         </color>
-        <globref id="ID1412532717">
-          <id>time1</id>
-          <ml>0</ml>
-          <layout>globref time1 = 0;</layout>
-        </globref>
         <var id="ID1412515112">
           <type>
             <id>INT</id>
@@ -728,8 +723,8 @@
                  h="40.000000"/>
         <token x="-10.000000"
                y="0.000000"/>
-        <marking x="-95.000000"
-                 y="-26.000000"
+        <marking x="-106.000000"
+                 y="-13.000000"
                  hidden="false">
           <snap snap_id="0"
                 anchor.horizontal="2"
@@ -832,7 +827,7 @@
                  h="40.000000"/>
         <token x="-19.000000"
                y="-16.000000"/>
-        <marking x="-75.000000"
+        <marking x="-72.000000"
                  y="2.000000"
                  hidden="false">
           <snap snap_id="0"
@@ -915,7 +910,7 @@
         </time>
         <code id="ID1412531650">
           <posattr x="158.500000"
-                   y="192.000000"/>
+                   y="185.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -925,7 +920,8 @@
           <textattr colour="Black"
                     bold="false"/>
           <text tool="CPN Tools"
-                version="4.0.1">action
+                version="4.0.1">input(n)
+action
 (sync_time := time());</text>
         </code>
         <priority id="ID1412531652">
@@ -1603,9 +1599,22 @@
                    currentcyckle="2"/>
         <transend idref="ID1412554185"/>
         <placeend idref="ID1412537661"/>
+        <bendpoint id="ID1412687757"
+                   serial="1">
+          <posattr x="0.000000"
+                   y="65.000000"/>
+          <fillattr colour="White"
+                    pattern="Solid"
+                    filled="false"/>
+          <lineattr colour="Black"
+                    thick="0"
+                    type="Solid"/>
+          <textattr colour="Black"
+                    bold="false"/>
+        </bendpoint>
         <annot id="ID1412617197">
-          <posattr x="-7.000000"
-                   y="54.000000"/>
+          <posattr x="-3.000000"
+                   y="76.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -2158,7 +2167,6 @@
           <IndexNode expanded="true"/>
           <IndexNode expanded="false"/>
           <IndexNode expanded="false"/>
-          <IndexNode expanded="true"/>
           <IndexNode expanded="true"/>
           <IndexNode expanded="true"/>
           <IndexNode expanded="true"/>

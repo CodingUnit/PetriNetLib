@@ -115,6 +115,9 @@
     <Compile Include="TimedPetriNet.n">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="TimedPlace.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="TimeScheduler.n">
       <SubType>Code</SubType>
     </Compile>

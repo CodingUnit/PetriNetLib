@@ -21,7 +21,7 @@ namespace PetriNetModel
       scheduler = TimeScheduler(this, time_step);
     }
     
-    public time() : long
+    public static time() : long
     {
       TimeScheduler.time()
     }

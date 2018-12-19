@@ -44,6 +44,11 @@ namespace PetriNetModel
       }
     }
 
+    public Have(tok : T) : bool 
+    {
+      table.Contains(tok)// table.Contains()
+    }
+    
     public Have(tok : IEnumerable[T]) : bool 
     {
       tok.All(x => table.Contains(x))// table.Contains()

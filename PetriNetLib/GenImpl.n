@@ -1,0 +1,121 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Nemerle.Compiler;
+using Nemerle.Compiler.Parsetree;
+using Nemerle.Compiler.Typedtree;
+using PetriNetModel;
+
+namespace PetriNetLib
+{
+  /// <summary>
+  /// Description of GenImpl.
+  /// </summary>
+  partial class Generator
+  {
+    model : OutModel;
+    proc : PetriNetProcessor;
+    converter : Converter;
+    typer : Typer;
+    typebuilder : TypeBuilder;
+    mutable typing_method : MethodBuilder;
+    //compiler : CompilerHost = CompilerHost();
+    mutable cons_expr : list[PExpr] = [];
+    mutable fields    : list[ClassMember] = [];
+    mutable init_body : list[PExpr] = [];
+    
+    public this(model : OutModel, proc : PetriNetProcessor)
+    {
+      this.typer = proc.Typer;
+      this.typebuilder = proc.Typebuilder;
+      
+      this.model = model;
+      this.proc = proc;
+      this.converter = proc.Converter;
+    }
+    
+    GetTypeExpr(p : Colour) : PExpr
+    {
+      | Colour.Simple(type) => 
+              match (type)
+              {
+                | "string" => <[ string ]>
+                | "int"    => <[ int ]>
+                | "intinf" => <[ IntInf ]>
+                | "real"   => <[ double ]>
+                | "time"   => <[ long ]>
+                | "bool"   => <[ bool ]>
+              }
+        | Integer       => <[ int ]>
+        | Unit(None())  => <[ Unit ]>
+        | Unit(Some(t)) => <[ $(t : usesite) ]>
+        | Product(vals) => def vals = vals.Map(x => <[ $(TypeFromStr(x)) ]>);
+                                         <[ (..$vals) ]>
+        | List(t, _)    => def inner = t |> TypeFromStr;
+                                         <[ list[$inner]]>
+    }
+    
+    GetTypeExpr(p : ColourSet) : PExpr
+    {
+        | ColourSet(n, Index)
+        | ColourSet(n, Enum)          => <[ $(n : usesite) ]>
+        | ColourSet(_, Timed(p))
+        | ColourSet(_, p)             => GetTypeExpr(p)
+    }
+      
+    TypeFromStr(str : string) : PExpr
+    {
+      | "string" => <[ string ]>
+      | "int"    => <[ int ]>
+      | "intinf" => <[ IntInf ]>
+      | "real"   => <[ double ]>
+      | "time"   => <[ long ]>
+      | "bool"   => <[ bool ]>
+      | "unit"   => <[ Unit ]>
+      | str      => proc.colour_sets[str] |> GetTypeExpr
+      
+    }
+    
+    IsTokenExpr(expr : PExpr) : bool
+    {
+      | <[ $(_ : usesite) ]> => false
+      | _                    => true
+    }
+    
+    CreateDummyMethod() : void
+    {
+      def meth = typebuilder.DefineAndReturn(<[decl: TypingMethod() : void {}]>);
+      typing_method = meth :> MethodBuilder;
+    }
+    
+    internal static GetTokenExpr(expr : PExpr) : PExpr
+    {
+      def loop(e)
+      {
+        | <[ $(count : int) ` $expr ]> => Enumerable.Repeat(expr, count).NToList()
+        | <[ $left %++ $right ]>       => loop(left) + loop(right)
+        | _                            => [expr]
+      }
+      
+      match (expr)
+      {
+        | <[$_(..$_)]> as e => e
+        | <[ $(_ : int)]> as e
+        | <[ $(_ : long)]> as e
+        | <[ $(_ : short)]> as e
+        | <[ $(_ : ushort)]> as e
+        | <[ $(_ : byte)]> as e
+        | <[ $(_ : string)]> as e => e
+        | e                 => def e = loop(e);
+                               <[IEnumerable[..$e]]>
+      }
+      
+    }
+    
+  }
+}

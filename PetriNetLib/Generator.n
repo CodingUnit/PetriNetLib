@@ -22,69 +22,7 @@ namespace PetriNetLib
   /// </summary>
   partial class Generator
   {
-    model : OutModel;
-    proc : PetriNetProcessor;
-    converter : Converter;
-    typer : Typer;
-    typebuilder : TypeBuilder;
-    mutable typing_method : MethodBuilder;
-    //compiler : CompilerHost = CompilerHost();
-    mutable cons_expr : list[PExpr] = [];
-    mutable fields    : list[ClassMember] = [];
-    mutable init_body : list[PExpr] = [];
     
-    public this(model : OutModel, proc : PetriNetProcessor)
-    {
-      this.typer = proc.Typer;
-      this.typebuilder = proc.Typebuilder;
-      
-      this.model = model;
-      this.proc = proc;
-      this.converter = proc.Converter;
-    }
-    
-    GetTypeExpr(p : Colour) : PExpr
-    {
-      | Colour.Simple(type) => 
-              match (type)
-              {
-                | "string" => <[ string ]>
-                | "int"    => <[ int ]>
-                | "intinf" => <[ IntInf ]>
-                | "real"   => <[ double ]>
-                | "time"   => <[ long ]>
-                | "bool"   => <[ bool ]>
-              }
-        | Integer       => <[ int ]>
-        | Unit(None())  => <[ Unit ]>
-        | Unit(Some(t)) => <[ $(t : usesite) ]>
-        | Product(vals) => def vals = vals.Map(x => <[ $(TypeFromStr(x)) ]>);
-                                         <[ (..$vals) ]>
-        | List(t, _)    => def inner = t |> TypeFromStr;
-                                         <[ list[$inner]]>
-    }
-    
-    GetTypeExpr(p : ColourSet) : PExpr
-    {
-        | ColourSet(n, Index)
-        | ColourSet(n, Enum)          => <[ $(n : usesite) ]>
-        | ColourSet(_, Timed(p))      => def t = GetTypeExpr(p);
-                                         <[ Timed.[$t]]>
-        | ColourSet(_, p)             => GetTypeExpr(p)
-    }
-      
-    TypeFromStr(str : string) : PExpr
-    {
-      | "string" => <[ string ]>
-      | "int"    => <[ int ]>
-      | "intinf" => <[ IntInf ]>
-      | "real"   => <[ double ]>
-      | "time"   => <[ long ]>
-      | "bool"   => <[ bool ]>
-      | "unit"   => <[ Unit ]>
-      | str      => proc.colour_sets[str] |> GetTypeExpr
-      
-    }
     
     CreatePlace(place : Place) : ClassMember
     {
@@ -99,37 +37,11 @@ namespace PetriNetLib
         | TokenQueue          => <[ TokenQueue() ]>
         | TimedSimpleMultiset => <[ TimedHeap() ]>
       }
+      if (place.IsTimed)
+      <[decl: $(name : usesite) : PetriNetModel.TimedPlace.[$type] = PetriNetModel.TimedPlace($(name : string), $dest_cont)]> else
       <[decl: $(name : usesite) : PetriNetModel.Place.[$type] = PetriNetModel.Place($(name : string), $dest_cont)]>
     }
     
-    IsTokenExpr(expr : PExpr) : bool
-    {
-      | <[ $(_ : usesite) ]> => false
-      | _                    => true
-    }
-    
-    CreateDummyMethod() : void
-    {
-      def meth = typebuilder.DefineAndReturn(<[decl: TypingMethod() : void {}]>);
-      typing_method = meth :> MethodBuilder;
-    }
-    
-    internal static GetTokenExpr(expr : PExpr) : PExpr
-    {
-      def loop(e)
-      {
-        | <[ $(count : int) ` $expr ]> => Enumerable.Repeat(expr, count).NToList()
-        | <[ $left %++ $right ]>       => loop(left) + loop(right)
-        | _                            => [expr]
-      }
-      
-      match (loop(expr))
-      {
-        | [<[$_(..$_)]> as e] => e
-        | e                   => <[IEnumerable[..$e]]>
-      }
-      
-    }
     
     CreateTran(tran : Transition) : ClassMember
     {
@@ -368,9 +280,9 @@ namespace PetriNetLib
       
       def time_body = match (next)
       {
-        | [] => <[ long.MaxValue ]>
+        | []    => <[ long.MaxValue ]>
         | [one] => one
-        | lst => def next = lst.Map(x => <[ min = PetriNetUtils.TimeMin(min, $x); ]>);
+        | lst   => def next = lst.Map(x => <[ min = PetriNetUtils.TimeMin(min, $x); ]>);
                   <[
                     mutable min = long.MaxValue;
                     {..$next}

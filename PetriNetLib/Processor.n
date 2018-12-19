@@ -197,11 +197,11 @@ namespace PetriNetLib
       
       def create_arcs(a)
       {
-        | CpnTree.Arc(t, from, to, p2t) => 
+        | CpnTree.Arc(t, from, to, dir) => 
             def expr = converter.ParseML(t);
             def placeend = end => places.First(x => x.id == end) |> ArcSource.PlaceEnd;
             def transend = end => transitions.First(x => x.id == end) |> ArcSource.TransitionEnd;
-            def (f, t) = if (p2t) (placeend, transend) else (transend, placeend);
+            def (f, t) = if (dir == Dir.P2T) (placeend, transend) else (transend, placeend);
             def from = from |> f;
             def to =   to   |> t;
             Arc(expr, from, to)
@@ -225,6 +225,10 @@ namespace PetriNetLib
       
       places      = tree_places.MapToArray(create_place);
       transitions = tree_tran.MapToArray(create_tran);
+      def (both_arcs, other_arcs)   = tree_arcs.Partition(x => x.type == Dir.Both);
+      def both_arcs = both_arcs.SelectMany(x => CpnTree.Arc(x.text, x.from, x.to, Dir.T2P) :: CpnTree.Arc(x.text, x.to, x.from, Dir.P2T) :: []).NToList();
+      
+      def tree_arcs = both_arcs + other_arcs;
       arcs        = tree_arcs.MapToArray(create_arcs);
       BuildMatrix();
       foreach (Arc(_, f, t) as a in arcs with i)

@@ -195,6 +195,11 @@ namespace PetriNetModel
       }
     }
 
+    public Have(tok : T) : bool 
+    {
+      tok |> queue.Contains
+    }
+    
     public Have(tok : IEnumerable[T]) : bool 
     {
       tok.All(queue.Contains)

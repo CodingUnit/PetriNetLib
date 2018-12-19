@@ -1,50 +1,55 @@
-﻿using Nemerle.Collections;
+﻿using Nemerle;
+using Nemerle.Collections;
 using Nemerle.Text;
 using Nemerle.Utility;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Random;
 
 namespace PetriNetModel
 {
-  
-  public class Place[T]
+  /// <summary>
+  /// Description of TimedPlace.
+  /// </summary>
+  public class TimedPlace[T]
   {
-    tokens : ITokenContainer[T];
+    tokens : ITimedTokenContainer[Timed[T]];
+    
+    public NextTokenDelay : long
+    {
+      get
+      {
+        tokens.NextTokenDelay
+      }
+    }
     
     public Name : string;
-    public this(name : string) {Name =  name;tokens = MultiSet()}
-    public this(name : string, cont : ITokenContainer[T]) {tokens = cont; Name = name;}
+    public this(name : string) {Name =  name;tokens = TimedHeap()}
+    public this(name : string, cont : ITimedTokenContainer[Timed[T]]) {tokens = cont; Name = name;}
     
-    public this(cont : ITokenContainer[T])
+    public this(cont : ITimedTokenContainer[Timed[T]])
     {
       tokens = cont
     }
     
-    public this(en : IEnumerable[T], cont : ITokenContainer[T])
+    public this(en : IEnumerable[Timed[T]], cont : ITimedTokenContainer[Timed[T]])
     {
       tokens = cont;
       Add(en)
     }
     
-    public Add(tok : T) : void
+    public Add(tok : Timed[T]) : void
     {
       tokens.Add(tok)
     }
     
-    public Add(tok : IEnumerable[T]) : void
+    public Add(tok : IEnumerable[Timed[T]]) : void
     {
       tokens.AddMany(tok)
     }
     
-    public Have(tok : T) : bool
-    {
-      tokens.Have(tok)
-    }
-    
-    public Have(tok : IEnumerable[T]) : bool
+    public Have(tok : IEnumerable[Timed[T]]) : bool
     {
       tokens.Have(tok)
     }
@@ -57,27 +62,27 @@ namespace PetriNetModel
       }
     }
     
-    public Get(tok : IEnumerable[T]) : void
+    public Get(tok : IEnumerable[Timed[T]]) : void
     {
       tokens.GetMany(tok)
     }
     
-    public Peek() : T
+    public Peek() : Timed[T]
     {
       tokens.Peek()
     }
     
-    public Get(elem : T) : void
+    public Get(elem : Timed[T]) : void
     {
       tokens.Get(elem)
     }
   
-    public Get() : T
+    public Get() : Timed[T]
     {
       tokens.Get()
     }
     
-    public PeekIndexed() : T * int
+    public PeekIndexed() : Timed[T] * int
     {
       tokens.PeekIndexed()
     }
@@ -96,5 +101,6 @@ namespace PetriNetModel
     {
       $"$Name{$tokens}"
     }
+    
   }
 }

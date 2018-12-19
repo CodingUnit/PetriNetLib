@@ -122,11 +122,16 @@ namespace PetriNetLib
     get_arc(a : XmlElement) : CpnTree.Arc
     {
       def annot = a.GetOneText("annot", "text");
-      def p2t   = a.GetAttrText("orientation") == "PtoT";
+      def dir = match (a.GetAttrText("orientation"))
+      {
+        | "PtoT"    => Dir.P2T
+        | "TtoP"    => Dir.T2P
+        | "BOTHDIR" => Dir.Both
+      }
       def trans  = a.GetOne("transend").GetAttrText("idref");
       def place  = a.GetOne("placeend").GetAttrText("idref");
-      def (from, to) = if (p2t) (place, trans) else (trans, place);
-      CpnTree.Arc(annot, from, to, p2t)
+      def (from, to) = if (dir == Dir.P2T) (place, trans) else (trans, place);
+      CpnTree.Arc(annot, from, to, dir)
     }
 
     parse_glob_ref(x : XmlElement) : CpnDecl

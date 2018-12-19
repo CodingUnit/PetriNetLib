@@ -90,7 +90,7 @@ namespace CpnML.Grammar
       | SetLowerEqual = Expr "<<==" Expr
       | SetUpperEqualAlt = Expr ">>=" Expr
       | SetLowerEqualAlt = Expr "<<=" Expr
-	    | SetScalarMult    = Expr "**" Expr
+	  | SetScalarMult    = Expr "**" Expr
       | SetScalarMultAlt = Expr "*" Expr
       precedence Func:
 	    | FuncCall   = Name=(Identifier;'.')+ !'(' Parms=(Expr)+// ^ Func)+

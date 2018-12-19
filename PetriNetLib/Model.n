@@ -50,12 +50,19 @@ namespace PetriNetLib
     }
   }
   
+  public enum Dir 
+  {
+    | P2T
+    | T2P
+    | Both
+  }
+  
   [Record]
   public variant CpnTree
   {
     | Declaration {decl : list[CpnDecl]}
     | Place       {name : string; id : string; type : string; init_mark : string;}
     | Transition  {name : string; id : string;guard : option[string];time : option[string];code : option[string]}
-    | Arc         {text : string;from : string; to : string;p2t : bool;}
+    | Arc         {text : string;from : string; to : string;type : Dir;}
   }
 }

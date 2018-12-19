@@ -11,12 +11,11 @@ namespace PetriNetModel
 {
   public interface ITokenContainer[T]
   {
-    Create() : ITokenContainer[T];
-    Create(en : IEnumerable[T]) : ITokenContainer[T];
     Add(tok : T) : void;
 
     AddMany(tok : IEnumerable[T]) : void;
 
+    Have(tok : T) : bool;
     Have(num : int) : bool;
     Have(tok : IEnumerable[T]) : bool;
 
@@ -37,4 +36,12 @@ namespace PetriNetModel
     GetManyIndexed(tok : IEnumerable[int]) : void;
   }
   
+  public interface ITimedTokenContainer[T] : ITokenContainer[T]
+  {
+    
+    NextTokenDelay : long
+    {
+      get;
+    }
+  }
 }
