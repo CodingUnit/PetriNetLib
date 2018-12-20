@@ -92,6 +92,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Index.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="IPetriNet.n">
       <SubType>Code</SubType>
     </Compile>

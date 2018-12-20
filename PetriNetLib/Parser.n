@@ -110,8 +110,8 @@ namespace PetriNetLib
 
     get_tran(p : XmlElement) : CpnTree.Transition
     {
-      def id = p.GetAttrText("id");
-      def name = p.GetOneText("text");
+      def id    = p.GetAttrText("id");
+      def name  = p.GetOneText("text");
       def guard = p.GetOneTextOpt("cond", "text");
       def time  = p.GetOneTextOpt("time", "text");
       def code  = p.GetOneTextOpt("code", "text");

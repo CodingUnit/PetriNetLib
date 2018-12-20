@@ -18,6 +18,8 @@ module Program
 {
   Main() : void
   {
+    def net = TimeExample1();
+    
     WriteLine("Hi!");
     _ = ReadLine();
   }

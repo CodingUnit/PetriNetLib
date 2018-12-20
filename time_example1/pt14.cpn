@@ -71,8 +71,8 @@
           <type>
             <id>INT</id>
           </type>
-          <id>q</id>
-          <layout>var q : INT;</layout>
+          <id>del</id>
+          <layout>var del : INT;</layout>
         </var>
         <globref id="ID1412604506">
           <id>sync_time</id>
@@ -86,6 +86,9 @@
           <id>n</id>
           <layout>var n : INT;</layout>
         </var>
+        <ml id="ID1412688969">fun evt_print_data(n : INT) = ();
+          <layout>fun evt_print_data(n : INT) = ();</layout>
+        </ml>
       </block>
     </globbox>
     <page id="ID6">
@@ -723,8 +726,8 @@
                  h="40.000000"/>
         <token x="-10.000000"
                y="0.000000"/>
-        <marking x="-106.000000"
-                 y="-13.000000"
+        <marking x="-91.000000"
+                 y="-27.000000"
                  hidden="false">
           <snap snap_id="0"
                 anchor.horizontal="2"
@@ -827,12 +830,12 @@
                  h="40.000000"/>
         <token x="-19.000000"
                y="-16.000000"/>
-        <marking x="-72.000000"
-                 y="2.000000"
+        <marking x="-75.000000"
+                 y="-3.000000"
                  hidden="false">
           <snap snap_id="0"
                 anchor.horizontal="2"
-                anchor.vertical="3"/>
+                anchor.vertical="2"/>
         </marking>
         <type id="ID1412551885">
           <posattr x="-103.500000"
@@ -909,7 +912,7 @@
                 version="4.0.1"/>
         </time>
         <code id="ID1412531650">
-          <posattr x="158.500000"
+          <posattr x="217.000000"
                    y="185.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
@@ -920,9 +923,9 @@
           <textattr colour="Black"
                     bold="false"/>
           <text tool="CPN Tools"
-                version="4.0.1">input(n)
+                version="4.0.1">input(n);
 action
-(sync_time := time());</text>
+(sync_time := time();evt_print_data(n));</text>
         </code>
         <priority id="ID1412531652">
           <posattr x="-12.000000"
@@ -1388,8 +1391,8 @@ action
                     bold="false"/>
         </bendpoint>
         <annot id="ID1412584131">
-          <posattr x="79.000000"
-                   y="168.000000"/>
+          <posattr x="84.500000"
+                   y="135.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -1399,7 +1402,7 @@ action
           <textattr colour="Black"
                     bold="false"/>
           <text tool="CPN Tools"
-                version="4.0.1">q</text>
+                version="4.0.1">del</text>
         </annot>
       </arc>
       <arc id="ID1412595172"
@@ -1449,7 +1452,7 @@ action
       </arc>
       <arc id="ID1412595762"
            orientation="PtoT"
-           order="2">
+           order="1">
         <posattr x="0.000000"
                  y="0.000000"/>
         <fillattr colour="White"
@@ -1467,7 +1470,7 @@ action
         <bendpoint id="ID1412638005"
                    serial="1">
           <posattr x="42.000000"
-                   y="-25.000000"/>
+                   y="-42.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -1478,8 +1481,8 @@ action
                     bold="false"/>
         </bendpoint>
         <annot id="ID1412595763">
-          <posattr x="50.000000"
-                   y="-35.000000"/>
+          <posattr x="28.500000"
+                   y="-32.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -1489,7 +1492,7 @@ action
           <textattr colour="Black"
                     bold="false"/>
           <text tool="CPN Tools"
-                version="4.0.1">q</text>
+                version="4.0.1">del</text>
         </annot>
       </arc>
       <arc id="ID1412596364"
@@ -1599,22 +1602,9 @@ action
                    currentcyckle="2"/>
         <transend idref="ID1412554185"/>
         <placeend idref="ID1412537661"/>
-        <bendpoint id="ID1412687757"
-                   serial="1">
-          <posattr x="0.000000"
-                   y="65.000000"/>
-          <fillattr colour="White"
-                    pattern="Solid"
-                    filled="false"/>
-          <lineattr colour="Black"
-                    thick="0"
-                    type="Solid"/>
-          <textattr colour="Black"
-                    bold="false"/>
-        </bendpoint>
         <annot id="ID1412617197">
-          <posattr x="-3.000000"
-                   y="76.000000"/>
+          <posattr x="-7.000000"
+                   y="54.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -1669,7 +1659,7 @@ action
           <textattr colour="Black"
                     bold="false"/>
           <text tool="CPN Tools"
-                version="4.0.1">()</text>
+                version="4.0.1">()@+20</text>
         </annot>
       </arc>
       <arc id="ID1412656784"
@@ -1714,7 +1704,7 @@ action
           <textattr colour="Black"
                     bold="false"/>
           <text tool="CPN Tools"
-                version="4.0.1">()@+20</text>
+                version="4.0.1">()</text>
         </annot>
       </arc>
       <arc id="ID1412674390"
@@ -1796,7 +1786,7 @@ action
           <boolean>true</boolean>
         </value>
       </option>
-      <option name="extensions.10002.enable">
+      <option name="extensions.10001.enable">
         <value>
           <boolean>true</boolean>
         </value>
@@ -1806,12 +1796,12 @@ action
           <boolean>true</boolean>
         </value>
       </option>
-      <option name="extensions.10007.enable">
+      <option name="extensions.10006.enable">
         <value>
           <boolean>true</boolean>
         </value>
       </option>
-      <option name="extensions.10001.enable">
+      <option name="extensions.10002.enable">
         <value>
           <boolean>true</boolean>
         </value>
@@ -1831,7 +1821,7 @@ action
           <boolean>true</boolean>
         </value>
       </option>
-      <option name="extensions.10006.enable">
+      <option name="extensions.10007.enable">
         <value>
           <boolean>true</boolean>
         </value>
@@ -2050,8 +2040,8 @@ action
                  height="762">
         <sheets>
           <cpnsheet id="ID1412530040"
-                    panx="-16.000000"
-                    pany="55.000000"
+                    panx="-10.000000"
+                    pany="61.000000"
                     zoom="1.000000"
                     instance="ID1412529957">
             <zorder>
@@ -2077,7 +2067,7 @@ action
     <monitorblock name="Monitors"/>
     <IndexNode expanded="true">
       <IndexNode expanded="false"/>
-      <IndexNode expanded="false"/>
+      <IndexNode expanded="true"/>
       <IndexNode expanded="true">
         <IndexNode expanded="false"/>
         <IndexNode expanded="false"/>
@@ -2154,7 +2144,7 @@ action
         <IndexNode expanded="false"/>
       </IndexNode>
       <IndexNode expanded="true">
-        <IndexNode expanded="false">
+        <IndexNode expanded="true">
           <IndexNode expanded="true"/>
           <IndexNode expanded="true"/>
           <IndexNode expanded="true"/>
@@ -2167,6 +2157,7 @@ action
           <IndexNode expanded="true"/>
           <IndexNode expanded="false"/>
           <IndexNode expanded="false"/>
+          <IndexNode expanded="true"/>
           <IndexNode expanded="true"/>
           <IndexNode expanded="true"/>
           <IndexNode expanded="true"/>

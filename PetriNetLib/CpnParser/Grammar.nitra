@@ -47,7 +47,7 @@ namespace CpnML.Grammar
       | AddTimeAlt = '@' '@' '+' Expr
     }
 
-	syntax ExprList = (Expr ";")+;
+	syntax ExprList = (Expr; ";"; ?)+;
 
 	syntax BraceFunc  = Name=(Identifier;'.')+ '(' Parms=(Expr)* ')';
 
@@ -131,7 +131,7 @@ namespace CpnML.Grammar
       precedence Sharp:
       | SharpOper = '#' Expr
       precedence Braces:
-      | BraceExpr = '(' Expr* ')'
+      | BraceExpr = '(' (Expr;',')* ')'
       precedence FigBraces:
       | FigBraceExpr = '{' Expr '}'   
       precedence Decl:

@@ -1,0 +1,50 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace PetriNetModel
+{
+  /// <summary>
+  /// Description of Index.
+  /// </summary>
+  [Record]
+  public abstract class Index[T] where T : class
+  {
+    public min : int;
+    public max : int;
+    public num : int;
+                                                        
+    public override Equals(obj : object) : bool
+    {
+      | Index as o => o.num == num
+      | _          => false
+    }
+                                                        
+    public override GetHashCode() : int 
+    {
+      num
+    }
+                                                        
+    public override ToString() : string
+    {
+      Name() + $"($num)"
+    }
+                
+    public abstract Create(num : int) : T;
+    public abstract Name() : string;
+    
+    protected all_impl : IEnumerable[T]
+    {
+      [Memoize]
+      get
+      {
+        Enumerable.Range(min, max).Select(Create)
+      }
+    }
+  }
+}

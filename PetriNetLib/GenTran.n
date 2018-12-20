@@ -47,7 +47,8 @@ namespace PetriNetLib
       
       def extract = input.Map(_.extract_expr);
       def add_body = add_proc.Map(_.add_token);
-      def body = extract + add_body;
+      def code = tran.code_segment ?? <[]>;
+      def body = extract + (code :: add_body);
       def body = if (tran.guard is <[]>) body else 
                   <[ when ($(tran.guard)) {..$body}]> :: [];
       

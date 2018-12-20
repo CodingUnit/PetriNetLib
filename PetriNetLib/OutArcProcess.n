@@ -25,6 +25,7 @@ namespace PetriNetLib
 
     public name : string
     {
+      [Memoize]
       get
       {
         place.name
@@ -42,6 +43,7 @@ namespace PetriNetLib
 
     is_time_expr : bool
     {
+      [Memoize]
       get
       {
         match (expr)
@@ -55,6 +57,7 @@ namespace PetriNetLib
     
     add_token_expr : PExpr
     {
+      [Memoize]
       get
       {
         def unfold(e)
@@ -66,7 +69,13 @@ namespace PetriNetLib
         match (expr)
         {
           | <[ () ]>                       => <[ Unit.Instance ]> 
-          | <[ $e %@+ $time]>              => <[ $(unfold(e)) %@+ $time]>
+          | <[ $e %@+ $(time : int)]>      => match (global_time)
+                                              {
+                                                | <[ $(t : int)]> => def time = time + t;     
+                                                                     <[ $(unfold(e)) %@+ $time]>
+                                              } 
+                                              
+          | <[ $e %@+ $time]>              => <[ $(unfold(e)) %@+ ($time + $global_time)]>
           | <[ $_ %++ $_ ]> as e           => Generator.GetTokenExpr(e)
           | <[ 1 ` $e ]>
           | <[ $_(..$_)]> as e
@@ -77,8 +86,22 @@ namespace PetriNetLib
       }
     }
     
+    public global_time : PExpr
+    {
+      [Memoize]
+      get
+      {
+        match (transition.time_expr)
+        {
+          | <[]>            => <[ 0 ]>
+          | <[ @Delay($t)]> => t
+        }
+      }
+    }
+    
     public add_token : PExpr
     {
+      [Memoize]
       get
       {
         if (place.IsTimed)
@@ -88,7 +111,7 @@ namespace PetriNetLib
             <[ $(name : usesite).Add($add_token_expr)]>
           } else
           {
-            <[ $(name : usesite).Add(Timed($add_token_expr, time()))]>
+            <[ $(name : usesite).Add($add_token_expr %@+ $global_time)]>
           }
         } else
         {

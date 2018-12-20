@@ -51,8 +51,8 @@ namespace PetriNetLib
       | BraceFunc(BraceFunc = MainParseTree.BraceFunc(NameData = (n, _), ParmsData = p)) => 
            def parms = match (p)
            {
-             | [BraceExpr(Exprs = e)] => e
-             | lst                    => lst
+             | [BraceExpr(ExprsData = (e, _))] => e
+             | lst                             => lst
            }
            def parms = parms.Map(GetExpr);
            //def path = if (n.Length > 1) n.ChopLast() else [];
@@ -104,8 +104,8 @@ namespace PetriNetLib
       | Concat(Expr1 = left, Expr2 = right)      => <[ $(GetExpr(left)) + $(GetExpr(right))]>
       | ListCombine(Expr1 = left, Expr2 = right) => <[ $(GetExpr(left)) :: $(GetExpr(right))]>
       | Multiply(Expr1 = left, Expr2 = right)    => <[ $(GetExpr(left)) * $(GetExpr(right))]>
-      | BraceExpr(ExprsData = [])                => <[ () ]>
-      | BraceExpr(ExprsData = e)                 => def e = e.Map(GetExpr);
+      | BraceExpr(ExprsData = ([], _))                => <[ () ]>
+      | BraceExpr(ExprsData = (e, _))                 => def e = e.Map(GetExpr);
                                                     <[ (..$e)]>
       | AtTime(Expr1 = left, Expr2 = right)      => <[ $(GetExpr(left)) %@ $(GetExpr(right)) ]>
       | Delay(Delay = MainParseTree.Delay.AddTime(Expr = e))
@@ -124,7 +124,7 @@ namespace PetriNetLib
            
           def map_decls(x)
           {
-            | MainParseTree.Declaration.Func(Name = n, TypeOpt = t, ParmsData = (p, _), Body = MainParseTree.ExprList(ExprsData = b)) => 
+            | MainParseTree.Declaration.Func(Name = n, TypeOpt = t, ParmsData = (p, _), Body = MainParseTree.ExprList(ExprsData = (b, _))) => 
               def get_parm(p)
               {
                 | <[ $(n : usesite)]>                 => <[parameter: $(n : usesite) ]>
@@ -156,7 +156,7 @@ namespace PetriNetLib
           }
           
       | Expr(Expr = e) => e |> GetExpr
-      | ExprList(ExprList = MainParseTree.ExprList(ExprsData = b)) => 
+      | ExprList(ExprList = MainParseTree.ExprList(ExprsData = (b, _))) => 
           match (b.Map(GetExpr))
           {
             | [e] => e

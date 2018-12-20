@@ -187,9 +187,33 @@ namespace PetriNetLib
       {
         | CpnTree.Transition(n, id, g, t, c) =>
         
+            def get_func(c)
+            {
+              match (c.IndexOf("action"))
+              {
+                | -1 => <[]>
+                | n  => 
+                
+                def firstbrace_str = c.Substring(n + 6);
+                def firstbrace = firstbrace_str.IndexOf('(') + 1;
+                def lastbrace = firstbrace_str.LastIndexOf(')');
+                def len = lastbrace - firstbrace;
+                match (converter.ParseML(firstbrace_str.Substring(firstbrace, len)))
+                {
+                  | <[]>               => <[]>
+                  | <[ {..$_} ]> as e
+                  | e                  => e
+                }
+              }
+          
+            
+            }
+        
             def guard = g.MapDefault(x => converter.ParseML(x.Trim('[', ']')), <[]>);
             def time  = t.MapDefault(converter.ParseML, <[]>);
-            def code  = c.MapDefault(converter.ParseML, <[]>);
+            def code  = c.MapDefault(get_func, <[]>);
+            
+            
             def tran = Transition(tidx, id, n, guard, time, code, 0, this);
             tidx += 1;
             tran

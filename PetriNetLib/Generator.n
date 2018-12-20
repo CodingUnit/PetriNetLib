@@ -174,32 +174,21 @@ namespace PetriNetLib
                                                  def mx = mx |> eval;
                                                  
                                                      
-                                                  <[decl: [Record]
-                                                      class $(n : usesite)
+                                                  <[decl:
+                                                      class $(n : usesite) : Index[$(n : usesite)]
                                                       {
-                                                        public static min : int = $(mn : int);
-                                                        public static max : int = $(mx : int);
-                                                        public num : int;
-                                                        
-                                                        public override Equals(obj : object) : bool
+                                                        public this(num : int)
                                                         {
-                                                          | $(n : usesite) as o => o.num == num
-                                                          | _                   => false
+                                                          base($(mn : int), $(mx : int), num)
                                                         }
                                                         
-                                                        public override GetHashCode() : int 
-                                                        {
-                                                          num
-                                                        }
-                                                        
-                                                        public override ToString() : string
-                                                        {
-                                                          $(n : string) + $"($num)"
-                                                        }
+                                                        public override Name() : string {$n}
+                                                        public override Create(num : int) : $(n : usesite) {$(n : usesite)(num)}
+                                                        public static Instance : $(n : usesite) = $(n : usesite)(0);
                                                         
                                                         public static all() : IEnumerable[$(n : usesite)]
                                                         {
-                                                          Enumerable.Range(min, max).Select($(n : usesite))
+                                                          Instance.all_impl
                                                         }
                                                       }
                                                      ]>
