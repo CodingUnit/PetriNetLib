@@ -86,9 +86,14 @@
           <id>n</id>
           <layout>var n : INT;</layout>
         </var>
-        <ml id="ID1412688969">fun evt_print_data(n : INT) = ();
-          <layout>fun evt_print_data(n : INT) = ();</layout>
-        </ml>
+        <color id="ID1412696863">
+          <id>OPTIONS</id>
+          <enum>
+            <id>events</id>
+            <id>print_binding</id>
+          </enum>
+          <layout>colset OPTIONS = with events | print_binding;</layout>
+        </color>
       </block>
     </globbox>
     <page id="ID6">
@@ -830,12 +835,12 @@
                  h="40.000000"/>
         <token x="-19.000000"
                y="-16.000000"/>
-        <marking x="-75.000000"
-                 y="-3.000000"
+        <marking x="-73.000000"
+                 y="3.000000"
                  hidden="false">
           <snap snap_id="0"
                 anchor.horizontal="2"
-                anchor.vertical="2"/>
+                anchor.vertical="3"/>
         </marking>
         <type id="ID1412551885">
           <posattr x="-103.500000"
@@ -912,7 +917,7 @@
                 version="4.0.1"/>
         </time>
         <code id="ID1412531650">
-          <posattr x="217.000000"
+          <posattr x="158.500000"
                    y="185.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
@@ -925,7 +930,7 @@
           <text tool="CPN Tools"
                 version="4.0.1">input(n);
 action
-(sync_time := time();evt_print_data(n));</text>
+(sync_time := time());</text>
         </code>
         <priority id="ID1412531652">
           <posattr x="-12.000000"
@@ -1029,12 +1034,12 @@ action
         <textattr colour="Black"
                   bold="false"/>
         <text></text>
-        <box w="60.000000"
+        <box w="74.000000"
              h="40.000000"/>
         <binding x="7.200000"
                  y="-3.000000"/>
         <cond id="ID1412593996">
-          <posattr x="156.500000"
+          <posattr x="163.500000"
                    y="-107.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
@@ -1048,7 +1053,7 @@ action
                 version="4.0.1">[time() - !sync_time &gt; 10]</text>
         </cond>
         <time id="ID1412593997">
-          <posattr x="86.500000"
+          <posattr x="93.500000"
                    y="-107.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
@@ -1062,7 +1067,7 @@ action
                 version="4.0.1"/>
         </time>
         <code id="ID1412593998">
-          <posattr x="106.500000"
+          <posattr x="113.500000"
                    y="-190.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
@@ -1076,7 +1081,7 @@ action
                 version="4.0.1"/>
         </code>
         <priority id="ID1412594000">
-          <posattr x="-26.000000"
+          <posattr x="-33.000000"
                    y="-169.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
@@ -1197,9 +1202,9 @@ action
                    currentcyckle="2"/>
         <transend idref="ID1412554185"/>
         <placeend idref="ID1412538555"/>
-        <bendpoint id="ID1412628438"
+        <bendpoint id="ID1412696043"
                    serial="1">
-          <posattr x="-42.000000"
+          <posattr x="-54.000000"
                    y="0.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
@@ -1211,8 +1216,8 @@ action
                     bold="false"/>
         </bendpoint>
         <annot id="ID1412555751">
-          <posattr x="-33.000000"
-                   y="21.000000"/>
+          <posattr x="168.000000"
+                   y="11.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -1287,22 +1292,9 @@ action
                    currentcyckle="2"/>
         <transend idref="ID1412554185"/>
         <placeend idref="ID1412551884"/>
-        <bendpoint id="ID1412686991"
-                   serial="1">
-          <posattr x="-58.000000"
-                   y="-42.000000"/>
-          <fillattr colour="White"
-                    pattern="Solid"
-                    filled="false"/>
-          <lineattr colour="Black"
-                    thick="0"
-                    type="Solid"/>
-          <textattr colour="Black"
-                    bold="false"/>
-        </bendpoint>
         <annot id="ID1412575218">
-          <posattr x="-49.000000"
-                   y="-16.000000"/>
+          <posattr x="-59.000000"
+                   y="-28.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -1436,7 +1428,7 @@ action
                     bold="false"/>
         </bendpoint>
         <annot id="ID1412595173">
-          <posattr x="213.000000"
+          <posattr x="217.000000"
                    y="-127.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
@@ -1512,10 +1504,10 @@ action
                    currentcyckle="2"/>
         <transend idref="ID1412593995"/>
         <placeend idref="ID1412537661"/>
-        <bendpoint id="ID1412638458"
+        <bendpoint id="ID1412701391"
                    serial="1">
           <posattr x="71.000000"
-                   y="-24.000000"/>
+                   y="0.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -1527,7 +1519,7 @@ action
         </bendpoint>
         <annot id="ID1412596365">
           <posattr x="79.000000"
-                   y="-36.000000"/>
+                   y="-15.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -1571,7 +1563,7 @@ action
                     bold="false"/>
         </bendpoint>
         <annot id="ID1412603592">
-          <posattr x="-106.000000"
+          <posattr x="-109.000000"
                    y="-162.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
@@ -1648,7 +1640,7 @@ action
                     bold="false"/>
         </bendpoint>
         <annot id="ID1412656213">
-          <posattr x="-50.000000"
+          <posattr x="-52.000000"
                    y="-137.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
@@ -1659,7 +1651,7 @@ action
           <textattr colour="Black"
                     bold="false"/>
           <text tool="CPN Tools"
-                version="4.0.1">()@+20</text>
+                version="4.0.1">()</text>
         </annot>
       </arc>
       <arc id="ID1412656784"
@@ -1679,9 +1671,9 @@ action
                    currentcyckle="2"/>
         <transend idref="ID1412593995"/>
         <placeend idref="ID1412551884"/>
-        <bendpoint id="ID1412664959"
+        <bendpoint id="ID1412694574"
                    serial="1">
-          <posattr x="19.000000"
+          <posattr x="22.000000"
                    y="-84.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
@@ -1693,7 +1685,7 @@ action
                     bold="false"/>
         </bendpoint>
         <annot id="ID1412656785">
-          <posattr x="8.000000"
+          <posattr x="11.000000"
                    y="-73.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
@@ -1704,7 +1696,7 @@ action
           <textattr colour="Black"
                     bold="false"/>
           <text tool="CPN Tools"
-                version="4.0.1">()</text>
+                version="4.0.1">()@+20</text>
         </annot>
       </arc>
       <arc id="ID1412674390"
@@ -2040,8 +2032,8 @@ action
                  height="762">
         <sheets>
           <cpnsheet id="ID1412530040"
-                    panx="-10.000000"
-                    pany="61.000000"
+                    panx="-14.000000"
+                    pany="63.000000"
                     zoom="1.000000"
                     instance="ID1412529957">
             <zorder>

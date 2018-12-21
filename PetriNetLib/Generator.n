@@ -184,7 +184,7 @@ namespace PetriNetLib
                                                         
                                                         public override Name() : string {$n}
                                                         public override Create(num : int) : $(n : usesite) {$(n : usesite)(num)}
-                                                        public static Instance : $(n : usesite) = $(n : usesite)(0);
+                                                        static Instance : $(n : usesite) = $(n : usesite)(0);
                                                         
                                                         public static all() : IEnumerable[$(n : usesite)]
                                                         {

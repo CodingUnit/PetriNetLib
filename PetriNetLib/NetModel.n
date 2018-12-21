@@ -275,6 +275,8 @@ namespace PetriNetLib
   [Flags]
   public enum PetriNetFlags
   {
-    | Debug = 1
+    | Debug        = 1
+    | Events       = 2
+    | PrintBinding = 4
   }
 }

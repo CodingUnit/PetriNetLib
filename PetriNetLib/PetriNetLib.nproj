@@ -137,6 +137,9 @@
     <Compile Include="OutModel.n">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="PetriNetCompiler.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Processor.n" />
     <Compile Include="Converter.n">
       <SubType>Code</SubType>

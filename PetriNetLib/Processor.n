@@ -20,43 +20,6 @@ namespace PetriNetLib
     - fifo places
     - sorted tokens places
   */
-  
-  
-  
-  public class PetriNetCompiler
-  {
-    mutable gen : Generator;
-    mutable proc : PetriNetProcessor;
-    
-    [FlagAccessor(
-                  Debug
-                )]
-    public Flags : PetriNetFlags;
-    
-    public PhaseTwo() : void
-    {
-      gen.PhaseTwo()
-    }
-    
-    public Process(ty : TypeBuilder, typer : Typer, file : string, page : string) : void
-    {
-      def parser = Parser(page);
-      parser.Parse(file);
-      def file = System.IO.Path.GetFileNameWithoutExtension(file);
-      proc = PetriNetProcessor(file, typer, ty, parser.Places, parser.Transitions, parser.Arcs, parser.Decls);
-      proc.Process();
-      gen = Generator(proc.OutModel, proc);
-      gen.PhaseOne();
-      ty.UserData["PetriNetGen"] = this;
-    }
-    
-    public MainGen() : void
-    {
-      gen = Generator(proc.OutModel, proc);
-      gen.Generate();
-    }
-  }
-  
   class PetriNetProcessor
   {
     mutable places      : array[Place];
@@ -93,6 +56,8 @@ namespace PetriNetLib
     colours            : list[Colour] = [];
     [Accessor]
     converter          : Converter = Converter();
+    
+    public Flags : PetriNetFlags {get; private set;}
     
     public InputTransitionArcs(tran : Transition) : list[Place * Arc]
     {
@@ -157,9 +122,10 @@ namespace PetriNetLib
       matrix_len = array[places, tran];
     }
     
-    public this(name : string, ty : Typer, typebuilder : TypeBuilder, places : list[CpnTree.Place], tran : list[CpnTree.Transition], arcs : list[CpnTree.Arc], decls : list[CpnDecl])
+    public this(name : string, flags : PetriNetFlags, ty : Typer, typebuilder : TypeBuilder, places : list[CpnTree.Place], tran : list[CpnTree.Transition], arcs : list[CpnTree.Arc], decls : list[CpnDecl])
     {
       this.name = name;
+      this.Flags = flags;
       tree_places = places;
       tree_tran = tran;
       tree_arcs = arcs;
@@ -232,9 +198,19 @@ namespace PetriNetLib
       }
       
       def (color, decls) = tree_decls.PartitionType();
-      foreach (d : CpnDecl.ColorSet in color)
+      foreach (d : CpnDecl.ColourSet in color)
       {
-        colour_sets[d.name] = ColourSet(d.name, d.type)
+        match (d)
+        {
+          | CpnDecl.ColourSet("OPTIONS", Colour.Enum(opts)) => 
+              foreach (opt in opts)
+              {
+                | "events"        => Flags |= PetriNetFlags.Events
+                | "print_binding" => Flags |= PetriNetFlags.PrintBinding
+                | _               => ()
+              }
+          | _                                            => colour_sets[d.name] = ColourSet(d.name, d.type);
+        }
       }
       
       foreach (d in decls)
@@ -253,7 +229,7 @@ namespace PetriNetLib
       def both_arcs = both_arcs.SelectMany(x => CpnTree.Arc(x.text, x.from, x.to, Dir.T2P) :: CpnTree.Arc(x.text, x.to, x.from, Dir.P2T) :: []).NToList();
       
       def tree_arcs = both_arcs + other_arcs;
-      arcs        = tree_arcs.MapToArray(create_arcs);
+      arcs          = tree_arcs.MapToArray(create_arcs);
       BuildMatrix();
       foreach (Arc(_, f, t) as a in arcs with i)
       {

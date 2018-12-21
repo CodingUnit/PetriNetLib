@@ -1,0 +1,46 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Nemerle.Compiler.Parsetree;
+using Nemerle.Compiler;
+
+namespace PetriNetLib
+{
+  public class PetriNetCompiler
+  {
+    mutable gen : Generator;
+    mutable proc : PetriNetProcessor;
+    
+    [FlagAccessor(
+                  Debug, Events, PrintBinding
+                )]
+    public Flags : PetriNetFlags;
+    
+    public PhaseTwo() : void
+    {
+      gen.PhaseTwo()
+    }
+    
+    public Process(ty : TypeBuilder, typer : Typer, file : string, page : string) : void
+    {
+      def parser = Parser(page);
+      parser.Parse(file);
+      def file = System.IO.Path.GetFileNameWithoutExtension(file);
+      proc = PetriNetProcessor(file, Flags, typer, ty, parser.Places, parser.Transitions, parser.Arcs, parser.Decls);
+      proc.Process();
+      gen = Generator(proc.OutModel, proc);
+      gen.PhaseOne();
+      ty.UserData["PetriNetGen"] = this;
+    }
+    
+    //public MainGen() : void
+    //{
+    //  gen.Generate();
+    //}
+  }
+}
