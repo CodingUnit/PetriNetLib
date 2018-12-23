@@ -306,6 +306,23 @@ namespace PetriNetLib
       }]>
     }
     
+    CreateEvents() : void
+    {
+      when (proc.Flags.HasFlag(PetriNetFlags.Events))
+      {
+        foreach (t in model.transitions)
+        {
+          def name = t.Name;
+          def evt = $"evt_$name";
+          fields ::= <[decl: public event $(evt : usesite) : Action]>;
+          fields ::= <[decl: $($"On$name" : usesite)() : void
+                      {
+                        $(evt : usesite).Invoke()
+                      } ]>;
+        }
+      }
+    }
+    
     public Generate() : void
     {      
       //CreateOperators();
@@ -320,6 +337,7 @@ namespace PetriNetLib
       when (model.IsTimed) CreateTimeMethods();
       CreateStepMethod();
       
+      CreateEvents();
       //CreateTranQueue();
       CreateToString();
       CreateStartMethod();

@@ -38,9 +38,9 @@ namespace PetriNetLib
       ty.UserData["PetriNetGen"] = this;
     }
     
-    //public MainGen() : void
-    //{
-    //  gen.Generate();
-    //}
+    public MainGen() : void
+    {
+      gen.Generate();
+    }
   }
 }

@@ -20,6 +20,7 @@ namespace PetriNetLib
     {
       def input  = tran.InputPlaces;
       def output = tran.OutputPlaces;
+      def name = tran.Name;
       //def map    = Hashtable();
       
       def input = input.Map((x, a) => InArcBinding(x, tran, [], a.expr));
@@ -52,7 +53,8 @@ namespace PetriNetLib
       def body = if (tran.guard is <[]>) body else 
                   <[ when ($(tran.guard)) {..$body}]> :: [];
       
-          
+      
+      def tran_evt = if (proc.Flags.HasFlag(PetriNetFlags.Events)) <[ $($"On$name" : usesite)()]> else <[]>;
       def fold(x, a)
       {
         if (a == null)
@@ -62,6 +64,7 @@ namespace PetriNetLib
               {
                $(x.bind_expr);
                {..$body}
+               $tran_evt
               }
           ]>
         } else

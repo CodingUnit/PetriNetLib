@@ -111,11 +111,6 @@
       <Project>{5e9cfda7-975a-4ef5-a7e7-b638df3d19f7}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\PetriNetLib\CpnParser\CpnParser.nproj">
-      <Name>CpnParser</Name>
-      <Project>{5bd4c7c7-4cce-4159-9acb-c3f324431ef7}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <ProjectReference Include="..\PetriNetLib\PetriNetLib.nproj">
       <Name>PetriNetLib</Name>
       <Project>{2edff5c5-d99f-4416-96e2-c5b4a4f18247}</Project>

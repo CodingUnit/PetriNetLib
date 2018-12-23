@@ -18,10 +18,10 @@ namespace PetriNetLib
   /// </summary>
   partial class Generator
   {
-    model : OutModel;
-    proc : PetriNetProcessor;
-    converter : Converter;
-    typer : Typer;
+    model       : OutModel;
+    proc        : PetriNetProcessor;
+    converter   : Converter;
+    typer       : Typer;
     typebuilder : TypeBuilder;
     mutable typing_method : MethodBuilder;
     //compiler : CompilerHost = CompilerHost();

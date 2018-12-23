@@ -95,7 +95,7 @@ namespace PetriNetLib
                                       if (col.Contains("string")) Colour.Simple("string") else
                                         null;
       def set = if (timed) Colour.Timed(set) else set;
-      CpnDecl.ColorSet(name, set)
+      CpnDecl.ColourSet(name, set)
     }
 
     get_place(p : XmlElement) : CpnTree.Place
