@@ -30,6 +30,7 @@ namespace PetriNetModel
 
     Get(elem : T) : void;
     Get() : T;
+    GetAll() : void;
     PeekIndexed() : T * int;
 
     GetIndexed(idx : int) : void;

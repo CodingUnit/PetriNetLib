@@ -216,6 +216,11 @@ namespace PetriNetModel
       get {queue.Count != 0}
     }
 
+    public GetAll() : void
+    {
+      queue.Clear()
+    }
+    
     public GetMany(num : int) : IEnumerable[T]
     {
       def by_key = queue.GroupBy(x => x);

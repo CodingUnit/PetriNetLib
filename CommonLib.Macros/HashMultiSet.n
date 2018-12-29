@@ -257,6 +257,12 @@ namespace CommonLib.Macros
       loop(probePoint)
     }
 
+    public Clear() : void
+    {
+      buckets = array(32);
+      items.Clear();
+    }
+    
     public AllElements() : IEnumerable[T]
     {
       foreach (elem in items)

@@ -50,7 +50,7 @@ namespace PetriNetLib
     }
     
     mutable matrix_len         : array[int];
-    mutable input_matrix       : array[2, Arc];//List[List[List[Arc]]];
+    mutable input_matrix       : array[2, Arc];
     mutable output_matrix      : array[2, Arc];
     mutable incidence_matrix   : array[2, int];
     colours            : list[Colour] = [];
@@ -191,10 +191,16 @@ namespace PetriNetLib
             def expr = converter.ParseML(t);
             def placeend = end => places.First(x => x.id == end) |> ArcSource.PlaceEnd;
             def transend = end => transitions.First(x => x.id == end) |> ArcSource.TransitionEnd;
-            def (f, t) = if (dir == Dir.P2T) (placeend, transend) else (transend, placeend);
+            def (f, t, k) = match (dir)
+            {
+              | Dir.Reset     => (placeend, transend, ArcKind.Reset)
+              | P2T           => (placeend, transend, ArcKind.Normal)
+              | Inhibitor     => (placeend, transend, ArcKind.Inhibitor)
+              | _             => (transend, placeend, ArcKind.Normal)
+            }
             def from = from |> f;
             def to =   to   |> t;
-            Arc(expr, from, to)
+            Arc(expr, from, to, k)
       }
       
       def (color, decls) = tree_decls.PartitionType();
@@ -231,13 +237,13 @@ namespace PetriNetLib
       def tree_arcs = both_arcs + other_arcs;
       arcs          = tree_arcs.MapToArray(create_arcs);
       BuildMatrix();
-      foreach (Arc(_, f, t) as a in arcs with i)
+      foreach (Arc(_, f, t, _) as a in arcs with i)
       {
         match (f, t)
         {
-          | (ArcSource.PlaceEnd(p), ArcSource.TransitionEnd(t)) => output_matrix[p.idx, t.idx] = a;
-          | (ArcSource.TransitionEnd(t), ArcSource.PlaceEnd(p)) => input_matrix[p.idx, t.idx] = a;
-          | _                                                   => ()
+          | (ArcSource.PlaceEnd(p),      ArcSource.TransitionEnd(t)) => output_matrix[p.idx, t.idx] = a;
+          | (ArcSource.TransitionEnd(t), ArcSource.PlaceEnd(p))      => input_matrix[p.idx, t.idx] = a;
+          | _                                                        => ()
         }
       }
       //BuildMatrix();

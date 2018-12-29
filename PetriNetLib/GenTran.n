@@ -23,7 +23,7 @@ namespace PetriNetLib
       def name = tran.Name;
       //def map    = Hashtable();
       
-      def input = input.Map((x, a) => InArcBinding(x, tran, [], a.expr));
+      def input = input.Map((x, a) => InArcBinding(x, tran, [], a));
       
       foreach (i in input)
       {

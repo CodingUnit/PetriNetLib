@@ -8,6 +8,7 @@ using Nemerle.Compiler;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using PetriNetModel;
 
 namespace PetriNetLib
 {
@@ -22,7 +23,7 @@ namespace PetriNetLib
 
     public priority : int
     {
-        [Memoize]
+      [Memoize]
       get
       {
         if (Depends == null || Depends.IsEmpty()) 0 else Depends.Max(_.priority) + 1
@@ -31,18 +32,36 @@ namespace PetriNetLib
 
     public name       : string
     {
-        [Memoize]
+      [Memoize]
       get
       {
         place.name
       }
     }
 
-    public expr       : PExpr;
+    public arc        : Arc;
+    
+    public arc_kind   : ArcKind
+    {
+      [Memoize]
+      get
+      {
+        arc.kind
+      }
+    }
+    
+    public expr       : PExpr
+    {
+      [Memoize]
+      get
+      {
+        arc.expr
+      }
+    }
 
     public bind_var : string
     {
-        [Memoize]
+      [Memoize]
       get
       {
         match (expr)
@@ -159,6 +178,22 @@ namespace PetriNetLib
       //      | _                          => null
       //    }
       //  }
+    unfold(e : PExpr) : PExpr
+    {
+      | <[ () ]> => <[ Unit.Instance ]>
+      | e        => e
+    }
+        
+        //match (expr)
+        //{
+        //  | <[ () ]>                       => <[ Unit.Instance ]> 
+        //  | <[ $e %@+ $(time : int)]>      => match (global_time)
+        //                                      {
+        //                                        | <[ $(t : int)]> => def time = time + t;     
+        //                                                             <[ $(unfold(e)) %@+ $time]>
+        //                                      } 
+                                              
+        //  | <[ $e %@+ $time]>              => <[ $(unfold(e)) %@+ ($time + $global_time)]>
       //}
 
     public check_expr : PExpr
@@ -166,14 +201,20 @@ namespace PetriNetLib
       [Memoize]
       get
       {
-        match (expr)
+        match (arc_kind)
         {
-          | <[ () ]>
-          | <[ $(_ : usesite)]> => <[ $(name : usesite).HaveTokens]>
-          | _                   => def tok = Generator.GetTokenExpr(expr);
-                                   <[ $(name : usesite).Have($tok) ]>
+         | ArcKind.Normal => 
+            match (expr)
+            {
+              | <[ () ]>                       => <[ $(name : usesite).HaveTokens]>
+              | <[ $e %@+ $time]>              => <[ $(name : usesite).Have($(unfold(e)) %@+ $time)]>
+              | <[ $(_ : usesite)]> => <[ $(name : usesite).HaveTokens]>
+              | _                   => def tok = Generator.GetTokenExpr(expr);
+                                       <[ $(name : usesite).Have($tok) ]>
+            }
+          | ArcKind.Inhibitor => <[ ! $(name : usesite).HaveTokens ]>
+          | _                 => <[]>
         }
-
       }
     }
 
@@ -182,15 +223,23 @@ namespace PetriNetLib
       [Memoize]
       get
       {
+        match (arc_kind)
+        {
+         | ArcKind.Normal => 
+         
           match (expr)
           {
             //| <[ $e %@+ $time ]>  => <[]>
+            | <[ $e %@+ $time]>   => <[ $(name : usesite).Get($(unfold(e)) %@+ $time)]>
             | <[ () ]>            => <[ _ = $(name : usesite).Get()]>
             | <[ $(n : usesite)]> => if (place.IsIndexedContainer) 
                                      <[ $(name : usesite).GetIndexed($(idx_name(n) : usesite))]> else 
                                      <[ $(name : usesite).Get($expr)]>
             | _                   => <[ $(name : usesite).Get($expr)]>
           }
+         | ArcKind.Inhibitor => <[ $(name : usesite).GetAll()]>
+         | _                 => <[ ]>
+       }
       }
     }
 

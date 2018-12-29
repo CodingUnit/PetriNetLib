@@ -72,6 +72,11 @@ namespace PetriNetModel
       tokens.Get(elem)
     }
   
+    public GetAll() : void
+    {
+      tokens.GetAll()
+    }
+    
     public Get() : T
     {
       tokens.Get()

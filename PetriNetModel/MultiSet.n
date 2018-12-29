@@ -99,6 +99,11 @@ namespace PetriNetModel
       elem
     }
 
+    public GetAll() : void
+    {
+      table.Clear()
+    }
+    
     public PeekIndexed() : T * int
     {
       def pos = rnd.Next(table.Count);

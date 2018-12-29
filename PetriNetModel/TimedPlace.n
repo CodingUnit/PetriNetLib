@@ -49,6 +49,11 @@ namespace PetriNetModel
       tokens.AddMany(tok)
     }
     
+    public Have(tok : Timed[T]) : bool
+    {
+      tokens.Have(tok)
+    }
+    
     public Have(tok : IEnumerable[Timed[T]]) : bool
     {
       tokens.Have(tok)
@@ -60,6 +65,11 @@ namespace PetriNetModel
       {
         tokens.HaveTokens
       }
+    }
+    
+    public GetAll() : void
+    {
+      tokens.GetAll()
     }
     
     public Get(tok : IEnumerable[Timed[T]]) : void

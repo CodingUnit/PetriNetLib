@@ -233,7 +233,13 @@ namespace PetriNetLib
     | TransitionEnd {tran  : Transition}
   }
 
-
+  enum ArcKind
+  {
+    | Normal
+    | Reset
+    | Inhibitor
+  }
+    
   [Record]
   [Lens]
   class Arc
@@ -256,6 +262,8 @@ namespace PetriNetLib
         }
       }
     }
+    
+    public kind : ArcKind;
   }
 
   [Record]

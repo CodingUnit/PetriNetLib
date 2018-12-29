@@ -74,6 +74,11 @@ namespace PetriNetModel
       }
     }
     
+    public GetAll() : void
+    {
+      heap.Clear()
+    }
+    
     public Add(tok : Timed[T]) : void
     {
       heap.Insert(tok)

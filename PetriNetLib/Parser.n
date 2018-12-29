@@ -19,7 +19,7 @@ namespace PetriNetLib
   /// </summary>
   public class Parser
   {
-    mutable xml : XmlDocument;
+    //mutable xml : XmlDocument;
 
     [Accessor]
     mutable decls : list[CpnDecl];
@@ -122,28 +122,30 @@ namespace PetriNetLib
     get_arc(a : XmlElement) : CpnTree.Arc
     {
       def annot = a.GetOneText("annot", "text");
-      def dir = match (a.GetAttrText("orientation"))
-      {
-        | "PtoT"    => Dir.P2T
-        | "TtoP"    => Dir.T2P
-        | "BOTHDIR" => Dir.Both
-      }
       def trans  = a.GetOne("transend").GetAttrText("idref");
       def place  = a.GetOne("placeend").GetAttrText("idref");
-      def (from, to) = if (dir == Dir.P2T) (place, trans) else (trans, place);
+      def (from, to, dir) = match (a.GetAttrText("orientation"))
+      {
+        | "PtoT"      => (place, trans, Dir.P2T)
+        | "TtoP"      => (trans, place, Dir.T2P)
+        | "BOTHDIR"   => (place, trans, Dir.Both)
+        | "Inhibitor" => (place, trans, Dir.Inhibitor)
+        | "Reset"     => (place, trans, Dir.Reset)
+      }
+      
       CpnTree.Arc(annot, from, to, dir)
     }
 
     parse_glob_ref(x : XmlElement) : CpnDecl
     {
-      def id = x.GetOneText("id");
+      def id    = x.GetOneText("id");
       def value = x.GetOneText("ml");
       CpnDecl.GlobRef(id, value)
     }
 
     public Parse(file : string) : void
     {
-      xml = XmlDocument();
+      def xml = XmlDocument();
       xml.Load(file);
       def glob = xml.GetChilds("workspaceElements", "cpnet", "globbox");
       def blocks = glob.GetChilds("block");

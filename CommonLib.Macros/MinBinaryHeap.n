@@ -132,6 +132,12 @@ namespace CommonLib.Macros
       BubbleDown(index)
     }        
 
+    public Clear() : void
+    {
+      size = 0;
+      size_end = 0;
+    }
+    
     public PeekFirstMin(max : T) : IEnumerable[T]
     {
       def loop(lev)

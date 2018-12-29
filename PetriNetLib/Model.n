@@ -55,6 +55,8 @@ namespace PetriNetLib
     | P2T
     | T2P
     | Both
+    | Reset
+    | Inhibitor
   }
   
   [Record]
