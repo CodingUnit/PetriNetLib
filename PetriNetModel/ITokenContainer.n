@@ -37,8 +37,20 @@ namespace PetriNetModel
     GetManyIndexed(tok : IEnumerable[int]) : void;
   }
   
-  public interface ITimedTokenContainer[T] : ITokenContainer[T]
+  public interface ITimedTokenContainer[T] : ITokenContainer[Timed[T]]
   {
+    HaveRelativeTime(tok : T, time : long) : bool;
+    GetRelativeTime(tok : T, time : long) : void;
+    
+    EnabledTokens : IEnumerable[Timed[T]]
+    {
+      get;
+    }
+    
+    EnabledTokensIdx : IEnumerable[Timed[T] * int]
+    {
+      get;
+    }
     
     NextTokenDelay : long
     {

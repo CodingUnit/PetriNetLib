@@ -1,0 +1,38 @@
+﻿using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Console;
+using System.Linq;
+using  time_example1;
+using System.Threading.Tasks;
+
+module Program
+{
+  Main() : void
+  {
+    def net = TimeExample1();
+
+    //def task = Task.Factory.StartNew(_ => do { WriteLine("ABC") } while (true));
+    WriteLine("Hi!");
+    net.Start();
+    net.evt_UnnamedTransition0 += _ => WriteLine($"$(TimeExample1.time()):Time delay transition: $net");
+    net.evt_UnnamedTransition1 += _ => WriteLine($"$(TimeExample1.time()):From delay to time transition: $net");
+    net.evt_UnnamedTransition2 += _ => WriteLine($"$(TimeExample1.time()):From syncbuf to delay transition: $net");
+    
+    def loop()
+    {
+      match (ReadLine())
+      {
+        | "s" => net.SYNC();loop()
+        | ""  => ()
+      }
+      
+    }
+    
+    loop()
+    
+  }
+}

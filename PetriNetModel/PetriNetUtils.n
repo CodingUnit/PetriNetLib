@@ -14,9 +14,9 @@ namespace PetriNetModel
   /// </summary>
   public class PetriNetUtils
   {
-    public static TimeMin(time1 : DateTime, time2 : DateTime) : DateTime
+    public static TimeMin(time1 : long, time2 : long) : long
     {
-      if (time1 < time2) time1 else time2
+      Math.Min(time1, time2)
     }
   }
 }

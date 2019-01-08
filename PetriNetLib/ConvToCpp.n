@@ -11,24 +11,545 @@ using Nemerle.Compiler.Parsetree;
 using Nemerle.Compiler.Typedtree;
 using CommonLib.Macros;
 using PetriNetModel;
+using System.Reactive.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using CppParserPrinter;
 
 namespace PetriNetLib
 {
   /// <summary>
-  /// Description of Class1.
+  /// Description of Generator.
   /// </summary>
-  class ConvToCpp
+  partial class CppGenerator
   {
+    model       : OutModel;
+    proc        : PetriNetProcessor;
+    converter   : Converter;
+    typer       : Typer;
     typebuilder : TypeBuilder;
+    mutable typing_method : MethodBuilder;
+    //compiler : CompilerHost = CompilerHost();
+    mutable cons_expr : list[PExpr] = [];
+    mutable fields    : list[ClassMember] = [];
+    mutable init_body : list[PExpr] = [];
     
-    public this(ty : TypeBuilder)
+    public this(model : OutModel, proc : PetriNetProcessor)
     {
-      typebuilder = ty;
+      this.typer = proc.Typer;
+      this.typebuilder = proc.Typebuilder;
+      
+      this.model = model;
+      this.proc = proc;
+      this.converter = proc.Converter;
     }
     
-    public Convert() : void
+    GetTypeExpr(p : Colour) : PExpr
     {
-      def mems = typebuilder.GetMembers();
+      | Colour.Simple(type) => 
+              match (type)
+              {
+                | "string" => <[ string ]>
+                | "int"    => <[ int ]>
+                | "intinf" => <[ IntInf ]>
+                | "real"   => <[ double ]>
+                | "time"   => <[ long ]>
+                | "bool"   => <[ bool ]>
+              }
+        | Integer       => <[ int ]>
+        | Unit(None())  => <[ Unit ]>
+        | Unit(Some(t)) => <[ $(t : usesite) ]>
+        | Product(vals) => def vals = vals.Map(x => <[ $(TypeFromStr(x)) ]>);
+                                         <[ (..$vals) ]>
+        | List(t, _)    => def inner = t |> TypeFromStr;
+                                         <[ list[$inner]]>
+    }
+    
+    GetTypeExpr(p : ColourSet) : PExpr
+    {
+        | ColourSet(n, Index)
+        | ColourSet(n, Enum)          => <[ $(n : usesite) ]>
+        | ColourSet(_, Timed(p))
+        | ColourSet(_, p)             => GetTypeExpr(p)
+    }
+      
+    TypeFromStr(str : string) : PExpr
+    {
+      | "string" => <[ string ]>
+      | "int"    => <[ int ]>
+      | "intinf" => <[ IntInf ]>
+      | "real"   => <[ double ]>
+      | "time"   => <[ long ]>
+      | "bool"   => <[ bool ]>
+      | "unit"   => <[ Unit ]>
+      | str      => proc.colour_sets[str] |> GetTypeExpr
+      
+    }
+    
+    IsTokenExpr(expr : PExpr) : bool
+    {
+      | <[ $(_ : usesite) ]> => false
+      | _                    => true
+    }
+    
+    CreateDummyMethod() : void
+    {
+      def meth = typebuilder.DefineAndReturn(<[decl: TypingMethod() : void {}]>);
+      typing_method = meth :> MethodBuilder;
+    }
+    
+    internal static GetTokenExpr(expr : PExpr) : PExpr
+    {
+      def loop(e)
+      {
+        | <[ $(count : int) ` $expr ]> => Enumerable.Repeat(expr, count).NToList()
+        | <[ $left %++ $right ]>       => loop(left) + loop(right)
+        | _                            => [expr]
+      }
+      
+      match (expr)
+      {
+        | <[$_(..$_)]> as e => e
+        | <[ $(_ : int)]> as e
+        | <[ $(_ : long)]> as e
+        | <[ $(_ : short)]> as e
+        | <[ $(_ : ushort)]> as e
+        | <[ $(_ : byte)]> as e
+        | <[ $(_ : string)]> as e => e
+        | e                 => def e = loop(e);
+                               <[IEnumerable[..$e]]>
+      }
+    }
+    
+      CreateTranBody(tran : Transition) : PExpr
+    {
+      def input  = tran.InputPlaces;
+      def output = tran.OutputPlaces;
+      def name = tran.Name;
+      //def map    = Hashtable();
+      
+      def input = input.Map((x, a) => InArcBinding(x, tran, [], a));
+      
+      foreach (i in input)
+      {
+        match (i.expr)
+        {
+          | <[ $_(..$p) ]> => foreach (p in p)
+                              {
+                                | <[ $(n : usesite)]> => match (input.Find(x => x.bind_var == n))
+                                                         {
+                                                           | Some(x) => i.Depends ::= x;
+                                                           | _       => ()
+                                                         }
+                                | _                   => ()
+                              }
+          | _ => ()
+        }
+        //map[i.name] = i;
+      }
+      
+      def input    = input.Sort((x, y) => y.priority - x.priority); 
+      def add_proc = output.Map((p, a) => OutArcProcess(p, tran, a));
+      
+      def extract = input.Map(_.extract_expr);
+      def add_body = add_proc.Map(_.add_token);
+      def code = tran.code_segment ?? <[]>;
+      def body = extract + (code :: add_body);
+      def body = if (tran.guard is <[]>) body else 
+                  <[ when ($(tran.guard)) {..$body}]> :: [];
+      
+      
+      def tran_evt = if (proc.Flags.HasFlag(PetriNetFlags.Events)) <[ $($"On$name" : usesite)()]> else <[]>;
+      def fold(x, a)
+      {
+        if (a == null)
+        {
+          if (x.check_expr is <[]>)
+            <[  
+               $(x.bind_expr);
+               {..$body}
+               $tran_evt
+             ]>
+           else
+          <[  
+              when ($(x.check_expr))
+              {
+               $(x.bind_expr);
+               {..$body}
+               $tran_evt
+              }
+          ]>
+        } else
+        {
+          if (x.check_expr is <[]>)
+          <[  
+              $(x.bind_expr);
+              $a
+          ]> else
+          <[  
+              when ($(x.check_expr))
+              {
+               $(x.bind_expr);
+               $a
+              }
+          ]>
+        }
+      }
+      
+      
+      //def input = eval(input, []);
+      
+      input.Fold(null, fold);
+    }
+    
+    CreatePlace(place : Place) : ClassMember
+    {
+      def name = place.Name;
+      //def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
+      def type = GetTypeExpr(place.colour);
+      def dest_cont = match (place.DestContainerType)
+      {
+        | TDestCont.MultiSet  => <[ MultiSet() ]>
+        | RandomEnumerable    => <[ RandomArray() ]>
+        | SortedSet           => <[ SortedArray() ]>
+        | TokenQueue          => <[ TokenQueue() ]>
+        | TimedSimpleMultiset => <[ TimedHeap() ]>
+      }
+      if (place.IsTimed)
+      <[decl: $(name : usesite) : PetriNetModel.TimedPlace.[$type] = PetriNetModel.TimedPlace($(name : string), $dest_cont)]> else
+      <[decl: $(name : usesite) : PetriNetModel.Place.[$type] = PetriNetModel.Place($(name : string), $dest_cont)]>
+    }
+    
+    
+    CreateTran(tran : Transition) : ClassMember
+    {
+      def name = tran.Name;
+      
+      def body = CreateTranBody(tran);      
+      <[
+         decl: public $(name : usesite)() : void
+               {
+                 when (Lock($(name : usesite)))
+                 {
+                  $body;
+                  Unlock();
+                 }
+               }
+       ]>
+    }
+    
+    CreateGlobRef(name : string, val : PExpr) : ClassMember
+    {
+      def ty = Typer(typing_method);
+      def te = ty.TypeExpr(val);
+      
+      <[decl: mutable $(name : usesite) : $(te.ty : typed) = $val]>
+    }
+     
+    CreateVals(expr : PExpr) : ClassMember
+    {
+      | <[ def $(name : usesite) = $val]> => 
+          def type = typer.TypeExpr(val);
+          def ty = type.ty;
+          <[ decl: $(name : usesite) : $(ty : typed) = $val ]>
+          
+      | _ => null
+    }
+    
+    ProcessFun(expr : PExpr) : PExpr
+    {
+      | <[ def $(n : usesite)(..$parms) { ..$body } ]> => 
+      
+            def proc_parm(p, (parm, e))
+            {
+              match (p)
+              {
+                | <[parameter: $(n : usesite) : Index.[$(type : usesite)]]> => 
+                  match (model.GetIndex(type))
+                  {
+                    | Some((t, _)) => (<[parameter: $(n : usesite) : $(t : usesite)]> :: parm, <[def $(n : usesite) = $(n : usesite).num ]> :: e)
+                    | _            => (parm, e)
+                  }
+                  
+              }
+            }
+      
+      def expr = <[ {..$body} ]>;
+      def (parms, expr) = parms.Fold(([], expr :: []), proc_parm);
+      def parms = parms.Rev();
+          
+      <[ def $(n : usesite)(..$parms) { ..$expr } ]>
+    }
+    
+    CreateDecl(expr : PExpr) : ClassMember
+    {
+      | <[ def $(_ : usesite)(..$_) { ..$_ } ]> => 
+          
+          def func = ProcessFun(expr);
+          def ty = Typer(typing_method);
+          def te = ty.TypeExpr(func);
+          match (func)
+          {
+            | <[ def $(n : usesite)(..$parms) { ..$expr } ]> =>
+                match (te)
+                {
+                  | TExpr.DefFunctionsIn(h :: _, _) => def ret = h.ReturnType;
+                                                      <[decl: $(n : usesite)(..$parms) : $(ret : typed)
+                                                        {
+                                                          ..$expr
+                                                        }]>
+                }
+        }
+      | _ => null
+    }
+    
+    CreateColourSet2(col : ColourSet) : ClassMember.TypeDeclaration
+    {
+      | ColourSet(n, Colour.Index(_, _, i)) => 
+          <[decl: [Record]
+            class $(i : usesite) : $(n : usesite)
+            {
+                                                       
+            }
+            ]>;
+      | _ => null    
+    }
+    
+    CreateColourSet(col : ColourSet) : CTypeDecl
+    {
+      | ColourSet(n, Colour.Alias(new_name))  => //def name = Macros.UseSiteSymbol(n);
+                                                 //def mods = AttributesAndModifiers(NemerleModifiers.Private, []);
+                                                 //def al = TopDeclaration.Alias(name, mods, Typarms.Empty, <[ $(new_name : usesite) ]>);
+                                                 //al |> ClassMember.TypeDeclaration.TypeDeclaration;
+                                                 // cpp("typedef $n $new_name")
+                                                 CTypeDecl.Decl(CTree.Decl([CSpec.Typedef()], CType.Class(n), [CDecl.Id(new_name, None())]))
+      | ColourSet(n, Colour.Record(vals))     => def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
+                                                 def fields = fields.Map((n, t) => <[decl: $(n : usesite) : $t]>);
+                                                 <[decl: [Record] class $(n : usesite)
+                                                         {
+                                                           ..$fields
+                                                         }
+                                                 ]>
+      | ColourSet(n, Colour.Index(mn, mx, _i)) => def eval(m)
+                                                 {
+                                                    def expr = converter.ParseML(m);
+                                                    match (expr)
+                                                    {
+                                                      | <[$(n : int)]>  => n
+                                                      | <[$(name : usesite) ]> => 
+                                                                           def match_var(x)
+                                                                           {
+                                                                             | <[ def $(n : usesite) = $_]> => n == name 
+                                                                             | _                            => false
+                                                                           }
+                                                                           
+                                                                           match (model.ml_decls.Find(match_var))
+                                                                           {
+                                                                             | Some(<[ def $(_ : usesite) = $(v : int)]>) => v
+                                                                             | _                                  => throw InvalidOperationException()
+                                                                           }
+                                                    }
+                                                 }
+                                                 def mn = mn |> eval;
+                                                 def mx = mx |> eval;
+                                                 
+                                                     
+                                                  <[decl:
+                                                      class $(n : usesite) : Index[$(n : usesite)]
+                                                      {
+                                                        public this(num : int)
+                                                        {
+                                                          base($(mn : int), $(mx : int), num)
+                                                        }
+                                                        
+                                                        public override Name() : string {$n}
+                                                        public override Create(num : int) : $(n : usesite) {$(n : usesite)(num)}
+                                                        static Instance : $(n : usesite) = $(n : usesite)(0);
+                                                        
+                                                        public static all() : IEnumerable[$(n : usesite)]
+                                                        {
+                                                          Instance.all_impl
+                                                        }
+                                                      }
+                                                     ]>
+      | ColourSet(n, Colour.Enum(vals)) => def vals = vals.Map(x => <[decl: | $(x : usesite) ]>);
+                                           <[decl: enum $(n : usesite)
+                                           {
+                                             ..$vals
+                                           }]>
+      | ColourSet(n, Colour.Timed(c))   => CreateColourSet(ColourSet(n, c))
+      | _                               => null
+    }    
+    
+    CreateInitMarking(place : Place) : PExpr
+    {
+      def combine(e1, e2)
+      {
+        | (<[Enumerable.Repeat($tok, $(n : int))]>, <[Enumerable.Repeat($tok2, $(n2 : int))]>) when (tok.Equals(tok2)) 
+            => <[Enumerable.Repeat($tok, $(n2 + n))]>
+        | (<[Enumerable.Repeat($(tok : int), $(n : int))]>, <[Enumerable.Repeat($(tok2 : int), $(n2 : int))]>)                         
+            => def val = Enumerable.Repeat(tok, n).Concat(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : int)]>).ToArray();
+               if (val.Length > 50) <[ $(e1).Concat($e2)]> else
+               <[ array[..$val] ]>
+        | (<[Enumerable.Repeat($(tok : string), $(n : int))]>, <[Enumerable.Repeat($(tok2 : string), $(n2 : int))]>)                         
+            => def val = Enumerable.Repeat(tok, n).Concat(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : string)]>).ToArray();
+               if (val.Length > 50) <[ $(e1).Concat($e2)]> else
+               <[ array[..$val] ]>
+        | (<[Enumerable.Repeat($(tok : double), $(n : int))]>, <[Enumerable.Repeat($(tok2 : double), $(n2 : int))]>)                         
+            => def val = Enumerable.Repeat(tok, n).Concat(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : double)]>).ToArray();
+               if (val.Length > 50) <[ $(e1).Concat($e2)]> else
+               <[ array[..$val] ]>       
+        | _  //(<[Enumerable.Repeat($_, $(_ : int))]>, <[Enumerable.Repeat($_, $(_ : int))]>)                         
+            => <[ $e1.Concat($e2)]> 
+      }
+      
+      def unfold(expr)
+      {
+        | <[ () ]> => <[ Unit.Instance ]>
+        | e        => e
+      }
+      
+      def fold(expr)
+      {
+        //| <[ {..$e} ]>   => e.Fold(acc, fold)
+        | <[ 1 ` $tok %@ $time ]>             => <[ $(unfold(tok)) %@ $time ]>
+        | <[ 1 ` $tok]>                       => <[ $(unfold(tok)) ]>
+        | <[ $(n : int) ` $tok %@ $time ]>    => <[ Enumerable.Repeat($(unfold(tok)) %@ $time, $n) ]>
+        | <[ $(n : int) ` $tok]>              => <[ Enumerable.Repeat($(unfold(tok)), $n) ]>
+        | <[ $l %++ $r]>                      => combine(fold(l), fold(r))
+        | e                                   => unfold(e)
+      }
+      
+      if (place.init_mark == null) <[]> else
+      {
+        def mark = fold(place.init_mark);
+        def mark = if (place.IsTimed) <[ $mark %@+ 0]> else mark;
+        def name = place.name;
+        <[ $(name : usesite).Add($mark)]>
+      }
+    }
+    
+    CreateToString() : void
+    {
+      def strings = model.places.Map(x => <[ $(x.name : usesite).ToString() ]>);
+      fields ::= <[decl: public override ToString() : string 
+      { 
+        def str = array[..$strings];
+        string.Join(";\n", str)
+      }]>
+    }
+    
+    CreateCons() : void
+    {
+      def marking = model.places.MapToList(CreateInitMarking);
+      fields ::= if (model.IsTimed || model.IsHaveImmediateTransitions) <[decl: public this(time_step : int = 15) { base(time_step);{..$marking} {..$cons_expr}}]>; 
+      else <[decl: public this() { {..$marking} {..$cons_expr} }]>;
+    }
+    
+    CreateTimeMethods() : void
+    {
+      def body = model.transitions.Where(_.IsTimed).Map(x => <[ $(x.Name : usesite)() ]>);
+      def next = model.places.Where(_.IsTimed).Map(x => <[ $(x.name : usesite).NextTokenDelay ]>);
+      
+      def time_body = match (next)
+      {
+        | []    => <[ long.MaxValue ]>
+        | [one] => one
+        | lst   => def next = lst.Map(x => <[ min = Math.Min(min, $x); ]>);
+                  <[
+                    mutable min = long.MaxValue;
+                    {..$next}
+                    min
+                  ]>
+      }
+      fields ::= <[decl: public override GetNextTime() : long
+                   {
+                     $time_body
+                   }]>;
+      fields ::= <[decl: public override TimeStep() : void
+      {
+        {..$body}
+      }]>
+    }
+    
+    CreateStepMethod() : void
+    {
+      def body = model.transitions.Where(x => x.IsImmediate && !x.IsTimed).Map(x => <[ $(x.Name : usesite)() ]>);
+      when (!body.IsEmpty())
+      fields ::= <[decl: public override Step() : void
+      {
+        {..$body}
+      }]>
+    }
+    
+    CreateStartMethod() : void
+    {
+      fields ::= <[decl: public Initiate() : void
+      {
+        {..$init_body}
+      }]>
+    }
+    
+    CreateEvents() : void
+    {
+      when (proc.Flags.HasFlag(PetriNetFlags.Events))
+      {
+        foreach (t in model.transitions)
+        {
+          def name = t.Name;
+          def evt = $"evt_$name";
+          fields ::= <[decl: public event $(evt : usesite) : Action]>;
+          fields ::= <[decl: $($"On$name" : usesite)() : void
+                      {
+                        $(evt : usesite)?.Invoke()
+                      } ]>;
+        }
+      }
+    }
+    
+    public Generate() : void
+    {      
+      //CreateOperators();
+      //assert2(false);
+      def sets = model.colour_sets.Values.Map(CreateColourSet).Filter(_ != null);
+      def sets2 = model.colour_sets.Values.Map(CreateColourSet2).Filter(_ != null);
+      def sets = sets + sets2;
+      foreach (m in sets) typebuilder.DefineNestedTypeWithSource(m).Compile();
+      
+      def places = model.places.MapToList(CreatePlace);      
+      
+      when (model.IsTimed) CreateTimeMethods();
+      CreateStepMethod();
+      
+      CreateEvents();
+      //CreateTranQueue();
+      CreateToString();
+      CreateStartMethod();
+      CreateCons();
+      
+      def members = fields + places;
+      foreach (m in members) _ = typebuilder.DefineWithSource(m);
+    }
+    
+    public PhaseOne() : void
+    {
+      //typebuilder.AddImplementedInterface(<[ IDisposable ]>);
+      typebuilder.AddImplementedInterface(if (model.IsTimed) <[ TimedPetriNet ]> 
+                                          else <[PetriNet]>);
+    }
+    
+    public PhaseTwo() : void
+    {
+      CreateDummyMethod();
+      def methods = model.transitions.MapToList(CreateTran);
+      def vals = model.ml_decls.Map(CreateVals).Filter(_ != null);
+      foreach (m in vals) _ = typebuilder.DefineWithSource(m);
+      def decls = model.ml_decls.Map(CreateDecl).Filter(_ != null);
+      def decls = decls + methods;
+      foreach (m in decls) _ = typebuilder.DefineWithSource(m);
+      def globrefs = model.glob_refs.KeyValuePairs.MapToList(CreateGlobRef);
+      foreach (m in globrefs) _ = typebuilder.DefineWithSource(m);
+      typebuilder.Compile()
     }
   }
 }

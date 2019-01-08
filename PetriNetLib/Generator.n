@@ -150,7 +150,7 @@ namespace PetriNetLib
                                                            ..$fields
                                                          }
                                                  ]>
-      | ColourSet(n, Colour.Index(mn, mx, i)) => def eval(m)
+      | ColourSet(n, Colour.Index(mn, mx, _i)) => def eval(m)
                                                  {
                                                     def expr = converter.ParseML(m);
                                                     match (expr)
@@ -208,16 +208,19 @@ namespace PetriNetLib
         | (<[Enumerable.Repeat($tok, $(n : int))]>, <[Enumerable.Repeat($tok2, $(n2 : int))]>) when (tok.Equals(tok2)) 
             => <[Enumerable.Repeat($tok, $(n2 + n))]>
         | (<[Enumerable.Repeat($(tok : int), $(n : int))]>, <[Enumerable.Repeat($(tok2 : int), $(n2 : int))]>)                         
-            => def val = Enumerable.Repeat(tok, n).Union(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : int)]>);
+            => def val = Enumerable.Repeat(tok, n).Concat(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : int)]>).ToArray();
+               if (val.Length > 50) <[ $(e1).Concat($e2)]> else
                <[ array[..$val] ]>
         | (<[Enumerable.Repeat($(tok : string), $(n : int))]>, <[Enumerable.Repeat($(tok2 : string), $(n2 : int))]>)                         
-            => def val = Enumerable.Repeat(tok, n).Union(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : string)]>);
+            => def val = Enumerable.Repeat(tok, n).Concat(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : string)]>).ToArray();
+               if (val.Length > 50) <[ $(e1).Concat($e2)]> else
                <[ array[..$val] ]>
         | (<[Enumerable.Repeat($(tok : double), $(n : int))]>, <[Enumerable.Repeat($(tok2 : double), $(n2 : int))]>)                         
-            => def val = Enumerable.Repeat(tok, n).Union(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : double)]>);
+            => def val = Enumerable.Repeat(tok, n).Concat(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : double)]>).ToArray();
+               if (val.Length > 50) <[ $(e1).Concat($e2)]> else
                <[ array[..$val] ]>       
         | _  //(<[Enumerable.Repeat($_, $(_ : int))]>, <[Enumerable.Repeat($_, $(_ : int))]>)                         
-            => <[ $e1.Union($e2)]> 
+            => <[ $e1.Concat($e2)]> 
       }
       
       def unfold(expr)
@@ -240,6 +243,7 @@ namespace PetriNetLib
       if (place.init_mark == null) <[]> else
       {
         def mark = fold(place.init_mark);
+        def mark = if (place.IsTimed) <[ $mark %@+ 0]> else mark;
         def name = place.name;
         <[ $(name : usesite).Add($mark)]>
       }
@@ -257,9 +261,13 @@ namespace PetriNetLib
     
     CreateCons() : void
     {
-      def marking = model.places.MapToList(CreateInitMarking);
-      fields ::= if (model.IsTimed || model.IsHaveImmediateTransitions) <[decl: public this(time_step : int = 15) { base(time_step);{..$marking} {..$cons_expr}}]>; 
-      else <[decl: public this() { {..$marking} {..$cons_expr} }]>;
+      fields ::= if (model.IsTimed || model.IsHaveImmediateTransitions) <[decl: public this(time_step : int = 15) { base(time_step); {..$cons_expr}}]>; 
+      else <[decl: public this() { {..$cons_expr} }]>;
+    }
+    
+    CreateInitMarking() : void
+    {
+      cons_expr += model.places.MapToList(CreateInitMarking);
     }
     
     CreateTimeMethods() : void
@@ -271,7 +279,7 @@ namespace PetriNetLib
       {
         | []    => <[ long.MaxValue ]>
         | [one] => one
-        | lst   => def next = lst.Map(x => <[ min = PetriNetUtils.TimeMin(min, $x); ]>);
+        | lst   => def next = lst.Map(x => <[ min = Math.Min(min, $x); ]>);
                   <[
                     mutable min = long.MaxValue;
                     {..$next}
@@ -290,9 +298,9 @@ namespace PetriNetLib
     
     CreateStepMethod() : void
     {
-      def body = model.transitions.Where(x => x.IsImmediate && !x.IsTimed).Map(x => <[ $(x.name : usesite)() ]>);
+      def body = model.transitions.Where(x => x.IsImmediate && !x.IsTimed).Map(x => <[ $(x.Name : usesite)() ]>);
       when (!body.IsEmpty())
-      fields ::= <[decl: public override TransitionStep() : void
+      fields ::= <[decl: public override Step() : void
       {
         {..$body}
       }]>
@@ -317,7 +325,7 @@ namespace PetriNetLib
           fields ::= <[decl: public event $(evt : usesite) : Action]>;
           fields ::= <[decl: $($"On$name" : usesite)() : void
                       {
-                        $(evt : usesite).Invoke()
+                        $(evt : usesite)?.Invoke()
                       } ]>;
         }
       }
@@ -341,6 +349,7 @@ namespace PetriNetLib
       //CreateTranQueue();
       CreateToString();
       CreateStartMethod();
+      CreateInitMarking();
       CreateCons();
       
       def members = fields + places;

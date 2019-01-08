@@ -66,7 +66,7 @@ namespace PetriNetLib
           | e        => e
         }
         
-        match (expr)
+        def add(e)
         {
           | <[ () ]>                       => <[ Unit.Instance ]> 
           | <[ $e %@+ $(time : int)]>      => match (global_time)
@@ -77,12 +77,14 @@ namespace PetriNetLib
                                               
           | <[ $e %@+ $time]>              => <[ $(unfold(e)) %@+ ($time + $global_time)]>
           | <[ $_ %++ $_ ]> as e           => Generator.GetTokenExpr(e)
-          | <[ 1 ` $e ]>
+          | <[ 1 ` $e ]>                   => add(e)
           | <[ $_(..$_)]> as e
           | <[ $(_ : usesite) ]> as e
           | <[ $(_ : int) ` $_ ]> as e     
           | e                              => e
         }
+        
+        add(expr)
       }
     }
     

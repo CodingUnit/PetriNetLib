@@ -127,7 +127,7 @@ namespace CommonLib.Macros
 
     public RemoveAt(index : int) : void
     {
-      def pos = ThreadSafeUtils.LockFreeUpdateValRet(ref size, _ - 1);
+      def pos = ThreadSafeUtils.LockFreeUpdateIntRet(ref size, _ - 1);
       heap[index] = heap[pos - 1];
       BubbleDown(index)
     }        
@@ -142,14 +142,14 @@ namespace CommonLib.Macros
     {
       def loop(lev)
       {
-        def start = 1 << lev - 1;
+        def start = (1 << lev) - 1;
         def count = 1 << lev;
         def end = start + count;
         mutable found = 0;
         mutable break = 0;
         for (mutable i = start; i < end && break == 0; i++)
         {
-          if (i < heap.Length)
+          if (i < size)
           {
             def elem = heap[i];
             def comp = elem.CompareTo(max);
@@ -245,13 +245,13 @@ namespace CommonLib.Macros
     {
       if (!ThreadSafeUtils.CAS(ref locked, 0, 1)) 
       {
-        def idx = ThreadSafeUtils.LockFreeUpdateValRet(ref size_end, _ + 1);
+        def idx = ThreadSafeUtils.LockFreeUpdateIntRet(ref size_end, _ + 1);
         heap[size + idx] = val;
       } else
       {
         //def pos = size;
         //heap[pos] = val;
-        def pos = ThreadSafeUtils.LockFreeUpdateValRet(ref size, x => {when (size == heap.Length - 1) DoubleSize(); x + 1});
+        def pos = ThreadSafeUtils.LockFreeUpdateIntRet(ref size, x => {when (size == heap.Length - 1) DoubleSize(); x + 1});
         heap[pos] = val;
         //when (size_end == 0) end_pos = pos + 1;
         BubbleUp(pos);

@@ -340,6 +340,7 @@ $<#struct $Name
       }
   }
 
+  [Record]
   public variant CDecl
   {
       | Id

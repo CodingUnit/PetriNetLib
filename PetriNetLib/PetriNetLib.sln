@@ -21,6 +21,8 @@ Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "CppParserPrinter", "..\CppP
 EndProject
 Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "time_example1", "..\time_example1\time_example1.nproj", "{B16C2C19-8DA4-43C0-91C8-05F67FE9D151}"
 EndProject
+Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "TimeExampleTest", "..\TimeExampleTest\TimeExampleTest.nproj", "{13E67CA6-AB2B-47CB-AA79-6E855F606FC5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -120,6 +122,16 @@ Global
 		{B16C2C19-8DA4-43C0-91C8-05F67FE9D151}.OPC|Any CPU.Build.0 = Release|Any CPU
 		{B16C2C19-8DA4-43C0-91C8-05F67FE9D151}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B16C2C19-8DA4-43C0-91C8-05F67FE9D151}.Release|Any CPU.Build.0 = Release|Any CPU
+		{13E67CA6-AB2B-47CB-AA79-6E855F606FC5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13E67CA6-AB2B-47CB-AA79-6E855F606FC5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13E67CA6-AB2B-47CB-AA79-6E855F606FC5}.LIBS|Any CPU.ActiveCfg = Release|Any CPU
+		{13E67CA6-AB2B-47CB-AA79-6E855F606FC5}.LIBS|Any CPU.Build.0 = Release|Any CPU
+		{13E67CA6-AB2B-47CB-AA79-6E855F606FC5}.NViewer|Any CPU.ActiveCfg = Release|Any CPU
+		{13E67CA6-AB2B-47CB-AA79-6E855F606FC5}.NViewer|Any CPU.Build.0 = Release|Any CPU
+		{13E67CA6-AB2B-47CB-AA79-6E855F606FC5}.OPC|Any CPU.ActiveCfg = Release|Any CPU
+		{13E67CA6-AB2B-47CB-AA79-6E855F606FC5}.OPC|Any CPU.Build.0 = Release|Any CPU
+		{13E67CA6-AB2B-47CB-AA79-6E855F606FC5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13E67CA6-AB2B-47CB-AA79-6E855F606FC5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

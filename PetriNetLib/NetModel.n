@@ -160,7 +160,7 @@ namespace PetriNetLib
       [Memoize]
       get
       {
-        InputPlaces.Exists((x, _) => x.IsTimed)
+        InputPlaces.Exists((x, a) => x.IsTimed && a.kind == ArcKind.Normal)
         //colour is ColourSet(_, Timed)
       }
     }

@@ -28,7 +28,7 @@ namespace PetriNetModel
     {
       time_step = step;
       main_cancel_token = main_cancel.Token; 
-      main_task = Task(_ => Step(), main_cancel)
+      main_task = Task(_ => StepInternal(), main_cancel)
     }
     
     public static @`[T](count : int, tok : T) : IEnumerable[T]
@@ -38,7 +38,7 @@ namespace PetriNetModel
     
     public static @%++[T](tok1 : IEnumerable[T], tok2 : IEnumerable[T]) : IEnumerable[T]
     {
-      tok1.Union(tok2)
+      tok1.Concat(tok2)
     }
     
     protected Lock(act : Action) : bool
@@ -65,7 +65,7 @@ namespace PetriNetModel
       }
     }
                          
-    public virtual TransitionStep() : void
+    public virtual Step() : void
     {
     }
     
@@ -91,13 +91,13 @@ namespace PetriNetModel
       main_task.Start()
     }
     
-    public Step() : void
+    StepInternal() : void
     {
       if (main_cancel_token.IsCancellationRequested)
         main_cancel_token.ThrowIfCancellationRequested(); else
-      TransitionStep();
+      Step();
       Thread.Sleep(time_step);
-      Step()
+      StepInternal()
     }
   }
 }

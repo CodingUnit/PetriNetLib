@@ -14,7 +14,11 @@ namespace PetriNetModel
   public class Timed[T] : IComparable[Timed[T]]
   {
     public key : T;
-    public time : long;
+    
+    [Accessor]
+    mutable time : long;
+    [RecordIgnore]
+    mutable ref_count : int;
     
     public override GetHashCode() : int
     {
@@ -28,13 +32,37 @@ namespace PetriNetModel
     
     public override Equals(obj : object) : bool
     {
-      | Timed(k, t) => key.Equals(k) && time == t
-      | _           => false
+      | Timed(key = k, time = t) => key.Equals(k) && time == t
+      | _                        => false
+    }
+    
+    public IncRef() : void
+    {
+      ref_count++;
+    }
+    
+    public DecRef() : void
+    {
+      when (ref_count != 0) ref_count--;
+    }
+    
+    public WithTime(time : long) : Timed[T]
+    {
+      if (ref_count == 0)
+      {
+        this.time = time;
+        this
+      } else
+      {
+        def timed = Timed(key, time);
+        timed.IncRef();
+        timed
+      }
     }
     
     public Add(inc : int) : Timed[T]
     {
-      Timed(key, time + inc)
+      WithTime(time + inc)
     }
     
     public override ToString() : string
@@ -45,7 +73,7 @@ namespace PetriNetModel
   /// <summary>
   /// Description of TimedSimpleMultiset.
   /// </summary>
-  public class TimedHeap[T] : ITimedTokenContainer[Timed[T]]
+  public class TimedHeap[T] : ITimedTokenContainer[T]
   {
     heap : MinBinaryHeap[Timed[T]] = MinBinaryHeap();
     rnd  : Random                  = Random();
@@ -71,6 +99,14 @@ namespace PetriNetModel
       get
       {
         heap.PeekFirstMin(Timed(default(T), TimeScheduler.time()))
+      }
+    }
+    
+    public EnabledTokensIdx : IEnumerable[Timed[T] * int]
+    {
+      get
+      {
+        EnabledTokens.Select((x, i) => (x, i))
       }
     }
     
@@ -109,6 +145,17 @@ namespace PetriNetModel
       //EnabledTokens.Intersect(tok).Count() == tok.Count()
     }
     
+    public HaveRelativeTime(tok : T, t : long) : bool
+    {
+      EnabledTokens.Exists(x => x.key.Equals(tok) && TimeScheduler.time() - x.Time >= t)
+    }
+    
+    public GetRelativeTime(tok : T, t : long) : void
+    {
+      def idx = EnabledTokens.IndexOf(x => x.key.Equals(tok) && TimeScheduler.time() - x.Time >= t);
+      heap.RemoveAt(idx)
+    }
+    
     public Peek() : Timed[T]
     {
       heap.PeekMin()
@@ -129,19 +176,19 @@ namespace PetriNetModel
         if (HaveTokens)
         {
           def min = Peek();
-          min.time
+          min.Time
         } else long.MaxValue
       }
     }
     
     public GetMany(num : int) : IEnumerable[Timed[T]]
     {
-      def by_key = EnabledTokens.GroupBy(_.key);
-      def tokens = by_key.Where(x => x.Count() >= num).ToArray();
+      def by_key = EnabledTokensIdx.GroupBy((x, _) => x.key);
+      def tokens = by_key.Where((x, _) => x.Count() >= num).ToArray();
       def idx    = rnd.Next(tokens.Length);
       def tokens = tokens[idx];
-      foreach (elem in tokens) heap.Remove(elem);
-      tokens
+      foreach ((_, i) in tokens) heap.RemoveAt(i);
+      tokens.Select(x => x[0])
     }
     
     public GetMany(tok : IEnumerable[Timed[T]]) : void
@@ -158,10 +205,10 @@ namespace PetriNetModel
     {
       if (EnabledTokens.IsMoreThanOne())
       {
-        def tokens = EnabledTokens.ToArray();
+        def tokens = EnabledTokensIdx.ToArray();
         def idx = rnd.Next(tokens.Length);
-        def elem = tokens[idx];
-        heap.Remove(elem);
+        def (elem, i) = tokens[idx];
+        heap.RemoveAt(i);
         elem
       } else 
       {
@@ -191,7 +238,7 @@ namespace PetriNetModel
     public override ToString() : string
     {
       def tokens = heap.GroupBy(x => x);
-      def tokens = tokens.Select(x => $"$(x.Count())`$(x.Key.key) @ $(x.Key.time)");
+      def tokens = tokens.Select(x => $"$(x.Count())`$(x.Key.key) @ $(x.Key.Time)");
       string.Join(" ++ ", tokens)
     }
   }

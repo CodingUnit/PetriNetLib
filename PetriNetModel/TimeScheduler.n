@@ -44,6 +44,7 @@ namespace PetriNetModel
     {
       cancel_token = cancel_source.Token;
       task = Task(Step, cancel_token);
+      task.Start();
     }
     
     public Step() : void
@@ -56,8 +57,10 @@ namespace PetriNetModel
         when (time() >= next_time)
         {
           net.TimeStep();
-          next_time = net.GetNextTime();
+          //next_time = net.GetNextTime();
         }
+        net.Step();
+        next_time = net.GetNextTime();
         Thread.Sleep(time_step);
       }
       Step()

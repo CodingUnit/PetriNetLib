@@ -14,7 +14,7 @@ namespace PetriNetModel
   /// </summary>
   public class TimedPlace[T]
   {
-    tokens : ITimedTokenContainer[Timed[T]];
+    tokens : ITimedTokenContainer[T];
     
     public NextTokenDelay : long
     {
@@ -26,14 +26,14 @@ namespace PetriNetModel
     
     public Name : string;
     public this(name : string) {Name =  name;tokens = TimedHeap()}
-    public this(name : string, cont : ITimedTokenContainer[Timed[T]]) {tokens = cont; Name = name;}
+    public this(name : string, cont : ITimedTokenContainer[T]) {tokens = cont; Name = name;}
     
-    public this(cont : ITimedTokenContainer[Timed[T]])
+    public this(cont : ITimedTokenContainer[T])
     {
       tokens = cont
     }
     
-    public this(en : IEnumerable[Timed[T]], cont : ITimedTokenContainer[Timed[T]])
+    public this(en : IEnumerable[Timed[T]], cont : ITimedTokenContainer[T])
     {
       tokens = cont;
       Add(en)
@@ -52,6 +52,16 @@ namespace PetriNetModel
     public Have(tok : Timed[T]) : bool
     {
       tokens.Have(tok)
+    }
+    
+    public HaveRelativeTime(tok : T, time : long) : bool
+    {
+      tokens.HaveRelativeTime(tok, time)
+    }
+    
+    public GetRelativeTime(tok : T, t : long) : void
+    {
+      tokens.GetRelativeTime(tok, t)
     }
     
     public Have(tok : IEnumerable[Timed[T]]) : bool

@@ -117,11 +117,8 @@ namespace PetriNetLib
       {
         if (place.IsTimed)
         {
-            //if (place.IsIndexedContainer) 
-              //<[ def ($(name : usesite), $($"$(name)_idx" : usesite)) = $source_token ]> else
           match (expr)
           {
-            //| <[ $e %@+ $time ]>   => <[ def $(source_token_name : usesite) = ]>
             | <[ $(n : usesite) ]> => if (place.IsIndexedContainer) 
                                           <[ def ($(source_token_name : usesite), $(idx_name(n)) : usesite)  = $source_token_peek ]> else
                                           <[ def $(source_token_name : usesite) = $source_token_peek ]>
@@ -201,17 +198,19 @@ namespace PetriNetLib
       [Memoize]
       get
       {
+        def check_func(e)
+        {
+          | <[ 1 ` $expr]>                 => check_func(expr)
+          | <[ () ]>                       => <[ $(name : usesite).HaveTokens]>
+          | <[ $e %@+ $time]>              => <[ $(name : usesite).HaveRelativeTime($(unfold(e)), $time)]>
+          | <[ $(_ : usesite)]> => <[ $(name : usesite).HaveTokens]>
+          | _                   => def tok = Generator.GetTokenExpr(expr);
+                                    <[ $(name : usesite).Have($tok) ]>
+        }
+        
         match (arc_kind)
         {
-         | ArcKind.Normal => 
-            match (expr)
-            {
-              | <[ () ]>                       => <[ $(name : usesite).HaveTokens]>
-              | <[ $e %@+ $time]>              => <[ $(name : usesite).Have($(unfold(e)) %@+ $time)]>
-              | <[ $(_ : usesite)]> => <[ $(name : usesite).HaveTokens]>
-              | _                   => def tok = Generator.GetTokenExpr(expr);
-                                       <[ $(name : usesite).Have($tok) ]>
-            }
+          | ArcKind.Normal    => check_func(expr)
           | ArcKind.Inhibitor => <[ ! $(name : usesite).HaveTokens ]>
           | _                 => <[]>
         }
@@ -223,22 +222,23 @@ namespace PetriNetLib
       [Memoize]
       get
       {
+        def extract(e)
+        {
+            //| <[ $e %@+ $time ]>  => <[]>
+          | <[ 1 ` $expr]>      => extract(expr)
+          | <[ $e %@+ $time]>   => <[ $(name : usesite).GetRelativeTime($(unfold(e)), $time)]>
+          | <[ () ]>            => <[ _ = $(name : usesite).Get()]>
+          | <[ $(n : usesite)]> => if (place.IsIndexedContainer) 
+                                    <[ $(name : usesite).GetIndexed($(idx_name(n) : usesite))]> else 
+                                    <[ $(name : usesite).Get($expr)]>
+          | _                   => <[ $(name : usesite).Get($expr)]>
+        }
+        
         match (arc_kind)
         {
-         | ArcKind.Normal => 
-         
-          match (expr)
-          {
-            //| <[ $e %@+ $time ]>  => <[]>
-            | <[ $e %@+ $time]>   => <[ $(name : usesite).Get($(unfold(e)) %@+ $time)]>
-            | <[ () ]>            => <[ _ = $(name : usesite).Get()]>
-            | <[ $(n : usesite)]> => if (place.IsIndexedContainer) 
-                                     <[ $(name : usesite).GetIndexed($(idx_name(n) : usesite))]> else 
-                                     <[ $(name : usesite).Get($expr)]>
-            | _                   => <[ $(name : usesite).Get($expr)]>
-          }
-         | ArcKind.Inhibitor => <[ $(name : usesite).GetAll()]>
-         | _                 => <[ ]>
+         | ArcKind.Normal         => extract(expr)
+         | ArcKind.Reset          => <[ $(name : usesite).GetAll()]>
+         | _                      => <[ ]>
        }
       }
     }

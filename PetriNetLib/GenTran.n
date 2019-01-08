@@ -59,6 +59,13 @@ namespace PetriNetLib
       {
         if (a == null)
         {
+          if (x.check_expr is <[]>)
+            <[  
+               $(x.bind_expr);
+               {..$body}
+               $tran_evt
+             ]>
+           else
           <[  
               when ($(x.check_expr))
               {
@@ -69,6 +76,11 @@ namespace PetriNetLib
           ]>
         } else
         {
+          if (x.check_expr is <[]>)
+          <[  
+              $(x.bind_expr);
+              $a
+          ]> else
           <[  
               when ($(x.check_expr))
               {

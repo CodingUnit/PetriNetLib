@@ -33,7 +33,6 @@ namespace PetriNetModel
     public override Start() : void
     {
       scheduler.Start();
-      base.Start();
     }
     
     public static @%@[T](token : T, time : int) : Timed[T]

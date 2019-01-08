@@ -67,7 +67,7 @@ syntax module CppGrammar
 
   keyword regex ['A'..'Z', 'a'..'z', '_'..'_']+ rule S;
 
-  alias Name                = Identifier;
+  //alias Name                = Identifier;
   alias QualifiedName       = QualifiedIdentifier;
   alias Char                = Any;
   alias Comma               = ","?;
@@ -142,6 +142,17 @@ syntax module CppGrammar
 
   syntax Specifier
   {
+    | Typedef  = "typedef"
+    | Auto     = "auto"
+    | Register = "register"
+    | Static   = "static"
+    | Extern   = "extern"
+    | Const    = "const"
+    | Volatile = "volatile"
+    //| Restrict 
+    | Inline   = "inline"
+    | Noreturn = "noreturn"
+    | Virtual  = "virtual"
   }
 
   syntax Type
@@ -157,21 +168,51 @@ syntax module CppGrammar
   {
   }
 
-  syntax TypeDecl
+  syntax TreeDecl = Specifier* sm Type sm Decls=Decl*;
+
+  syntax Decl
   {
-    | ClassDecl
-    | Method = Specifier RetType=Type Name=Identifier '(' Parms=Type* ')' sm Qualifier? nl '{' nl Body=Statement* nl '}' 
-    {
-      syntax Qualifier
-      {
-       | Const = "const"
-      }
-    }
+	/*| Id
+	| Pointer
+	| Array
+	| Function*/
   }
 
-  syntax ClassDecl = "class" sm Name=Identifier sm Base? nl '{' i Body=TypeDecl* d nl '}'
+  syntax Qualifier
+  {
+	| Const = "const"
+  }
+
+  syntax TypeDecl
+  {
+	| StructDecl
+    | ClassDecl
+	| TreeDecl
+	| Modifier = Modifier ':'
+	| Constructor = Name=Identifier '(' Parms=Type* ')' nl '{' nl Body=Statement* nl '}'
+	| Destructor = '~' Name=Identifier '(' ')' nl '{' nl Body=Statement* nl '}'
+	| AssignmentOp = RetType=Type sm "operator" "=" '(' Parms=Type* ')' sm Qualifier? nl '{' nl Body=Statement* nl '}' 
+    | Method = Specifier? sm RetType=Type sm Name=Identifier '(' Parms=Type* ')' sm Qualifier? nl '{' nl Body=Statement* nl '}' 
+  }
+
+  syntax StructTypeDecl
+  {
+	| StructDecl
+	| TreeDecl
+  }
+
+  syntax StructDecl = "struct" sm Name nl '{' i Body=StructTypeDecl* d nl '}';
+
+  syntax ClassDecl = "class" sm Name sm Base? nl '{' i Body=TypeDecl* d nl '}'
   {
       syntax Base = ':' sm Modifier sm BaseClass=QualifiedName;
+  }
+
+  syntax Name
+  {
+	| Id = Identifier
+	| Qualified = QualifiedName
+	| Splicable = '$' Name=Identifier
   }
 
   syntax Declaration
