@@ -35,6 +35,26 @@ namespace PetriNetLib
     | Timed {col : Colour}
     | Queue {type : Colour}
     | Sorted {type : Colour}
+    
+    public IsComplex : bool
+    {
+      [Memoize]
+      get
+      {
+        match (this)
+        {
+          | Union
+          | Record
+          | Index
+          | Unit
+          | Alias
+          | Queue
+          | Sorted => true
+          | _      => false
+        }
+      }
+    }
+    
   }
   
   [Record]

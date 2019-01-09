@@ -28,17 +28,31 @@ namespace CppParserPrinter
     }
   }
 
+  public variant CQuotation
+  {
+    | Type {type : CComplexType} 
+    | Func {func : CTree.Func}
+    | Statement {statement : CStatement}
+  }
+  
+  public variant CName
+  {
+    | String {str : string}
+    | Splicable {str : string}
+  }
+  
   public variant CTree : IPrintable
   {
       | Compound {decls : list[CTree] }
-      | NameSpace { name : string; decls : CTree}
+      | NameSpace { name : CName; decls : CTree}
       | Type { type : CComplexType;}
-      | Func { ret_type : CType; name : string; parms : list[CType]; body : CStatement}
+      | Func { ret_type : CType; name : CName; parms : list[CType]; body : CStatement}
       | Decl { specifiers : list[CSpec]; type : CType; decls : list[CDecl] }
+      | Quotation { quot : CQuotation;}
       
       public override Print(del : int) : string
       {
-        $"$this" |> Delim(_, del)
+        "this" |> Delim(_, del)
       }
       
       public override ToString() : string
@@ -193,7 +207,7 @@ $<#$spec~$name()
 
   public class CEnumDecl : IPrintable
   {
-      public name : string;
+      public name : CName;
       public val  : option[CConstExpr];
       
       public override Print(del : int) : string
@@ -204,7 +218,7 @@ $<#$spec~$name()
 
   public class CUnionDecl : IPrintable
   {
-      public name : string;
+      public name : CName;
       public val  : option[CConstExpr];
       
       public override Print(del : int) : string
@@ -270,9 +284,9 @@ $<#$spec~$name()
       | Enum { decls : list[CEnumDecl]}
       | Union { decls : list[CUnionDecl] }
 
-      public name : option[string];
+      public name : option[CName];
 
-      public Name : string
+      public Name : CName
       {
         [Memoize]
         get
@@ -348,7 +362,7 @@ $<#struct $Name
       | Array
       | Function
 
-      name : string;
+      name : CName;
       init : option[ CConstExpr ]
   }
 
@@ -577,7 +591,7 @@ $<#if ($c)
   public variant CExpr
   {
       | Compound { expr : list[CExpr]} // (a,b,c)
-      | Id { name : string }
+      | Id { name : CName }
       | Constant { lit : CConstant }
       | Operator { op : COper }
 
@@ -589,8 +603,8 @@ $<#if ($c)
 
   public variant PreprocessorExpr
   {
-    | Include {file : string;}
-    | Define {parms : list[string]; body : string;}
+    | Include {file : CName;}
+    | Define {parms : list[CName]; body : CName;}
     | If
     | Else
     | Ifdef

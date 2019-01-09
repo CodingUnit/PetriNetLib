@@ -139,10 +139,13 @@ namespace PetriNetLib
     
     CreateColourSet(col : ColourSet) : ClassMember.TypeDeclaration
     {
-      | ColourSet(n, Colour.Alias(new_name))  => def name = Macros.UseSiteSymbol(n);
-                                                 def mods = AttributesAndModifiers(NemerleModifiers.Private, []);
-                                                 def al = TopDeclaration.Alias(name, mods, Typarms.Empty, <[ $(new_name : usesite) ]>);
-                                                 al |> ClassMember.TypeDeclaration.TypeDeclaration;
+      | ColourSet(n, Colour.Alias(new_name))  => if (model.colour_sets[new_name].type.IsComplex)
+                                                 {
+                                                   def name = Macros.UseSiteSymbol(n);
+                                                   def mods = AttributesAndModifiers(NemerleModifiers.Private, []);
+                                                   def al = TopDeclaration.Alias(name, mods, Typarms.Empty, <[ $(new_name : usesite) ]>);
+                                                   al |> ClassMember.TypeDeclaration.TypeDeclaration;
+                                                 } else null
       | ColourSet(n, Colour.Record(vals))     => def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
                                                  def fields = fields.Map((n, t) => <[decl: $(n : usesite) : $t]>);
                                                  <[decl: [Record] class $(n : usesite)

@@ -6,6 +6,8 @@ using Nemerle.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cpp.Grammar.CppGrammarParseTree;
+using Nitra;
 
 namespace CppParserPrinter
 {
@@ -14,7 +16,49 @@ namespace CppParserPrinter
   /// </summary>
   public class Parser
   {
+    parserHost : ParseSession;
+    msg : Nitra.ProjectSystem.CompilerMessageList;
     
+    NameToCName(n : Name) : CName
+    {
+      | Name.Id(Identifier = n) => CName.String(n.GetText())
+    }
     
+    ConvertTree(decl : Declaration) : CTree
+    {
+      | Declaration.TypeDecl(TypeDecl = td) => 
+         match (td)
+         {
+           | TypeDecl.ClassDecl(ClassDecl = ClassDecl(Name = n, BaseOptData = b, BodyData = body)) =>
+              def decls = [];
+              def b = [];
+              def name = NameToCName(n);
+              CTree.Type(CComplexType.Class(Some(name), b, decls))
+         }
+        //
+    }
+    
+    public Parse(text : string) : CTree
+    {
+      if (string.IsNullOrWhiteSpace(text)) null else
+      {
+        def source = SourceSnapshot(text, null : string);
+        def result = parserHost.Parse(source);//Main.StateMachine(source, parserHost);
+        def ast = result.CreateParseTree();
+        if (result.IsSuccess) 
+        {
+          match (ast)
+          {
+            | Declaration as a => ConvertTree(a);
+            | _                => null
+          }
+        } else 
+        {
+          def msg = msg.GetMessages();
+          null
+          //(null, msg.GetMessages().NToList())
+        }
+      }
+    }
   }
 }

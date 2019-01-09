@@ -21,8 +21,8 @@ namespace PetriNetModel
                                                         
     public override Equals(obj : object) : bool
     {
-      | Index as o => o.num == num
-      | _          => false
+      | o is Index[T] => o.num == num
+      | _             => false
     }
                                                         
     public override GetHashCode() : int 
