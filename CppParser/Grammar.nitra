@@ -161,7 +161,7 @@ syntax module CppGrammar
     | Short = "short"
     | Char  = "char"
     | UnsignedChar = "unsigned" sm "char"
-    | Named = IdentifierBody
+    | Named = Name
   }
 
   syntax Statement
@@ -172,10 +172,10 @@ syntax module CppGrammar
 
   syntax TreeDecl
   {
-	/*| Id
-	| Pointer
-	| Array
-	| Function*/
+	  /*| Id
+	  | Pointer
+	  | Array
+	  | Function*/
   }
 
   syntax Qualifier
@@ -210,9 +210,9 @@ syntax module CppGrammar
 
   syntax Name
   {
-	  | Id = Identifier
-	  | Qualified = QualifiedName
-	  | Splicable = '$' Name=Identifier
+	  | Id                 = Identifier
+	  | Qualified          = QualifiedName
+	  | Splicable          = '$' Name=Identifier
     | SplicableQualified = '$' '(' Name=QualifiedName ')'
   }
 

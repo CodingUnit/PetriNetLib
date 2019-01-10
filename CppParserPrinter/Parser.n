@@ -6,6 +6,7 @@ using Nemerle.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cpp.Grammar;
 using Cpp.Grammar.CppGrammarParseTree;
 using Nitra;
 
@@ -24,18 +25,59 @@ namespace CppParserPrinter
       | Name.Id(Identifier = n) => CName.String(n.GetText())
     }
     
+    GetModifier(mod : Modifier) : CMod
+    {
+      | Modifier.Private => CMod.Private()
+      | Protected        => CMod.Protected()
+      | Public           => CMod.Public()
+    }
+    
+    GetDecl(decl : TypeDecl) : CTypeDecl
+    {
+      | TypeDecl.ClassDecl(ClassDecl = ClassDecl(Name = n, BaseOptData = b, BodyData = body)) =>
+           
+               def get_base(b)
+               {
+                 def mod = GetModifier(b.Modifier);
+                 def name = NameToCName(b.BaseClass);
+                 (mod, name) :: []
+               }
+           
+              def decls = body.Map(GetDecl);
+              def b = b.Map(get_base).WithDefault([]);
+              def name = NameToCName(n);
+              CTypeDecl.Type(CComplexType.Class(Some(name), b, decls))
+    }
+    
+    GetSpecifier(spec : Specifier) : CSpec
+    {
+      | Specifier.Typedef  => CSpec.Typedef()
+      | Specifier.Const    => CSpec.Const()
+      | Specifier.Inline   => CSpec.Inline()
+      | Specifier.Extern   => CSpec.Extern()
+      | Specifier.Static   => CSpec.Static()
+      | Specifier.Virtual  => CSpec.Virtual()
+      | Specifier.Volatile => CSpec.Volatile()
+      | _                  => null
+    }
+    
+    GetType(t : CppGrammarParseTree.Type) : CType
+    {
+      | Type.Named(Name = n) => CType.Class(NameToCName(n))
+    }
+    
     ConvertTree(decl : Declaration) : CTree
     {
       | Declaration.TypeDecl(TypeDecl = td) => 
-         match (td)
-         {
-           | TypeDecl.ClassDecl(ClassDecl = ClassDecl(Name = n, BaseOptData = b, BodyData = body)) =>
-              def decls = [];
-              def b = [];
-              def name = NameToCName(n);
-              CTree.Type(CComplexType.Class(Some(name), b, decls))
-         }
-        //
+          match (GetDecl(td))
+          {
+            | CTypeDecl.Type(c) => c |> CTree.Type
+          }
+      | Declaration.Decl(Decl = Decl(SpecifiersData = s, Type = t, DeclsData = d)) => 
+      def spec = s.Map(GetSpecifier);
+      def type = t |> GetType;
+      def decls = [];
+      CTree.Decl(spec, type, decls)
     }
     
     public Parse(text : string) : CTree

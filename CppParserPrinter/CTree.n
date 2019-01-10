@@ -39,6 +39,8 @@ namespace CppParserPrinter
   {
     | String {str : string}
     | Splicable {str : string}
+    
+    
   }
   
   public variant CTree : IPrintable
@@ -154,8 +156,8 @@ $<#$spec~$name()
   {
       | Void
       //| ComplexTypeDecl { type : CComplexType; }
-      | Class { name : string; }
-      | Enum  { name : string; }
+      | Class { name : CName; }
+      | Enum  { name : CName; }
       | Short
       //| Byte
       | Char
@@ -180,8 +182,8 @@ $<#$spec~$name()
         {
           | Void                 => "void"
           //| ComplexTypeDecl(t) =>  { type : CComplexType; }
-          | Class(n)             => n
-          | Enum(n)              => n
+          | Class(n)             => $"$n"
+          | Enum(n)              => $"$n"
           | Short                => "short"
           //| Byte     
           | Char                 => "char"
@@ -279,7 +281,7 @@ $<#$spec~$name()
    [Record]
   public variant CComplexType : IPrintable
   {
-      | Class { base_class : list[CMod * Class]; decls : list[CTypeDecl]; }
+      | Class { base_class : list[CMod * CName]; decls : list[CTypeDecl]; }
       | Struct { decls : list[CTypeDecl]; }
       | Enum { decls : list[CEnumDecl]}
       | Union { decls : list[CUnionDecl] }

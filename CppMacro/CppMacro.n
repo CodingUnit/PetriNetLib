@@ -1,0 +1,33 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Compiler;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Nemerle.Compiler.Parsetree;
+using CppParserPrinter;
+
+namespace CppMacro
+{
+  public macro CppMacro(expr)
+  {
+    CppMacroUtil.Process(expr)
+  }
+  
+  module CppMacroUtil
+  {
+    Lift(tree : CTree) : PExpr
+    {
+      <[]>
+    }
+    
+    public Process(expr : PExpr) : PExpr
+    {
+      | <[ $(str : string)]> => def tree = Parser.Parse(str);
+                                Lift(tree)
+    }
+  }
+}
