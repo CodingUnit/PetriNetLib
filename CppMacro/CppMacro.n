@@ -12,22 +12,102 @@ using CppParserPrinter;
 
 namespace CppMacro
 {
-  public macro CppMacro(expr)
+  public macro CppMacro(expr, flags) syntax("cpp", "(", expr, ")")
   {
-    CppMacroUtil.Process(expr)
+    CppMacroUtil.Process(expr, flags)
   }
   
   module CppMacroUtil
   {
     Lift(tree : CTree) : PExpr
     {
+      | CTree.Type(c) => <[ CTree.Type($(Lift(c)))]>
+      | CTree.Decl(s, t, d) => 
+          def spec = s.Map(Lift);
+          def decls = d.Map(Lift);
+          <[ CTree.Decl([..$spec], $(Lift(t)), [..$decls]) ]>
+    }
+    
+    Lift(spec : CSpec) : PExpr
+    {
+      | CSpec.Typedef => <[ CSpec.Typedef() ]>
+    }
+    
+    Lift(tree : CConstExpr) : PExpr
+    {
       <[]>
     }
     
-    public Process(expr : PExpr) : PExpr
+    Lift(tree : CComplexType) : PExpr
     {
-      | <[ $(str : string)]> => def tree = Parser.Parse(str);
-                                Lift(tree)
+      | CComplexType.Class(b, d) as c => 
+          def bas = b.Map((m, n) => <[ ($(Lift(m)), $(Lift(n))) ]>);
+          def decls = d.Map(x => <[ $(Lift(x))]> );
+          <[ CComplexType.Class($(Lift(c.Name)), [..$bas], [..$decls]) ]>
+    }
+    
+    Lift(name : CName) : PExpr
+    {
+      | CName.String(s)    => <[ CName.String($(s : string))]>
+      | CName.Splicable(s) => <[ $(s : string) ]>
+    }
+    
+    Lift(mod : CMod) : PExpr
+    {
+      | CMod.Private   => <[ CMod.Private ]>
+      | CMod.Public    => <[ CMod.Public ]>
+      | CMod.Protected => <[ CMod.Protected ]>
+    }
+    
+    Lift(tree : CType) : PExpr
+    {
+      | CType.Class(n) => <[ $(Lift(n))]>
+    }
+    
+    Lift(tree : CDecl) : PExpr
+    {
+      def name = <[ $(Lift(tree.name)) ]>;
+      def init = tree.init.Map(x => <[ $(Lift(x))]>) |> Lift;
+      match (tree)
+      {
+        | CDecl.Function(p) => 
+        
+            def get_parms(t, n)
+            {
+              def n = n.Map(Lift) |> Lift;
+              <[ ($(Lift(t)), $n)]>
+            }
+            
+            def parms = p.Map(get_parms);
+            <[ CDecl.Function($name, $init, [..$parms]) ]>
+        | CDecl.Id       => <[ CDecl.Id($name, $init) ]>
+        | CDecl.Array(s) => 
+            def s = s.Map(x => <[ $(x : int)]>) |> Lift;
+            <[ CDecl.Array($name, $init, $s) ]>
+      }
+    }
+    
+    Lift(opt : option[PExpr]) : PExpr
+    {
+      | Some(o) => <[ Some($o)]>
+      | None()  => <[ None() ]>
+    }
+    
+    Lift(tree : CTypeDecl) : PExpr
+    {
+      | CTypeDecl.Type(c) => <[ $(Lift(c))]>
+      | CTypeDecl.Decl(d) => <[ $(Lift(d))]>
+    }
+    
+    public Process(expr : PExpr, flags : PExpr) : PExpr
+    {
+      match (expr)
+      {
+        | <[ $(str : string) ]> => if (!(flags is <[]>)) assert2(false) else ();
+                                   def parser = Parser();
+                                   def tree = parser.Parse(str);
+                                   Lift(tree)
+      }
     }
   }
 }

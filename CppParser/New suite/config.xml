@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-16"?>
+<Config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <ProjectSupport Caption="CPP" TypeFullName="Cpp.Grammar.Typing.ProjectSupport" Path="D:\programs\opensource\PetriNetLib\CppParser\bin\Debug\CppParser.dll" />
+  <Languages>
+    <Language Name="Cplusplus" Path="D:\programs\opensource\PetriNetLib\CppParser\bin\Debug\CppParser.dll">
+      <DynamicExtensions />
+    </Language>
+  </Languages>
+  <References />
+</Config>

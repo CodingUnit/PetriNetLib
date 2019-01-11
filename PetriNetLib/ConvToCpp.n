@@ -15,6 +15,7 @@ using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CppParserPrinter;
+using CppMacro;
 
 namespace PetriNetLib
 {
@@ -322,7 +323,8 @@ namespace PetriNetLib
                                                  //def al = TopDeclaration.Alias(name, mods, Typarms.Empty, <[ $(new_name : usesite) ]>);
                                                  //al |> ClassMember.TypeDeclaration.TypeDeclaration;
                                                  // cpp("typedef $n $new_name")
-                                                 CTypeDecl.Decl(CTree.Decl([CSpec.Typedef()], CType.Class(n), [CDecl.Id(CName.String(new_name), None())]))
+                                                 cpp("typedef $n $new_name;");
+                                                 //CTypeDecl.Decl(CTree.Decl([CSpec.Typedef()], CType.Class(n), [CDecl.Id(CName.String(new_name), None())]))
       //| ColourSet(n, Colour.Record(vals))     => def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
       //                                           def fields = fields.Map((n, t) => <[decl: $(n : usesite) : $t]>);
       //                                           <[decl: [Record] class $(n : usesite)

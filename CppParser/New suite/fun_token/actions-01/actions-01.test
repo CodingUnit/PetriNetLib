@@ -1,0 +1,7 @@
+﻿fun Chopsticks(ph(i)) = 
+1`cs(i) ++ 1`cs(if i=n then 1 else i+1);
+
+fun Chopsticks2(ph(i)) = 
+val a = 1`cs(i) ++ 1`cs(if i=n then 1 else i+1);
+val b = 1 + fn f ml;
+a

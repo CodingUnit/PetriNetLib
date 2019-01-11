@@ -107,8 +107,8 @@ $<#namespace $name
       | Method { specifier : CSpec; func : CTree.Func; qualifiers : CMethodQualifier; } // method
       | Modifier { mod : CMod; } // public:
       | Decl { var : CTree.Decl }
-      | Constructor {cl : CComplexType.Class;parms : list[CType]; body : CStatement}
-      | Destructor {specifier : CSpec;cl : CComplexType.Class;body : CStatement}
+      | Constructor {cl : CComplexType.Class; parms : list[CType]; body : CStatement}
+      | Destructor {specifier : CSpec; cl : CComplexType.Class; body : CStatement}
       | AssignmentOperator {ret_type : CType; parms : list[CType]; body : CStatement;qualifiers : list[CMethodQualifier];}
       
       public override Print(del : int) : string
@@ -333,7 +333,6 @@ $<#struct $Name
       }
   }
 
-
   public variant CSpec : IPrintable
   {
       | None
@@ -361,11 +360,11 @@ $<#struct $Name
   {
       | Id
       | Pointer
-      | Array
-      | Function
+      | Array {size : option[int];}
+      | Function {parms : list[CType * option[CName]]}
 
-      name : CName;
-      init : option[ CConstExpr ]
+      public name : CName;
+      public init : option[ CConstExpr ]
   }
 
   public class COper

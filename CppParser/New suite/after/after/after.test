@@ -1,0 +1,4 @@
+﻿val four = 8 - 4;
+val n = op + (5, 5);
+fun Mes(s) = 
+PR.mult(1`s,DBM.all() --1`s);

@@ -1,4 +1,4 @@
-﻿language CPNML
+﻿language Cplusplus
 {
   syntax module Cpp.Grammar.CppGrammar start rule Declaration;
   //syntax module Nemerle.Statechart.Grammar.Actions;
@@ -168,14 +168,46 @@ syntax module CppGrammar
   {
   }
 
-  syntax Decl = Specifier* sm Type sm Decls=TreeDecl*;
+  syntax Decl = Specifier* sm Type sm Decls=TreeDecl+ Init? ';'
+  {
+    syntax Init = '=' ConstExpr;
+  }
+
+  syntax ConstExpr
+  {
+    | Int  = IntegerLiteral
+    | Enum = Name
+    | Oper = ReadOnlyOper
+  }
+
+  syntax ReadOnlyOper
+  {
+    | Not    = "!" Expr=ConstExpr
+    | Invert = "~" Expr=ConstExpr
+    | Plus   = "+" Expr=ConstExpr
+    | Minus  = "-" Expr=ConstExpr
+    | Sizeof = "sizeof" "(" Expr=ConstExpr ")"
+    | BinaryOper
+  }
+
+  syntax BinaryOper
+  {
+  }
 
   syntax TreeDecl
   {
-	  /*| Id
-	  | Pointer
-	  | Array
-	  | Function*/
+	  | Id      = Name
+	  | Pointer = '*' Name
+	  | Array   = Name '[' Size=IntegerLiteral? ']'
+	  | Function = Name '(' (Parm; ",")* ')'
+      {
+        syntax Parm = Type Name?;
+      }
+
+  }
+
+  syntax InitConstExpr
+  {
   }
 
   syntax Qualifier
