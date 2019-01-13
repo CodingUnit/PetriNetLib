@@ -196,14 +196,14 @@ syntax module CppGrammar
 
   syntax TreeDecl
   {
-	  | Id      = Name
-	  | Pointer = '*' Name
-	  | Array   = Name '[' Size=IntegerLiteral? ']'
-	  | Function = Name '(' (Parm; ",")* ')'
-      {
-        syntax Parm = Type Name?;
-      }
-
+	| Id       = Name
+	| Pointer  = '*' Name
+	| Array    = Name '[' Size=IntegerLiteral? ']'
+	| FuncDecl = Specifier? sm Name '(' Parms=Parm* ')'
+	{
+		syntax Parm = Type Name?;
+	}
+	//| Func
   }
 
   syntax InitConstExpr
@@ -217,13 +217,13 @@ syntax module CppGrammar
 
   syntax TypeDecl
   {
-	  | StructDecl
+	| StructDecl
     | ClassDecl
-	  | Decl
-	  | Modifier = Modifier ':'
-	  | Constructor = Name=Identifier '(' Parms=Type* ')' nl '{' nl Body=Statement* nl '}'
-	  | Destructor = '~' Name=Identifier '(' ')' nl '{' nl Body=Statement* nl '}'
-	  | AssignmentOp = RetType=Type sm "operator" "=" '(' Parms=Type* ')' sm Qualifier? nl '{' nl Body=Statement* nl '}' 
+	| Decl
+	| Modifier = Modifier ':'
+	| Constructor = Name=Identifier '(' Parms=Type* ')' nl '{' nl Body=Statement* nl '}'
+	| Destructor = '~' Name=Identifier '(' ')' nl '{' nl Body=Statement* nl '}'
+	| AssignmentOp = RetType=Type sm "operator" "=" '(' Parms=Type* ')' sm Qualifier? nl '{' nl Body=Statement* nl '}' 
     | Method = Specifier? sm RetType=Type sm Name=Identifier '(' Parms=Type* ')' sm Qualifier? nl '{' i nl Body=Statement* d nl '}' 
   }
 
@@ -245,17 +245,19 @@ syntax module CppGrammar
 	  | Id                 = Identifier
 	  | Qualified          = QualifiedName
 	  | Splicable          = '$' Name=Identifier
-    | SplicableQualified = '$' '(' Name=QualifiedName ')'
+	  | SplicableQualified = '$' '(' Name=QualifiedName ')'
   }
 
 
-  syntax Func = Specifier? sm RetType=Type sm Name=Identifier '(' Parms=Type* ')' nl '{' nl Body=Statement* nl '}';
-
+  syntax Func = Specifier? sm RetType=Type sm Name=Identifier '(' Parms=Parm* ')' nl '{' nl Body=Statement* nl '}'
+  {
+	syntax Parm = Type Name;
+  }
 //RetType = CType; name : CName; parms : list[CType]; body : CStatement}
   syntax QuotDecl
   {
     | TypeDecl
-    | Func
+    //| Func
   }
 
   syntax Declaration

@@ -323,7 +323,7 @@ namespace PetriNetLib
                                                  //def al = TopDeclaration.Alias(name, mods, Typarms.Empty, <[ $(new_name : usesite) ]>);
                                                  //al |> ClassMember.TypeDeclaration.TypeDeclaration;
                                                  // cpp("typedef $n $new_name")
-                                                 cpp("typedef $n $new_name;");
+                                                 cpp("decl: typedef $n $new_name;");
                                                  //CTypeDecl.Decl(CTree.Decl([CSpec.Typedef()], CType.Class(n), [CDecl.Id(CName.String(new_name), None())]))
       //| ColourSet(n, Colour.Record(vals))     => def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
       //                                           def fields = fields.Map((n, t) => <[decl: $(n : usesite) : $t]>);

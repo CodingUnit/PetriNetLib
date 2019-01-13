@@ -12,15 +12,20 @@ using CppParserPrinter;
 
 namespace CppMacro
 {
-  public macro CppMacro(expr, flags) syntax("cpp", "(", expr, ")")
+  public macro CppMacro(expr) syntax("cpp", "(", expr, ")")
   {
-    CppMacroUtil.Process(expr, flags)
+    CppMacroUtil.Process(expr)
   }
   
   module CppMacroUtil
   {
     Lift(tree : CTree) : PExpr
     {
+      | CTree.Quotation(q) =>
+         match (q)
+         {
+           | CQuotation.TypeDecl(t) => Lift(t)
+         }
       | CTree.Type(c) => <[ CTree.Type($(Lift(c)))]>
       | CTree.Decl(s, t, d) => 
           def spec = s.Map(Lift);
@@ -49,7 +54,7 @@ namespace CppMacro
     Lift(name : CName) : PExpr
     {
       | CName.String(s)    => <[ CName.String($(s : string))]>
-      | CName.Splicable(s) => <[ $(s : string) ]>
+      | CName.Splicable(s) => <[ CName.String($(s : usesite)) ]>
     }
     
     Lift(mod : CMod) : PExpr
@@ -61,7 +66,7 @@ namespace CppMacro
     
     Lift(tree : CType) : PExpr
     {
-      | CType.Class(n) => <[ $(Lift(n))]>
+      | CType.Class(n) => <[ CType.Class($(Lift(n)))]>
     }
     
     Lift(tree : CDecl) : PExpr
@@ -95,15 +100,16 @@ namespace CppMacro
     
     Lift(tree : CTypeDecl) : PExpr
     {
-      | CTypeDecl.Type(c) => <[ $(Lift(c))]>
-      | CTypeDecl.Decl(d) => <[ $(Lift(d))]>
+      | CTypeDecl.Type(c) => <[ CTypeDecl.Type($(Lift(c)))]>
+      | CTypeDecl.Decl(d) => <[ CTypeDecl.Decl($(Lift(d)))]>
     }
     
-    public Process(expr : PExpr, flags : PExpr) : PExpr
+    public Process(expr : PExpr) : PExpr
     {
       match (expr)
       {
-        | <[ $(str : string) ]> => if (!(flags is <[]>)) assert2(false) else ();
+        | <[ (..$e) ]>            => assert2(false);Process(e.Head)// e
+        | <[ $(str : string) ]> => //if (!(flags is <[]>)) assert2(false) else ();
                                    def parser = Parser();
                                    def tree = parser.Parse(str);
                                    Lift(tree)

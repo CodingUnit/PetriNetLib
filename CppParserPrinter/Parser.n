@@ -27,8 +27,8 @@ namespace CppParserPrinter
     
     NameToCName(n : Name) : CName
     {
-      | Name.Id(Identifier = n)        => CName.String(n.GetText())
-      | Name.Splicable(Name = n)       => CName.Splicable(n.GetText())
+      | Name.Id(Identifier = n)        => CName.String(n.IdentifierBodyData)
+      | Name.Splicable(Name = n)       => CName.Splicable(n.IdentifierBodyData)
     }
     
     GetModifier(mod : Modifier) : CMod
@@ -53,6 +53,7 @@ namespace CppParserPrinter
               def b = b.Map(get_base).WithDefault([]);
               def name = NameToCName(n);
               CTypeDecl.Type(CComplexType.Class(Some(name), b, decls))
+              
       | TypeDecl.Decl(Decl = Decl(SpecifiersData = s, Type = t, Decls = d, InitOptData = i)) => 
           def spec = s.Map(GetSpecifier);
           def type = GetType(t);
@@ -84,7 +85,7 @@ namespace CppParserPrinter
       {
         | TreeDecl.Id(Name = n)                  => CDecl.Id(n |> NameToCName, init)
         | TreeDecl.Array(Name = n, SizeData = s) => CDecl.Array(n |> NameToCName, init, s.Map(int.Parse))
-        | TreeDecl.Function(Name = n, ParmsData = (p, _)) => 
+        | TreeDecl.FuncDecl(Name = n, ParmsData = p) => 
             def parms = p.Map(x => (x.Type |> GetType, x.NameOptData.Map(NameToCName)));
             CDecl.Function(n |> NameToCName, init, parms)
         | TreeDecl.Pointer(Name = n) => CDecl.Pointer(n |> NameToCName, init)
@@ -99,7 +100,9 @@ namespace CppParserPrinter
     
     ConvertTree(decl : Declaration) : CTree
     {
+      | Declaration.QuotDecl(QuotDecl = QuotDecl.TypeDecl(TypeDecl = t)) => CTree.Quotation(CQuotation.TypeDecl(GetTypeDecl(t)))
       | Declaration.TypeDecl(TypeDecl = td) => 
+      
           match (GetTypeDecl(td))
           {
             | CTypeDecl.Type(c) => c |> CTree.Type

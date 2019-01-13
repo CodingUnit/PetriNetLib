@@ -32,6 +32,8 @@ namespace CppParserPrinter
   {
     | Type {type : CComplexType} 
     | Func {func : CTree.Func}
+    | Decl { decl : CDecl }
+    | TypeDecl { decl : CTypeDecl }
     | Statement {statement : CStatement}
   }
   
