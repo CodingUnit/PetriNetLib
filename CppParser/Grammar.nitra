@@ -248,10 +248,10 @@ syntax module CppGrammar
 
   syntax Name
   {
-	  | Id                 = Identifier
-	  | Qualified          = QualifiedName
-    | SplicableList      = "..$" Name=Identifier
-	  | Splicable          = '$' Name=Identifier
+    | Id                 = Identifier
+    | Qualified          = QualifiedName
+    //| SplicableList      = "..$" Name=Identifier
+    | Splicable          = '$' Name=Identifier
     | SplicableType      = "$" "(" Name=Identifier ":" "type" ")" 
 	  | SplicableQualified = '$' '(' Name=QualifiedName ')'
   }

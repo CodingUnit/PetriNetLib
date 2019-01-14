@@ -42,7 +42,7 @@ namespace CppParserPrinter
   {
     | String {str : string}
     | Splicable {str : string}
-    | SplicableList {str : string}
+    //| SplicableList {str : string}
     | SplicableType {str : string}
   }
 

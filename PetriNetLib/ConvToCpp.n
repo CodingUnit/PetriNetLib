@@ -52,7 +52,7 @@ namespace PetriNetLib
       | Unit(None())  => cpp("type: Unit")
       | Unit(Some(t)) => cpp("type: $t")
       | Product(vals) => def vals = vals.Map(TypeFromStr);
-                         cpp(<#type: Tuple2<..$vals>#>)
+                         cpp(<#type: Tuple2<$vals>#>)
                          //               <[ (..$vals) ]>
       | List(t, _)    => def inner = t |> TypeFromStr;
                          cpp("type: $(inner : type) *")//<[ list[$inner]]>
@@ -208,9 +208,10 @@ namespace PetriNetLib
         | TokenQueue          => <[ TokenQueue() ]>
         | TimedSimpleMultiset => <[ TimedHeap() ]>
       }
-      if (place.IsTimed)
-      <[decl: $(name : usesite) : PetriNetModel.TimedPlace.[$type] = PetriNetModel.TimedPlace($(name : string), $dest_cont)]> else
-      <[decl: $(name : usesite) : PetriNetModel.Place.[$type] = PetriNetModel.Place($(name : string), $dest_cont)]>
+      null
+      //if (place.IsTimed)
+      //<[decl: $(name : usesite) : PetriNetModel.TimedPlace.[$type] = PetriNetModel.TimedPlace($(name : string), $dest_cont)]> else
+      //<[decl: $(name : usesite) : PetriNetModel.Place.[$type] = PetriNetModel.Place($(name : string), $dest_cont)]>
     }
     
     
@@ -318,11 +319,11 @@ namespace PetriNetLib
                                                  cpp("decl: typedef $n $new_name;");
                                                  //CTypeDecl.Decl(CTree.Decl([CSpec.Typedef()], CType.Class(n), [CDecl.Id(CName.String(new_name), None())]))
       | ColourSet(n, Colour.Record(vals))     => def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
-                                                 def fields = fields.Map((n, t) => <[decl: $(n : usesite) : $t]>);
+                                                 def fields = fields.Map((n, t) => cpp(("decl: $(t : type) $n;")));
                                                  cpp(<#struct $n
                                                       {
-                                                        ..$fields
-                                                      }#>)
+                                                        $fields
+                                                      };#>)
                                                  //<[decl: [Record] class $(n : usesite)
                                                  //        {
                                                  //          ..$fields

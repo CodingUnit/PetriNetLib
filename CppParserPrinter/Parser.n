@@ -29,7 +29,7 @@ namespace CppParserPrinter
     {
       | Name.Id(Identifier = n)        => CName.String(n.IdentifierBodyData)
       | Name.Splicable(Name = n)       => CName.Splicable(n.IdentifierBodyData)
-      | Name.SplicableList(Name = n)   => CName.SplicableList(n.IdentifierBodyData)
+      //| Name.SplicableList(Name = n)   => CName.SplicableList(n.IdentifierBodyData)
       | Name.SplicableType(Name = n)   => CName.SplicableType(n.IdentifierBodyData)
     }
     

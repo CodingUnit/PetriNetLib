@@ -73,6 +73,7 @@ namespace CppMacro
     
     Lift(tree : CType) : PExpr
     {
+      | CType.Class(CName.SplicableType(t)) => <[ $(t : usesite).type ]>
       | CType.Class(n) => <[ CType.Class($(Lift(n)))]>
       | CType.Char     => <[ CType.Char() ]>
       | CType.Int      => <[ CType.Int() ]>
