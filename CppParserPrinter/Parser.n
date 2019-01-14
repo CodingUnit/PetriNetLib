@@ -29,6 +29,8 @@ namespace CppParserPrinter
     {
       | Name.Id(Identifier = n)        => CName.String(n.IdentifierBodyData)
       | Name.Splicable(Name = n)       => CName.Splicable(n.IdentifierBodyData)
+      | Name.SplicableList(Name = n)   => CName.SplicableList(n.IdentifierBodyData)
+      | Name.SplicableType(Name = n)   => CName.SplicableType(n.IdentifierBodyData)
     }
     
     GetModifier(mod : Modifier) : CMod
@@ -77,6 +79,18 @@ namespace CppParserPrinter
     GetType(t : CppGrammarParseTree.Type) : CType
     {
       | Type.Named(Name = n) => CType.Class(NameToCName(n))
+      | Type.Short           => CType.Short()
+      | Type.Int             => CType.Int()
+      | Type.Long            => CType.Long()
+      | Type.UnsignedType(Type = t) => match (t |> GetType)
+                                        {
+                                          | CType.Int => CType.UInt()
+                                          | CType.Char => CType.UChar()
+                                          | CType.Long => CType.ULong()
+                                          | x          => x
+                                        }
+      | Type.SignedType(Type = t) => t |> GetType
+      | Type.Char            => CType.Char()
     }
     
     GetDecl(t : TreeDecl, init : option[CConstExpr]) : CDecl
@@ -100,6 +114,11 @@ namespace CppParserPrinter
     
     ConvertTree(decl : Declaration) : CTree
     {
+      | Declaration.QuotType(QuotType = QuotType(QType = TypePtr(SpecifierOptData = s, Type = t))) => 
+          def spec = s.Map(x => [GetSpecifier(x)]).WithDefault([]);
+          def type = GetType(t) |> CType.Pointer(_, []) |> CTree.TypeDecl(spec, _);
+          CTree.Quotation(CQuotation.Type(type))
+      | Declaration.QuotType(QuotType = QuotType(QType = Type(Type = t))) => CTree.Quotation(CQuotation.Type(CTree.TypeDecl([], t |> GetType)))
       | Declaration.QuotDecl(QuotDecl = QuotDecl.TypeDecl(TypeDecl = t)) => CTree.Quotation(CQuotation.TypeDecl(GetTypeDecl(t)))
       | Declaration.TypeDecl(TypeDecl = td) => 
       

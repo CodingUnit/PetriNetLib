@@ -45,44 +45,36 @@ namespace PetriNetLib
       this.converter = proc.Converter;
     }
     
-    GetTypeExpr(p : Colour) : PExpr
+    GetTypeExpr(p : Colour) : CTree.TypeDecl
     {
-      | Colour.Simple(type) => 
-              match (type)
-              {
-                | "string" => <[ string ]>
-                | "int"    => <[ int ]>
-                | "intinf" => <[ IntInf ]>
-                | "real"   => <[ double ]>
-                | "time"   => <[ long ]>
-                | "bool"   => <[ bool ]>
-              }
-        | Integer       => <[ int ]>
-        | Unit(None())  => <[ Unit ]>
-        | Unit(Some(t)) => <[ $(t : usesite) ]>
-        | Product(vals) => def vals = vals.Map(x => <[ $(TypeFromStr(x)) ]>);
-                                         <[ (..$vals) ]>
-        | List(t, _)    => def inner = t |> TypeFromStr;
-                                         <[ list[$inner]]>
+      | Colour.Simple(type) => TypeFromStr(type)
+      | Integer       => cpp("type: int")
+      | Unit(None())  => cpp("type: Unit")
+      | Unit(Some(t)) => cpp("type: $t")
+      | Product(vals) => def vals = vals.Map(TypeFromStr);
+                         cpp(<#type: Tuple2<..$vals>#>)
+                         //               <[ (..$vals) ]>
+      | List(t, _)    => def inner = t |> TypeFromStr;
+                         cpp("type: $(inner : type) *")//<[ list[$inner]]>
     }
     
-    GetTypeExpr(p : ColourSet) : PExpr
+    GetTypeExpr(p : ColourSet) : CTree.TypeDecl
     {
         | ColourSet(n, Index)
-        | ColourSet(n, Enum)          => <[ $(n : usesite) ]>
+        | ColourSet(n, Enum)          => cpp("type: $n")//<[ $(n : usesite) ]>
         | ColourSet(_, Timed(p))
         | ColourSet(_, p)             => GetTypeExpr(p)
     }
       
-    TypeFromStr(str : string) : PExpr
+    TypeFromStr(str : string) : CTree.TypeDecl
     {
-      | "string" => <[ string ]>
-      | "int"    => <[ int ]>
-      | "intinf" => <[ IntInf ]>
-      | "real"   => <[ double ]>
-      | "time"   => <[ long ]>
-      | "bool"   => <[ bool ]>
-      | "unit"   => <[ Unit ]>
+      | "string" => cpp("type: char *")
+      | "int"    => cpp("type: int")
+      | "intinf" => cpp("type: int")
+      | "real"   => cpp("type: float")
+      | "time"   => cpp("type: int")
+      | "bool"   => cpp("type: bool")
+      | "unit"   => cpp("type: Unit")
       | str      => proc.colour_sets[str] |> GetTypeExpr
       
     }
@@ -325,13 +317,17 @@ namespace PetriNetLib
                                                  // cpp("typedef $n $new_name")
                                                  cpp("decl: typedef $n $new_name;");
                                                  //CTypeDecl.Decl(CTree.Decl([CSpec.Typedef()], CType.Class(n), [CDecl.Id(CName.String(new_name), None())]))
-      //| ColourSet(n, Colour.Record(vals))     => def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
-      //                                           def fields = fields.Map((n, t) => <[decl: $(n : usesite) : $t]>);
-      //                                           <[decl: [Record] class $(n : usesite)
-      //                                                   {
-      //                                                     ..$fields
-      //                                                   }
-      //                                           ]>
+      | ColourSet(n, Colour.Record(vals))     => def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
+                                                 def fields = fields.Map((n, t) => <[decl: $(n : usesite) : $t]>);
+                                                 cpp(<#struct $n
+                                                      {
+                                                        ..$fields
+                                                      }#>)
+                                                 //<[decl: [Record] class $(n : usesite)
+                                                 //        {
+                                                 //          ..$fields
+                                                 //        }
+                                                 //]>
       //| ColourSet(n, Colour.Index(mn, mx, _i)) => def eval(m)
       //                                           {
       //                                              def expr = converter.ParseML(m);

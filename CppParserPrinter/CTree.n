@@ -16,7 +16,7 @@ namespace CppParserPrinter
     | Private
     | Public
     | Protected
-    
+
     public override ToString() : string
     {
       match (this)
@@ -30,21 +30,22 @@ namespace CppParserPrinter
 
   public variant CQuotation
   {
-    | Type {type : CComplexType} 
+    | ComplexType {type : CComplexType}
     | Func {func : CTree.Func}
     | Decl { decl : CDecl }
     | TypeDecl { decl : CTypeDecl }
+    | Type {type : CTree.TypeDecl}
     | Statement {statement : CStatement}
   }
-  
+
   public variant CName
   {
     | String {str : string}
     | Splicable {str : string}
-    
-    
+    | SplicableList {str : string}
+    | SplicableType {str : string}
   }
-  
+
   public variant CTree : IPrintable
   {
       | Compound {decls : list[CTree] }
@@ -52,26 +53,27 @@ namespace CppParserPrinter
       | Type { type : CComplexType;}
       | Func { ret_type : CType; name : CName; parms : list[CType]; body : CStatement}
       | Decl { specifiers : list[CSpec]; type : CType; decls : list[CDecl] }
+      | TypeDecl {specifiers : list[CSpec]; type : CType; }
       | Quotation { quot : CQuotation;}
-      
+
       public override Print(del : int) : string
       {
         "this" |> Delim(_, del)
       }
-      
+
       public override ToString() : string
       {
         match (this)
         {
           | Decl(spec, type, decls)          => $<#..($spec; " ") $type ..$decls#>.Trim()
           | Type(t)                          => $"$t"
-          | Func(ret, name, parms, body)     => 
+          | Func(ret, name, parms, body)     =>
 $<#$ret $name(..$(parms;", "))
 {
   $body
 }#>
           | Compound(decls)                  => $<#..$(decls;"\n")#>
-          | NameSpace(name, d) => 
+          | NameSpace(name, d) =>
 $<#namespace $name
 {
   $d
@@ -85,12 +87,12 @@ $<#namespace $name
   {
     | None
     | Const
-    
+
     public override Print(del : int) : string
     {
       $"$this" |> Delim(_, del)
     }
-    
+
     public override ToString() : string
     {
       match (this)
@@ -99,9 +101,9 @@ $<#namespace $name
         | Const => "const"
       }
     }
-    
+
   }
-  
+
   // class содержимое
   public variant CTypeDecl : IPrintable
   {
@@ -112,35 +114,35 @@ $<#namespace $name
       | Constructor {cl : CComplexType.Class; parms : list[CType]; body : CStatement}
       | Destructor {specifier : CSpec; cl : CComplexType.Class; body : CStatement}
       | AssignmentOperator {ret_type : CType; parms : list[CType]; body : CStatement;qualifiers : list[CMethodQualifier];}
-      
+
       public override Print(del : int) : string
       {
         $"$this" |> Delim(_, del)
       }
-      
+
       public override ToString() : string
       {
         match (this)
         {
-          | AssignmentOperator(ret, parms, body, qual)         => 
+          | AssignmentOperator(ret, parms, body, qual)         =>
 $<#$ret operator=(..$(parms; ",")) $qual
 {
   $body
 }#>
           | Type(t)                                            => $"$t"
-          | Method(spec, (ret, name, parms, body), qual)       => 
+          | Method(spec, (ret, name, parms, body), qual)       =>
 $<#$spec $ret $name(..$(parms; ", ")) $qual
 {
   $body
 }#>.Trim()
           | Modifier(m)                                        => $"$m:"
           | Decl(v)                                            => $"$v"
-          | Constructor(Class(name = Some(name)), parms, body) => 
+          | Constructor(Class(name = Some(name)), parms, body) =>
 $<#$name(..$(parms; ",")
 {
   $body
 }#>
-          | Destructor(spec, Class(name = Some(name)), body)   => 
+          | Destructor(spec, Class(name = Some(name)), body)   =>
 $<#$spec~$name()
 {
   $body
@@ -177,7 +179,7 @@ $<#$spec~$name()
       | Pointer { type : CType; rank : list[int] }
       | Reference { type : CType }
       | Array { type : CType; rank : list[int]}
-      
+
       public override ToString() : string
       {
         match (this)
@@ -187,7 +189,7 @@ $<#$spec~$name()
           | Class(n)             => $"$n"
           | Enum(n)              => $"$n"
           | Short                => "short"
-          //| Byte     
+          //| Byte
           | Char                 => "char"
           | UShort               => "unsigned short"
           | UChar                => "unsigned char"
@@ -202,7 +204,7 @@ $<#$spec~$name()
           | Reference(t)         => $"$t &"
         }
       }
-      
+
       public override Print(del : int) : string
       {
         ""
@@ -213,7 +215,7 @@ $<#$spec~$name()
   {
       public name : CName;
       public val  : option[CConstExpr];
-      
+
       public override Print(del : int) : string
       {
         ""
@@ -224,57 +226,57 @@ $<#$spec~$name()
   {
       public name : CName;
       public val  : option[CConstExpr];
-      
+
       public override Print(del : int) : string
       {
         ""
       }
   }
 
-  
+
   public abstract class IPrintable
   {
     public Del(del : int) : string
     {
       del |> string(' ', _)
     }
-    
+
     public abstract Print(delim : int) : string
     {
       ""
     }
-    
+
     public Print(printer : IEnumerable[IPrintable], del : int, func : string -> string) : list[string]
     {
         (x => Print(x, del) |> func) |> printer.Map;
     }
-    
+
     public Print(printer : IEnumerable[IPrintable], del : int) : list[string]
     {
         Print(_, del) |> printer.Map;
     }
-    
+
     //public PrintOpt[T](printer : option[T], del : int, func : string -> string) : string where T : IPrintable
     //{
     //    def func = if (func != null) func else x => x;
     //    (x => Print(x, del) |> func) |> printer.MapDefault(_, "");
     //}
-    
+
     public Print(printer : IPrintable, del : int) : string
     {
        printer.Print(del)
     }
-    
+
     public Delim(str : string, del : int) : string
     {
       Del(del) + str |> _.Replace("\n", Del(del))
     }
   }
- 
+
   //class Printer
   //{
   //  public static Delim(del : int) : string {string(' ', del)}
-    
+
   //  public static Print(printer : IPrintable, del : int) : string
   //  {
   //      printer.Print(del)
@@ -304,12 +306,12 @@ $<#$spec~$name()
       //  | CMod.mod_public    => "public"
       //  | CMod.mod_protected => "protected"
       //}
-      
+
       public override Print(delim : int) : string
       {
         Delim($"$this", delim)
       }
- 
+
       public override ToString() : string
       {
         match (this)
@@ -319,14 +321,14 @@ $<#$spec~$name()
                                              | [] => ""
                                              | _  => def b = b.Map((x, y) => $"$x $y");
                                                      $<# : ..$(b; ", ")#>
-                                                 
+
                                            }
 $<#class $Name$base1
 {
   ..$(decls; "\n")
 };#>
-                           
-          | Struct(decls)   => 
+
+          | Struct(decls)   =>
 $<#struct $Name
 {
   ..$(decls; "\n")
@@ -350,7 +352,7 @@ $<#struct $Name
       | Inline
       | Noreturn
       | Virtual
-      
+
       public override Print(del : int) : string
       {
         ""
@@ -441,7 +443,7 @@ $<#struct $Name
 
       left : CExpr;
       right : CExpr;
-      
+
       public override ToString() : string
       {
         match (this)
@@ -493,7 +495,7 @@ $<#struct $Name
       | Char { val : Char }
       | Float { val : double }
       | Sizeof { expr : CExpr }
-      
+
       public override ToString() : string
       {
         match (this)
@@ -525,7 +527,7 @@ $<#struct $Name
       | While { cond : CExpr; body : CStatement }
       | DoWhile { body : CStatement; cond : CExpr }
       | For { init : CInitExpr; cond : option[CExpr]; iter : option[CExpr]; body : CStatement }
-      
+
       public override Print(del : int) : string
       {
         match (this)
@@ -535,26 +537,26 @@ $<#struct $Name
                            $<#$delim{..$(b;"\n")$delim}#>
         }
       }
-      
+
       public override ToString() : string
       {
         match (this)
         {
           | Compound(b) => $<#..$(b;"\n")}#>
-          | BraceStatement(b) => 
+          | BraceStatement(b) =>
 $<#{
   $b
 }#>
           | Expression(e) => $"$e"
           | Continue      => "continue;"
           | Decl(t)       => $"$t"
-          | DoWhile(b, c) => 
+          | DoWhile(b, c) =>
 $<#do
 {
   $b
 } while ($c);
 #>
-          | For(i, c, it, b) => 
+          | For(i, c, it, b) =>
 $<#for ($i; $c; $it)
 {
   $b

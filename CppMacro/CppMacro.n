@@ -24,9 +24,13 @@ namespace CppMacro
       | CTree.Quotation(q) =>
          match (q)
          {
+           | CQuotation.Type(t)     => Lift(t)
            | CQuotation.TypeDecl(t) => Lift(t)
          }
       | CTree.Type(c) => <[ CTree.Type($(Lift(c)))]>
+      | CTree.TypeDecl(s, t) =>
+          def spec = s.Map(Lift);
+          <[ CTree.TypeDecl([..$spec], $(Lift(t))) ]>
       | CTree.Decl(s, t, d) => 
           def spec = s.Map(Lift);
           def decls = d.Map(Lift);
@@ -36,6 +40,7 @@ namespace CppMacro
     Lift(spec : CSpec) : PExpr
     {
       | CSpec.Typedef => <[ CSpec.Typedef() ]>
+      | CSpec.Const   => <[ CSpec.Const() ]>
     }
     
     Lift(tree : CConstExpr) : PExpr
@@ -55,6 +60,8 @@ namespace CppMacro
     {
       | CName.String(s)    => <[ CName.String($(s : string))]>
       | CName.Splicable(s) => <[ CName.String($(s : usesite)) ]>
+      | CName.SplicableType(s) => <[ $(s : usesite) ]>
+      //| CName.SplicableList(s) => <[]>
     }
     
     Lift(mod : CMod) : PExpr
@@ -67,6 +74,17 @@ namespace CppMacro
     Lift(tree : CType) : PExpr
     {
       | CType.Class(n) => <[ CType.Class($(Lift(n)))]>
+      | CType.Char     => <[ CType.Char() ]>
+      | CType.Int      => <[ CType.Int() ]>
+      | CType.Long     => <[ CType.Long() ]>
+      | CType.Short    => <[ CType.Short() ]>
+      | CType.UInt     => <[ CType.UInt() ]>
+      | CType.ULong    => <[ CType.ULong() ]>
+      | CType.UShort   => <[ CType.UShort() ]>
+      | CType.UChar    => <[ CType.UChar() ]>
+      | CType.Pointer(t, r) => 
+          def rank = r.Map(x => <[ $(x : int)]>);
+          <[ CType.Pointer($(Lift(t)), [..$rank])]>
     }
     
     Lift(tree : CDecl) : PExpr
