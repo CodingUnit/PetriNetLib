@@ -114,7 +114,8 @@ $<#namespace $name
       | Constructor {cl : CComplexType.Class; parms : list[CType]; body : CStatement}
       | Destructor {specifier : CSpec; cl : CComplexType.Class; body : CStatement}
       | AssignmentOperator {ret_type : CType; parms : list[CType]; body : CStatement;qualifiers : list[CMethodQualifier];}
-
+      | SplicableMembers {members : string}
+      
       public override Print(del : int) : string
       {
         $"$this" |> Delim(_, del)

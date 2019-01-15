@@ -52,7 +52,7 @@ namespace PetriNetLib
       | Unit(None())  => cpp("type: Unit")
       | Unit(Some(t)) => cpp("type: $t")
       | Product(vals) => def vals = vals.Map(TypeFromStr);
-                         cpp(<#type: Tuple2<$vals>#>)
+                         cpp(<#type: tuple2<$vals>#>)
                          //               <[ (..$vals) ]>
       | List(t, _)    => def inner = t |> TypeFromStr;
                          cpp("type: $(inner : type) *")//<[ list[$inner]]>
@@ -320,7 +320,7 @@ namespace PetriNetLib
                                                  //CTypeDecl.Decl(CTree.Decl([CSpec.Typedef()], CType.Class(n), [CDecl.Id(CName.String(new_name), None())]))
       | ColourSet(n, Colour.Record(vals))     => def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
                                                  def fields = fields.Map((n, t) => cpp(("decl: $(t : type) $n;")));
-                                                 cpp(<#struct $n
+                                                 cpp(<#decl: struct $n
                                                       {
                                                         $fields
                                                       };#>)
@@ -329,48 +329,51 @@ namespace PetriNetLib
                                                  //          ..$fields
                                                  //        }
                                                  //]>
-      //| ColourSet(n, Colour.Index(mn, mx, _i)) => def eval(m)
-      //                                           {
-      //                                              def expr = converter.ParseML(m);
-      //                                              match (expr)
-      //                                              {
-      //                                                | <[$(n : int)]>  => n
-      //                                                | <[$(name : usesite) ]> => 
-      //                                                                     def match_var(x)
-      //                                                                     {
-      //                                                                       | <[ def $(n : usesite) = $_]> => n == name 
-      //                                                                       | _                            => false
-      //                                                                     }
+      | ColourSet(n, Colour.Index(mn, mx, _i)) => def eval(m)
+                                                 {
+                                                    def expr = converter.ParseML(m);
+                                                    match (expr)
+                                                    {
+                                                      | <[$(n : int)]>  => n
+                                                      | <[$(name : usesite) ]> => 
+                                                                           def match_var(x)
+                                                                           {
+                                                                             | <[ def $(n : usesite) = $_]> => n == name 
+                                                                             | _                            => false
+                                                                           }
                                                                            
-      //                                                                     match (model.ml_decls.Find(match_var))
-      //                                                                     {
-      //                                                                       | Some(<[ def $(_ : usesite) = $(v : int)]>) => v
-      //                                                                       | _                                  => throw InvalidOperationException()
-      //                                                                     }
-      //                                              }
-      //                                           }
-      //                                           def mn = mn |> eval;
-      //                                           def mx = mx |> eval;
+                                                                           match (model.ml_decls.Find(match_var))
+                                                                           {
+                                                                             | Some(<[ def $(_ : usesite) = $(v : int)]>) => v
+                                                                             | _                                  => throw InvalidOperationException()
+                                                                           }
+                                                    }
+                                                 }
+                                                 def mn = mn |> eval;
+                                                 def mx = mx |> eval;
                                                  
                                                      
-      //                                            <[decl:
-      //                                                class $(n : usesite) : Index[$(n : usesite)]
-      //                                                {
-      //                                                  public this(num : int)
-      //                                                  {
-      //                                                    base($(mn : int), $(mx : int), num)
-      //                                                  }
+                                                  cpp(<#decl:
+                                                      class $n : public index<$n>
+                                                      {
+                                                        public:
+                                                          
+                                                        public $n(int num)
+                                                        {
+                                                          base($mn, $mx, num)
+                                                        }
                                                         
-      //                                                  public override Name() : string {$n}
-      //                                                  public override Create(num : int) : $(n : usesite) {$(n : usesite)(num)}
-      //                                                  static Instance : $(n : usesite) = $(n : usesite)(0);
+                                                        char *Name() {return $n;}
+                                                        $(n : usesite) Create(num : int) {return $n(num)}
                                                         
-      //                                                  public static all() : IEnumerable[$(n : usesite)]
-      //                                                  {
-      //                                                    Instance.all_impl
-      //                                                  }
-      //                                                }
-      //                                               ]>
+                                                        static $n Instance = $n(0);
+                                                        
+                                                        static Tokens<$n> all()
+                                                        {
+                                                          return Instance.all_impl;
+                                                        }
+                                                      };
+                                                     #>)
       //| ColourSet(n, Colour.Enum(vals)) => def vals = vals.Map(x => <[decl: | $(x : usesite) ]>);
       //                                     <[decl: enum $(n : usesite)
       //                                     {

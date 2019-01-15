@@ -40,29 +40,41 @@ namespace CppParserPrinter
       | Public           => CMod.Public()
     }
     
+    GetTypeDecl(decl : StructTypeDecl) : CTypeDecl
+    {
+      | StructTypeDecl.SplicableMembers(SplicableMembers = SplicableMembers(Name = n)) => CTypeDecl.SplicableMembers(n.IdentifierBodyData)
+      | StructTypeDecl.StructDecl(StructDecl = d) => GetTypeDecl(d)
+      | StructTypeDecl.Decl(Decl = d)             => d |> GetDecl |> CTypeDecl.Decl
+    }
+    
+    GetTypeDecl(decl : StructDecl) : CTypeDecl
+    {
+       def decls = decl.BodyData.Map(GetTypeDecl);
+       def name  = NameToCName(decl.Name);
+       CTypeDecl.Type(CComplexType.Struct(Some(name), decls))
+    }
+    
     GetTypeDecl(decl : TypeDecl) : CTypeDecl
     {
+      | TypeDecl.SplicableMembers(SplicableMembers = SplicableMembers(Name = n)) => CTypeDecl.SplicableMembers(n.IdentifierBodyData)
+      | TypeDecl.StructDecl(StructDecl = s) => GetTypeDecl(s)
       | TypeDecl.ClassDecl(ClassDecl = ClassDecl(Name = n, BaseOptData = b, BodyData = body)) =>
            
-               def get_base(b)
-               {
-                 def mod = GetModifier(b.Modifier);
-                 def name = NameToCName(b.BaseClass);
-                 (mod, name) :: []
-               }
+          def get_base(b)
+          {
+            def mod = GetModifier(b.Modifier);
+            def name = NameToCName(b.BaseClass);
+            (mod, name) :: []
+          }
            
-              def decls = body.Map(GetTypeDecl);
-              def b = b.Map(get_base).WithDefault([]);
-              def name = NameToCName(n);
-              CTypeDecl.Type(CComplexType.Class(Some(name), b, decls))
+          def decls = body.Map(GetTypeDecl);
+          def b = b.Map(get_base).WithDefault([]);
+          def name = NameToCName(n);
+          CTypeDecl.Type(CComplexType.Class(Some(name), b, decls))
               
-      | TypeDecl.Decl(Decl = Decl(SpecifiersData = s, Type = t, Decls = d, InitOptData = i)) => 
-          def spec = s.Map(GetSpecifier);
-          def type = GetType(t);
-          def init = i.Map(x => x.ConstExpr |> GetConstExpr);
-          def decls = d.Map(x => GetDecl(x, init));
-          CTypeDecl.Decl(CTree.Decl(spec, type, decls))
+      | TypeDecl.Decl(Decl = d) => GetDecl(d) |> CTypeDecl.Decl
     }
+    
     
     GetSpecifier(spec : Specifier) : CSpec
     {
@@ -91,6 +103,15 @@ namespace CppParserPrinter
                                         }
       | Type.SignedType(Type = t) => t |> GetType
       | Type.Char            => CType.Char()
+    }
+    
+    GetDecl(t : Decl) : CTree.Decl
+    {
+      def spec = t.SpecifiersData.Map(GetSpecifier);
+      def type = GetType(t.Type);
+      def init = t.InitOptData.Map(x => x.ConstExpr |> GetConstExpr);
+      def decls = t.DeclsData.Map(GetDecl(_, init));
+      CTree.Decl(spec, type, decls)
     }
     
     GetDecl(t : TreeDecl, init : option[CConstExpr]) : CDecl

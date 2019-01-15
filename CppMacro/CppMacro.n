@@ -50,10 +50,13 @@ namespace CppMacro
     
     Lift(tree : CComplexType) : PExpr
     {
+      | CComplexType.Struct(d) as c => 
+          def name = c.name.Map(Lift) |> Lift;
+          <[ CComplexType.Struct($name, $(Lift(d))) ]>
       | CComplexType.Class(b, d) as c => 
+          def name = c.name.Map(Lift) |> Lift;
           def bas = b.Map((m, n) => <[ ($(Lift(m)), $(Lift(n))) ]>);
-          def decls = d.Map(x => <[ $(Lift(x))]> );
-          <[ CComplexType.Class($(Lift(c.Name)), [..$bas], [..$decls]) ]>
+          <[ CComplexType.Class($name, [..$bas], $(Lift(d))) ]>
     }
     
     Lift(name : CName) : PExpr
@@ -117,8 +120,16 @@ namespace CppMacro
       | None()  => <[ None() ]>
     }
     
+    Lift(tree : list[CTypeDecl]) : PExpr
+    {
+      | [CTypeDecl.SplicableMembers(m)] => <[ $(m : usesite) ]>
+      | d                               => def decls = d.Map(x => <[ $(Lift(x))]> );
+                                           <[ [..$decls] ]>
+    }
+    
     Lift(tree : CTypeDecl) : PExpr
     {
+      | CTypeDecl.SplicableMembers(m) => <[ $(m : usesite) ]>
       | CTypeDecl.Type(c) => <[ CTypeDecl.Type($(Lift(c)))]>
       | CTypeDecl.Decl(d) => <[ CTypeDecl.Decl($(Lift(d)))]>
     }

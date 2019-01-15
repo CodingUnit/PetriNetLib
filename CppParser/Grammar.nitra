@@ -67,6 +67,8 @@ syntax module CppGrammar
 
   keyword regex ['A'..'Z', 'a'..'z', '_'..'_']+ rule S;
 
+  regex KeywordToken =   "struct" | "class" | "case" | "switch" | "if" | "union";
+
   //alias Name                = Identifier;
   alias QualifiedName       = QualifiedIdentifier;
   alias Char                = Any;
@@ -78,9 +80,13 @@ syntax module CppGrammar
   /////////////////////////////////////////////////////////
   // Identifiers
 
-  [ExplicitSpaces, SuppressTrailingSpaces]
-  syntax Identifier           = IdentifierBody s;
-  syntax QualifiedIdentifier  = (Identifier; "::")+;
+  //[ExplicitSpaces, SuppressTrailingSpaces]
+  token Identifier           = !Keyword IdentifierBody//s
+  {
+    token Keyword = KeywordToken !IdentifierPartCharacters;
+  }
+
+  token QualifiedIdentifier  = (Identifier; "::")+;
 
   regex LetterCharacter           = [Lu, Ll, Lt, Lm, Lo, Nl];//['A'..'Z', 'a'..'z', 'а'..'я', 'А'..'Я', 'і'];//
   regex CombiningCharacter        = [Mn, Mc];
@@ -221,6 +227,8 @@ syntax module CppGrammar
 	  | Const = "const"
   }
 
+  syntax SplicableMembers = "$" Name=Identifier;
+
   syntax TypeDecl
   {
 	  | StructDecl
@@ -231,17 +239,19 @@ syntax module CppGrammar
 	  | Destructor = '~' Name=Identifier '(' ')' nl '{' nl Body=Statement* nl '}'
 	  | AssignmentOp = RetType=Type sm "operator" "=" '(' Parms=Type* ')' sm Qualifier? nl '{' nl Body=Statement* nl '}' 
     | Method = Specifier? sm RetType=Type sm Name=Identifier '(' Parms=Type* ')' sm Qualifier? nl '{' i nl Body=Statement* d nl '}' 
+    | SplicableMembers
   }
 
   syntax StructTypeDecl
   {
 	  | StructDecl
 	  | Decl
+    | SplicableMembers
   }
 
-  syntax StructDecl = "struct" sm Name nl '{' i Body=StructTypeDecl* d nl '}';
+  syntax StructDecl = "struct" sm Name nl '{' i Body=StructTypeDecl* d nl '}' ';';
 
-  syntax ClassDecl = "class" sm Name sm Base? nl '{' i Body=TypeDecl* d nl '}'
+  syntax ClassDecl = "class" sm Name sm Base? nl '{' i Body=TypeDecl* d nl '}' ';'
   {
       syntax Base = ':' sm Modifier sm BaseClass=Name;
   }
