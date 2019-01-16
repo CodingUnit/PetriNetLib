@@ -25,6 +25,8 @@ Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "TimeExampleTest", "..\TimeE
 EndProject
 Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "CppMacro", "..\CppMacro\CppMacro.nproj", "{89ED5472-DD7B-4C4A-A9BE-59D2C5FD2ACF}"
 EndProject
+Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "Elevator", "..\Elevator\Elevator.nproj", "{8A477047-9855-4DD7-BB7C-32937D429F09}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -144,6 +146,16 @@ Global
 		{89ED5472-DD7B-4C4A-A9BE-59D2C5FD2ACF}.OPC|Any CPU.Build.0 = Release|Any CPU
 		{89ED5472-DD7B-4C4A-A9BE-59D2C5FD2ACF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{89ED5472-DD7B-4C4A-A9BE-59D2C5FD2ACF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8A477047-9855-4DD7-BB7C-32937D429F09}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A477047-9855-4DD7-BB7C-32937D429F09}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A477047-9855-4DD7-BB7C-32937D429F09}.LIBS|Any CPU.ActiveCfg = Release|Any CPU
+		{8A477047-9855-4DD7-BB7C-32937D429F09}.LIBS|Any CPU.Build.0 = Release|Any CPU
+		{8A477047-9855-4DD7-BB7C-32937D429F09}.NViewer|Any CPU.ActiveCfg = Release|Any CPU
+		{8A477047-9855-4DD7-BB7C-32937D429F09}.NViewer|Any CPU.Build.0 = Release|Any CPU
+		{8A477047-9855-4DD7-BB7C-32937D429F09}.OPC|Any CPU.ActiveCfg = Release|Any CPU
+		{8A477047-9855-4DD7-BB7C-32937D429F09}.OPC|Any CPU.Build.0 = Release|Any CPU
+		{8A477047-9855-4DD7-BB7C-32937D429F09}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A477047-9855-4DD7-BB7C-32937D429F09}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

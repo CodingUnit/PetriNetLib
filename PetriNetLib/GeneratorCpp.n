@@ -322,7 +322,7 @@ namespace PetriNetLib
                                                  def fields = fields.Map((n, t) => cpp(("decl: $(t : type) $n;")));
                                                  cpp(<#decl: struct $n
                                                       {
-                                                        $fields
+                                                        $fields;
                                                       };#>)
                                                  //<[decl: [Record] class $(n : usesite)
                                                  //        {
@@ -352,18 +352,22 @@ namespace PetriNetLib
                                                  def mn = mn |> eval;
                                                  def mx = mx |> eval;
                                                  
-                                                     
-                                                  cpp(<#decl:
-                                                      class $n : public index<$n>
-                                                      {
-                                                        public:
+                                                 null    
+                                                  //cpp((<#decl:
+                                                  //    class $n : public index<$n>
+                                                  //    {
+                                                  //      public:
                                                           
-                                                        public $n(int num)
-                                                        {
-                                                          base($mn, $mx, num)
-                                                        }
+                                                  //      $n(int num)
+                                                  //      {
+                                                  //        base($mn, $mx, num)
+                                                  //      }
                                                         
-                                                        char *Name() {return $n;}
+                                                        
+                                                  //    };
+                                                  //   #>, ""))
+      /*
+      char *Name() {return $n;}
                                                         $(n : usesite) Create(num : int) {return $n(num)}
                                                         
                                                         static $n Instance = $n(0);
@@ -372,9 +376,8 @@ namespace PetriNetLib
                                                         {
                                                           return Instance.all_impl;
                                                         }
-                                                      };
-                                                     #>)
-      //| ColourSet(n, Colour.Enum(vals)) => def vals = vals.Map(x => <[decl: | $(x : usesite) ]>);
+      */
+                                                     //| ColourSet(n, Colour.Enum(vals)) => def vals = vals.Map(x => <[decl: | $(x : usesite) ]>);
       //                                     <[decl: enum $(n : usesite)
       //                                     {
       //                                       ..$vals

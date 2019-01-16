@@ -63,8 +63,11 @@ namespace CppParserPrinter
           def get_base(b)
           {
             def mod = GetModifier(b.Modifier);
-            def name = NameToCName(b.BaseClass);
-            (mod, name) :: []
+            def bs = b.BaseClass;
+            def name = NameToCName(bs.Name);
+            def template = bs.TemplateOptData.Map(x => x.NamesData[0].Map(NameToCName)).WithDefault([]);
+            def cl = CClassName(name, template);
+            (mod, cl) :: []
           }
            
           def decls = body.Map(GetTypeDecl);

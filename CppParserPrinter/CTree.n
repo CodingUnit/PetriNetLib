@@ -274,6 +274,13 @@ $<#$spec~$name()
     }
   }
 
+  [Record]
+  public class CClassName
+  {
+    public name : CName;
+    public template_parms : list[CName];
+  }
+  
   //class Printer
   //{
   //  public static Delim(del : int) : string {string(' ', del)}
@@ -286,7 +293,7 @@ $<#$spec~$name()
    [Record]
   public variant CComplexType : IPrintable
   {
-      | Class { base_class : list[CMod * CName]; decls : list[CTypeDecl]; }
+      | Class { base_class : list[CMod * CClassName]; decls : list[CTypeDecl]; }
       | Struct { decls : list[CTypeDecl]; }
       | Enum { decls : list[CEnumDecl]}
       | Union { decls : list[CUnionDecl] }

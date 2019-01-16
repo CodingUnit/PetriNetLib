@@ -116,6 +116,7 @@ namespace PetriNetLib
                                                 <[ $(i : usesite) = $(GetExpr(e)) ]>
       | RefContents(Identifier = i)          => def i = i.GetText();
                                                 <[ $(i : usesite) ]>
+      | AndAlso(Expr1 = e, Expr2 = e2) => <[ $(GetExpr(e)) && $(GetExpr(e2))]>
     }
     
     ConvertTree(tree : MainParseTree.LangExpr) : PExpr

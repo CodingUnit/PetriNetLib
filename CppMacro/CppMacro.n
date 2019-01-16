@@ -59,19 +59,25 @@ namespace CppMacro
           <[ CComplexType.Class($name, [..$bas], $(Lift(d))) ]>
     }
     
+    Lift(name : CClassName) : PExpr
+    {
+      def template = name.template_parms.Map(Lift);
+      <[ CClassName($(Lift(name.name)), [..$template])]>
+    }
+    
     Lift(name : CName) : PExpr
     {
-      | CName.String(s)    => <[ CName.String($(s : string))]>
-      | CName.Splicable(s) => <[ CName.String($(s : usesite)) ]>
+      | CName.String(s)        => <[ CName.String($(s : string))]>
+      | CName.Splicable(s)     => <[ CName.String($(s : usesite)) ]>
       | CName.SplicableType(s) => <[ $(s : usesite) ]>
       //| CName.SplicableList(s) => <[]>
     }
     
     Lift(mod : CMod) : PExpr
     {
-      | CMod.Private   => <[ CMod.Private ]>
-      | CMod.Public    => <[ CMod.Public ]>
-      | CMod.Protected => <[ CMod.Protected ]>
+      | CMod.Private   => <[ CMod.Private() ]>
+      | CMod.Public    => <[ CMod.Public() ]>
+      | CMod.Protected => <[ CMod.Protected() ]>
     }
     
     Lift(tree : CType) : PExpr
