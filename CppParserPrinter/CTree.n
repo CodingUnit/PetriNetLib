@@ -33,8 +33,9 @@ namespace CppParserPrinter
     | ComplexType {type : CComplexType}
     | Func {func : CTree.Func}
     | Decl { decl : CDecl }
+    | EnumDecl {decl : CEnumDecl}
     | TypeDecl { decl : CTypeDecl }
-    | Type {type : CTree.TypeDecl}
+    | Type {type : CType}
     | Statement {statement : CStatement}
   }
 
@@ -53,7 +54,7 @@ namespace CppParserPrinter
       | Type { type : CComplexType;}
       | Func { ret_type : CType; name : CName; parms : list[CType]; body : CStatement}
       | Decl { specifiers : list[CSpec]; type : CType; decls : list[CDecl] }
-      | TypeDecl {specifiers : list[CSpec]; type : CType; }
+      //| TypeDecl { type : CType; }
       | Quotation { quot : CQuotation;}
 
       public override Print(del : int) : string
@@ -177,8 +178,8 @@ $<#$spec~$name()
       | Double
       | LongLong
       | ULongLong
-      | Pointer { type : CType; rank : list[int] }
-      | Reference { type : CType }
+      | Pointer { specifiers : list[CSpec]; type : CType; rank : list[int] }
+      | Reference { specifiers : list[CSpec]; type : CType }
       | Array { type : CType; rank : list[int]}
 
       public override ToString() : string
@@ -202,7 +203,7 @@ $<#$spec~$name()
           | Double               => "double"
           | LongLong             => "long long"
           | ULongLong            => "unsigned long long"
-          | Reference(t)         => $"$t &"
+          | Reference(s, t)         => $"..$s $t &"
         }
       }
 
@@ -212,11 +213,17 @@ $<#$spec~$name()
       }
   }
 
-  public class CEnumDecl : IPrintable
+  [Record]
+  public variant CEnumDecl : IPrintable
   {
-      public name : CName;
-      public val  : option[CConstExpr];
-
+    | Option
+      {
+        public name : CName;
+        public val  : option[CConstExpr];
+      }
+    
+    | SplicableMembers {members : string}
+    
       public override Print(del : int) : string
       {
         ""

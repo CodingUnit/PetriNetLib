@@ -1,4 +1,4 @@
-﻿namespace CpnML.Grammar
+﻿namespace Cpp.Grammar
 {
   syntax module Base
   {
@@ -6,6 +6,7 @@
     using Nitra;
     using Nitra.CStyleComments;
     
+
     
 	  extend token IgnoreToken
     {
@@ -19,30 +20,7 @@
       
     }*/
 
-		regex UnicodeLineSeparator      = '\u2028';
-    regex UnicodeParagraphSeparator = '\u2029';
-    regex NewLineCharacter          = '\n' | '\r' | UnicodeLineSeparator | UnicodeParagraphSeparator;
-    regex NewLine                   = "\r\n" | NewLineCharacter;
-    //regex Whitespace                = [Zs] | '\t' | '\v' | '\f' | '\uFEFF';
-    regex Space                     = Whitespace | NewLineCharacter;
-    regex Spaces                    = Space+;
-
-    //void s = Spaces*;                // optional spacer
-
-    regex Whitespace = [Zs] | '\t' | '\v' | '\f';
-    //regex Spaces     = Whitespace*;
-
 		token String = '"' (!'"' Any)* '"';
-
-	  regex Integer  = '0' | ['1'..'9'] ['0'..'9']*;
-	  token Numeric = Minus="~"? Val=Integer
-    {
-      GetValue() : int
-      { 
-        def val = int.Parse(GetText(Val));
-        if (Minus.HasValue) -val else val
-      }
-    }
 
     [SpanClass(Number)]
     token FloatingNumber = Minus="~"? Val=Number
@@ -59,40 +37,81 @@
       }
     }
 
-    token Boolean
-    {
-      | True = "true"
-      | False = "false"
-    }
+  token Boolean
+  {
+    | True  = "true"
+    | False = "false"
+  }    
 
-    regex KeywordToken =   "fun"    | "var" | "val" | "orelse" | "andalso" 
-                           | "case" | "in"  | "end" | "int"    | "string" 
-                           | "real" | "if";
+  regex Any = ['\u0000'..'\uFFFF'];
 
-    regex IdentifierBody = IdentifierStartCharacter IdentifierPartCharacters*;
+  //[StartRule, ExplicitSpaces]
+  //syntax CompilationUnit = s Expression !Any;
 
-    regex LetterCharacter           = [Lu, Ll, Lt, Lm, Lo, Nl];
-    regex CombiningCharacter        = [Mn, Mc];
-    regex DecimalDigitCharacter     = [Nd];
-    regex ConnectingCharacter       = [Pc];
-    regex FormattingCharacter       = [Cf];
+  /////////////////////////////////////////////////////////
+  // Spacing
 
-    regex IdentifierStartCharacter  = LetterCharacter | "_";
-    regex IdentifierPartCharacters  = LetterCharacter 
-                                      | DecimalDigitCharacter
-                                      | ConnectingCharacter 
-                                      | CombiningCharacter
-                                      | FormattingCharacter
-                                      | '-';
+  regex NewLineCharacter  = '\n' | '\r' | '\u2028' /*  line separator */ | '\u2029' /*  paragraph separator */;
+  regex NewLine  = "\r\n" | NewLineCharacter;
+  regex Whitespace = [Zs] | '\t' | '\v' | '\f' | '\uFEFF' | '\u0000';
+  regex Space = Whitespace | NewLine;
+  regex Spaces = Space+;
 
-	  token Identifier = !Keyword !'=' IdentifierBody
-    {
-      token Keyword = KeywordToken !IdentifierPartCharacters;
-    }
-    
-    token AnyIdentifier = IdentifierBody;    
+  void s   = Spaces*;                     // optional spacer
+  void S   = !IdentifierPartCharacters s; // identifier break spacer
 
-    syntax Attributes = '[' (Identifier; ',')+ ']';
+  marker i;     // increase a indent
+  marker d;     // decrease a indent
+  marker nl;    // optional spacer and plase for \n while pretty printing
+  marker inl;   // i + nl
+  marker sm;    // optional spacer and prefer to print space while pretty printing
+
+  keyword regex ['A'..'Z', 'a'..'z', '_'..'_']+ rule S;
+
+  regex KeywordToken =   "struct" | "class" | "case" | "switch" | "if" | "union";
+
+  //alias Name                = Identifier;
+  alias QualifiedName       = QualifiedIdentifier;
+  alias Char                = Any;
+  alias Comma               = ","?;
+
+  // Spacing
+  /////////////////////////////////////////////////////////
+
+  /////////////////////////////////////////////////////////
+  // Identifiers
+
+  //[ExplicitSpaces, SuppressTrailingSpaces]
+  token Identifier           = !Keyword IdentifierBody//s
+  {
+    token Keyword = KeywordToken !IdentifierPartCharacters;
+  }
+
+  token QualifiedIdentifier  = (Identifier; "::")+;
+
+  regex LetterCharacter           = [Lu, Ll, Lt, Lm, Lo, Nl];//['A'..'Z', 'a'..'z', 'а'..'я', 'А'..'Я', 'і'];//
+  regex CombiningCharacter        = [Mn, Mc];
+  regex DecimalDigitCharacter     = [Nd];
+  regex ConnectingCharacter       = [Pc];
+  regex FormattingCharacter       = [Cf];
+
+  regex IdentifierStartCharacter  = LetterCharacter | "_";
+  regex IdentifierPartCharacters  = LetterCharacter | DecimalDigitCharacter | ConnectingCharacter | CombiningCharacter | FormattingCharacter;
+  regex IdentifierBody            = IdentifierStartCharacter IdentifierPartCharacters*;
+
+  // Identifiers
+  /////////////////////////////////////////////////////////
+
+  /////////////////////////////////////////////////////////
+  // Literals
+
+  regex DecimalDigit                        = ['0'..'9'];
+  regex HexDigit                            = ['0'..'9', 'a'..'f', 'A'..'F'];
+  regex IntegerTypeSuffixTerminal           = ('U' | 'u') ('l' | 'L')? | ('l' | 'L') ('U' | 'u')?;
+  regex IntegerTypeSuffix                   = IntegerTypeSuffixTerminal; // "UL" | "ul" | "uL" | "Ul" | "LU" | "lu" | "Lu" | "lU" | "U" | "u" | "L" | "l";
+  regex DecimalIntegerLiteral               = DecimalDigit+ IntegerTypeSuffix?;
+  regex HexadecimalIntegerLiteral           = ("0x" | "0X") HexDigit+ IntegerTypeSuffix?;
+  regex Integer                      = HexadecimalIntegerLiteral | DecimalIntegerLiteral;
 
   }
 }

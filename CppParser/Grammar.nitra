@@ -14,103 +14,10 @@ namespace Cpp.Grammar
 {
 
  //using Nitra;
+using Base;
 
 syntax module CppGrammar
 {
-  literal Less                = "<";
-  literal Greater             = ">";
-  literal OpenBrace           = "(";
-  literal CloseBrace          = ")";
-  literal OpenBrace           = "{";
-  literal CloseBrace          = "}";
-  literal OpenSquareBrace     = "[";
-  literal CloseSquareBrace    = "]";
-  literal SingleQuote         = "\'";
-  literal Quote               = "\"";
-  literal Semicolon           = ";";
-  literal Comma               = ",";
-  literal Dot                 = ".";
-  literal Colon               = ":";
-  literal Question            = "?";
-  literal At                  = "@";
-  literal AliasSeparator      = "::";
-  literal Assign              = "=";
-  literal Prefix              = "\\u";
-  literal DodDot              = "..";
-  literal Op                  = "=>", "=", "*=", "/=", "%=", "+=", "-=", "<<=", ">>=", "&=", "^=", "|=", "??",
-                                "||", "&&", "|", "^", "&", "==", "!=", "<=", ">=", "<<", ">>", "+", "-", "!", "~", "++", "--", "*", "/", "%", "->";
-  literal Backslash           = "\\";
-  literal Epsilon             = "";
-
-  regex Any = ['\u0000'..'\uFFFF'];
-
-  [StartRule, ExplicitSpaces]
-  syntax CompilationUnit = s Expression !Any;
-
-  /////////////////////////////////////////////////////////
-  // Spacing
-
-  regex NewLineCharacter  = '\n' | '\r' | '\u2028' /*  line separator */ | '\u2029' /*  paragraph separator */;
-  regex NewLine  = "\r\n" | NewLineCharacter;
-  regex Whitespace = [Zs] | '\t' | '\v' | '\f' | '\uFEFF' | '\u0000';
-  regex Space = Whitespace | NewLine;
-  regex Spaces = Space+;
-
-  void s   = Spaces*;                     // optional spacer
-  void S   = !IdentifierPartCharacters s; // identifier break spacer
-
-  marker i;     // increase a indent
-  marker d;     // decrease a indent
-  marker nl;    // optional spacer and plase for \n while pretty printing
-  marker inl;   // i + nl
-  marker sm;    // optional spacer and prefer to print space while pretty printing
-
-  keyword regex ['A'..'Z', 'a'..'z', '_'..'_']+ rule S;
-
-  regex KeywordToken =   "struct" | "class" | "case" | "switch" | "if" | "union";
-
-  //alias Name                = Identifier;
-  alias QualifiedName       = QualifiedIdentifier;
-  alias Char                = Any;
-  alias Comma               = ","?;
-
-  // Spacing
-  /////////////////////////////////////////////////////////
-
-  /////////////////////////////////////////////////////////
-  // Identifiers
-
-  //[ExplicitSpaces, SuppressTrailingSpaces]
-  token Identifier           = !Keyword IdentifierBody//s
-  {
-    token Keyword = KeywordToken !IdentifierPartCharacters;
-  }
-
-  token QualifiedIdentifier  = (Identifier; "::")+;
-
-  regex LetterCharacter           = [Lu, Ll, Lt, Lm, Lo, Nl];//['A'..'Z', 'a'..'z', 'а'..'я', 'А'..'Я', 'і'];//
-  regex CombiningCharacter        = [Mn, Mc];
-  regex DecimalDigitCharacter     = [Nd];
-  regex ConnectingCharacter       = [Pc];
-  regex FormattingCharacter       = [Cf];
-
-  regex IdentifierStartCharacter  = LetterCharacter | "_";
-  regex IdentifierPartCharacters  = LetterCharacter | DecimalDigitCharacter | ConnectingCharacter | CombiningCharacter | FormattingCharacter;
-  regex IdentifierBody            = IdentifierStartCharacter IdentifierPartCharacters*;
-
-  // Identifiers
-  /////////////////////////////////////////////////////////
-
-  /////////////////////////////////////////////////////////
-  // Literals
-
-  regex DecimalDigit                        = ['0'..'9'];
-  regex HexDigit                            = ['0'..'9', 'a'..'f', 'A'..'F'];
-  regex IntegerTypeSuffixTerminal           = ('U' | 'u') ('l' | 'L')? | ('l' | 'L') ('U' | 'u')?;
-  regex IntegerTypeSuffix                   = IntegerTypeSuffixTerminal; // "UL" | "ul" | "uL" | "Ul" | "LU" | "lu" | "Lu" | "lU" | "U" | "u" | "L" | "l";
-  regex DecimalIntegerLiteral               = DecimalDigit+ IntegerTypeSuffix?;
-  regex HexadecimalIntegerLiteral           = ("0x" | "0X") HexDigit+ IntegerTypeSuffix?;
-  regex IntegerLiteral                      = HexadecimalIntegerLiteral | DecimalIntegerLiteral;
 
   ////////////////////////////////////////////////////////////////////////////////////
   // Type
@@ -127,11 +34,62 @@ syntax module CppGrammar
   // Expressions
   syntax Constant
   {
-    | Int = IntegerLiteral
+    | Int = Integer
+    | Float = FloatingNumber
+    | String = String
+  }
+
+  syntax BinaryOperator
+  {
+    | Mul = Expression '*' Expression
+    | Div = Expression '/' Expression
+    | Add = Expression '+' Expression
+    | Sub = Expression '-' Expression
+    | Mod = Expression '%' Expression
+    | LogicAnd = Expression "&&" Expression
+    | LogicOr = Expression "||" Expression
+    | Xor = Expression '^' Expression
+    | And = Expression '^' Expression
+    | Or  = Expression '|' Expression
+    | LShift = Expression "<<" Expression
+    | RShift = Expression ">>" Expression
+    | CondOper = Expression '?' Expression ':' Expression // ? :
+    | Assign  = Expression '=' Expression
+    | AddAssign = Expression "+=" Expression
+    | SubAssign = Expression "-=" Expression
+    | MulAssign = Expression "*=" Expression
+    | DivAssign = Expression "/=" Expression
+    | ModAssign = Expression "%=" Expression
+    | AndAssign = Expression "&=" Expression
+    | OrAssign = Expression "|=" Expression
+    | XorAssign = Expression "^=" Expression
+    | LShiftAssign = Expression "<<=" Expression
+    | RShiftAssign = Expression ">>=" Expression
+    | Equal = Expression "==" Expression
+    | NotEqual = Expression "!=" Expression
+    | Greater = Expression ">" Expression
+    | Lower = Expression "<" Expression
+    | GreaterEqual = Expression ">=" Expression
+    | LowerEqual = Expression "<=" Expression
+    | ArrayIndex = Expression "[" Expression "]"
+    | MemberPointerAccess = Expression "->" Expression
+    | MemberAccess = Expression "." Expression
+    | SeqOp = Expression "," Expression// ,
+    | CallFunc = Expression "(" Expression ")"// a(...)
+    | TypeConv = "(" Type ")" Expression// (type)expr
+  }
+
+  syntax UnaryOperator
+  {
   }
 
   syntax Expression
   {
+    //| Compound = (Expression;",")+
+    | Id = Name
+    | Constant
+    | UnaryOperator
+    | BinaryOperator
     /*| IdentifierExpression             = QualifiedName;
     | IntegerLiteralExpression         = IntegerLiteral;
 
@@ -213,7 +171,7 @@ syntax module CppGrammar
 
   syntax ConstExpr
   {
-    | Int  = IntegerLiteral
+    | Int  = Integer
     | Enum = Name
     | Oper = ReadOnlyOper
   }
@@ -236,7 +194,7 @@ syntax module CppGrammar
   {
 	  | Id       = Name
 	  | Pointer  = '*' Name
-	  | Array    = Name '[' Size=IntegerLiteral? ']'
+	  | Array    = Name '[' Size=Integer? ']'
 	  | FuncDecl = Specifier? sm Name '(' Parms=Parm* ')'
 	  {
 		  syntax Parm = Type Name?;
@@ -259,6 +217,7 @@ syntax module CppGrammar
   {
 	  | StructDecl
     | ClassDecl
+    | Enum
 	  | Decl
 	  | Modifier = Modifier ':'
 	  | Constructor = Name '(' Parms=Type* ')' nl '{' nl Body=Statement* nl '}'
@@ -282,6 +241,8 @@ syntax module CppGrammar
       syntax Base = ':' sm Modifier sm BaseClass=NameClass;
   }
 
+  syntax Enum = "enum" sm Name nl "{" i (EnumDecl;",")* d nl "}" ";";
+
   syntax NameClass = Name Template?
   {
     syntax Template = "<" (Name; ",")+ ">";
@@ -290,11 +251,11 @@ syntax module CppGrammar
   syntax Name
   {
     | Id                 = Identifier
-    | Qualified          = QualifiedName
+    | Qualified          = QualifiedIdentifier
     //| SplicableList      = "..$" Name=Identifier
     | Splicable          = '$' Name=Identifier
     | SplicableType      = "$" "(" Name=Identifier ":" "type" ")" 
-	  | SplicableQualified = '$' '(' Name=QualifiedName ')'
+	  | SplicableQualified = '$' '(' Name=QualifiedIdentifier ')'
   }
 
 
@@ -318,10 +279,20 @@ syntax module CppGrammar
     }
   }
 
+  syntax EnumDecl 
+  {
+    | SplicableMembers
+    | Option = Name Value?
+      { 
+          syntax Value = "=" ConstExpr;
+      }
+  }
+
   syntax Declaration
   {
     | QuotDecl = "decl:" QuotDecl
     | QuotExpr = "expr:" Statement
+    | QuotEnum = "enumdecl:" EnumDecl
     | QuotType 
     | Namespace = "namespace" sm Name nl '{' Declaration* nl '}'
     | TypeDecl

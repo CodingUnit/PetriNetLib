@@ -136,13 +136,24 @@ namespace CppParserPrinter
       null
     }
     
+    GetEnumDecl(decl : EnumDecl) : CEnumDecl
+    {
+      | EnumDecl.Option(Name = n, ValueOptData = v) => 
+          def name = n |> NameToCName;
+          def val = v.Map(x => GetConstExpr(x.ConstExpr));
+          CEnumDecl.Option(name, val)
+      | EnumDecl.SplicableMembers(SplicableMembers = SplicableMembers(Name = m)) => 
+          CEnumDecl.SplicableMembers(m.IdentifierBodyData)
+    }
+    
     ConvertTree(decl : Declaration) : CTree
     {
+      | Declaration.QuotEnum(EnumDecl = e) => CTree.Quotation(CQuotation.EnumDecl(e |> GetEnumDecl))
       | Declaration.QuotType(QuotType = QuotType(QType = TypePtr(SpecifierOptData = s, Type = t))) => 
           def spec = s.Map(x => [GetSpecifier(x)]).WithDefault([]);
-          def type = GetType(t) |> CType.Pointer(_, []) |> CTree.TypeDecl(spec, _);
+          def type = GetType(t) |> CType.Pointer(spec, _, []);
           CTree.Quotation(CQuotation.Type(type))
-      | Declaration.QuotType(QuotType = QuotType(QType = Type(Type = t))) => CTree.Quotation(CQuotation.Type(CTree.TypeDecl([], t |> GetType)))
+      | Declaration.QuotType(QuotType = QuotType(QType = Type(Type = t))) => CTree.Quotation(CQuotation.Type(t |> GetType))
       | Declaration.QuotDecl(QuotDecl = QuotDecl.TypeDecl(TypeDecl = t)) => CTree.Quotation(CQuotation.TypeDecl(GetTypeDecl(t)))
       | Declaration.TypeDecl(TypeDecl = td) => 
       

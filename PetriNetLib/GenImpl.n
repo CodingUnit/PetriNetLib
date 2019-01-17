@@ -41,6 +41,7 @@ namespace PetriNetLib
     
     GetTypeExpr(p : Colour) : PExpr
     {
+      | Colour.Alias(n)     => <[ $(n : usesite) ]>
       | Colour.Simple(type) => 
               match (type)
               {
@@ -63,7 +64,9 @@ namespace PetriNetLib
     GetTypeExpr(p : ColourSet) : PExpr
     {
         | ColourSet(n, Index)
+        
         | ColourSet(n, Enum)          => <[ $(n : usesite) ]>
+        | ColourSet(n, Alias)         => <[ $(n : usesite) ]>
         | ColourSet(_, Timed(p))
         | ColourSet(_, p)             => GetTypeExpr(p)
     }

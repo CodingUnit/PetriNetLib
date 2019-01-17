@@ -24,13 +24,14 @@ namespace CppMacro
       | CTree.Quotation(q) =>
          match (q)
          {
+           | CQuotation.EnumDecl(t) => Lift(t)
            | CQuotation.Type(t)     => Lift(t)
            | CQuotation.TypeDecl(t) => Lift(t)
          }
       | CTree.Type(c) => <[ CTree.Type($(Lift(c)))]>
-      | CTree.TypeDecl(s, t) =>
-          def spec = s.Map(Lift);
-          <[ CTree.TypeDecl([..$spec], $(Lift(t))) ]>
+      //| CTree.TypeDecl(s, t) =>
+      //    def spec = s.Map(Lift);
+      //    <[ CTree.TypeDecl([..$spec], $(Lift(t))) ]>
       | CTree.Decl(s, t, d) => 
           def spec = s.Map(Lift);
           def decls = d.Map(Lift);
@@ -48,15 +49,33 @@ namespace CppMacro
       <[]>
     }
     
+    Lift(tree : list[CEnumDecl]) : PExpr
+    {
+      | [CEnumDecl.SplicableMembers(m)] => <[ $(m : usesite)]>
+      | d => def decls = d.Map(Lift);
+             <[ [..$decls] ]>
+    }
+    
+    Lift(tree : CEnumDecl) : PExpr
+    {
+      | CEnumDecl.Option(n, d) =>
+          def val = d.Map(Lift) |> Lift;
+          <[ CEnumDecl.Option($(Lift(n)), $val)]>
+    }
+    
     Lift(tree : CComplexType) : PExpr
     {
-      | CComplexType.Struct(d) as c => 
-          def name = c.name.Map(Lift) |> Lift;
-          <[ CComplexType.Struct($name, $(Lift(d))) ]>
-      | CComplexType.Class(b, d) as c => 
-          def name = c.name.Map(Lift) |> Lift;
-          def bas = b.Map((m, n) => <[ ($(Lift(m)), $(Lift(n))) ]>);
-          <[ CComplexType.Class($name, [..$bas], $(Lift(d))) ]>
+      def name = tree.name.Map(Lift) |> Lift;
+      match (tree)
+      {
+        | CComplexType.Enum(s) as c => 
+            <[ CComplexType.Enum($name, $(Lift(s)))]>
+        | CComplexType.Struct(d) as c => 
+            <[ CComplexType.Struct($name, $(Lift(d))) ]>
+        | CComplexType.Class(b, d) as c => 
+            def bas = b.Map((m, n) => <[ ($(Lift(m)), $(Lift(n))) ]>);
+            <[ CComplexType.Class($name, [..$bas], $(Lift(d))) ]>
+      }
     }
     
     Lift(name : CClassName) : PExpr
@@ -82,7 +101,7 @@ namespace CppMacro
     
     Lift(tree : CType) : PExpr
     {
-      | CType.Class(CName.SplicableType(t)) => <[ $(t : usesite).type ]>
+      | CType.Class(CName.SplicableType(t)) => <[ $(t : usesite) ]>
       | CType.Class(n) => <[ CType.Class($(Lift(n)))]>
       | CType.Char     => <[ CType.Char() ]>
       | CType.Int      => <[ CType.Int() ]>
@@ -92,9 +111,9 @@ namespace CppMacro
       | CType.ULong    => <[ CType.ULong() ]>
       | CType.UShort   => <[ CType.UShort() ]>
       | CType.UChar    => <[ CType.UChar() ]>
-      | CType.Pointer(t, r) => 
+      | CType.Pointer(s, t, r) => 
           def rank = r.Map(x => <[ $(x : int)]>);
-          <[ CType.Pointer($(Lift(t)), [..$rank])]>
+          <[ CType.Pointer($(Lift(s)), $(Lift(t)), [..$rank])]>
     }
     
     Lift(tree : CDecl) : PExpr
@@ -124,6 +143,12 @@ namespace CppMacro
     {
       | Some(o) => <[ Some($o)]>
       | None()  => <[ None() ]>
+    }
+    
+    Lift(tree : list[CSpec]) : PExpr
+    {
+      def decls = tree.Map(x => <[ $(Lift(x))]> );
+      <[ [..$decls] ]>
     }
     
     Lift(tree : list[CTypeDecl]) : PExpr

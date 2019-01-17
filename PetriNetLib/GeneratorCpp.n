@@ -45,7 +45,7 @@ namespace PetriNetLib
       this.converter = proc.Converter;
     }
     
-    GetTypeExpr(p : Colour) : CTree.TypeDecl
+    GetTypeExpr(p : Colour) : CType
     {
       | Colour.Simple(type) => TypeFromStr(type)
       | Integer       => cpp("type: int")
@@ -58,7 +58,7 @@ namespace PetriNetLib
                          cpp("type: $(inner : type) *")//<[ list[$inner]]>
     }
     
-    GetTypeExpr(p : ColourSet) : CTree.TypeDecl
+    GetTypeExpr(p : ColourSet) : CType
     {
         | ColourSet(n, Index)
         | ColourSet(n, Enum)          => cpp("type: $n")//<[ $(n : usesite) ]>
@@ -66,7 +66,7 @@ namespace PetriNetLib
         | ColourSet(_, p)             => GetTypeExpr(p)
     }
       
-    TypeFromStr(str : string) : CTree.TypeDecl
+    TypeFromStr(str : string) : CType
     {
       | "string" => cpp("type: char *")
       | "int"    => cpp("type: int")
@@ -329,43 +329,42 @@ namespace PetriNetLib
                                                  //          ..$fields
                                                  //        }
                                                  //]>
-      | ColourSet(n, Colour.Index(mn, mx, _i)) => def eval(m)
-                                                 {
-                                                    def expr = converter.ParseML(m);
-                                                    match (expr)
-                                                    {
-                                                      | <[$(n : int)]>  => n
-                                                      | <[$(name : usesite) ]> => 
-                                                                           def match_var(x)
-                                                                           {
-                                                                             | <[ def $(n : usesite) = $_]> => n == name 
-                                                                             | _                            => false
-                                                                           }
+      //| ColourSet(n, Colour.Index(mn, mx, _i)) => def eval(m)
+      //                                           {
+      //                                              def expr = converter.ParseML(m);
+      //                                              match (expr)
+      //                                              {
+      //                                                | <[$(n : int)]>  => n
+      //                                                | <[$(name : usesite) ]> => 
+      //                                                                     def match_var(x)
+      //                                                                     {
+      //                                                                       | <[ def $(n : usesite) = $_]> => n == name 
+      //                                                                       | _                            => false
+      //                                                                     }
                                                                            
-                                                                           match (model.ml_decls.Find(match_var))
-                                                                           {
-                                                                             | Some(<[ def $(_ : usesite) = $(v : int)]>) => v
-                                                                             | _                                  => throw InvalidOperationException()
-                                                                           }
-                                                    }
-                                                 }
-                                                 def mn = mn |> eval;
-                                                 def mx = mx |> eval;
+      //                                                                     match (model.ml_decls.Find(match_var))
+      //                                                                     {
+      //                                                                       | Some(<[ def $(_ : usesite) = $(v : int)]>) => v
+      //                                                                       | _                                  => throw InvalidOperationException()
+      //                                                                     }
+      //                                              }
+      //                                           }
+      //                                           def mn = mn |> eval;
+      //                                           def mx = mx |> eval;
                                                  
-                                                 null    
-                                                  //cpp((<#decl:
-                                                  //    class $n : public index<$n>
-                                                  //    {
-                                                  //      public:
+      //                                            cpp((<#decl:
+      //                                                class $n : public index<$n>
+      //                                                {
+      //                                                  public:
                                                           
-                                                  //      $n(int num)
-                                                  //      {
-                                                  //        base($mn, $mx, num)
-                                                  //      }
+      //                                                  $n(int num)
+      //                                                  {
+      //                                                    base($mn, $mx, num)
+      //                                                  }
                                                         
                                                         
-                                                  //    };
-                                                  //   #>, ""))
+      //                                                };
+      //                                               #>, ""))
       /*
       char *Name() {return $n;}
                                                         $(n : usesite) Create(num : int) {return $n(num)}
@@ -377,13 +376,13 @@ namespace PetriNetLib
                                                           return Instance.all_impl;
                                                         }
       */
-                                                     //| ColourSet(n, Colour.Enum(vals)) => def vals = vals.Map(x => <[decl: | $(x : usesite) ]>);
-      //                                     <[decl: enum $(n : usesite)
-      //                                     {
-      //                                       ..$vals
-      //                                     }]>
-      //| ColourSet(n, Colour.Timed(c))   => CreateColourSet(ColourSet(n, c))
-      //| _                               => null
+      | ColourSet(n, Colour.Enum(vals)) => def vals = vals.Map(x => cpp("enumdecl: $x"));
+                                           cpp(<#decl: enum $n
+                                           {
+                                             $vals
+                                           }#>)
+      | ColourSet(n, Colour.Timed(c))   => CreateColourSet(ColourSet(n, c))
+      | _                               => null
     }    
     
     CreateInitMarking(place : Place) : PExpr

@@ -232,7 +232,16 @@ namespace PetriNetLib
       places      = tree_places.MapToArray(create_place);
       transitions = tree_tran.MapToArray(create_tran);
       def (both_arcs, other_arcs)   = tree_arcs.Partition(x => x.type == Dir.Both);
-      def both_arcs = both_arcs.SelectMany(x => CpnTree.Arc(x.text, x.from, x.to, Dir.T2P) :: CpnTree.Arc(x.text, x.to, x.from, Dir.P2T) :: []).NToList();
+      
+      def create_two_arcs(b)
+      {
+        def (dir1, dir2) = if (places.Exists(x => x.id == b.from)) (Dir.P2T, Dir.T2P) else (Dir.T2P, Dir.P2T);
+        def a1 = CpnTree.Arc(b.text, b.from, b.to, dir1);
+        def a2 = CpnTree.Arc(b.text, b.to, b.from, dir2);
+        a1 :: a2 :: []
+      }
+      
+      def both_arcs = both_arcs.SelectMany(create_two_arcs).NToList();
       
       def tree_arcs = both_arcs + other_arcs;
       arcs          = tree_arcs.MapToArray(create_arcs);
