@@ -214,6 +214,13 @@ $<#$spec~$name()
   }
 
   [Record]
+  public variant CSplicableVal
+  {
+    | Value { val : CConstExpr}
+    | Splicable { val : string}
+  }
+  
+  [Record]
   public variant CEnumDecl : IPrintable
   {
     | Option
@@ -222,7 +229,8 @@ $<#$spec~$name()
         public val  : option[CConstExpr];
       }
     
-    | SplicableMembers {members : string}
+    | SplicableMembers {members : string }
+    | SplicableMember {member : string; val : option[CSplicableVal] }
     
       public override Print(del : int) : string
       {

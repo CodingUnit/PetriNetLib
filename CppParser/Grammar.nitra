@@ -211,7 +211,7 @@ syntax module CppGrammar
 	  | Const = "const"
   }
 
-  syntax SplicableMembers = "$" Name=Identifier ";";
+  syntax SplicableMembers = "..$" Name=Identifier ";"?;
 
   syntax TypeDecl
   {
@@ -225,6 +225,7 @@ syntax module CppGrammar
 	  | AssignmentOp = RetType=Type sm "operator" "=" '(' Parms=Type* ')' sm Qualifier? nl '{' nl Body=Statement* nl '}' 
     | Method = Specifier? sm RetType=Type sm Name '(' Parms=Type* ')' sm Qualifier? nl '{' i nl Body=Statement* d nl '}' 
     | SplicableMembers
+    | SplicableMember = "$" Identifier
   }
 
   syntax StructTypeDecl
@@ -232,6 +233,7 @@ syntax module CppGrammar
 	  | StructDecl
 	  | Decl
     | SplicableMembers
+    | SplicableMember = "$" Identifier
   }
 
   syntax StructDecl = "struct" sm Name nl '{' i Body=StructTypeDecl* d nl '}' ';';
@@ -281,7 +283,15 @@ syntax module CppGrammar
 
   syntax EnumDecl 
   {
-    | SplicableMembers
+    | SplicableMember = "$" Name=Identifier sm Value? ";"?
+      {
+        syntax Value
+        {
+          | Literal   = "=" ConstExpr
+          | Splicable = "=" Name=Identifier
+        }
+      }
+    | SplicableMembers = "..$" Name=Identifier ";"?
     | Option = Name Value?
       { 
           syntax Value = "=" ConstExpr;

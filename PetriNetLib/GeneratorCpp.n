@@ -33,7 +33,7 @@ namespace PetriNetLib
     //compiler : CompilerHost = CompilerHost();
     mutable cons_expr : list[PExpr] = [];
     mutable fields    : list[ClassMember] = [];
-    mutable init_body : list[PExpr] = [];
+    mutable init_body : list[CExpr] = [];
     
     public this(model : OutModel, proc : PetriNetProcessor)
     {
@@ -320,10 +320,10 @@ namespace PetriNetLib
                                                  //CTypeDecl.Decl(CTree.Decl([CSpec.Typedef()], CType.Class(n), [CDecl.Id(CName.String(new_name), None())]))
       | ColourSet(n, Colour.Record(vals))     => def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
                                                  def fields = fields.Map((n, t) => cpp(("decl: $(t : type) $n;")));
-                                                 cpp(<#decl: struct $n
+                                                 cpp((<#decl: struct $n
                                                       {
-                                                        $fields;
-                                                      };#>)
+                                                        ..$fields
+                                                      };#>, ""))
                                                  //<[decl: [Record] class $(n : usesite)
                                                  //        {
                                                  //          ..$fields
@@ -378,9 +378,9 @@ namespace PetriNetLib
       */
       | ColourSet(n, Colour.Enum(vals)) => def vals = vals.Map(x => cpp("enumdecl: $x"));
                                            cpp(<#decl: enum $n
-                                           {
-                                             $vals
-                                           }#>)
+                                                 {
+                                                   ..$vals
+                                                 };#>)
       | ColourSet(n, Colour.Timed(c))   => CreateColourSet(ColourSet(n, c))
       | _                               => null
     }    
@@ -488,10 +488,11 @@ namespace PetriNetLib
     
     CreateStartMethod() : void
     {
-      fields ::= <[decl: public Initiate() : void
-      {
-        {..$init_body}
-      }]>
+      //fields ::= []
+      /*cpp(<#decl: void Initiate()
+                      {
+                        ..$init_body;
+                      })*/
     }
     
     CreateEvents() : void

@@ -56,8 +56,18 @@ namespace CppMacro
              <[ [..$decls] ]>
     }
     
+    Lift(tree : CSplicableVal) : PExpr
+    {
+      | CSplicableVal.Splicable(m) => <[ $(m : usesite)]>
+      | CSplicableVal.Value(c)     => Lift(c)
+    }
+    
     Lift(tree : CEnumDecl) : PExpr
     {
+      | CEnumDecl.SplicableMember(m, v) => 
+          def val = v.Map(Lift) |> Lift;
+          <[ CEnumDecl.Option(CName.String($(m : usesite)), $val)]>
+      | CEnumDecl.SplicableMembers(m) => <[ $(m : usesite) ]>
       | CEnumDecl.Option(n, d) =>
           def val = d.Map(Lift) |> Lift;
           <[ CEnumDecl.Option($(Lift(n)), $val)]>

@@ -57,6 +57,9 @@ namespace CppParserPrinter
     GetTypeDecl(decl : TypeDecl) : CTypeDecl
     {
       | TypeDecl.SplicableMembers(SplicableMembers = SplicableMembers(Name = n)) => CTypeDecl.SplicableMembers(n.IdentifierBodyData)
+      | TypeDecl.Enum(Enum = Cpp.Grammar.CppGrammarParseTree.Enum(Name = n, EnumDeclsData = (d, _))) =>
+          def decls = d.Map(GetEnumDecl);
+          CTypeDecl.Type(CComplexType.Enum(NameToCName(n) |> Some, decls))
       | TypeDecl.StructDecl(StructDecl = s) => GetTypeDecl(s)
       | TypeDecl.ClassDecl(ClassDecl = ClassDecl(Name = n, BaseOptData = b, BodyData = body)) =>
            
@@ -142,8 +145,15 @@ namespace CppParserPrinter
           def name = n |> NameToCName;
           def val = v.Map(x => GetConstExpr(x.ConstExpr));
           CEnumDecl.Option(name, val)
-      | EnumDecl.SplicableMembers(SplicableMembers = SplicableMembers(Name = m)) => 
-          CEnumDecl.SplicableMembers(m.IdentifierBodyData)
+      | EnumDecl.SplicableMember(Name = m, ValueOptData = v) => 
+          def val = match (v)
+          {
+            | Some(EnumDecl.SplicableMember.Nested.Value.Splicable(Name = n)) => CSplicableVal.Splicable(n.IdentifierBodyData) |> Some
+            | Some(EnumDecl.SplicableMember.Nested.Value.Literal(ConstExpr = c)) => GetConstExpr(c) |> CSplicableVal.Value |> Some
+            | _                                                                  => None()
+          }
+          CEnumDecl.SplicableMember(m.IdentifierBodyData, val)
+      | EnumDecl.SplicableMembers(Name = m) => CEnumDecl.SplicableMembers(m.IdentifierBodyData)
     }
     
     ConvertTree(decl : Declaration) : CTree
