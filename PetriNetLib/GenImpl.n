@@ -63,10 +63,15 @@ namespace PetriNetLib
     
     GetTypeExpr(p : ColourSet) : PExpr
     {
+        | ColourSet(n, Alias(n2))    => def col = model.colour_sets[n2].type;
+                                        if (col.IsComplex) <[ $(n : usesite) ]>
+                                        else
+                                        {
+                                          GetTypeExpr(col)
+                                        }
+                                        
         | ColourSet(n, Index)
-        
         | ColourSet(n, Enum)          => <[ $(n : usesite) ]>
-        | ColourSet(n, Alias)         => <[ $(n : usesite) ]>
         | ColourSet(_, Timed(p))
         | ColourSet(_, p)             => GetTypeExpr(p)
     }
