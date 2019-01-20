@@ -195,58 +195,73 @@ namespace PetriNetLib
       input.Fold(null, fold);
     }
     
-    CreatePlace(place : Place) : ClassMember
+    CreatePlace(place : Place) : CTypeDecl
     {
       def name = place.Name;
       //def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
       def type = GetTypeExpr(place.colour);
       def dest_cont = match (place.DestContainerType)
       {
-        | TDestCont.MultiSet  => <[ MultiSet() ]>
-        | RandomEnumerable    => <[ RandomArray() ]>
-        | SortedSet           => <[ SortedArray() ]>
-        | TokenQueue          => <[ TokenQueue() ]>
-        | TimedSimpleMultiset => <[ TimedHeap() ]>
+        | TDestCont.MultiSet  => cpp("type: multi_set")
+        | RandomEnumerable    => cpp("type: random_array")
+        | SortedSet           => cpp("type: sorted_array")
+        | TokenQueue          => cpp("type: token_queue")
+        | TimedSimpleMultiset => cpp("type: timed_heap")
       }
-      null
+      cpp(<#decl: dest_cont $name = dest_cont()#>)
       //if (place.IsTimed)
       //<[decl: $(name : usesite) : PetriNetModel.TimedPlace.[$type] = PetriNetModel.TimedPlace($(name : string), $dest_cont)]> else
       //<[decl: $(name : usesite) : PetriNetModel.Place.[$type] = PetriNetModel.Place($(name : string), $dest_cont)]>
     }
     
     
-    CreateTran(tran : Transition) : ClassMember
+    CreateTran(tran : Transition) : CTypeDecl
     {
       def name = tran.Name;
       
       def body = CreateTranBody(tran);      
-      <[
-         decl: public $(name : usesite)() : void
+      cpp(<#
+         decl: void $name()
                {
-                 when (Lock($(name : usesite)))
+                 if (lock($name))
                  {
                   $body;
                   Unlock();
                  }
                }
-       ]>
+       #>)
     }
     
-    CreateGlobRef(name : string, val : PExpr) : ClassMember
+    ConvType(te : TExpr) : CType
+    {
+      null
+    }
+   
+    ConvExpr(expr : PExpr) : CExpr
+    {
+      null
+    }
+    
+    CreateGlobRef(name : string, val : PExpr) : CTypeDecl
     {
       def ty = Typer(typing_method);
       def te = ty.TypeExpr(val);
       
-      <[decl: mutable $(name : usesite) : $(te.ty : typed) = $val]>
+      def type = ConvType(te);
+      def val = ConvExpr(val);
+      //<[decl: mutable $(name : usesite) : $(te.ty : typed) = $val]>
+      cpp("decl: $type $name = $val")
     }
      
-    CreateVals(expr : PExpr) : ClassMember
+    CreateVals(expr : PExpr) : CTypeDecl
     {
       | <[ def $(name : usesite) = $val]> => 
           def type = typer.TypeExpr(val);
           def ty = type.ty;
-          <[ decl: $(name : usesite) : $(ty : typed) = $val ]>
-          
+          def type = type |> ConvType;
+          def val = ConvExpr(val);
+          //<[ decl: $(name : usesite) : $(ty : typed) = $val ]>
+          cpp("decl: $type $name = $val")
       | _ => null
     }
     
@@ -275,23 +290,29 @@ namespace PetriNetLib
       <[ def $(n : usesite)(..$parms) { ..$expr } ]>
     }
     
-    CreateDecl(expr : PExpr) : ClassMember
+    CreateDecl(expr : PExpr) : CTypeDecl
     {
       | <[ def $(_ : usesite)(..$_) { ..$_ } ]> => 
           
           def func = ProcessFun(expr);
           def ty = Typer(typing_method);
           def te = ty.TypeExpr(func);
+          def type = te |> ConvType;
           match (func)
           {
             | <[ def $(n : usesite)(..$parms) { ..$expr } ]> =>
                 match (te)
                 {
-                  | TExpr.DefFunctionsIn(h :: _, _) => def ret = h.ReturnType;
-                                                      <[decl: $(n : usesite)(..$parms) : $(ret : typed)
-                                                        {
-                                                          ..$expr
-                                                        }]>
+                  | TExpr.DefFunctionsIn(h :: _, _) => def ret = h.ReturnType |> ConvType;
+                                                       def expr = expr |> ConvExpr;
+                                                       cpp(<#decl: $ret $n(..$parms)
+                                                       {
+                                                         $expr
+                                                       }#>)
+                                                      //<[decl: $(n : usesite)(..$parms) : $(ret : typed)
+                                                      //  {
+                                                      //    ..$expr
+                                                      //  }]>
                 }
         }
       | _ => null
@@ -299,14 +320,14 @@ namespace PetriNetLib
     
     CreateColourSet2(col : ColourSet) : ClassMember.TypeDeclaration
     {
-      | ColourSet(n, Colour.Index(_, _, i)) => 
-          <[decl: [Record]
-            class $(i : usesite) : $(n : usesite)
-            {
+      //| ColourSet(n, Colour.Index(_, _, i)) => 
+      //    <[decl: [Record]
+      //      class $(i : usesite) : $(n : usesite)
+      //      {
                                                        
-            }
-            ]>;
-      | _ => null    
+      //      }
+      //      ]>;
+      //| _ => null    
     }
     
     CreateColourSet(col : ColourSet) : CTypeDecl
@@ -517,7 +538,7 @@ namespace PetriNetLib
       //CreateOperators();
       //assert2(false);
       def sets = model.colour_sets.Values.Map(CreateColourSet).Filter(_ != null);
-      def sets2 = model.colour_sets.Values.Map(CreateColourSet2).Filter(_ != null);
+      //def sets2 = model.colour_sets.Values.Map(CreateColourSet2).Filter(_ != null);
       //def sets = sets + sets2;
       //foreach (m in sets) typebuilder.DefineNestedTypeWithSource(m).Compile();
       
