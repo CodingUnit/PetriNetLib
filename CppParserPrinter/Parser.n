@@ -54,8 +54,33 @@ namespace CppParserPrinter
        CTypeDecl.Type(CComplexType.Struct(Some(name), decls))
     }
     
+    GetQualifier(q : Qualifier) : CMethodQualifier
+    {
+      null
+    }
+    
+    GetExpression(e : Expression) : CExpr
+    {
+      null
+    }
+    
+    GetStatement(st : Statement) : CStatement
+    {
+      | Statement.BraceStatement(StatementsData = s)      => CStatement.Compound(s.Map(GetStatement))
+      | Statement.Expression(Expression = e)              => CStatement.Expression(e |> GetExpression)
+      | Statement.If(Cond = c, Body = b, ElseOptData = e) => 
+          CStatement.If(c |> GetExpression, b |> GetStatement, e.Map(x => GetStatement(x.Statement)))
+    }
+    
     GetTypeDecl(decl : TypeDecl) : CTypeDecl
     {
+      | TypeDecl.Method(SpecifierOptData = s, QualifierOptData = q, RetType = t, Name = n, ParmsData = p, BodyData = b) => 
+         def type = t |> GetType;
+         def spec = s.Map(GetSpecifier).WithDefault(CSpec.None());
+         def qual = q.Map(GetQualifier).WithDefault(CMethodQualifier.None());
+         def parms = p.Map(GetType);
+         def body = CStatement.Compound(b.Map(GetStatement));
+         CTypeDecl.Method(spec, CTree.Func(type, n |> NameToCName, parms, body), qual)
       | TypeDecl.SplicableMembers(SplicableMembers = SplicableMembers(Name = n)) => CTypeDecl.SplicableMembers(n.IdentifierBodyData)
       | TypeDecl.Enum(Enum = Cpp.Grammar.CppGrammarParseTree.Enum(Name = n, EnumDeclsData = (d, _))) =>
           def decls = d.Map(GetEnumDecl);

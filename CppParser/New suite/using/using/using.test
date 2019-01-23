@@ -1,1 +1,8 @@
-using A.B;
+decl: void $name()
+               {
+                 if (lock($name)) 
+{
+  $body;
+  Unlock();
+}
+}

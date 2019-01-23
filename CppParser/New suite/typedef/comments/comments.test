@@ -1,8 +1,1 @@
-a => B; // abcd
-a => B;
-/*
-comments
-
-*/
-
-c => D;
+decl: dest_cont $name = dest_cont()

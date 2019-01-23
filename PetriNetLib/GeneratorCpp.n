@@ -114,7 +114,7 @@ namespace PetriNetLib
       }
     }
     
-      CreateTranBody(tran : Transition) : PExpr
+      CreateTranBody(tran : Transition) : CExpr
     {
       def input  = tran.InputPlaces;
       def output = tran.OutputPlaces;
@@ -192,7 +192,8 @@ namespace PetriNetLib
       
       //def input = eval(input, []);
       
-      input.Fold(null, fold);
+      _ = input.Fold(null, fold);
+      null
     }
     
     CreatePlace(place : Place) : CTypeDecl
@@ -208,7 +209,7 @@ namespace PetriNetLib
         | TokenQueue          => cpp("type: token_queue")
         | TimedSimpleMultiset => cpp("type: timed_heap")
       }
-      cpp(<#decl: dest_cont $name = dest_cont()#>)
+      cpp(<#decl: dest_cont $name;#>)
       //if (place.IsTimed)
       //<[decl: $(name : usesite) : PetriNetModel.TimedPlace.[$type] = PetriNetModel.TimedPlace($(name : string), $dest_cont)]> else
       //<[decl: $(name : usesite) : PetriNetModel.Place.[$type] = PetriNetModel.Place($(name : string), $dest_cont)]>
@@ -220,16 +221,16 @@ namespace PetriNetLib
       def name = tran.Name;
       
       def body = CreateTranBody(tran);      
-      cpp(<#
+      cpp((<#
          decl: void $name()
                {
                  if (lock($name))
                  {
-                  $body;
-                  Unlock();
+                   $body;
+                   unlock();
                  }
                }
-       #>)
+       #>, ""))
     }
     
     ConvType(te : TExpr) : CType
