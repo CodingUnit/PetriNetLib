@@ -47,12 +47,21 @@ namespace CppParserPrinter
     | SplicableType {str : string}
   }
 
+  [Record]
+  public class CParm
+  {
+    public name : CName;
+    public type : CType;
+    public default : option[CConstExpr];
+  }
+  
+  [Record]
   public variant CTree : IPrintable
   {
       | Compound {decls : list[CTree] }
       | NameSpace { name : CName; decls : CTree}
       | Type { type : CComplexType;}
-      | Func { ret_type : CType; name : CName; parms : list[CType]; body : CStatement}
+      | Func { ret_type : CType; name : CName; parms : list[CParm]; body : CStatement}
       | Decl { specifiers : list[CSpec]; type : CType; decls : list[CDecl] }
       //| TypeDecl { type : CType; }
       | Quotation { quot : CQuotation;}

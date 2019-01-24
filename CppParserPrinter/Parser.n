@@ -79,13 +79,18 @@ namespace CppParserPrinter
           CStatement.If(c |> GetExpression, b |> GetStatement, e.Map(x => GetStatement(x.Statement)))
     }
     
+    GetParm(p : Parm) : CParm
+    {
+      CParm(p.Name |> NameToCName, p.Type |> GetType, None())
+    }
+    
     GetTypeDecl(decl : TypeDecl) : CTypeDecl
     {
       | TypeDecl.Method(SpecifierOptData = s, QualifierOptData = q, RetType = t, Name = n, ParmsData = p, BodyData = b) => 
          def type = t |> GetType;
          def spec = s.Map(GetSpecifier).WithDefault(CSpec.None());
          def qual = q.Map(GetQualifier).WithDefault(CMethodQualifier.None());
-         def parms = p.Map(GetType);
+         def parms = p.Map(GetParm);
          def body = CStatement.Compound(b.Map(GetStatement));
          CTypeDecl.Method(spec, CTree.Func(type, n |> NameToCName, parms, body), qual)
       | TypeDecl.SplicableMembers(SplicableMembers = SplicableMembers(Name = n)) => CTypeDecl.SplicableMembers(n.IdentifierBodyData)
@@ -190,12 +195,12 @@ namespace CppParserPrinter
     
     ConvertTree(decl : Declaration) : CTree
     {
-      | Declaration.QuotEnum(EnumDecl = e) => CTree.Quotation(CQuotation.EnumDecl(e |> GetEnumDecl))
-      | Declaration.QuotType(QuotType = QuotType(QType = TypePtr(SpecifierOptData = s, Type = t))) => 
-          def spec = s.Map(x => [GetSpecifier(x)]).WithDefault([]);
-          def type = GetType(t) |> CType.Pointer(spec, _, []);
-          CTree.Quotation(CQuotation.Type(type))
-      | Declaration.QuotType(QuotType = QuotType(QType = Type(Type = t))) => CTree.Quotation(CQuotation.Type(t |> GetType))
+      //| Declaration.QuotEnum(EnumDecl = e) => CTree.Quotation(CQuotation.EnumDecl(e |> GetEnumDecl))
+      //| Declaration.QuotType(QuotType = QuotType(QType = TypePtr(SpecifierOptData = s, Type = t))) => 
+      //    def spec = s.Map(x => [GetSpecifier(x)]).WithDefault([]);
+      //    def type = GetType(t) |> CType.Pointer(spec, _, []);
+      //    CTree.Quotation(CQuotation.Type(type))
+      //| Declaration.QuotType(QuotType = QuotType(QType = Type(Type = t))) => CTree.Quotation(CQuotation.Type(t |> GetType))
       | Declaration.QuotDecl(QuotDecl = QuotDecl.TypeDecl(TypeDecl = t)) => CTree.Quotation(CQuotation.TypeDecl(GetTypeDecl(t)))
       //| Declaration.TypeDecl(TypeDecl = td) => 
       

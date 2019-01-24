@@ -1,6 +1,6 @@
 ﻿language Cplusplus
 {
-  syntax module Cpp.Grammar.CppGrammar start rule Declaration;
+  syntax module Cpp.Grammar.CppGrammar start rule CompilationUnit;
   //syntax module Nemerle.Statechart.Grammar.Actions;
   //syntax module Nemerle.Statechart.Grammar.Base;
   //syntax module Nemerle.Statechart.Grammar.Events;
@@ -13,7 +13,8 @@
 namespace Cpp.Grammar
 {
 
- //using Nitra;
+using Nitra;
+using Nitra.Core;
 using Base;
 
 syntax module CppGrammar
@@ -127,22 +128,22 @@ precedence Invocation:
   syntax Type
   {
     | Void  = "void"
-    | Short = "short"
-    | Char  = "char"
-    | Int   = "int"
-    | Long  = "long"
-    | UnsignedType = "unsigned" sm Type
-    | SignedType = "signed" sm Type
-    | Named = Name Template?
+    //| Short = "short"
+    //| Char  = "char"
+    //| Int   = "int"
+    //| Long  = "long"
+    //| UnsignedType = "unsigned" sm Type
+    //| SignedType = "signed" sm Type
+    /*| Named = Name Template?
       {
         syntax Template = "<" (Name;",")* ">";
-      }
+      }*/
   }
 
   syntax Statement
   {
     //| Compound = Statement+
-    | BraceStatement = "{" Statement* "}"
+    /*| BraceStatement = "{" Statement* "}"
     | Null = ";"
     | Decl
     | Expression = Expression ';'
@@ -162,7 +163,7 @@ precedence Invocation:
     | If = "if" "(" Cond=Expression ")" Body=Statement Else?
     {
       syntax Else = "else" Statement;
-    }
+    }*/
   }
 
   syntax Decl = Specifier* sm Type sm Decls=TreeDecl+ Init? ';'
@@ -226,7 +227,7 @@ precedence Invocation:
 	  | Constructor = Name '(' Parms=Type* ')' nl '{' nl Body=Statement* nl '}'
 	  | Destructor = '~' Name '(' ')' nl '{' nl Body=Statement* nl '}'
 	  | AssignmentOp = RetType=Type sm "operator" "=" '(' Parms=Type* ')' sm Qualifier? nl '{' nl Body=Statement* nl '}' 
-    | Method = Specifier? sm RetType=Type sm Name '(' Parms=Parm* ')' sm Qualifier? nl '{' i nl Body=Statement* d nl '}' 
+    | Method = Specifier? sm RetType=Type                  sm Name '(' Parms=Parm* ')' sm Qualifier? nl '{' nl Body=Statement* nl '}' 
     | SplicableMembers
     | SplicableMember = "$" Identifier
   }
@@ -257,17 +258,14 @@ precedence Invocation:
   {
     | Id                 = Identifier
     | Qualified          = QualifiedIdentifier
-    //| SplicableList      = "..$" Name=Identifier
+    | SplicableList      = "..$" Name=Identifier
     | Splicable          = '$' Name=Identifier
-    | SplicableType      = "$" "(" Name=Identifier ":" "type" ")" 
-	  | SplicableQualified = '$' '(' Name=QualifiedIdentifier ')'
+    //| SplicableType      = "$" "(" Name=Identifier ":" "type" ")" 
+	  //| SplicableQualified = '$' '(' Name=QualifiedIdentifier ')'
   }
 
 
-  syntax Func = Specifier? sm RetType=Type sm Name=Identifier '(' Parms=Parm* ')' nl '{' nl Body=Statement* nl '}'
-  {
-	  syntax Parm = Type Name;
-  }
+  syntax Func = Specifier? sm RetType=Type sm Name=Identifier '(' Parms=Parm* ')' nl '{' nl Body=Statement* nl '}';
 //RetType = CType; name : CName; parms : list[CType]; body : CStatement}
   syntax QuotDecl
   {
@@ -301,21 +299,24 @@ precedence Invocation:
       }
   }
 
+  [StartRule]
+  syntax CompilationUnit = Declaration* !Any;
+
   syntax Declaration
   {
     | QuotDecl = "decl:" QuotDecl
     | QuotExpr = "expr:" Statement
     | QuotEnum = "enumdecl:" EnumDecl
     | QuotType 
-    //| Namespace = "namespace" sm Name nl '{' Declaration* nl '}'
-    //| TypeDecl
-    //| Func
-    //| StructDecl
-    //| ClassDecl
-    //| Enum
-    //| Decl
-    //| SplicableMembers
-    //| SplicableMember = "$" Identifier
+    | Namespace = "namespace" sm Name nl '{' Declaration* nl '}'
+    | TypeDecl
+    | Func
+    | StructDecl
+    | ClassDecl
+    | Enum
+    | Decl
+    | SplicableMembers
+    | SplicableMember = "$" Identifier
   }
 }
 

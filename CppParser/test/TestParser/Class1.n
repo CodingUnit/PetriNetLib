@@ -1,0 +1,63 @@
+﻿using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Nitra;
+using Cpp.Grammar;
+using Cpp.Grammar.CppGrammarParseTree;
+
+namespace TestParser
+{
+  public module Main
+  {
+    parserHost : ParseSession;
+    msg : Nitra.ProjectSystem.CompilerMessageList = Nitra.ProjectSystem.CompilerMessageList();
+    
+    this()
+    {
+      parserHost = ParseSession(Cpp.Grammar.CppGrammar.CompilationUnit, compilerMessages = msg);
+    }
+    
+    public Parse(text : string) : bool
+    {
+      if (string.IsNullOrWhiteSpace(text)) false else
+      {
+        def source = SourceSnapshot(text, null : string);
+        def result = parserHost.Parse(source);
+        def ast = result.CreateParseTree();
+        if (result.IsSuccess) 
+        {
+          match (ast)
+          {
+            | Declaration as a => true//ConvertTree(a)
+            | _                => false
+          }
+        } else 
+        {
+          def msg = msg.GetMessages();
+          foreach (m in msg)
+          {
+            System.Diagnostics.Trace.WriteLine(m)
+          }
+          false
+          //(null, msg.GetMessages().NToList())
+        }
+        
+      }
+    }
+    
+    public Main() : void
+    {
+      def text = <#
+         decl: void $n()
+               {
+                 
+               }
+       #>;
+      Parse(text)
+    }
+  }
+}

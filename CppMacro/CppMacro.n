@@ -102,6 +102,11 @@ namespace CppMacro
       //| CName.SplicableList(s) => <[]>
     }
 
+    Lift(parm : CParm) : PExpr
+    {
+      def deflt = parm.default.Map(Lift) |> Lift;
+      <[ CParm($(Lift(parm.name)), $(Lift(parm.type)), $deflt)]>
+    }
     
     Lift(func : CTree.Func) : PExpr
     {

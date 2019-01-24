@@ -43,7 +43,7 @@
     | False = "false"
   }    
 
-  regex Any = ['\u0000'..'\uFFFF'];
+  //regex Any = ['\u0000'..'\uFFFF'];
 
   //[StartRule, ExplicitSpaces]
   //syntax CompilationUnit = s Expression !Any;
@@ -57,18 +57,12 @@
   regex Space = Whitespace | NewLine;
   regex Spaces = Space+;
 
-  void s   = Spaces*;                     // optional spacer
-  void S   = !IdentifierPartCharacters s; // identifier break spacer
-
-  marker i;     // increase a indent
-  marker d;     // decrease a indent
-  marker nl;    // optional spacer and plase for \n while pretty printing
-  marker inl;   // i + nl
-  marker sm;    // optional spacer and prefer to print space while pretty printing
+  //void s   = Spaces*;                     // optional spacer
+  //void S   = !IdentifierPartCharacters s; // identifier break spacer
 
   keyword regex ['A'..'Z', 'a'..'z', '_'..'_']+ rule S;
 
-  regex KeywordToken =   "void" | "int" | "struct" | "class" | "case" | "switch" | "if" | "union" | "decl:" | "expr:" | "enumdecl:" | "namespace" | "enum";
+  regex KeywordToken =   "struct" | "class" | "case" | "switch" | "if" | "union";
 
   //alias Name                = Identifier;
   alias QualifiedName       = QualifiedIdentifier;
