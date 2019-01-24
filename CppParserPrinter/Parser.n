@@ -18,7 +18,7 @@ namespace CppParserPrinter
   public class Parser
   {
     parserHost : ParseSession;
-    msg : Nitra.ProjectSystem.CompilerMessageList;
+    msg : Nitra.ProjectSystem.CompilerMessageList = Nitra.ProjectSystem.CompilerMessageList();
     
     public this()
     {
@@ -56,12 +56,19 @@ namespace CppParserPrinter
     
     GetQualifier(q : Qualifier) : CMethodQualifier
     {
-      null
+      | Qualifier.Const => CMethodQualifier.Const()
+    }
+    
+    GetBinaryOp(op : BinaryOperator) : COper
+    {
+      | BinaryOperator.CallFunc(Expression = c, ExpressionsData = (p, _)) => 
+          CBinaryOper.CallFunc(c |> GetExpression, CExpr.Compound(p.Map(GetExpression)))
     }
     
     GetExpression(e : Expression) : CExpr
     {
-      null
+      | Expression.BinaryOperator(BinaryOperator = op) => GetBinaryOp(op) |> CExpr.Operator
+      | Expression.Id(Name = n) => CExpr.Id(n |> NameToCName)
     }
     
     GetStatement(st : Statement) : CStatement
@@ -190,19 +197,19 @@ namespace CppParserPrinter
           CTree.Quotation(CQuotation.Type(type))
       | Declaration.QuotType(QuotType = QuotType(QType = Type(Type = t))) => CTree.Quotation(CQuotation.Type(t |> GetType))
       | Declaration.QuotDecl(QuotDecl = QuotDecl.TypeDecl(TypeDecl = t)) => CTree.Quotation(CQuotation.TypeDecl(GetTypeDecl(t)))
-      | Declaration.TypeDecl(TypeDecl = td) => 
+      //| Declaration.TypeDecl(TypeDecl = td) => 
       
-          match (GetTypeDecl(td))
-          {
-            | CTypeDecl.Type(c) => c |> CTree.Type
-            | CTypeDecl.Decl(d) => d
-          }
-      | Declaration.Decl(Decl = Decl(SpecifiersData = s, Type = t, DeclsData = d, InitOptData = i)) => 
-          def spec = s.Map(GetSpecifier);
-          def type = t |> GetType;
-          def init = i.Map(x => x.ConstExpr |> GetConstExpr);
-          def decls = d.Map(GetDecl(_, init));
-          CTree.Decl(spec, type, decls)
+      //    match (GetTypeDecl(td))
+      //    {
+      //      | CTypeDecl.Type(c) => c |> CTree.Type
+      //      | CTypeDecl.Decl(d) => d
+      //    }
+      //| Declaration.Decl(Decl = Decl(SpecifiersData = s, Type = t, DeclsData = d, InitOptData = i)) => 
+      //    def spec = s.Map(GetSpecifier);
+      //    def type = t |> GetType;
+      //    def init = i.Map(x => x.ConstExpr |> GetConstExpr);
+      //    def decls = d.Map(GetDecl(_, init));
+      //    CTree.Decl(spec, type, decls)
     }
     
     public Parse(text : string) : CTree
@@ -212,19 +219,23 @@ namespace CppParserPrinter
         def source = SourceSnapshot(text, null : string);
         def result = parserHost.Parse(source);//Main.StateMachine(source, parserHost);
         def ast = result.CreateParseTree();
-        if (result.IsSuccess) 
+//        if (result.IsSuccess) 
         {
           match (ast)
           {
             | Declaration as a => ConvertTree(a)
-            | _                => null
+            | _                => {
+                                    def msg = msg.GetMessages();
+                                    foreach (m in msg)
+                                    {
+                                      System.Diagnostics.Trace.WriteLine(m)
+                                    }
+                                    null
+                                    //(null, msg.GetMessages().NToList())
+                                  }
           }
-        } else 
-        {
-          def msg = msg.GetMessages();
-          null
-          //(null, msg.GetMessages().NToList())
-        }
+        }// else 
+        
       }
     }
   }

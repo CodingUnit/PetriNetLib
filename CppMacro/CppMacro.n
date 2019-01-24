@@ -78,11 +78,11 @@ namespace CppMacro
       def name = tree.name.Map(Lift) |> Lift;
       match (tree)
       {
-        | CComplexType.Enum(s) as c => 
+        | CComplexType.Enum(s) => 
             <[ CComplexType.Enum($name, $(Lift(s)))]>
-        | CComplexType.Struct(d) as c => 
+        | CComplexType.Struct(d) => 
             <[ CComplexType.Struct($name, $(Lift(d))) ]>
-        | CComplexType.Class(b, d) as c => 
+        | CComplexType.Class(b, d) => 
             def bas = b.Map((m, n) => <[ ($(Lift(m)), $(Lift(n))) ]>);
             <[ CComplexType.Class($name, [..$bas], $(Lift(d))) ]>
       }
@@ -100,6 +100,40 @@ namespace CppMacro
       | CName.Splicable(s)     => <[ CName.String($(s : usesite)) ]>
       | CName.SplicableType(s) => <[ $(s : usesite) ]>
       //| CName.SplicableList(s) => <[]>
+    }
+
+    
+    Lift(func : CTree.Func) : PExpr
+    {
+      
+      def parms = func.parms.Map(Lift);
+      <[ CTree.Func($(Lift(func.ret_type)), $(Lift(func.name)), [..$parms], $(Lift(func.body)))]>
+    }
+    
+    Lift(o : COper) : PExpr
+    {
+      | CBinaryOper.CallFunc(left = l, right = r) => <[CBinaryOper.CallFunc($(Lift(l)), $(Lift(r)))]>
+    }
+    
+    Lift(st : CExpr) : PExpr
+    {
+      | CExpr.Compound(c) => def c = c.Map(Lift);
+                             <[ CExpr.Compound([..$c])]>
+      | CExpr.Operator(o) => <[ CExpr.Operator($(Lift(o))) ]>
+      | CExpr.Id(n)       => <[ CExpr.Id($(Lift(n))) ]>
+    }
+    
+    Lift(st : CStatement) : PExpr
+    {
+      | CStatement.If(c, b, e) => 
+          def e = e.Map(Lift) |> Lift;
+          <[ CStatement.If($(Lift(c)), $(Lift(b)), $e)]>
+    }
+    
+    Lift(qual : CMethodQualifier) : PExpr
+    {
+      | CMethodQualifier.Const => <[ CMethodQualifier.Const() ]>
+      | CMethodQualifier.None  => <[ CMethodQualifier.None() ]>
     }
     
     Lift(mod : CMod) : PExpr
@@ -170,6 +204,7 @@ namespace CppMacro
     
     Lift(tree : CTypeDecl) : PExpr
     {
+      | CTypeDecl.Method(s, f, q) => <[ CTypeDecl.Method($(Lift(s)), $(Lift(f)), $(Lift(q)))]>
       | CTypeDecl.SplicableMembers(m) => <[ $(m : usesite) ]>
       | CTypeDecl.Type(c) => <[ CTypeDecl.Type($(Lift(c)))]>
       | CTypeDecl.Decl(d) => <[ CTypeDecl.Decl($(Lift(d)))]>

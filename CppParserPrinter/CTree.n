@@ -398,6 +398,7 @@ $<#struct $Name
   {
   }
 
+  [Record]
   public variant CUnaryOper : COper
   {
       | PostInc
@@ -412,9 +413,10 @@ $<#struct $Name
       | Minus
       | Sizeof
 
-      expr : CExpr;
+      public expr : CExpr;
   }
 
+  [Record]
   public variant CReadOnlyOper : COper
   {
       | Not { expr : CConstExpr }
@@ -425,6 +427,7 @@ $<#struct $Name
       | Binary { bin : CBinaryOper }
   }
 
+  [Record]
   public variant CBinaryOper : COper
   {
       | Mul
@@ -464,8 +467,8 @@ $<#struct $Name
       | CallFunc // a(...)
       | TypeConv // (type)expr
 
-      left : CExpr;
-      right : CExpr;
+      public left : CExpr;
+      public right : CExpr;
 
       public override ToString() : string
       {

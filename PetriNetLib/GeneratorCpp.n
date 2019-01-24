@@ -218,19 +218,20 @@ namespace PetriNetLib
     
     CreateTran(tran : Transition) : CTypeDecl
     {
-      def name = tran.Name;
+      def n = tran.Name;
       
       def body = CreateTranBody(tran);      
       cpp((<#
-         decl: void $name()
+         decl: void $n()
                {
-                 if (lock($name))
+                 
+               }
+       #>, ""))/*
+       if (lock($name))
                  {
                    $body;
                    unlock();
-                 }
-               }
-       #>, ""))
+                 }*/
     }
     
     ConvType(te : TExpr) : CType

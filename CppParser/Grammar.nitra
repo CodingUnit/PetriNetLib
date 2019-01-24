@@ -187,6 +187,8 @@ precedence Invocation:
     | BinaryOper
   }
 
+  syntax Parm = Type Name;
+
   syntax BinaryOper
   {
   }
@@ -200,7 +202,7 @@ precedence Invocation:
 	  {
 		  syntax Parm = Type Name?;
 	  }
-	//| Func
+	  //| Func
   }
 
   syntax InitConstExpr
@@ -224,7 +226,7 @@ precedence Invocation:
 	  | Constructor = Name '(' Parms=Type* ')' nl '{' nl Body=Statement* nl '}'
 	  | Destructor = '~' Name '(' ')' nl '{' nl Body=Statement* nl '}'
 	  | AssignmentOp = RetType=Type sm "operator" "=" '(' Parms=Type* ')' sm Qualifier? nl '{' nl Body=Statement* nl '}' 
-    | Method = Specifier? sm RetType=Type sm Name '(' Parms=Type* ')' sm Qualifier? nl '{' i nl Body=Statement* d nl '}' 
+    | Method = Specifier? sm RetType=Type sm Name '(' Parms=Parm* ')' sm Qualifier? nl '{' i nl Body=Statement* d nl '}' 
     | SplicableMembers
     | SplicableMember = "$" Identifier
   }
@@ -305,10 +307,15 @@ precedence Invocation:
     | QuotExpr = "expr:" Statement
     | QuotEnum = "enumdecl:" EnumDecl
     | QuotType 
-    | Namespace = "namespace" sm Name nl '{' Declaration* nl '}'
-    | TypeDecl
-    | Func
-    | Decl
+    //| Namespace = "namespace" sm Name nl '{' Declaration* nl '}'
+    //| TypeDecl
+    //| Func
+    //| StructDecl
+    //| ClassDecl
+    //| Enum
+    //| Decl
+    //| SplicableMembers
+    //| SplicableMember = "$" Identifier
   }
 }
 

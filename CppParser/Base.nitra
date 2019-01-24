@@ -68,7 +68,7 @@
 
   keyword regex ['A'..'Z', 'a'..'z', '_'..'_']+ rule S;
 
-  regex KeywordToken =   "struct" | "class" | "case" | "switch" | "if" | "union";
+  regex KeywordToken =   "void" | "int" | "struct" | "class" | "case" | "switch" | "if" | "union" | "decl:" | "expr:" | "enumdecl:" | "namespace" | "enum";
 
   //alias Name                = Identifier;
   alias QualifiedName       = QualifiedIdentifier;
