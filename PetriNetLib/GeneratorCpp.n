@@ -47,34 +47,34 @@ namespace PetriNetLib
     
     GetTypeExpr(p : Colour) : CType
     {
-      //| Colour.Simple(type) => TypeFromStr(type)
-      //| Integer       => cpp("type: int")
-      //| Unit(None())  => cpp("type: Unit")
-      //| Unit(Some(t)) => cpp("type: $t")
-      //| Product(vals) => def vals = vals.Map(TypeFromStr);
-      //                   cpp(<#type: tuple2<$vals>#>)
-      //| List(t, _)    => def inner = t |> TypeFromStr;
-      //                   cpp("type: $(inner : type) *")
+      | Colour.Simple(type) => TypeFromStr(type)
+      | Integer       => cpp("type: int")
+      | Unit(None())  => cpp("type: Unit")
+      | Unit(Some(t)) => cpp("type: $t")
+      | Product(vals) => def vals = vals.Map(TypeFromStr);
+                         cpp(<#type: tuple2<..$vals>#>)
+      | List(t, _)    => def inner = t |> TypeFromStr;
+                         cpp("type: $(inner : type) *")
     }
     
     GetTypeExpr(p : ColourSet) : CType
     {
         | ColourSet(n, Index)
-        | ColourSet(n, Enum)          => null//cpp("type: $n")
+        | ColourSet(n, Enum)          => cpp("type: $n")
         | ColourSet(_, Timed(p))
         | ColourSet(_, p)             => GetTypeExpr(p)
     }
       
     TypeFromStr(str : string) : CType
     {
-      //| "string" => cpp("type: char *")
-      //| "int"    => cpp("type: int")
-      //| "intinf" => cpp("type: int")
-      //| "real"   => cpp("type: float")
-      //| "time"   => cpp("type: int")
-      //| "bool"   => cpp("type: bool")
-      //| "unit"   => cpp("type: Unit")
-      //| str      => proc.colour_sets[str] |> GetTypeExpr
+      | "string" => cpp("type: char *")
+      | "int"    => cpp("type: int")
+      | "intinf" => cpp("type: int")
+      | "real"   => cpp("type: float")
+      | "time"   => cpp("type: int")
+      | "bool"   => cpp("type: bool")
+      | "unit"   => cpp("type: Unit")
+      | str      => proc.colour_sets[str] |> GetTypeExpr
       
     }
     
@@ -202,12 +202,11 @@ namespace PetriNetLib
       def type = GetTypeExpr(place.colour);
       def dest_cont = match (place.DestContainerType)
       {
-        | _ => null
-        //| TDestCont.MultiSet  => cpp("type: multi_set")
-        //| RandomEnumerable    => cpp("type: random_array")
-        //| SortedSet           => cpp("type: sorted_array")
-        //| TokenQueue          => cpp("type: token_queue")
-        //| TimedSimpleMultiset => cpp("type: timed_heap")
+        | TDestCont.MultiSet  => cpp("type: multi_set")
+        | RandomEnumerable    => cpp("type: random_array")
+        | SortedSet           => cpp("type: sorted_array")
+        | TokenQueue          => cpp("type: token_queue")
+        | TimedSimpleMultiset => cpp("type: timed_heap")
       }
       cpp(<#decl: dest_cont $name;#>)
       //if (place.IsTimed)
@@ -221,17 +220,17 @@ namespace PetriNetLib
       def n = tran.Name;
       
       def body = CreateTranBody(tran);      
-      cpp((<#
+      cpp(<#
          decl: void $n()
                {
-                 
-               }
-       #>, ""))/*
-       if (lock($name))
+                 if (lock($name))
                  {
                    $body;
                    unlock();
-                 }*/
+                 }
+               }
+       #>)/*
+       */
     }
     
     ConvType(te : TExpr) : CType
@@ -252,7 +251,7 @@ namespace PetriNetLib
       def type = ConvType(te);
       def val = ConvExpr(val);
       //<[decl: mutable $(name : usesite) : $(te.ty : typed) = $val]>
-      cpp("decl: $type $name = $val")
+      cpp(("decl: $type $name = $val", ""))
     }
      
     CreateVals(expr : PExpr) : CTypeDecl
