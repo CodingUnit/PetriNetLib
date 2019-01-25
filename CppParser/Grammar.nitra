@@ -134,6 +134,7 @@ precedence Invocation:
   syntax Statement
   {
     //| Compound = Statement+
+    | SplicableStatement = "$" Identifier
     | BraceStatement = "{" Statement* "}"
     | Null = ";"
     | Decl

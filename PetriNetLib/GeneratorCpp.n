@@ -217,11 +217,11 @@ namespace PetriNetLib
     
     CreateTran(tran : Transition) : CTypeDecl
     {
-      def n = tran.Name;
+      def name = tran.Name;
       
       def body = CreateTranBody(tran);      
       cpp(<#
-         decl: void $n()
+         decl: void $name()
                {
                  if (lock($name))
                  {
