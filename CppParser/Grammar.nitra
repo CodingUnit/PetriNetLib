@@ -90,17 +90,8 @@ precedence Invocation:
     //| Compound = (Expression;",")+
     | Id = Name
     | Constant
-    //| UnaryOperator
-    | BinaryOperator
-    /*| IdentifierExpression             = QualifiedName;
-    | IntegerLiteralExpression         = IntegerLiteral;
-
-    | QualifiedNameExpression          = QualifiedName; // simple-name || member-access
-    | ParenthesizedExpression          = "(" Expression ")"; // parenthesized-expression
-    | Cast                             = "(" Type ")" Expression;
-
-    precedence Invocation:
-    | Invocation                       = Expression ^ Invocation "(" (Expression; ",")* ")";*/
+    | UnaryOperator
+    | BinaryOperator    
   }
 
   syntax Modifier
@@ -128,22 +119,22 @@ precedence Invocation:
   syntax Type
   {
     | Void  = "void"
-    //| Short = "short"
-    //| Char  = "char"
-    //| Int   = "int"
-    //| Long  = "long"
-    //| UnsignedType = "unsigned" sm Type
-    //| SignedType = "signed" sm Type
-    /*| Named = Name Template?
+    | Short = "short"
+    | Char  = "char"
+    | Int   = "int"
+    | Long  = "long"
+    | UnsignedType = "unsigned" sm Type
+    | SignedType = "signed" sm Type
+    | Named = Name Template?
       {
         syntax Template = "<" (Name;",")* ">";
-      }*/
+      }
   }
 
   syntax Statement
   {
     //| Compound = Statement+
-    /*| BraceStatement = "{" Statement* "}"
+    | BraceStatement = "{" Statement* "}"
     | Null = ";"
     | Decl
     | Expression = Expression ';'
@@ -163,7 +154,7 @@ precedence Invocation:
     | If = "if" "(" Cond=Expression ")" Body=Statement Else?
     {
       syntax Else = "else" Statement;
-    }*/
+    }
   }
 
   syntax Decl = Specifier* sm Type sm Decls=TreeDecl+ Init? ';'
@@ -260,8 +251,8 @@ precedence Invocation:
     | Qualified          = QualifiedIdentifier
     | SplicableList      = "..$" Name=Identifier
     | Splicable          = '$' Name=Identifier
-    //| SplicableType      = "$" "(" Name=Identifier ":" "type" ")" 
-	  //| SplicableQualified = '$' '(' Name=QualifiedIdentifier ')'
+    | SplicableType      = "$" "(" Name=Identifier ":" "type" ")" 
+	  | SplicableQualified = '$' '(' Name=QualifiedIdentifier ')'
   }
 
 

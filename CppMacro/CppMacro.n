@@ -29,9 +29,6 @@ namespace CppMacro
            | CQuotation.TypeDecl(t) => Lift(t)
          }
       | CTree.Type(c) => <[ CTree.Type($(Lift(c)))]>
-      //| CTree.TypeDecl(s, t) =>
-      //    def spec = s.Map(Lift);
-      //    <[ CTree.TypeDecl([..$spec], $(Lift(t))) ]>
       | CTree.Decl(s, t, d) => 
           def spec = s.Map(Lift);
           def decls = d.Map(Lift);
@@ -42,6 +39,7 @@ namespace CppMacro
     {
       | CSpec.Typedef => <[ CSpec.Typedef() ]>
       | CSpec.Const   => <[ CSpec.Const() ]>
+      | CSpec.None    => <[ CSpec.None() ]>
     }
     
     Lift(tree : CConstExpr) : PExpr
@@ -130,6 +128,11 @@ namespace CppMacro
     
     Lift(st : CStatement) : PExpr
     {
+      | CStatement.Expression(e)      => <[ CStatement.Expression($(Lift(e)))]>
+      | CStatement.BraceStatement(st) => <[ CStatement.BraceStatement($(Lift(st)))]>
+      | CStatement.Compound(b) => 
+          def b = b.Map(Lift);
+          <[ CStatement.Compound([..$b])]>
       | CStatement.If(c, b, e) => 
           def e = e.Map(Lift) |> Lift;
           <[ CStatement.If($(Lift(c)), $(Lift(b)), $e)]>
@@ -150,6 +153,7 @@ namespace CppMacro
     
     Lift(tree : CType) : PExpr
     {
+      | CType.Void => <[ CType.Void() ]>
       | CType.Class(CName.SplicableType(t)) => <[ $(t : usesite) ]>
       | CType.Class(n) => <[ CType.Class($(Lift(n)))]>
       | CType.Char     => <[ CType.Char() ]>
