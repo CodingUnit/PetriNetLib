@@ -1,1 +1,4 @@
-lock();
+decl: $(ret : type) $n(..$parms)
+                                                       {
+                                                         $expr;
+                                                       }

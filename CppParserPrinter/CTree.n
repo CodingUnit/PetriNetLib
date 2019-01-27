@@ -56,12 +56,34 @@ namespace CppParserPrinter
   }
   
   [Record]
+  public variant CParms
+  {
+    | ParmList {parms : list[CParm]}
+    | Splicable { parms : string }
+    | SplicableList { parms : string }
+  }
+  
+  [Record]
   public variant CTree : IPrintable
   {
       | Compound {decls : list[CTree] }
       | NameSpace { name : CName; decls : CTree}
       | Type { type : CComplexType;}
-      | Func { ret_type : CType; name : CName; parms : list[CParm]; body : CStatement}
+      | Func 
+      { 
+        ret_type : CType; 
+        name : CName; 
+        parms :CParms; 
+        body : CStatement;
+        
+        public this(ret_type : CType, name : CName, parms : CParms, body : list[CExpr])
+        {
+          this.ret_type = ret_type;
+          this.name = name;
+          this.parms = parms;
+          this.body = body |> CExpr.Compound |> CStatement.Expression;
+        }
+      }
       | Decl { specifiers : list[CSpec]; type : CType; decls : list[CDecl] }
       //| TypeDecl { type : CType; }
       | Quotation { quot : CQuotation;}
@@ -78,7 +100,7 @@ namespace CppParserPrinter
           | Decl(spec, type, decls)          => $<#..($spec; " ") $type ..$decls#>.Trim()
           | Type(t)                          => $"$t"
           | Func(ret, name, parms, body)     =>
-$<#$ret $name(..$(parms;", "))
+$<#$ret $name($parms))
 {
   $body
 }#>
@@ -142,7 +164,7 @@ $<#$ret operator=(..$(parms; ",")) $qual
 }#>
           | Type(t)                                            => $"$t"
           | Method(spec, (ret, name, parms, body), qual)       =>
-$<#$spec $ret $name(..$(parms; ", ")) $qual
+$<#$spec $ret $name($parms) $qual
 {
   $body
 }#>.Trim()
@@ -530,7 +552,8 @@ $<#struct $Name
       | Char { val : Char }
       | Float { val : double }
       | Sizeof { expr : CExpr }
-
+      | Splicable { name : string}
+      
       public override ToString() : string
       {
         match (this)
@@ -562,7 +585,8 @@ $<#struct $Name
       | While { cond : CExpr; body : CStatement }
       | DoWhile { body : CStatement; cond : CExpr }
       | For { init : CInitExpr; cond : option[CExpr]; iter : option[CExpr]; body : CStatement }
-
+      | Splicable {name : string}
+      
       public override Print(del : int) : string
       {
         match (this)

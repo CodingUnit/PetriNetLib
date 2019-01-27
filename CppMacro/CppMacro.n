@@ -44,7 +44,8 @@ namespace CppMacro
     
     Lift(tree : CConstExpr) : PExpr
     {
-      <[]>
+      | CConstExpr.Splicable(s) => <[ $(s : usesite) ]>
+      | CConstExpr.Int(i)       => <[ CConstExpr.Int($(i : int))]>
     }
     
     Lift(tree : list[CEnumDecl]) : PExpr
@@ -106,11 +107,19 @@ namespace CppMacro
       <[ CParm($(Lift(parm.name)), $(Lift(parm.type)), $deflt)]>
     }
     
+    Lift(parms : CParms) : PExpr
+    {
+      | CParms.ParmList(l) => def lst = l.Map(Lift);
+                              <[ CParms.ParmList([..$lst])]>
+      | CParms.Splicable(l)     => <[ CParms.ParmList([$(l : usesite)])]>
+      | CParms.SplicableList(l) => <[ CParms.ParmList($(l : usesite))]>
+    }
+    
     Lift(func : CTree.Func) : PExpr
     {
       
-      def parms = func.parms.Map(Lift);
-      <[ CTree.Func($(Lift(func.ret_type)), $(Lift(func.name)), [..$parms], $(Lift(func.body)))]>
+      def parms = func.parms |> Lift;
+      <[ CTree.Func($(Lift(func.ret_type)), $(Lift(func.name)), $parms, $(Lift(func.body)))]>
     }
     
     Lift(o : COper) : PExpr
@@ -128,6 +137,8 @@ namespace CppMacro
     
     Lift(st : CStatement) : PExpr
     {
+      | CStatement.Splicable(s)       => <[ $(s : usesite) ]>
+      | CStatement.Expression(CExpr.Id(CName.Splicable(s))) => <[ $(s : usesite) ]>
       | CStatement.Expression(e)      => <[ CStatement.Expression($(Lift(e)))]>
       | CStatement.BraceStatement(st) => <[ CStatement.BraceStatement($(Lift(st)))]>
       | CStatement.Compound(b) => 

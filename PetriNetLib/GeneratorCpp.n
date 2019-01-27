@@ -113,7 +113,7 @@ namespace PetriNetLib
       }
     }
     
-      CreateTranBody(tran : Transition) : CExpr
+      CreateTranBody(tran : Transition) : CStatement
     {
       def input  = tran.InputPlaces;
       def output = tran.OutputPlaces;
@@ -220,7 +220,7 @@ namespace PetriNetLib
       def name = tran.Name;
       
       def body = CreateTranBody(tran);      
-      cpp(<#
+      cpp((<#
          decl: void $name()
                {
                  if (lock($name))
@@ -229,7 +229,7 @@ namespace PetriNetLib
                    unlock();
                  }
                }
-       #>)/*
+       #>, ""))/*
        */
     }
     
@@ -238,7 +238,23 @@ namespace PetriNetLib
       null
     }
    
+    ConvType(te : TypeVar) : CType
+    {
+      null
+    }
+    
     ConvExpr(expr : PExpr) : CExpr
+    {
+      null
+    }
+    
+    
+    ConvParm(expr : PParameter) : CParm
+    {
+      null
+    }
+    
+    ExprToConstExpr(expr : CExpr) : CConstExpr
     {
       null
     }
@@ -249,9 +265,9 @@ namespace PetriNetLib
       def te = ty.TypeExpr(val);
       
       def type = ConvType(te);
-      def val = ConvExpr(val);
+      def val = ConvExpr(val) |> ExprToConstExpr;
       //<[decl: mutable $(name : usesite) : $(te.ty : typed) = $val]>
-      cpp(("decl: $type $name = $val", ""))
+      cpp("decl: $(type : type) $name = $val;")
     }
      
     CreateVals(expr : PExpr) : CTypeDecl
@@ -260,9 +276,9 @@ namespace PetriNetLib
           def type = typer.TypeExpr(val);
           def ty = type.ty;
           def type = type |> ConvType;
-          def val = ConvExpr(val);
+          def val = ConvExpr(val) |> ExprToConstExpr;
           //<[ decl: $(name : usesite) : $(ty : typed) = $val ]>
-          cpp("decl: $type $name = $val")
+          cpp("decl: $(type : type) $name = $val;")
       | _ => null
     }
     
@@ -305,10 +321,11 @@ namespace PetriNetLib
                 match (te)
                 {
                   | TExpr.DefFunctionsIn(h :: _, _) => def ret = h.ReturnType |> ConvType;
-                                                       def expr = expr |> ConvExpr;
-                                                       cpp(<#decl: $ret $n(..$parms)
+                                                       def expr = expr.Map(ConvExpr);
+                                                       def parms = parms.Map(ConvParm);
+                                                       cpp(<#decl: $(ret : type) $n(..$parms)
                                                        {
-                                                         $expr
+                                                         $expr;
                                                        }#>)
                                                       //<[decl: $(n : usesite)(..$parms) : $(ret : typed)
                                                       //  {
@@ -329,6 +346,7 @@ namespace PetriNetLib
       //      }
       //      ]>;
       //| _ => null    
+      null
     }
     
     CreateColourSet(col : ColourSet) : CTypeDecl
@@ -341,11 +359,11 @@ namespace PetriNetLib
                                                  cpp("decl: typedef $n $new_name;");
                                                  //CTypeDecl.Decl(CTree.Decl([CSpec.Typedef()], CType.Class(n), [CDecl.Id(CName.String(new_name), None())]))
       | ColourSet(n, Colour.Record(vals))     => def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
-                                                 def fields = fields.Map((n, t) => cpp(("decl: $(t : type) $n;")));
-                                                 cpp((<#decl: struct $n
+                                                 def fields = fields.Map((n, t) => cpp("decl: $(t : type) $n;"));
+                                                 cpp(<#decl: struct $n
                                                       {
-                                                        ..$fields
-                                                      };#>, ""))
+                                                        ..$fields;
+                                                      };#>)
                                                  //<[decl: [Record] class $(n : usesite)
                                                  //        {
                                                  //          ..$fields
@@ -401,7 +419,7 @@ namespace PetriNetLib
       | ColourSet(n, Colour.Enum(vals)) => def vals = vals.Map(x => cpp("enumdecl: $x"));
                                            cpp(<#decl: enum $n
                                                  {
-                                                   ..$vals
+                                                   ..$vals;
                                                  };#>)
       | ColourSet(n, Colour.Timed(c))   => CreateColourSet(ColourSet(n, c))
       | _                               => null
@@ -554,8 +572,8 @@ namespace PetriNetLib
       CreateStartMethod();
       CreateCons();
       
-      def members = fields + places;
-      foreach (m in members) _ = typebuilder.DefineWithSource(m);
+      //def members = fields + places;
+      //foreach (m in members) _ = typebuilder.DefineWithSource(m);
     }
     
     public PhaseOne() : void
@@ -570,12 +588,12 @@ namespace PetriNetLib
       CreateDummyMethod();
       def methods = model.transitions.MapToList(CreateTran);
       def vals = model.ml_decls.Map(CreateVals).Filter(_ != null);
-      foreach (m in vals) _ = typebuilder.DefineWithSource(m);
+      //foreach (m in vals) _ = typebuilder.DefineWithSource(m);
       def decls = model.ml_decls.Map(CreateDecl).Filter(_ != null);
       def decls = decls + methods;
-      foreach (m in decls) _ = typebuilder.DefineWithSource(m);
+      //foreach (m in decls) _ = typebuilder.DefineWithSource(m);
       def globrefs = model.glob_refs.KeyValuePairs.MapToList(CreateGlobRef);
-      foreach (m in globrefs) _ = typebuilder.DefineWithSource(m);
+      //foreach (m in globrefs) _ = typebuilder.DefineWithSource(m);
       typebuilder.Compile()
     }
   }

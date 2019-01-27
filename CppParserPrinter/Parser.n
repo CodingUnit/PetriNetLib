@@ -28,7 +28,7 @@ namespace CppParserPrinter
     NameToCName(n : Name) : CName
     {
       | Name.Id(Identifier = n)        => CName.String(n.IdentifierBodyData)
-      | Name.Splicable(Name = n)       => CName.Splicable(n.IdentifierBodyData)
+      | Name.Splicable(Splicable = Splicable(Name = n)) => CName.Splicable(n.IdentifierBodyData)
       //| Name.SplicableList(Name = n)   => CName.SplicableList(n.IdentifierBodyData)
       | Name.SplicableType(Name = n)   => CName.SplicableType(n.IdentifierBodyData)
     }
@@ -42,7 +42,7 @@ namespace CppParserPrinter
     
     GetTypeDecl(decl : StructTypeDecl) : CTypeDecl
     {
-      | StructTypeDecl.SplicableMembers(SplicableMembers = SplicableMembers(Name = n)) => CTypeDecl.SplicableMembers(n.IdentifierBodyData)
+      | StructTypeDecl.SplicableMembers(SplicableMembers = SplicableMembers(SplicableList = n)) => CTypeDecl.SplicableMembers(n.Name.IdentifierBodyData)
       | StructTypeDecl.StructDecl(StructDecl = d) => GetTypeDecl(d)
       | StructTypeDecl.Decl(Decl = d)             => d |> GetDecl |> CTypeDecl.Decl
     }
@@ -85,6 +85,13 @@ namespace CppParserPrinter
           CStatement.If(c |> GetExpression, b |> GetStatement, e.Map(x => GetStatement(x.Statement)))
     }
     
+    GetParms(p : Parms) : CParms
+    {
+      | Parms.ParmList(ParmsData = p) => p.Map(GetParm) |> CParms.ParmList
+      | Parms.Splicable(Splicable = Splicable(Name = n)) => CParms.Splicable(n.IdentifierBodyData)
+      | Parms.SplicableList(SplicableList = SplicableList(Name = n))        => CParms.SplicableList(n.IdentifierBodyData)
+    }
+    
     GetParm(p : Parm) : CParm
     {
       CParm(p.Name |> NameToCName, p.Type |> GetType, None())
@@ -92,18 +99,18 @@ namespace CppParserPrinter
     
     GetTypeDecl(decl : TypeDecl) : CTypeDecl
     {
-      | TypeDecl.Method(SpecifierOptData = s, QualifierOptData = q, RetType = t, Name = n, ParmsData = p, BodyData = b) => 
+      | TypeDecl.Method(SpecifierOptData = s, QualifierOptData = q, RetType = t, Name = n, ParmsOptData = p, BodyData = b) => 
          def type = t |> GetType;
          def spec = s.Map(GetSpecifier).WithDefault(CSpec.None());
          def qual = q.Map(GetQualifier).WithDefault(CMethodQualifier.None());
-         def parms = p.Map(GetParm);
+         def parms = p.Map(GetParms).WithDefault(CParms.ParmList([]));
          def body = match (b.Map(GetStatement))
          {
            | [st] => st
            | lst  => lst |> CStatement.Compound
          };
          CTypeDecl.Method(spec, CTree.Func(type, n |> NameToCName, parms, body), qual)
-      | TypeDecl.SplicableMembers(SplicableMembers = SplicableMembers(Name = n)) => CTypeDecl.SplicableMembers(n.IdentifierBodyData)
+      | TypeDecl.SplicableMembers(SplicableMembers = SplicableMembers(SplicableList = n)) => CTypeDecl.SplicableMembers(n.Name.IdentifierBodyData)
       | TypeDecl.Enum(Enum = Cpp.Grammar.CppGrammarParseTree.Enum(Name = n, EnumDeclsData = (d, _))) =>
           def decls = d.Map(GetEnumDecl);
           CTypeDecl.Type(CComplexType.Enum(NameToCName(n) |> Some, decls))
@@ -184,7 +191,8 @@ namespace CppParserPrinter
     
     GetConstExpr(expr : ConstExpr) : CConstExpr
     {
-      null
+      | ConstExpr.Splicable(Splicable = Splicable(Name = n)) => CConstExpr.Splicable(n.IdentifierBodyData)
+      | ConstExpr.Int as a                                   => a.IntegerData |> int.Parse |> CConstExpr.Int
     }
     
     GetEnumDecl(decl : EnumDecl) : CEnumDecl

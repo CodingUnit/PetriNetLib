@@ -134,7 +134,7 @@ precedence Invocation:
   syntax Statement
   {
     //| Compound = Statement+
-    | SplicableStatement = "$" Identifier
+    //| Splicable = Splicable ';'
     | BraceStatement = "{" Statement* "}"
     | Null = ";"
     | Decl
@@ -166,8 +166,9 @@ precedence Invocation:
   syntax ConstExpr
   {
     | Int  = Integer
-    | Enum = Name
+    | Enum = Identifier
     | Oper = ReadOnlyOper
+    | Splicable
   }
 
   syntax ReadOnlyOper
@@ -182,6 +183,12 @@ precedence Invocation:
 
   syntax Parm = Type Name;
 
+  syntax Parms
+  {
+    | ParmList = Parm+
+    | Splicable
+    | SplicableList
+  }
   syntax BinaryOper
   {
   }
@@ -207,7 +214,12 @@ precedence Invocation:
 	  | Const = "const"
   }
 
-  syntax SplicableMembers = "..$" Name=Identifier ";"?;
+  syntax SplicableList = "..$" Name=Identifier;
+
+  syntax Splicable = "$" Name=Identifier;
+
+  syntax SplicableMembers = SplicableList ';';
+  syntax SplicableMember = Splicable ';';
 
   syntax TypeDecl
   {
@@ -219,9 +231,9 @@ precedence Invocation:
 	  | Constructor = Name '(' Parms=Type* ')' nl '{' nl Body=Statement* nl '}'
 	  | Destructor = '~' Name '(' ')' nl '{' nl Body=Statement* nl '}'
 	  | AssignmentOp = RetType=Type sm "operator" "=" '(' Parms=Type* ')' sm Qualifier? nl '{' nl Body=Statement* nl '}' 
-    | Method = Specifier? sm RetType=Type                  sm Name '(' Parms=Parm* ')' sm Qualifier? nl '{' nl Body=Statement* nl '}' 
+    | Method = Specifier? sm RetType=Type sm Name '(' Parms? ')' sm Qualifier? nl '{' nl Body=Statement* nl '}' 
     | SplicableMembers
-    | SplicableMember = "$" Identifier
+    | SplicableMember
   }
 
   syntax StructTypeDecl
@@ -229,7 +241,7 @@ precedence Invocation:
 	  | StructDecl
 	  | Decl
     | SplicableMembers
-    | SplicableMember = "$" Identifier
+    | SplicableMember
   }
 
   syntax StructDecl = "struct" sm Name nl '{' i Body=StructTypeDecl* d nl '}' ';';
@@ -250,8 +262,8 @@ precedence Invocation:
   {
     | Id                 = Identifier
     | Qualified          = QualifiedIdentifier
-    | SplicableList      = "..$" Name=Identifier
-    | Splicable          = '$' Name=Identifier
+    | SplicableList
+    | Splicable
     | SplicableType      = "$" "(" Name=Identifier ":" "type" ")" 
 	  | SplicableQualified = '$' '(' Name=QualifiedIdentifier ')'
   }
@@ -308,7 +320,7 @@ precedence Invocation:
     | Enum
     | Decl
     | SplicableMembers
-    | SplicableMember = "$" Identifier
+    | SplicableMember
   }
 }
 
