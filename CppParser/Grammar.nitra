@@ -181,7 +181,10 @@ precedence Invocation:
     | BinaryOper
   }
 
-  syntax Parm = Type Name;
+  syntax Parm = Type Name Init?
+  {
+    syntax Init = '=' ConstExpr;
+  }
 
   syntax Parms
   {
@@ -228,9 +231,9 @@ precedence Invocation:
     | Enum
 	  | Decl
 	  | Modifier = Modifier ':'
-	  | Constructor = Name '(' Parms=Type* ')' nl '{' nl Body=Statement* nl '}'
+	  | Constructor = Name '(' Parms? ')' nl '{' nl Body=Statement* nl '}'
 	  | Destructor = '~' Name '(' ')' nl '{' nl Body=Statement* nl '}'
-	  | AssignmentOp = RetType=Type sm "operator" "=" '(' Parms=Type* ')' sm Qualifier? nl '{' nl Body=Statement* nl '}' 
+	  | AssignmentOp = RetType=Type sm "operator" "=" '(' Parms? ')' sm Qualifier? nl '{' nl Body=Statement* nl '}' 
     | Method = Specifier? sm RetType=Type sm Name '(' Parms? ')' sm Qualifier? nl '{' nl Body=Statement* nl '}' 
     | SplicableMembers
     | SplicableMember

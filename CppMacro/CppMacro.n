@@ -224,6 +224,7 @@ namespace CppMacro
     
     Lift(tree : CTypeDecl) : PExpr
     {
+      | CTypeDecl.Constructor(n, p, b) => <[ CTypeDecl.Constructor($(Lift(n)), $(Lift(p)), $(Lift(b))) ]>
       | CTypeDecl.Method(s, f, q) => <[ CTypeDecl.Method($(Lift(s)), $(Lift(f)), $(Lift(q)))]>
       | CTypeDecl.SplicableMembers(m) => <[ $(m : usesite) ]>
       | CTypeDecl.Type(c) => <[ CTypeDecl.Type($(Lift(c)))]>

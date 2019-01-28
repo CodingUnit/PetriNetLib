@@ -234,7 +234,7 @@ namespace PetriNetLib
       def name = tran.Name;
 
       def body = CreateTranBody(tran);      
-      cpp((<#
+      cpp(<#
          decl: void $name()
                {
                  if (lock($name))
@@ -243,7 +243,7 @@ namespace PetriNetLib
                    unlock();
                  }
                }
-       #>, ""))/*
+       #>)/*
        */
     }
 
@@ -439,7 +439,7 @@ namespace PetriNetLib
       | _                               => null
     }    
 
-    CreateInitMarking(place : Place) : PExpr
+    CreateInitMarking(place : Place) : CExpr
     {
       def combine(e1, e2)
       {
@@ -478,12 +478,13 @@ namespace PetriNetLib
         | e                                   => unfold(e)
       }
 
-      if (place.init_mark == null) <[]> else
+      if (place.init_mark == null) null else
       {
         def mark = fold(place.init_mark);
         def mark = if (place.IsTimed) <[ $mark %@+ 0]> else mark;
         def name = place.name;
-        <[ $(name : usesite).Add($mark)]>
+        //<[ $(name : usesite).Add($mark)]>
+        null
       }
     }
 
@@ -510,16 +511,16 @@ namespace PetriNetLib
     {
       def marking = model.places.MapToList(CreateInitMarking);
       fields ::= if (model.IsTimed || model.IsHaveImmediateTransitions) 
-      cpp(<#decl: public $Name(int time_step = 15) 
+      cpp((<#decl: $Name(int time_step = 15) 
       { 
         $Base(time_step);
-        ..$marking;
-        ..$cons_expr;
-      };#>); 
-      else cpp(<#decl: public $Name(int time_step = 15) 
+        $marking;
+        $cons_expr;
+      }#>, "")); 
+      else cpp(<#decl: $Name(int time_step = 15) 
       { 
-        ..$marking;
-        ..$cons_expr;
+        $marking;
+        $cons_expr;
       };#>);//<[decl: public this() { {..$marking} {..$cons_expr} }]>;
     }
 
