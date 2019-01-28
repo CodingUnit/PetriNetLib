@@ -309,7 +309,7 @@ precedence Invocation:
   syntax Declaration
   {
     | QuotDecl = "decl:" QuotDecl
-    | QuotExpr = "expr:" Statement
+    | QuotExpr = "expr:" Statement*
     | QuotEnum = "enumdecl:" EnumDecl
     | QuotType 
     | Namespace = "namespace" sm Name nl '{' Declaration* nl '}'

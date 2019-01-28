@@ -30,6 +30,7 @@ namespace PetriNetLib
     public  colour_sets : Hashtable[string, ColourSet] = Hashtable();
     [Accessor]
     mutable ml_decls    : list[PExpr];
+    [Accessor]
     name : string;
     tree_places : list[CpnTree.Place];
     tree_tran   : list[CpnTree.Transition];

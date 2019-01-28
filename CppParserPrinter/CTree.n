@@ -63,6 +63,7 @@ namespace CppParserPrinter
     | SplicableList { parms : string }
   }
   
+  [Lens]
   [Record]
   public variant CTree : IPrintable
   {
@@ -137,6 +138,8 @@ $<#namespace $name
   }
 
   // class содержимое
+  [Lens]
+  [Record]
   public variant CTypeDecl : IPrintable
   {
       | Type { type : CComplexType } // nested type
@@ -325,6 +328,12 @@ $<#$spec~$name()
   {
     public name : CName;
     public template_parms : list[CName];
+    
+    public this(name : CType, parms : list[CName])
+    {
+      this.name = if (name is CType.Class(n)) n else null;
+      this.template_parms = parms;
+    }
   }
   
   //class Printer
@@ -336,10 +345,15 @@ $<#$spec~$name()
   //      printer.Print(del)
   //  }
   //}
+  [Lens]
    [Record]
   public variant CComplexType : IPrintable
   {
-      | Class { base_class : list[CMod * CClassName]; decls : list[CTypeDecl]; }
+      | Class 
+      { 
+        base_class : list[CMod * CClassName]; 
+        decls : list[CTypeDecl]; 
+      }
       | Struct { decls : list[CTypeDecl]; }
       | Enum { decls : list[CEnumDecl]}
       | Union { decls : list[CUnionDecl] }

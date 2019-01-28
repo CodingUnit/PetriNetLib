@@ -9,10 +9,30 @@ using System.Linq;
 
 namespace CppParserPrinter
 {
+  
   /// <summary>
   /// Description of Printer.
   /// </summary>
   public class Printer
   {
+    file : string;
+    
+    public this(file : string)
+    {
+      this.file = file
+    }
+    
+    decls : List[CTree] = List();
+    
+    public Define(decl : CTree) : void
+    {
+      decls.Add(decl)
+    }
+    
+    public Generate() : void
+    {
+      def data = decls.Fold([], (x, a) => x.Print(0) :: a);
+      System.IO.File.WriteAllLines(file, data.ToArray())
+    }
   }
 }
