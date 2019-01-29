@@ -73,7 +73,13 @@ namespace CppParserPrinter
     GetExpression(e : Expression) : CExpr
     {
       | Expression.BinaryOperator(BinaryOperator = op) => GetBinaryOp(op) |> CExpr.Operator
-      | Expression.Id(Name = n) => CExpr.Id(n |> NameToCName)
+      | Expression.Id(Name = n)                        => CExpr.Id(n |> NameToCName)
+      | Expression.Constant(Constant = c)              => CExpr.Constant(c |> GetConstant)
+    }
+    
+    GetConstant(st : Constant) : CConstant
+    {
+      | Constant.Int(Integer = i) => i.ToString() |> int.Parse |> CConstant.Int
     }
     
     GetStatement(st : Statement) : CStatement
@@ -83,6 +89,7 @@ namespace CppParserPrinter
       | Statement.Expression(Expression = e)              => CStatement.Expression(e |> GetExpression)
       | Statement.If(Cond = c, Body = b, ElseOptData = e) => 
           CStatement.If(c |> GetExpression, b |> GetStatement, e.Map(x => GetStatement(x.Statement)))
+      | Statement.Return(ExpressionOptData = e)           => CStatement.Return(e.Map(GetExpression))
     }
     
     GetParms(p : Parms) : CParms
@@ -94,7 +101,7 @@ namespace CppParserPrinter
     
     GetParm(p : Parm) : CParm
     {
-      CParm(p.Name |> NameToCName, p.Type |> GetType, None())
+      CParm(p.Name |> NameToCName, p.Type |> GetType, p.InitOptData.Map(x => GetConstExpr(x.ConstExpr)))
     }
     
     GetParms(parm : option[Parms]) : CParms
@@ -240,6 +247,7 @@ namespace CppParserPrinter
             | CTypeDecl.Type(c) => c |> CTree.Type
             | CTypeDecl.Decl(d) => d
           }
+      | Declaration.QuotExpr(StatementsData = s) => CQuotation.Statement(s |> GetBody) |> CTree.Quotation
       | Declaration.Decl(Decl = Decl(SpecifiersData = s, Type = t, DeclsData = d, InitOptData = i)) => 
           def spec = s.Map(GetSpecifier);
           def type = t |> GetType;

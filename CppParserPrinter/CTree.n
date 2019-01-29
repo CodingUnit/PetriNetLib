@@ -678,7 +678,16 @@ $<#if ($c)
   public variant CExpr
   {
       | Compound { expr : list[CExpr]} // (a,b,c)
-      | Id { name : CName }
+      | Id 
+      { 
+        name : CName;
+        
+        public this(ty : CType)
+        {
+          | CType.Class(n, _) => name = n
+          | _                 => throw InvalidOperationException()
+        }
+      }
       | Constant { lit : CConstant }
       | Operator { op : COper }
 

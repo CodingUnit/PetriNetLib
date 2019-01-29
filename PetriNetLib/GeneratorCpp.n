@@ -511,16 +511,16 @@ namespace PetriNetLib
     {
       def marking = model.places.MapToList(CreateInitMarking);
       fields ::= if (model.IsTimed || model.IsHaveImmediateTransitions) 
-      cpp((<#decl: public $Name(int time_step = 15) 
+      cpp(<#decl: $Name(int time_step = 15) 
       { 
-        $Base(time_step);
+        $(Base : type)(time_step);
         ..$marking;
         ..$cons_expr;
-      }#>, "")); 
+      }#>); 
       else cpp(<#decl: $Name(int time_step = 15) 
       { 
-        $marking;
-        $cons_expr;
+        ..$marking;
+        ..$cons_expr;
       }#>);//<[decl: public this() { {..$marking} {..$cons_expr} }]>;
     }
 
@@ -531,7 +531,7 @@ namespace PetriNetLib
 
       def time_body = match (next)
                        {
-                         | []    => cpp("expr: return 0xFFFFFFF;")
+                         | []    => cpp(("expr: return 0xFFFFFFF;", ""))
                          | [one] => one
                          | lst   => def next = lst.Map(x => cpp(<# min = min(min, $x); #>));
                           cpp(<#expr:
