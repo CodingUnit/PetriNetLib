@@ -43,7 +43,7 @@ namespace CppParserPrinter
   {
     | String {str : string}
     | Splicable {str : string}
-    //| SplicableList {str : string}
+    | SplicableList {str : string}
     | SplicableType {str : string}
   }
 
@@ -194,9 +194,17 @@ $<#$spec~$name()
   // тип переменных и параметров функции
   public variant CType : IPrintable
   {
+      | Splicable { name : string}
       | Void
       //| ComplexTypeDecl { type : CComplexType; }
-      | Class { name : CName; }
+      | Class 
+      { 
+        name : CName; 
+        template : list[CType];
+        
+        
+        
+      }
       | Enum  { name : CName; }
       | Short
       //| Byte
@@ -222,7 +230,8 @@ $<#$spec~$name()
         {
           | Void                 => "void"
           //| ComplexTypeDecl(t) =>  { type : CComplexType; }
-          | Class(n)             => $"$n"
+          | Class(n, [])         => $"$n"
+          | Class(n, t)          => $"$n<..$t>"
           | Enum(n)              => $"$n"
           | Short                => "short"
           //| Byte
@@ -237,7 +246,7 @@ $<#$spec~$name()
           | Double               => "double"
           | LongLong             => "long long"
           | ULongLong            => "unsigned long long"
-          | Reference(s, t)         => $"..$s $t &"
+          | Reference(s, t)      => $"..$s $t &"
         }
       }
 
@@ -326,12 +335,12 @@ $<#$spec~$name()
   [Record]
   public class CClassName
   {
-    public name : CName;
-    public template_parms : list[CName];
+    public name           : CName;
+    public template_parms : list[CType];
     
-    public this(name : CType, parms : list[CName])
+    public this(name : CType, parms : list[CType])
     {
-      this.name = if (name is CType.Class(n)) n else null;
+      this.name = if (name is CType.Class(n, _)) n else null;
       this.template_parms = parms;
     }
   }
@@ -346,7 +355,7 @@ $<#$spec~$name()
   //  }
   //}
   [Lens]
-   [Record]
+  [Record]
   public variant CComplexType : IPrintable
   {
       | Class 

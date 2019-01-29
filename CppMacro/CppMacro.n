@@ -98,7 +98,7 @@ namespace CppMacro
       | CName.String(s)        => <[ CName.String($(s : string))]>
       | CName.Splicable(s)     => <[ CName.String($(s : usesite)) ]>
       | CName.SplicableType(s) => <[ $(s : usesite) ]>
-      //| CName.SplicableList(s) => <[]>
+      | CName.SplicableList(s) => <[ $(s : usesite)]>
     }
 
     Lift(parm : CParm) : PExpr
@@ -138,6 +138,7 @@ namespace CppMacro
     Lift(st : CStatement) : PExpr
     {
       | CStatement.Splicable(s)       => <[ $(s : usesite) ]>
+      | CStatement.Expression(CExpr.Id(CName.SplicableList(s))) => <[ CStatement.Compound($(s : usesite))]>
       | CStatement.Expression(CExpr.Id(CName.Splicable(s))) => <[ $(s : usesite) ]>
       | CStatement.Expression(e)      => <[ CStatement.Expression($(Lift(e)))]>
       | CStatement.BraceStatement(st) => <[ CStatement.BraceStatement($(Lift(st)))]>
@@ -162,11 +163,22 @@ namespace CppMacro
       | CMod.Protected => <[ CMod.Protected() ]>
     }
     
+    Lift(tree : list[CType]) : PExpr
+    {
+      //| [CType.Class(CName.Splicable(n), _)]
+      //| [CType.Splicable(n)]                 => <[ $(n : usesite) ]>
+      | lst =>
+          def lst = lst.Map(Lift);
+          <[ [..$lst] ]>
+    }
+    
     Lift(tree : CType) : PExpr
     {
       | CType.Void => <[ CType.Void() ]>
-      | CType.Class(CName.SplicableType(t)) => <[ $(t : usesite) ]>
-      | CType.Class(n) => <[ CType.Class($(Lift(n)))]>
+      //| CType.Class(CName.Splicable(t), _)
+      | CType.Class(CName.SplicableType(t), _) => <[ $(t : usesite) ]>
+      | CType.Class(n, [CType.Class(CName.SplicableType(t), _)]) => <[ CType.Class($(Lift(n)), $(t : usesite))]>
+      | CType.Class(n, t) => <[ CType.Class($(Lift(n)), $(Lift(t)))]>
       | CType.Char     => <[ CType.Char() ]>
       | CType.Int      => <[ CType.Int() ]>
       | CType.Long     => <[ CType.Long() ]>
