@@ -517,10 +517,10 @@ namespace PetriNetLib
         ..$marking;
         ..$cons_expr;
       }#>, "")); 
-      else cpp(<#decl: public $Name(int time_step = 15) 
+      else cpp(<#decl: $Name(int time_step = 15) 
       { 
-        ..$marking;
-        ..$cons_expr;
+        $marking;
+        $cons_expr;
       }#>);//<[decl: public this() { {..$marking} {..$cons_expr} }]>;
     }
 

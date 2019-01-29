@@ -1,6 +1,16 @@
+a => B;
+a, b / a, b, c() => B;
+
+a [g1] / a => C;
+
+a => {
+       g1 / a => C;
+       else => B;
+     }
+     
+a => ${
+       g1 => C;
+       else => B;
 decl: public $Name(int time_step = 15) 
-      { 
-        $Base(time_step);
-        ..$marking;
-        ..$cons_expr;
+decl: $Name(int time_step = 15) 
       }
