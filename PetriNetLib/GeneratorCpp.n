@@ -33,11 +33,11 @@ namespace PetriNetLib
     typebuilder : TypeBuilder;
     mutable typing_method : MethodBuilder;
     //compiler : CompilerHost = CompilerHost();
-    mutable cons_expr : list[CStatement] = [];
-    mutable fields    : list[CTypeDecl] = [];
-    mutable init_body : list[CStatement] = [];
+    mutable cons_expr : list[string] = [];
+    mutable fields    : list[string] = [];
+    mutable init_body : list[string] = [];
     printer : Printer;
-    mutable main_class : CTree.Type;
+    //mutable main_class : CTree.Type;
 
     public this(file : string, model : OutModel, proc : PetriNetProcessor)
     {
@@ -59,35 +59,35 @@ namespace PetriNetLib
       }
     }
     
-    GetTypeExpr(p : Colour) : CType
+    GetTypeExpr(p : Colour) : string
     {
       | Colour.Simple(type) => TypeFromStr(type)
-      | Integer       => cpp("type: int")
-      | Unit(None())  => cpp("type: Unit")
-      | Unit(Some(t)) => cpp("type: $t")
+      | Integer       => "int"//cpp("type: int")
+      | Unit(None())  => "Unit"//cpp("type: Unit")
+      | Unit(Some(t)) => t//cpp("type: $t")
       | Product(vals) => def vals = vals.Map(TypeFromStr);
-                         cpp(<#type: tuple2<$(vals : type)>#>)
-      | List(t, _)    => def inner = t |> TypeFromStr;
-                        cpp("type: $(inner : type) *")
+                         $<#type: tuple2<..$vals>#>//cpp(<#type: tuple2<..$vals>#>)
+      | List(t, _)    => t |> TypeFromStr
+                        //cpp("type: $(inner : type) *")
     }
 
-    GetTypeExpr(p : ColourSet) : CType
+    GetTypeExpr(p : ColourSet) : string
     {
       | ColourSet(n, Index)
-      | ColourSet(n, Enum)          => cpp("type: $n")
+      | ColourSet(n, Enum)          => n//cpp("type: $n")
       | ColourSet(_, Timed(p))
       | ColourSet(_, p)             => GetTypeExpr(p)
     }
 
-    TypeFromStr(str : string) : CType
+    TypeFromStr(str : string) : string
     {
-      | "string" => cpp("type: char *")
-      | "int"    => cpp("type: int")
-      | "intinf" => cpp("type: int")
-      | "real"   => cpp("type: float")
-      | "time"   => cpp("type: int")
-      | "bool"   => cpp("type: bool")
-      | "unit"   => cpp("type: Unit")
+      | "string" => "char *"//cpp("type: char *")
+      | "int"//    => "int"//cpp("type: int")
+      | "intinf" => "int"//cpp("type: int")
+      | "real"   => "float"//cpp("type: float")
+      | "time"   => "int"//cpp("type: int")
+      | "bool"   => "bool"//cpp("type: bool")
+      | "unit"   => "Unit"//cpp("type: Unit")
       | str      => proc.colour_sets[str] |> GetTypeExpr
 
     }
@@ -209,33 +209,34 @@ namespace PetriNetLib
       null
     }
 
-    CreatePlace(place : Place) : CTypeDecl
+    CreatePlace(place : Place) : string
     {
       def name = place.Name;
       //def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
       def type = GetTypeExpr(place.colour);
       def dest_cont = match (place.DestContainerType)
                        {
-                         | TDestCont.MultiSet  => cpp("type: multi_set")
-                         | RandomEnumerable    => cpp("type: random_array")
-                         | SortedSet           => cpp("type: sorted_array")
-                         | TokenQueue          => cpp("type: token_queue")
-                         | TimedSimpleMultiset => cpp("type: timed_heap")
+                         | TDestCont.MultiSet  => "multi_set"//cpp("type: multi_set")
+                         | RandomEnumerable    => "random_array"//cpp("type: random_array")
+                         | SortedSet           => "sorted_array"//cpp("type: sorted_array")
+                         | TokenQueue          => "token_queue"//cpp("type: token_queue")
+                         | TimedSimpleMultiset => "timed_heap"//cpp("type: timed_heap")
                        }
-      cpp(<#decl: $(dest_cont : type) $name;#>)
+      $<#decl: $dest_cont $name;#>
+      //cpp(<#decl: $(dest_cont : type) $name;#>)
       //if (place.IsTimed)
       //<[decl: $(name : usesite) : PetriNetModel.TimedPlace.[$type] = PetriNetModel.TimedPlace($(name : string), $dest_cont)]> else
       //<[decl: $(name : usesite) : PetriNetModel.Place.[$type] = PetriNetModel.Place($(name : string), $dest_cont)]>
     }
 
 
-    CreateTran(tran : Transition) : CTypeDecl
+    CreateTran(tran : Transition) : string
     {
       def name = tran.Name;
 
       def body = CreateTranBody(tran);      
-      cpp(<#
-         decl: void $name()
+      //cpp(<#
+         $<#   void $name()
                {
                  if (lock($name))
                  {
@@ -243,56 +244,52 @@ namespace PetriNetLib
                    unlock();
                  }
                }
-       #>)/*
-       */
+       #>//)
     }
 
-    ConvType(te : TExpr) : CType
+    ConvType(te : TExpr) : string
     {
       null
     }
 
-    ConvType(te : TypeVar) : CType
+    ConvType(te : TypeVar) : string
     {
       null
     }
 
-    ConvExpr(expr : PExpr) : CExpr
+    ConvExpr(expr : PExpr) : string
     {
       null
     }
 
 
-    ConvParm(expr : PParameter) : CParm
+    ConvParm(expr : PParameter) : string
     {
       null
     }
 
-    ExprToConstExpr(expr : CExpr) : CConstExpr
-    {
-      null
-    }
-
-    CreateGlobRef(name : string, val : PExpr) : CTypeDecl
+    CreateGlobRef(name : string, val : PExpr) : string
     {
       def ty = Typer(typing_method);
       def te = ty.TypeExpr(val);
 
       def type = ConvType(te);
-      def val = ConvExpr(val) |> ExprToConstExpr;
+      def val = ConvExpr(val);
       //<[decl: mutable $(name : usesite) : $(te.ty : typed) = $val]>
-      cpp("decl: $(type : type) $name = $val;")
+      //cpp("decl: $(type : type) $name = $val;")
+      $"$type $name = $val;"
     }
 
-    CreateVals(expr : PExpr) : CTypeDecl
+    CreateVals(expr : PExpr) : string
     {
       | <[ def $(name : usesite) = $val]> => 
           def type = typer.TypeExpr(val);
           def ty = type.ty;
           def type = type |> ConvType;
-          def val = ConvExpr(val) |> ExprToConstExpr;
+          def val = ConvExpr(val);
           //<[ decl: $(name : usesite) : $(ty : typed) = $val ]>
-          cpp("decl: $(type : type) $name = $val;")
+          //cpp("decl: $(type : type) $name = $val;")
+          $"$type $name = $val;"
       | _ => null
     }
 
@@ -321,7 +318,7 @@ namespace PetriNetLib
       <[ def $(n : usesite)(..$parms) { ..$expr } ]>
     }
 
-    CreateDecl(expr : PExpr) : CTypeDecl
+    CreateDecl(expr : PExpr) : string
     {
       | <[ def $(_ : usesite)(..$_) { ..$_ } ]> => 
 
@@ -337,10 +334,10 @@ namespace PetriNetLib
                   | TExpr.DefFunctionsIn(h :: _, _) => def ret = h.ReturnType |> ConvType;
                                                       def expr = expr.Map(ConvExpr);
                                                       def parms = parms.Map(ConvParm);
-                                                      cpp(<#decl: $(ret : type) $n(..$parms)
+                                                      $<#$ret $n(..$parms)
                                                        {
                                                          $expr;
-                                                       }#>)
+                                                       }#>
                                                       //<[decl: $(n : usesite)(..$parms) : $(ret : typed)
                                                       //  {
                                                       //    ..$expr
@@ -363,21 +360,21 @@ namespace PetriNetLib
       null
     }
 
-    CreateColourSet(col : ColourSet) : CTypeDecl
+    CreateColourSet(col : ColourSet) : string
     {
       | ColourSet(n, Colour.Alias(new_name))  => //def name = Macros.UseSiteSymbol(n);
                                                 //def mods = AttributesAndModifiers(NemerleModifiers.Private, []);
                                                 //def al = TopDeclaration.Alias(name, mods, Typarms.Empty, <[ $(new_name : usesite) ]>);
                                                 //al |> ClassMember.TypeDeclaration.TypeDeclaration;
                                                 // cpp("typedef $n $new_name")
-          cpp("decl: typedef $n $new_name;");
+          "typedef $n $new_name;"
                                                 //CTypeDecl.Decl(CTree.Decl([CSpec.Typedef()], CType.Class(n), [CDecl.Id(CName.String(new_name), None())]))
       | ColourSet(n, Colour.Record(vals))     => def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
-                                                def fields = fields.Map((n, t) => cpp("decl: $(t : type) $n;"));
-                                                cpp(<#decl: struct $n
+                                                def fields = fields.Map((n, t) => $"$t $n;");
+                                                $<#struct $n
                                                       {
                                                         ..$fields;
-                                                      };#>)
+                                                      };#>
                                                 //<[decl: [Record] class $(n : usesite)
                                                 //        {
                                                 //          ..$fields
@@ -430,11 +427,11 @@ namespace PetriNetLib
                                                           return Instance.all_impl;
                                                         }
       */
-      | ColourSet(n, Colour.Enum(vals)) => def vals = vals.Map(x => cpp("enumdecl: $x"));
-                                          cpp(<#decl: enum $n
+      | ColourSet(n, Colour.Enum(vals)) => //def vals = vals.Map(x => $"$x");
+                                          $<#    enum $n
                                                  {
                                                    ..$vals;
-                                                 };#>)
+                                                 };#>
       | ColourSet(n, Colour.Timed(c))   => CreateColourSet(ColourSet(n, c))
       | _                               => null
     }    
@@ -498,12 +495,12 @@ namespace PetriNetLib
     //  }]>
     //}
 
-    Base : CType
+    Base : string
     {
       [Memoize]
       get
       {
-        if (model.IsTimed) cpp("type: timed_petri_net") else cpp("type: petri_net")
+        if (model.IsTimed) "timed_petri_net" else "petri_net"
       }
     }
     
@@ -511,53 +508,53 @@ namespace PetriNetLib
     {
       def marking = model.places.MapToList(CreateInitMarking);
       fields ::= if (model.IsTimed || model.IsHaveImmediateTransitions) 
-      cpp(<#decl: $Name(int time_step = 15) 
+      $<#$Name(int time_step = 15) 
       { 
-        $(Base : type)(time_step);
+        $Base(time_step);
         ..$marking;
         ..$cons_expr;
-      }#>); 
-      else cpp(<#decl: $Name(int time_step = 15) 
+      }#>; 
+      else $<#$Name(int time_step = 15) 
       { 
         ..$marking;
         ..$cons_expr;
-      }#>);//<[decl: public this() { {..$marking} {..$cons_expr} }]>;
+      }#>;//<[decl: public this() { {..$marking} {..$cons_expr} }]>;
     }
 
     CreateTimeMethods() : void
     {
       def body = model.transitions.Where(_.IsTimed).Map(x => <[ $(x.Name : usesite)() ]>);
-      def next = model.places.Where(_.IsTimed).Map(x => <[ $(x.name : usesite).NextTokenDelay ]>);
+      def next = model.places.Where(_.IsTimed).Map(x => $"$(x.name).NextTokenDelay");
 
       def time_body = match (next)
                        {
-                         | []    => cpp("expr: return 0xFFFFFFFF;")
+                         | []    => "return 0xFFFFFFFF;"
                          | [one] => one
-                         | lst   => def next = lst.Map(x => cpp((<#expr: min = math_utils::min(min, $x); #>, "")));
-                          cpp(<#expr:
+                         | lst   => def next = lst.Map(x => $<#expr: min = math_utils::min(min, $x); #>);
+                          $<#
                                   int min = 0xFFFFFFFF;
-                                  ..$next;
+                                  ..$(next;"\n");
                                   return min;
-                              #>)
+                              #>
                        }
-      fields ::= cpp(<#decl: int get_next_time()
+      fields ::= $<#int get_next_time()
                       {
                         $time_body;
-                      }#>);
-      fields ::= cpp(<#decl: void time_step()
+                      }#>;
+      fields ::= $<#void time_step()
                       {
                         ..$body;
-                      }#>)
+                      }#>
     }
 
     CreateStepMethod() : void
     {
-      def body = model.transitions.Where(x => x.IsImmediate && !x.IsTimed).Map(x => <[ $(x.Name : usesite)() ]>);
+      def body = model.transitions.Where(x => x.IsImmediate && !x.IsTimed).Map(x => $<#$(x.Name)()#>);
       when (!body.IsEmpty())
-        fields ::= <[decl: public override Step() : void
+        fields ::= $<#Step() : void
       {
-        {..$body}
-      }]>
+        ..$body
+      }#>
     }
 
     CreateStartMethod() : void
@@ -577,11 +574,11 @@ namespace PetriNetLib
         {
           def name = t.Name;
           def evt = $"evt_$name";
-          fields ::= <[decl: public event $(evt : usesite) : Action]>;
-          fields ::= <[decl: $($"On$name" : usesite)() : void
-                      {
-                        $(evt : usesite)?.Invoke()
-                      } ]>;
+          //fields ::= $<#decl: public event $(evt : usesite) : Action#>;
+          //fields ::= <[decl: $($"On$name" : usesite)() : void
+          //            {
+          //              $(evt : usesite)?.Invoke()
+          //            } ]>;
         }
       }
     }
@@ -602,7 +599,7 @@ namespace PetriNetLib
 
       CreateEvents();
       //CreateTranQueue();
-      CreateToString();
+      //CreateToString();
       CreateStartMethod();
       CreateCons();
 
@@ -610,15 +607,15 @@ namespace PetriNetLib
       foreach (m in members) Define(m)//_ = typebuilder.DefineWithSource(m);
     }
 
-    Define(decl : list[CTypeDecl]) : void
+    Define(decl : list[string]) : void
     {
       foreach (d in decl) Define(d)
     }
 
-    Define(decl : CTypeDecl) : void
+    Define(decl : string) : void
     {
-      def ty = CTree.Type.type_lens >> CComplexType.Class.decls_lens;
-      main_class = ty.Update(main_class, x => x.Append(decl));
+      //def ty = CTree.Type.type_lens >> CComplexType.Class.decls_lens;
+      //main_class = ty.Update(main_class, x => x.Append(decl));
       //(main_class.type :> CComplexType.Class).
     }
 
@@ -627,9 +624,9 @@ namespace PetriNetLib
     {
       def name = proc.Name;
       
-      main_class = cpp(<#class $name : public $(bas : type)
-                      {
-                      };#>);
+      //main_class = cpp(<#class $name : public $(bas : type)
+      //                {
+      //                };#>);
       //printer.
       //typebuilder.AddImplementedInterface(<[ IDisposable ]>);
       //typebuilder.AddImplementedInterface(if (model.IsTimed) <[ TimedPetriNet ]> 
