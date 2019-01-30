@@ -28,6 +28,7 @@ namespace CppParserPrinter
     NameToCName(n : Name) : CName
     {
       | Name.Id(Identifier = n)        => CName.String(n.IdentifierBodyData)
+      | Name.Qualified(QualifiedIdentifier = n) => CName.Qualified(n.IdentifiersData[0].Map(_.IdentifierBodyData))
       | Name.Splicable(Splicable = Splicable(Name = n)) => CName.Splicable(n.IdentifierBodyData)
       | Name.SplicableList(SplicableList = SplicableList(Name = n)) => CName.SplicableList(n.IdentifierBodyData)
       | Name.SplicableType(Name = n)   => CName.SplicableType(n.IdentifierBodyData)
@@ -59,27 +60,32 @@ namespace CppParserPrinter
       | Qualifier.Const => CMethodQualifier.Const()
     }
     
-    GetBinaryOp(op : BinaryOperator) : COper
+    GetExpression(e : Expression) : CExpr
     {
-      | BinaryOperator.CallFunc(Expression = c, ExpressionsData = (p, _)) => 
+      | Expression.Assign(Expression1 = left, Expression2 = right) =>
+         CBinaryOper.Assign(GetExpression(left), GetExpression(right)) |> CExpr.Operator
+      | CallFunc(Expression = c, ExpressionsData = (p, _)) => 
           def body = match (p.Map(GetExpression))
           {
             | [b] => b
             | lst => CExpr.Compound(lst)
           }
-          CBinaryOper.CallFunc(c |> GetExpression, body)
-    }
-    
-    GetExpression(e : Expression) : CExpr
-    {
-      | Expression.BinaryOperator(BinaryOperator = op) => GetBinaryOp(op) |> CExpr.Operator
+          CBinaryOper.CallFunc(c |> GetExpression, body) |> CExpr.Operator
       | Expression.Id(Name = n)                        => CExpr.Id(n |> NameToCName)
       | Expression.Constant(Constant = c)              => CExpr.Constant(c |> GetConstant)
     }
     
     GetConstant(st : Constant) : CConstant
     {
-      | Constant.Int(Integer = i) => i.ToString() |> int.Parse |> CConstant.Int
+      | Constant.Int(IntegerData = i) => 
+          def val = if (i.StartsWith("0x"))
+          {
+            int.Parse(i.Substring(2), System.Globalization.NumberStyles.AllowHexSpecifier | 
+            System.Globalization.NumberStyles.HexNumber)
+          } else int.Parse(i);
+          val |> CConstant.Int
+          //else
+      
     }
     
     GetStatement(st : Statement) : CStatement

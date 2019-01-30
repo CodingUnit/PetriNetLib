@@ -1,16 +1,1 @@
-a => B;
-a, b / a, b, c() => B;
-
-a [g1] / a => C;
-
-a => {
-       g1 / a => C;
-       else => B;
-     }
-     
-a => ${
-       g1 => C;
-       else => B;
-decl: public $Name(int time_step = 15) 
-decl: $Name(int time_step = 15) 
-      }
+expr: min = math_utils::min(min, $x);

@@ -42,43 +42,7 @@ syntax module CppGrammar
 
   syntax BinaryOperator
   {
-    | Mul = Expression '*' Expression
-    | Div = Expression '/' Expression
-    | Add = Expression '+' Expression
-    | Sub = Expression '-' Expression
-    | Mod = Expression '%' Expression
-    | LogicAnd = Expression "&&" Expression
-    | LogicOr = Expression "||" Expression
-    | Xor = Expression '^' Expression
-    | And = Expression '^' Expression
-    | Or  = Expression '|' Expression
-    | LShift = Expression "<<" Expression
-    | RShift = Expression ">>" Expression
-    | CondOper = Expression '?' Expression ':' Expression
-    | Assign  = Expression '=' Expression
-    | AddAssign = Expression "+=" Expression
-    | SubAssign = Expression "-=" Expression
-    | MulAssign = Expression "*=" Expression
-    | DivAssign = Expression "/=" Expression
-    | ModAssign = Expression "%=" Expression
-    | AndAssign = Expression "&=" Expression
-    | OrAssign = Expression "|=" Expression
-    | XorAssign = Expression "^=" Expression
-    | LShiftAssign = Expression "<<=" Expression
-    | RShiftAssign = Expression ">>=" Expression
-    | Equal = Expression "==" Expression
-    | NotEqual = Expression "!=" Expression
-    | Greater = Expression ">" Expression
-    | Lower = Expression "<" Expression
-    | GreaterEqual = Expression ">=" Expression
-    | LowerEqual = Expression "<=" Expression
-    | ArrayIndex = Expression "[" Expression "]"
-    | MemberPointerAccess = Expression "->" Expression
-    | MemberAccess = Expression "." Expression
-    | SeqOp = Expression "," Expression
-precedence Invocation:
-    | CallFunc = Expression ^ Invocation "(" (Expression;",")* ")"// a(...)
-    | TypeConv = "(" Type ")" Expression// (type)expr
+    
   }
 
   syntax UnaryOperator
@@ -91,7 +55,59 @@ precedence Invocation:
     | Id = Name
     | Constant
     | UnaryOperator
-    | BinaryOperator    
+    //| BinaryOperator    
+precedence Lowest:
+    | SeqOp = Expression "," Expression
+precedence Assignment:
+    | Assign  = Expression '=' Expression   right-associative;
+    | AddAssign = Expression "+=" Expression right-associative;
+    | SubAssign = Expression "-=" Expression right-associative;
+    | MulAssign = Expression "*=" Expression right-associative;
+    | DivAssign = Expression "/=" Expression right-associative;
+    | ModAssign = Expression "%=" Expression right-associative;
+    | AndAssign = Expression "&=" Expression right-associative;
+    | OrAssign = Expression "|=" Expression right-associative;
+    | XorAssign = Expression "^=" Expression right-associative;
+    | LShiftAssign = Expression "<<=" Expression right-associative;
+    | RShiftAssign = Expression ">>=" Expression right-associative;
+precedence LOr:
+    | LogicOr = Expression "||" Expression
+precedence LAnd:
+    | LogicAnd = Expression "&&" Expression
+
+precedence Or:
+    | Or  = Expression '|' Expression
+precedence XOr:
+    | Xor = Expression '^' Expression
+precedence And:
+    | And = Expression '&' Expression
+precedence Equality:
+    | Equal = Expression "==" Expression
+    | NotEqual = Expression "!=" Expression
+    
+    | LShift = Expression "<<" Expression
+    | RShift = Expression ">>" Expression
+    | CondOper = Expression '?' Expression ':' Expression
+    
+    | Greater = Expression ">" Expression
+    | Lower = Expression "<" Expression
+    | GreaterEqual = Expression ">=" Expression
+    | LowerEqual = Expression "<=" Expression
+    | ArrayIndex = Expression "[" Expression "]"
+    | MemberPointerAccess = Expression "->" Expression
+    | MemberAccess = Expression "." Expression
+precedence Additive:
+    | Add = Expression '+' Expression
+    | Sub = Expression '-' Expression
+precedence Multiplicative:
+    | Mod = Expression '%' Expression
+    | Mul = Expression '*' Expression
+    | Div = Expression '/' Expression
+    
+precedence Second:
+    | TypeConv = "(" Type ")" Expression// (type)expr
+precedence Invocation:
+    | CallFunc = Expression ^ Invocation "(" (Expression;",")* ")"// a(...)
   }
 
   syntax Modifier
@@ -307,7 +323,7 @@ precedence Invocation:
   syntax Declaration
   {
     | QuotDecl = "decl:" QuotDecl
-    | QuotExpr = "expr:" Statement*
+    | QuotExpr = "expr:" Statement+
     | QuotEnum = "enumdecl:" EnumDecl
     | QuotType 
     | Namespace = "namespace" sm Name nl '{' Declaration* nl '}'

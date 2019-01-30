@@ -24,9 +24,10 @@ namespace CppMacro
       | CTree.Quotation(q) =>
          match (q)
          {
-           | CQuotation.EnumDecl(t) => Lift(t)
-           | CQuotation.Type(t)     => Lift(t)
-           | CQuotation.TypeDecl(t) => Lift(t)
+           | CQuotation.EnumDecl(t)  => Lift(t)
+           | CQuotation.Statement(t) => Lift(t)
+           | CQuotation.Type(t)      => Lift(t)
+           | CQuotation.TypeDecl(t)  => Lift(t)
          }
       | CTree.Type(c) => <[ CTree.Type($(Lift(c)))]>
       | CTree.Decl(s, t, d) => 
@@ -96,6 +97,8 @@ namespace CppMacro
     Lift(name : CName) : PExpr
     {
       | CName.String(s)        => <[ CName.String($(s : string))]>
+      | CName.Qualified(s)     => def s = s.Map(x => <[ $(x : string)]>);
+                                  <[ CName.Qualified([..$s])]>
       | CName.Splicable(s)     => <[ CName.String($(s : usesite)) ]>
       | CName.SplicableType(s) => <[ $(s : usesite) ]>
       | CName.SplicableList(s) => <[ $(s : usesite)]>
@@ -133,10 +136,18 @@ namespace CppMacro
                              <[ CExpr.Compound([..$c])]>
       | CExpr.Operator(o) => <[ CExpr.Operator($(Lift(o))) ]>
       | CExpr.Id(n)       => <[ CExpr.Id($(Lift(n))) ]>
+      | CExpr.Constant(c) => <[ CExpr.Constant($(Lift(c)))]>
+    }
+    
+    Lift(c : CConstant) : PExpr
+    {
+      | CConstant.Int(i) => <[ CConstant.Int($(i : int))]>
     }
     
     Lift(st : CStatement) : PExpr
     {
+      | CStatement.Return(v)          => def v = v.Map(Lift) |> Lift;
+                                         <[ CStatement.Return($v) ]>
       | CStatement.Splicable(s)       => <[ $(s : usesite) ]>
       | CStatement.Expression(CExpr.Id(CName.SplicableList(s))) => <[ CStatement.Compound($(s : usesite))]>
       | CStatement.Expression(CExpr.Id(CName.Splicable(s))) => <[ $(s : usesite) ]>

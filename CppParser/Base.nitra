@@ -105,7 +105,7 @@
   regex IntegerTypeSuffix                   = IntegerTypeSuffixTerminal; // "UL" | "ul" | "uL" | "Ul" | "LU" | "lu" | "Lu" | "lU" | "U" | "u" | "L" | "l";
   regex DecimalIntegerLiteral               = DecimalDigit+ IntegerTypeSuffix?;
   regex HexadecimalIntegerLiteral           = ("0x" | "0X") HexDigit+ IntegerTypeSuffix?;
-  regex Integer                      = HexadecimalIntegerLiteral | DecimalIntegerLiteral;
+  regex Integer                             = HexadecimalIntegerLiteral | DecimalIntegerLiteral;
 
   }
 }

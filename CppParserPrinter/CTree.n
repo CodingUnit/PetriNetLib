@@ -42,6 +42,7 @@ namespace CppParserPrinter
   public variant CName
   {
     | String {str : string}
+    | Qualified { path : list[string]; }
     | Splicable {str : string}
     | SplicableList {str : string}
     | SplicableType {str : string}

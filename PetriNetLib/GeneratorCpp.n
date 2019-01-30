@@ -531,23 +531,23 @@ namespace PetriNetLib
 
       def time_body = match (next)
                        {
-                         | []    => cpp(("expr: return 0xFFFFFFF;", ""))
+                         | []    => cpp("expr: return 0xFFFFFFFF;")
                          | [one] => one
-                         | lst   => def next = lst.Map(x => cpp(<# min = min(min, $x); #>));
+                         | lst   => def next = lst.Map(x => cpp((<#expr: min = math_utils::min(min, $x); #>, "")));
                           cpp(<#expr:
-                                  int min = 0xFFFFFFF;
+                                  int min = 0xFFFFFFFF;
                                   ..$next;
                                   return min;
                               #>)
                        }
       fields ::= cpp(<#decl: int get_next_time()
-                  {
-                    $time_body;
-                  }#>);
+                      {
+                        $time_body;
+                      }#>);
       fields ::= cpp(<#decl: void time_step()
-      {
-        ..$body;
-      }#>)
+                      {
+                        ..$body;
+                      }#>)
     }
 
     CreateStepMethod() : void
