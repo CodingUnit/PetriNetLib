@@ -1,0 +1,247 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+using Nemerle.Compiler.Parsetree;
+using Nemerle.Compiler;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using PetriNetModel;
+
+namespace PetriNetLib
+{
+  [Record]
+  class InArcBindingCpp
+  {
+    public place      : Place;
+
+    public transition : Transition;
+    public Depends     : list[InArcBinding] {get;set;}
+      //public NeedBinding : bool {get;set;}
+
+    public priority : int
+    {
+      [Memoize]
+      get
+      {
+        if (Depends == null || Depends.IsEmpty()) 0 else Depends.Max(_.priority) + 1
+      }
+    }
+
+    public name       : string
+    {
+      [Memoize]
+      get
+      {
+        place.name
+      }
+    }
+
+    public arc        : Arc;
+    
+    public arc_kind   : ArcKind
+    {
+      [Memoize]
+      get
+      {
+        arc.kind
+      }
+    }
+    
+    public expr       : PExpr
+    {
+      [Memoize]
+      get
+      {
+        arc.expr
+      }
+    }
+
+    public bind_var : string
+    {
+      [Memoize]
+      get
+      {
+        match (expr)
+        {
+          | <[ $(n : usesite) ]> => n
+          | _                    => null
+        }
+      }
+    }
+
+      //public before_bind_expr  : PExpr
+      //{
+      //  [Memoize]
+      //  get
+      //  {
+      //    match (expr)
+      //    {
+      //      | <[ $(_ : usesite)(..$_) ]> => <[ def $(introduced_var : name) = $expr ]>
+      //      | _                          => <[]>
+      //    }
+      //  }
+      //}
+
+    public source_token_peek : PExpr
+    {
+      [Memoize]
+      get
+      {
+        //if (place.IsTimed)
+        //{
+        //  def name = $"$(name)_tok";
+        //    <[ $(name : usesite) ]>
+        //} else
+          if (place.IsIndexedContainer)
+            <[ $(name : usesite).PeekIndexed() ]> else
+            <[ $(name : usesite).Peek() ]>
+      }
+    }
+
+    source_token_name : string
+    {
+      [Memoize]
+      get
+      {
+        $"$(name)_tok"
+      }
+    }
+    
+    public timed_bind_expr : PExpr
+    {
+      [Memoize]
+      get
+      {
+        if (place.IsTimed)
+        {
+          match (expr)
+          {
+            | <[ $(n : usesite) ]> => if (place.IsIndexedContainer) 
+                                          <[ def ($(source_token_name : usesite), $(idx_name(n)) : usesite)  = $source_token_peek ]> else
+                                          <[ def $(source_token_name : usesite) = $source_token_peek ]>
+            | _                     => <[]>
+          }
+          
+        } else
+        {
+          <[]>
+        }
+      }
+    }
+
+    idx_name(name : string) : string
+    {
+      $"$(name)_idx"
+    }
+    
+    public bind_expr  : PExpr
+    {
+      [Memoize]
+      get
+      {
+        if (place.IsTimed)
+        {
+          def time_expr = timed_bind_expr;
+          def bind_expr = match (expr)
+          {
+            
+            | <[ $(_ : usesite) ]> => <[ def $expr = $(source_token_name : usesite) ]>
+            | _                    => <[]>
+          }
+          <[ $time_expr; $bind_expr]>
+        } else
+        match (expr)
+        {
+//          | <[ () ]>             => <[]>
+          | <[ $(n : usesite) ]> => if (place.IsIndexedContainer) 
+                                        <[ def ($expr, $(idx_name(n) : usesite)) = $source_token_peek ]> else
+                                        <[ def $expr = $source_token_peek ]>
+          | _                    => <[]>
+        }
+      }
+    }
+
+      //public introduced_var : Name
+      //{
+      //  [Memoize]
+      //  get
+      //  {
+      //    match (expr)
+      //    {
+      //      | <[ $(n : usesite)(..$_) ]> => Macros.NewSymbol(n.Substring(0, 2));
+      //      | _                          => null
+      //    }
+      //  }
+    unfold(e : PExpr) : PExpr
+    {
+      | <[ () ]> => <[ Unit.Instance ]>
+      | e        => e
+    }
+        
+        //match (expr)
+        //{
+        //  | <[ () ]>                       => <[ Unit.Instance ]> 
+        //  | <[ $e %@+ $(time : int)]>      => match (global_time)
+        //                                      {
+        //                                        | <[ $(t : int)]> => def time = time + t;     
+        //                                                             <[ $(unfold(e)) %@+ $time]>
+        //                                      } 
+                                              
+        //  | <[ $e %@+ $time]>              => <[ $(unfold(e)) %@+ ($time + $global_time)]>
+      //}
+
+    public check_expr : PExpr
+    {
+      [Memoize]
+      get
+      {
+        def check_func(e)
+        {
+          | <[ 1 ` $expr]>                 => check_func(expr)
+          | <[ () ]>                       => <[ $(name : usesite).HaveTokens]>
+          | <[ $e %@+ $time]>              => <[ $(name : usesite).HaveRelativeTime($(unfold(e)), $time)]>
+          | <[ $(_ : usesite)]> => <[ $(name : usesite).HaveTokens]>
+          | _                   => def tok = Generator.GetTokenExpr(expr);
+                                    <[ $(name : usesite).Have($tok) ]>
+        }
+        
+        match (arc_kind)
+        {
+          | ArcKind.Normal    => check_func(expr)
+          | ArcKind.Inhibitor => <[ ! $(name : usesite).HaveTokens ]>
+          | _                 => <[]>
+        }
+      }
+    }
+
+    public extract_expr   : PExpr
+    {
+      [Memoize]
+      get
+      {
+        def extract(e)
+        {
+            //| <[ $e %@+ $time ]>  => <[]>
+          | <[ 1 ` $expr]>      => extract(expr)
+          | <[ $e %@+ $time]>   => <[ $(name : usesite).GetRelativeTime($(unfold(e)), $time)]>
+          | <[ () ]>            => <[ _ = $(name : usesite).Get()]>
+          | <[ $(n : usesite)]> => if (place.IsIndexedContainer) 
+                                    <[ $(name : usesite).GetIndexed($(idx_name(n) : usesite))]> else 
+                                    <[ $(name : usesite).Get($expr)]>
+          | _                   => <[ $(name : usesite).Get($expr)]>
+        }
+        
+        match (arc_kind)
+        {
+         | ArcKind.Normal         => extract(expr)
+         | ArcKind.Reset          => <[ $(name : usesite).GetAll()]>
+         | _                      => <[ ]>
+       }
+      }
+    }
+
+  }
+}

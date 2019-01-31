@@ -39,6 +39,18 @@ namespace PetriNetLib
     printer : Printer;
     //mutable main_class : CTree.Type;
 
+    main_class : string
+    {
+      get
+      {
+        $<#class $Name : public $Base
+            {
+              ..$(fields;"\n")
+            };
+        #>
+      }
+    }
+    
     public this(file : string, model : OutModel, proc : PetriNetProcessor)
     {
       this.typer = proc.Typer;
@@ -170,35 +182,35 @@ namespace PetriNetLib
       {
         if (a == null)
         {
-          if (x.check_expr is <[]>)
-            <[  
+          if (x.check_expr.IsEmpty())
+            $<#  
             $(x.bind_expr);
-              {..$body}
+              ..$body
               $tran_evt
-            ]>
+            #>
           else
-          <[  
+          $<#  
               when ($(x.check_expr))
               {
               $(x.bind_expr);
               {..$body}
               $tran_evt
               }
-          ]>
+          #>
         } else
         {
-          if (x.check_expr is <[]>)
-          <[  
+          if (x.check_expr.IsEmpty())
+          $<#  
             $(x.bind_expr);
               $a
-          ]> else
-          <[  
+          #> else
+          $<#  
               when ($(x.check_expr))
               {
               $(x.bind_expr);
               $a
               }
-          ]>
+          #>
         }
       }
 
@@ -304,18 +316,18 @@ namespace PetriNetLib
                 | <[parameter: $(n : usesite) : Index.[$(type : usesite)]]> => 
                   match (model.GetIndex(type))
                   {
-                    | Some((t, _)) => (<[parameter: $(n : usesite) : $(t : usesite)]> :: parm, <[def $(n : usesite) = $(n : usesite).num ]> :: e)
+                    | Some((t, _)) => ($"$t $n" :: parm, $"$n = $n.num" :: e)
                     | _            => (parm, e)
                   }
 
               }
             }
 
-      def expr = <[ {..$body} ]>;
+      def expr = $"..$body";
       def (parms, expr) = parms.Fold(([], expr :: []), proc_parm);
       def parms = parms.Rev();
 
-      <[ def $(n : usesite)(..$parms) { ..$expr } ]>
+      $"IEnumerable[token] $n(..$parms) { ..$expr }"
     }
 
     CreateDecl(expr : PExpr) : string
@@ -367,7 +379,7 @@ namespace PetriNetLib
                                                 //def al = TopDeclaration.Alias(name, mods, Typarms.Empty, <[ $(new_name : usesite) ]>);
                                                 //al |> ClassMember.TypeDeclaration.TypeDeclaration;
                                                 // cpp("typedef $n $new_name")
-          "typedef $n $new_name;"
+          $"typedef $n $new_name;"
                                                 //CTypeDecl.Decl(CTree.Decl([CSpec.Typedef()], CType.Class(n), [CDecl.Id(CName.String(new_name), None())]))
       | ColourSet(n, Colour.Record(vals))     => def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
                                                 def fields = fields.Map((n, t) => $"$t $n;");
@@ -460,28 +472,28 @@ namespace PetriNetLib
 
       def unfold(expr)
       {
-        | <[ () ]> => <[ Unit.Instance ]>
-        | e        => e
+        | <[ () ]> => "Unit.Instance"
+        | e        => $"$e"
       }
 
       def fold(expr)
       {
         //| <[ {..$e} ]>   => e.Fold(acc, fold)
-        | <[ 1 ` $tok %@ $time ]>             => <[ $(unfold(tok)) %@ $time ]>
-        | <[ 1 ` $tok]>                       => <[ $(unfold(tok)) ]>
-        | <[ $(n : int) ` $tok %@ $time ]>    => <[ Enumerable.Repeat($(unfold(tok)) %@ $time, $n) ]>
-        | <[ $(n : int) ` $tok]>              => <[ Enumerable.Repeat($(unfold(tok)), $n) ]>
-        | <[ $l %++ $r]>                      => combine(fold(l), fold(r))
+        | <[ 1 ` $tok %@ $time ]>             => $"$(unfold(tok)) %@ $time"
+        | <[ 1 ` $tok]>                       => $"$(unfold(tok))"
+        | <[ $(n : int) ` $tok %@ $time ]>    => $"Enumerable.Repeat($(unfold(tok)) %@ $time, $n)"
+        | <[ $(n : int) ` $tok]>              => $"Enumerable.Repeat($(unfold(tok)), $n)"
+        | <[ $l %++ $r]>                      => $"$(combine(fold(l), fold(r)))"
         | e                                   => unfold(e)
       }
 
       if (place.init_mark == null) null else
       {
         def mark = fold(place.init_mark);
-        def mark = if (place.IsTimed) <[ $mark %@+ 0]> else mark;
+        def mark = if (place.IsTimed) $"$mark %@+ 0" else mark;
         def name = place.name;
         //<[ $(name : usesite).Add($mark)]>
-        null
+        $"$name.Add($mark)"
       }
     }
 
@@ -603,7 +615,7 @@ namespace PetriNetLib
       CreateStartMethod();
       CreateCons();
 
-      def members = fields + places;
+      def members = places;
       foreach (m in members) Define(m)//_ = typebuilder.DefineWithSource(m);
     }
 
@@ -614,6 +626,7 @@ namespace PetriNetLib
 
     Define(decl : string) : void
     {
+      fields ::= decl
       //def ty = CTree.Type.type_lens >> CComplexType.Class.decls_lens;
       //main_class = ty.Update(main_class, x => x.Append(decl));
       //(main_class.type :> CComplexType.Class).
