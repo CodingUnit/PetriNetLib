@@ -71,7 +71,7 @@ namespace PetriNetLib
       }
     }
     
-    GetTypeExpr(p : Colour) : string
+    internal GetTypeExpr(p : Colour) : string
     {
       | Colour.Simple(type) => TypeFromStr(type)
       | Integer       => "int"//cpp("type: int")
@@ -83,7 +83,7 @@ namespace PetriNetLib
                         //cpp("type: $(inner : type) *")
     }
 
-    GetTypeExpr(p : ColourSet) : string
+    internal GetTypeExpr(p : ColourSet) : string
     {
       | ColourSet(n, Index)
       | ColourSet(n, Enum)          => n//cpp("type: $n")
@@ -91,7 +91,7 @@ namespace PetriNetLib
       | ColourSet(_, p)             => GetTypeExpr(p)
     }
 
-    TypeFromStr(str : string) : string
+    internal TypeFromStr(str : string) : string
     {
       | "string" => "char *"//cpp("type: char *")
       | "int"//    => "int"//cpp("type: int")
@@ -151,7 +151,7 @@ namespace PetriNetLib
       def name = tran.Name;
       //def map    = Hashtable();
 
-      def input = input.Map((x, a) => InArcBindingCpp(x, tran, [], a));
+      def input = input.Map((x, a) => InArcBindingCpp(x, this, tran, [], a));
 
       foreach (i in input)
       {
@@ -176,7 +176,7 @@ namespace PetriNetLib
 
       def extract = input.Map(_.extract_expr);
       def add_body = add_proc.Map(_.add_token);
-      def code = tran.code_segment ?? <[]>;
+      def code = tran.code_segment |> ConvExpr ?? "";
       def body = extract + (code :: add_body);
       def body = if (tran.guard is <[]>) body else 
                   <[ when ($(tran.guard)) {..$body}]> :: [];

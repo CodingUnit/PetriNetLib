@@ -125,10 +125,16 @@
     <Compile Include="InArcBinding.n">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="InArcBindingCpp.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="NetModel.n">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="OutArcProcess.n">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="OutArcProcessCpp.n">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="OutModel.n">
