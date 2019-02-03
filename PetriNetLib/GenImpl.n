@@ -101,6 +101,8 @@ namespace PetriNetLib
       typing_method = meth :> MethodBuilder;
     }
     
+    
+    
     internal static GetTokenExpr(expr : PExpr) : PExpr
     {
       def loop(e)

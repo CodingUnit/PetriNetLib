@@ -17,6 +17,7 @@ namespace PetriNetLib
   {
     public place      : Place;
 
+    public gen : CppGenerator;
     public transition : Transition;
     public Depends     : list[InArcBinding] {get;set;}
       //public NeedBinding : bool {get;set;}
@@ -85,20 +86,25 @@ namespace PetriNetLib
       //  }
       //}
 
-    public source_token_peek : PExpr
+    public TokenType : string
     {
       [Memoize]
       get
       {
+        place.colour |> gen.GetTypeExpr
+      }
+    }
+    
+    public source_token_peek(n : string) : string
+    {
         //if (place.IsTimed)
         //{
         //  def name = $"$(name)_tok";
         //    <[ $(name : usesite) ]>
         //} else
-          if (place.IsIndexedContainer)
-            <[ $(name : usesite).PeekIndexed() ]> else
-            <[ $(name : usesite).Peek() ]>
-      }
+      if (place.IsIndexedContainer)
+        $<#$name.PeekIndexed($n)#> else
+        $<#$name.Peek()#>
     }
 
     source_token_name : string
@@ -110,7 +116,7 @@ namespace PetriNetLib
       }
     }
     
-    public timed_bind_expr : PExpr
+    public timed_bind_expr : string
     {
       [Memoize]
       get
@@ -119,15 +125,21 @@ namespace PetriNetLib
         {
           match (expr)
           {
-            | <[ $(n : usesite) ]> => if (place.IsIndexedContainer) 
-                                          <[ def ($(source_token_name : usesite), $(idx_name(n)) : usesite)  = $source_token_peek ]> else
-                                          <[ def $(source_token_name : usesite) = $source_token_peek ]>
-            | _                     => <[]>
+            | <[ $(n : usesite) ]> => def ty = TokenType;
+                                      if (place.IsIndexedContainer) 
+                                      {
+                                          $<#int $(idx_name(n));
+                                          $ty $source_token_name = $(source_token_peek(n));#>
+                                      } else
+                                      {
+                                          $<#$ty $source_token_name = $(source_token_peek(n));#>
+                                      }
+            | _                     => ""
           }
           
         } else
         {
-          <[]>
+          ""
         }
       }
     }
@@ -137,7 +149,7 @@ namespace PetriNetLib
       $"$(name)_idx"
     }
     
-    public bind_expr  : PExpr
+    public bind_expr  : string
     {
       [Memoize]
       get
@@ -148,18 +160,24 @@ namespace PetriNetLib
           def bind_expr = match (expr)
           {
             
-            | <[ $(_ : usesite) ]> => <[ def $expr = $(source_token_name : usesite) ]>
-            | _                    => <[]>
+            | <[ $(_ : usesite) ]> => 
+              def ty = CppGenerator.TypeOfExpr(expr);
+              $<#$ty $expr = $source_token_name;#>
+            | _                    => ""
           }
-          <[ $time_expr; $bind_expr]>
+          $<#$time_expr; $bind_expr;#>
         } else
         match (expr)
         {
 //          | <[ () ]>             => <[]>
-          | <[ $(n : usesite) ]> => if (place.IsIndexedContainer) 
-                                        <[ def ($expr, $(idx_name(n) : usesite)) = $source_token_peek ]> else
-                                        <[ def $expr = $source_token_peek ]>
-          | _                    => <[]>
+          | <[ $(n : usesite) ]> => def ty = CppGenerator.TypeOfExpr(expr);
+                                    if (place.IsIndexedContainer) 
+                                    {
+                                      $<# int $(idx_name(n)));
+                                          $ty $expr = $source_token_peek;#>
+                                    } else
+                                        $<#$ty $expr = $source_token_peek; #>
+          | _                    => ""
         }
       }
     }
@@ -175,10 +193,10 @@ namespace PetriNetLib
       //      | _                          => null
       //    }
       //  }
-    unfold(e : PExpr) : PExpr
+    unfold(e : PExpr) : string
     {
-      | <[ () ]> => <[ Unit.Instance ]>
-      | e        => e
+      | <[ () ]> => <#unit.instance()#>
+      | e        => e |> CppGenerator.ConvExpr
     }
         
         //match (expr)
@@ -193,31 +211,31 @@ namespace PetriNetLib
         //  | <[ $e %@+ $time]>              => <[ $(unfold(e)) %@+ ($time + $global_time)]>
       //}
 
-    public check_expr : PExpr
+    public check_expr : string
     {
       [Memoize]
       get
       {
         def check_func(e)
         {
-          | <[ 1 ` $expr]>                 => check_func(expr)
-          | <[ () ]>                       => <[ $(name : usesite).HaveTokens]>
-          | <[ $e %@+ $time]>              => <[ $(name : usesite).HaveRelativeTime($(unfold(e)), $time)]>
-          | <[ $(_ : usesite)]> => <[ $(name : usesite).HaveTokens]>
+          | <[ 1 ` $expr]>      => check_func(expr)
+          | <[ () ]>            => $<#$name.have_tokens()#>
+          | <[ $e %@+ $time]>   => $<#$name.have_relative_time($(unfold(e)), $time)#>
+          | <[ $(_ : usesite)]> => $<#$name.have_tokens#>
           | _                   => def tok = Generator.GetTokenExpr(expr);
-                                    <[ $(name : usesite).Have($tok) ]>
+                                   $<#$name.have($tok)#>
         }
         
         match (arc_kind)
         {
           | ArcKind.Normal    => check_func(expr)
-          | ArcKind.Inhibitor => <[ ! $(name : usesite).HaveTokens ]>
-          | _                 => <[]>
+          | ArcKind.Inhibitor => $<#!$name.have_tokens()#>
+          | _                 => ""
         }
       }
     }
 
-    public extract_expr   : PExpr
+    public extract_expr   : string
     {
       [Memoize]
       get
@@ -226,19 +244,19 @@ namespace PetriNetLib
         {
             //| <[ $e %@+ $time ]>  => <[]>
           | <[ 1 ` $expr]>      => extract(expr)
-          | <[ $e %@+ $time]>   => <[ $(name : usesite).GetRelativeTime($(unfold(e)), $time)]>
-          | <[ () ]>            => <[ _ = $(name : usesite).Get()]>
+          | <[ $e %@+ $time]>   => $<#$name.get_relative_time($(unfold(e)), $time)#>
+          | <[ () ]>            => $<#$name.get()#>
           | <[ $(n : usesite)]> => if (place.IsIndexedContainer) 
-                                    <[ $(name : usesite).GetIndexed($(idx_name(n) : usesite))]> else 
-                                    <[ $(name : usesite).Get($expr)]>
-          | _                   => <[ $(name : usesite).Get($expr)]>
+                                    $<#$name.get_indexed($(idx_name(n)))#> else 
+                                    $<#$name.get($expr)#>
+          | _                   => $<#$name.get($expr)#>
         }
         
         match (arc_kind)
         {
          | ArcKind.Normal         => extract(expr)
-         | ArcKind.Reset          => <[ $(name : usesite).GetAll()]>
-         | _                      => <[ ]>
+         | ArcKind.Reset          => $<#$name.get_all()#>
+         | _                      => ""
        }
       }
     }

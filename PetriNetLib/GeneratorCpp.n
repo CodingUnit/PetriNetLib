@@ -116,6 +116,11 @@ namespace PetriNetLib
       typing_method = meth :> MethodBuilder;
     }
 
+    internal static CreateArray(expr : list[PExpr]) : string
+    {
+      null
+    }
+    
     internal static GetTokenExpr(expr : PExpr) : PExpr
     {
       def loop(e)
@@ -133,9 +138,9 @@ namespace PetriNetLib
         | <[ $(_ : short)]> as e
         | <[ $(_ : ushort)]> as e
         | <[ $(_ : byte)]> as e
-        | <[ $(_ : string)]> as e => e
+        | <[ $(_ : string)]> as e => e |> ConvExpr
         | e                 => def e = loop(e);
-                              <[IEnumerable[..$e]]>
+                               CreateArray(e)//<[array[..$e]]>
       }
     }
 
@@ -146,7 +151,7 @@ namespace PetriNetLib
       def name = tran.Name;
       //def map    = Hashtable();
 
-      def input = input.Map((x, a) => InArcBinding(x, tran, [], a));
+      def input = input.Map((x, a) => InArcBindingCpp(x, tran, [], a));
 
       foreach (i in input)
       {
@@ -177,7 +182,8 @@ namespace PetriNetLib
                   <[ when ($(tran.guard)) {..$body}]> :: [];
 
 
-      def tran_evt = if (proc.Flags.HasFlag(PetriNetFlags.Events)) <[ $($"On$name" : usesite)()]> else <[]>;
+      def tran_evt = if (proc.Flags.HasFlag(PetriNetFlags.Events)) $<#On$name()#> else "";
+      
       def fold(x, a)
       {
         if (a == null)
@@ -259,23 +265,28 @@ namespace PetriNetLib
        #>//)
     }
 
-    ConvType(te : TExpr) : string
+    internal static TypeOfExpr(expr : PExpr) : string
+    {
+      null
+    }
+    
+    internal ConvType(te : TExpr) : string
     {
       null
     }
 
-    ConvType(te : TypeVar) : string
+    internal ConvType(te : TypeVar) : string
     {
       null
     }
 
-    ConvExpr(expr : PExpr) : string
+    internal static ConvExpr(expr : PExpr) : string
     {
       null
     }
 
 
-    ConvParm(expr : PParameter) : string
+    internal ConvParm(expr : PParameter) : string
     {
       null
     }
