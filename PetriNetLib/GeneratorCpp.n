@@ -121,7 +121,7 @@ namespace PetriNetLib
       null
     }
     
-    internal static GetTokenExpr(expr : PExpr) : PExpr
+    internal static GetTokenExpr(expr : PExpr) : string
     {
       def loop(e)
       {
@@ -132,7 +132,7 @@ namespace PetriNetLib
 
       match (expr)
       {
-        | <[$_(..$_)]> as e => e
+        | <[$_(..$_)]> as e => e |> ConvExpr
         | <[ $(_ : int)]> as e
         | <[ $(_ : long)]> as e
         | <[ $(_ : short)]> as e
@@ -172,15 +172,20 @@ namespace PetriNetLib
       }
 
       def input    = input.Sort((x, y) => y.priority - x.priority); 
-      def add_proc = output.Map((p, a) => OutArcProcess(p, tran, a));
+      def add_proc = output.Map((p, a) => OutArcProcessCpp(p, tran, a));
 
       def extract = input.Map(_.extract_expr);
       def add_body = add_proc.Map(_.add_token);
       def code = tran.code_segment |> ConvExpr ?? "";
       def body = extract + (code :: add_body);
       def body = if (tran.guard is <[]>) body else 
-                  <[ when ($(tran.guard)) {..$body}]> :: [];
-
+                {
+                  def guard = tran.guard |> ConvExpr;
+                  $<#if ($guard) 
+                  {
+                    ..$(body;"\n")
+                  }#> :: [];
+                }
 
       def tran_evt = if (proc.Flags.HasFlag(PetriNetFlags.Events)) $<#On$name()#> else "";
       
@@ -190,31 +195,31 @@ namespace PetriNetLib
         {
           if (x.check_expr.IsEmpty())
             $<#  
-            $(x.bind_expr);
-              ..$body
+              $(x.bind_expr)
+              ..$(body;"\n")
               $tran_evt
             #>
           else
           $<#  
-              when ($(x.check_expr))
+              if ($(x.check_expr))
               {
-              $(x.bind_expr);
-              {..$body}
-              $tran_evt
+                $(x.bind_expr)
+                ..$(body; "\n")
+                $tran_evt
               }
           #>
         } else
         {
           if (x.check_expr.IsEmpty())
           $<#  
-            $(x.bind_expr);
+              $(x.bind_expr)
               $a
           #> else
           $<#  
-              when ($(x.check_expr))
+              if ($(x.check_expr))
               {
-              $(x.bind_expr);
-              $a
+                $(x.bind_expr)
+                $a
               }
           #>
         }
@@ -319,7 +324,7 @@ namespace PetriNetLib
     ProcessFun(expr : PExpr) : PExpr
     {
       | <[ def $(n : usesite)(..$parms) { ..$body } ]> => 
-
+      
             def proc_parm(p, (parm, e))
             {
               match (p)
@@ -327,18 +332,18 @@ namespace PetriNetLib
                 | <[parameter: $(n : usesite) : Index.[$(type : usesite)]]> => 
                   match (model.GetIndex(type))
                   {
-                    | Some((t, _)) => ($"$t $n" :: parm, $"$n = $n.num" :: e)
+                    | Some((t, _)) => (<[parameter: $(n : usesite) : $(t : usesite)]> :: parm, <[def $(n : usesite) = $(n : usesite).num ]> :: e)
                     | _            => (parm, e)
                   }
-
+                  
               }
             }
-
-      def expr = $"..$body";
+      
+      def expr = <[ {..$body} ]>;
       def (parms, expr) = parms.Fold(([], expr :: []), proc_parm);
       def parms = parms.Rev();
-
-      $"IEnumerable[token] $n(..$parms) { ..$expr }"
+          
+      <[ def $(n : usesite)(..$parms) { ..$expr } ]>
     }
 
     CreateDecl(expr : PExpr) : string
@@ -459,7 +464,7 @@ namespace PetriNetLib
       | _                               => null
     }    
 
-    CreateInitMarking(place : Place) : CStatement
+    CreateInitMarking(place : Place) : string
     {
       def combine(e1, e2)
       {
@@ -467,44 +472,47 @@ namespace PetriNetLib
             => <[Enumerable.Repeat($tok, $(n2 + n))]>
         | (<[Enumerable.Repeat($(tok : int), $(n : int))]>, <[Enumerable.Repeat($(tok2 : int), $(n2 : int))]>)                         
             => def val = Enumerable.Repeat(tok, n).Concat(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : int)]>).ToArray();
-              if (val.Length > 50) <[ $(e1).Concat($e2)]> else
-              <[ array[..$val] ]>
+               if (val.Length > 50) <[ $(e1).Concat($e2)]> else
+               <[ array[..$val] ]>
         | (<[Enumerable.Repeat($(tok : string), $(n : int))]>, <[Enumerable.Repeat($(tok2 : string), $(n2 : int))]>)                         
             => def val = Enumerable.Repeat(tok, n).Concat(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : string)]>).ToArray();
-              if (val.Length > 50) <[ $(e1).Concat($e2)]> else
-              <[ array[..$val] ]>
+               if (val.Length > 50) <[ $(e1).Concat($e2)]> else
+               <[ array[..$val] ]>
         | (<[Enumerable.Repeat($(tok : double), $(n : int))]>, <[Enumerable.Repeat($(tok2 : double), $(n2 : int))]>)                         
             => def val = Enumerable.Repeat(tok, n).Concat(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : double)]>).ToArray();
-              if (val.Length > 50) <[ $(e1).Concat($e2)]> else
-              <[ array[..$val] ]>       
+               if (val.Length > 50) <[ $(e1).Concat($e2)]> else
+               <[ array[..$val] ]>       
         | _  //(<[Enumerable.Repeat($_, $(_ : int))]>, <[Enumerable.Repeat($_, $(_ : int))]>)                         
             => <[ $e1.Concat($e2)]> 
       }
-
+      
       def unfold(expr)
       {
-        | <[ () ]> => "Unit.Instance"
-        | e        => $"$e"
+        | <[ () ]> => <[unit.instance()]>
+        | e        => e
       }
 
-      def fold(expr)
+      def fold(expr) : PExpr
       {
         //| <[ {..$e} ]>   => e.Fold(acc, fold)
-        | <[ 1 ` $tok %@ $time ]>             => $"$(unfold(tok)) %@ $time"
-        | <[ 1 ` $tok]>                       => $"$(unfold(tok))"
-        | <[ $(n : int) ` $tok %@ $time ]>    => $"Enumerable.Repeat($(unfold(tok)) %@ $time, $n)"
-        | <[ $(n : int) ` $tok]>              => $"Enumerable.Repeat($(unfold(tok)), $n)"
-        | <[ $l %++ $r]>                      => $"$(combine(fold(l), fold(r)))"
+        | <[ 1 ` $tok %@ $time ]>             => def time = time |> ConvExpr;
+                                                 def tok = unfold(tok);
+                                                 <[at_time($tok, $time)]>
+        | <[ 1 ` $tok]>                       => <[$(unfold(tok))]>
+        | <[ $(n : int) ` $tok %@ $time ]>    => <[IEnumerable.Repeat(at_time($(unfold(tok)), $time), $n)]>
+        | <[ $(n : int) ` $tok]>              => <[IEnumerable.Repeat($(unfold(tok)), $n)]>
+        | <[ $l %++ $r]>                      => <[$(combine(fold(l), fold(r)))]>
         | e                                   => unfold(e)
       }
 
       if (place.init_mark == null) null else
       {
         def mark = fold(place.init_mark);
-        def mark = if (place.IsTimed) $"$mark %@+ 0" else mark;
+        def mark = mark |> ConvExpr;
+        def mark = if (place.IsTimed) $"add_time($mark, 0);" else mark;
         def name = place.name;
         //<[ $(name : usesite).Add($mark)]>
-        $"$name.Add($mark)"
+        $"$name.Add($mark);"
       }
     }
 

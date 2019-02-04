@@ -55,36 +55,45 @@ namespace PetriNetLib
       }
     }
     
-    add_token_expr : PExpr
+    add_token_expr : string
     {
       [Memoize]
       get
       {
         def unfold(e)
         {
-          | <[ () ]> => <[ Unit.Instance ]>
-          | e        => e
+          | <[ () ]> => <#unit.instance()#>
+          | e        => e |> CppGenerator.ConvExpr
         }
         
         def add(e)
         {
-          | <[ () ]>                       => <[ Unit.Instance ]> 
+          | <[ () ]>                       => <#unit.instance()#>
           | <[ $e %@+ $(time : int)]>      => match (global_time)
                                               {
                                                 | <[ $(t : int)]> => def time = time + t;     
-                                                                     <[ $(unfold(e)) %@+ $time]>
+                                                                     $<#add_time($(unfold(e)), $time)#>
                                               } 
                                               
-          | <[ $e %@+ $time]>              => <[ $(unfold(e)) %@+ ($time + $global_time)]>
-          | <[ $_ %++ $_ ]> as e           => Generator.GetTokenExpr(e)
+          | <[ $e %@+ $time]>              => $<#add_time($(unfold(e)), $time + $global_time_str)#>
+          | <[ $_ %++ $_ ]> as e           => CppGenerator.GetTokenExpr(e)
           | <[ 1 ` $e ]>                   => add(e)
           | <[ $_(..$_)]> as e
           | <[ $(_ : usesite) ]> as e
           | <[ $(_ : int) ` $_ ]> as e     
-          | e                              => e
+          | e                              => e |> CppGenerator.ConvExpr
         }
         
         add(expr)
+      }
+    }
+    
+    public global_time_str : string
+    {
+      [Memoize]
+      get
+      {
+        global_time |> CppGenerator.ConvExpr
       }
     }
     
@@ -95,13 +104,13 @@ namespace PetriNetLib
       {
         match (transition.time_expr)
         {
-          | <[]>            => <[ 0 ]>
+          | <[]>            => <[0]>
           | <[ @Delay($t)]> => t
         }
       }
     }
     
-    public add_token : PExpr
+    public add_token : string
     {
       [Memoize]
       get
@@ -110,14 +119,14 @@ namespace PetriNetLib
         {
           if (is_time_expr)
           {
-            <[ $(name : usesite).Add($add_token_expr)]>
+            $<#$name.Add($add_token_expr)#>
           } else
           {
-            <[ $(name : usesite).Add($add_token_expr %@+ $global_time)]>
+            $<#$name.Add(add_time($add_token_expr, $global_time_str))#>
           }
         } else
         {
-          <[ $(name : usesite).Add($add_token_expr)]>
+          $<#$name.Add($add_token_expr)#>
         }
       }
       

@@ -19,7 +19,7 @@ namespace PetriNetLib
 
     public gen : CppGenerator;
     public transition : Transition;
-    public Depends     : list[InArcBinding] {get;set;}
+    public Depends     : list[InArcBindingCpp] {get;set;}
       //public NeedBinding : bool {get;set;}
 
     public priority : int
