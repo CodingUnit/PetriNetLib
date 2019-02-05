@@ -160,8 +160,8 @@ namespace PetriNetLib
           def bind_expr = match (expr)
           {
             
-            | <[ $(_ : usesite) ]> => 
-              def ty = CppGenerator.TypeOfExpr(expr);
+            | <[ $(n : usesite) ]> => 
+              def ty = CppGenerator.TypeOfVar(n);
               $<#$ty $expr = $source_token_name;#>
             | _                    => ""
           }
@@ -170,7 +170,7 @@ namespace PetriNetLib
         match (expr)
         {
 //          | <[ () ]>             => <[]>
-          | <[ $(n : usesite) ]> => def ty = CppGenerator.TypeOfExpr(expr);
+          | <[ $(n : usesite) ]> => def ty = CppGenerator.TypeOfVar(n);
                                     if (place.IsIndexedContainer) 
                                     {
                                       $<# int $(idx_name(n)));

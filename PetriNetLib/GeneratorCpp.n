@@ -36,7 +36,7 @@ namespace PetriNetLib
     mutable cons_expr : list[string] = [];
     mutable fields    : list[string] = [];
     mutable init_body : list[string] = [];
-    printer : Printer;
+    file : string;
     //mutable main_class : CTree.Type;
 
     main_class : string
@@ -54,7 +54,7 @@ namespace PetriNetLib
     public this(file : string, model : OutModel, proc : PetriNetProcessor)
     {
       this.typer = proc.Typer;
-      printer = Printer(file);
+      this.file = file;
       this.typebuilder = proc.Typebuilder;
 
       this.model = model;
@@ -75,7 +75,7 @@ namespace PetriNetLib
     {
       | Colour.Simple(type) => TypeFromStr(type)
       | Integer       => "int"//cpp("type: int")
-      | Unit(None())  => "Unit"//cpp("type: Unit")
+      | Unit(None())  => "unit"//cpp("type: Unit")
       | Unit(Some(t)) => t//cpp("type: $t")
       | Product(vals) => def vals = vals.Map(TypeFromStr);
                          $<#type: tuple2<..$vals>#>//cpp(<#type: tuple2<..$vals>#>)
@@ -99,7 +99,7 @@ namespace PetriNetLib
       | "real"   => "float"//cpp("type: float")
       | "time"   => "int"//cpp("type: int")
       | "bool"   => "bool"//cpp("type: bool")
-      | "unit"   => "Unit"//cpp("type: Unit")
+      | "unit"   => "unit"//cpp("type: Unit")
       | str      => proc.colour_sets[str] |> GetTypeExpr
 
     }
@@ -270,30 +270,43 @@ namespace PetriNetLib
        #>//)
     }
 
-    internal static TypeOfExpr(expr : PExpr) : string
+    internal static TypeOfVar(expr : string) : string
     {
       null
     }
     
     internal ConvType(te : TExpr) : string
     {
-      null
+      te.Type.ToString()
     }
 
     internal ConvType(te : TypeVar) : string
     {
-      null
+      te.ToString()
     }
 
     internal static ConvExpr(expr : PExpr) : string
     {
-      null
+      | <[ $a * $b]>          => $<#$a * $b#>
+      | <[ $(n : usesite)]>   => $<#$n#>
+      | <[ Enumerable.Repeat($tok, $n) ]> => $<#token_iter_utils.repeat($tok, $n)#>
+      | <[ $(e1).Concat($e2) ]> => $<#token_iter_utils.concat($e1, $e2)#>
+      | <[ $func(..$parms) ]> => def parms = parms.Map(ConvExpr);
+                                 $<#$func(..$(parms; ","))#>
+      | <[ $(_ : int)]> as e
+      | <[ $(_ : long)]> as e
+      | <[ $(_ : short)]> as e
+      | <[ $(_ : ushort)]> as e
+      | <[ $(_ : byte)]> as e => $<#$e#>
+      | <[ $(n : string)]>    => $<#$n#>
+      | <[ array[..$val] ]>   => CreateArray(val)
     }
 
 
     internal ConvParm(expr : PParameter) : string
     {
-      null
+      def deflt = expr.DefaultValue.Map(x => $" = $(ConvExpr(x))").WithDefault("");
+      $<#$(expr.Type) $(expr.Name)$deflt#>;
     }
 
     CreateGlobRef(name : string, val : PExpr) : string
@@ -362,7 +375,7 @@ namespace PetriNetLib
                   | TExpr.DefFunctionsIn(h :: _, _) => def ret = h.ReturnType |> ConvType;
                                                       def expr = expr.Map(ConvExpr);
                                                       def parms = parms.Map(ConvParm);
-                                                      $<#$ret $n(..$parms)
+                                                      $<#$ret $n(..$(parms; ","))
                                                        {
                                                          $expr;
                                                        }#>
@@ -676,6 +689,7 @@ namespace PetriNetLib
       Define(decls);//_ = typebuilder.DefineWithSource(m);
       def globrefs = model.glob_refs.KeyValuePairs.MapToList(CreateGlobRef);
       Define(globrefs);//_ = typebuilder.DefineWithSource(m);
+      System.IO.File.WriteAllText(file, main_class)
       //typebuilder.Compile()
     }
   }

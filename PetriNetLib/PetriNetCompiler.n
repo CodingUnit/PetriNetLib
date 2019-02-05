@@ -8,12 +8,14 @@ using System.Collections.Generic;
 using System.Linq;
 using Nemerle.Compiler.Parsetree;
 using Nemerle.Compiler;
+using System.IO;
 
 namespace PetriNetLib
 {
   public class PetriNetCompiler
   {
     mutable gen : Generator;
+    mutable cpp_gen : CppGenerator;
     mutable proc : PetriNetProcessor;
     
     [FlagAccessor(
@@ -23,7 +25,8 @@ namespace PetriNetLib
     
     public PhaseTwo() : void
     {
-      gen.PhaseTwo()
+      gen.PhaseTwo();
+      cpp_gen.PhaseTwo();
     }
     
     public Process(ty : TypeBuilder, typer : Typer, file : string, page : string) : void
@@ -34,13 +37,16 @@ namespace PetriNetLib
       proc = PetriNetProcessor(file, Flags, typer, ty, parser.Places, parser.Transitions, parser.Arcs, parser.Decls);
       proc.Process();
       gen = Generator(proc.OutModel, proc);
+      cpp_gen = CppGenerator($"$file.h", proc.OutModel, proc);
       gen.PhaseOne();
+      cpp_gen.PhaseOne();
       ty.UserData["PetriNetGen"] = this;
     }
     
     public MainGen() : void
     {
       gen.Generate();
+      cpp_gen.Generate();
     }
   }
 }
