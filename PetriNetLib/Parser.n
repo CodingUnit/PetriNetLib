@@ -131,6 +131,7 @@ namespace PetriNetLib
         | "BOTHDIR"   => (place, trans, Dir.Both)
         | "Inhibitor" => (place, trans, Dir.Inhibitor)
         | "Reset"     => (place, trans, Dir.Reset)
+        | s           => throw InvalidOperationException($"orientation $s")
       }
       
       CpnTree.Arc(annot, from, to, dir)

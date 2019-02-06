@@ -23,6 +23,7 @@ namespace PetriNetLib
     converter   : Converter;
     typer       : Typer;
     typebuilder : TypeBuilder;
+    [Accessor]
     mutable typing_method : MethodBuilder;
     //compiler : CompilerHost = CompilerHost();
     mutable cons_expr : list[PExpr] = [];

@@ -63,7 +63,7 @@ namespace PetriNetLib
         def unfold(e)
         {
           | <[ () ]> => <#unit.instance()#>
-          | e        => e |> CppGenerator.ConvExpr
+          | e        => e |> CppGenerator.ConvExpr(_, false)
         }
         
         def add(e)
@@ -81,7 +81,7 @@ namespace PetriNetLib
           | <[ $_(..$_)]> as e
           | <[ $(_ : usesite) ]> as e
           | <[ $(_ : int) ` $_ ]> as e     
-          | e                              => e |> CppGenerator.ConvExpr
+          | e                              => e |> CppGenerator.ConvExpr(_, false)
         }
         
         add(expr)
@@ -93,7 +93,7 @@ namespace PetriNetLib
       [Memoize]
       get
       {
-        global_time |> CppGenerator.ConvExpr
+        global_time |> CppGenerator.ConvExpr(_, false)
       }
     }
     
@@ -119,14 +119,14 @@ namespace PetriNetLib
         {
           if (is_time_expr)
           {
-            $<#$name.Add($add_token_expr)#>
+            $<#$name.add($add_token_expr);#>
           } else
           {
-            $<#$name.Add(add_time($add_token_expr, $global_time_str))#>
+            $<#$name.add(add_time($add_token_expr, $global_time_str));#>
           }
         } else
         {
-          $<#$name.Add($add_token_expr)#>
+          $<#$name.add($add_token_expr);#>
         }
       }
       
