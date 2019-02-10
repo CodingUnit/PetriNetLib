@@ -39,6 +39,19 @@ class rqueue
 	//		write_idx = idx; // сохраняем последний временный счетчик в текущий индекс записи, показывая что очередь заполнена на это количество элементов
 	//	}
 	//}
+  u16 get_index()
+  {
+    /*u16 idx;
+    int locked;
+    do
+    {
+    idx = LL16(&temp_write_idx);
+    locked = fifo_locked;
+    } while (!SC16(&temp_write_idx, add_idx(idx, 1)));
+
+    if (!locked) write_idx = idx;*/ // если не заблокирован записываем индекс		
+    return atomic_inc(write_idx);
+  }
 
 	// получаем указатель на элемент в очереди по индексу
 	u8 *get_pos(u32 idx) const
@@ -62,7 +75,7 @@ public:
 		unlock(); // разблокируем очередь
 	}
 
-	void *enqueue(void *buf, int len)
+	void *enqueue(int len)
 	{
 		u16 idx = get_index();	// получаем индекс и время в момент получения индекса    
 		return get_pos(idx); // получаем указатель на элемент в очереди
@@ -87,19 +100,7 @@ public:
 	//	return idx;
 	//}
 
-	//u16 get_index()
-	//{
-	//	/*u16 idx;
-	//	int locked;
-	//	do
-	//	{
-	//		idx = LL16(&temp_write_idx);
-	//		locked = fifo_locked;
-	//	} while (!SC16(&temp_write_idx, add_idx(idx, 1)));
-
-	//	if (!locked) write_idx = idx;*/ // если не заблокирован записываем индекс		
-	//	return atomic_inc(write_idx);
-	//}
+	
 
 	// size - 0 : читаем элемент 1, -1 - все элементы, size - размер кратный элементам
 	virtual void *deque()
@@ -131,6 +132,47 @@ public:
 		read_idx++;// = add_idx(read_idx, 1); // увеличиваем индекс чтения, очередь должна читаться из одного потока
 	}
 
+  int next_free_index() const
+  {
+    return write_index % count;
+  }
+
+  void *remove_abs(int index) const
+  {
+    void *data = deque();
+    int idx = read_idx;
+    if (index == idx % count)
+    {
+      return data;
+    }
+    else
+    {
+      u8 *ptr = get_pos(index);
+      copy(ptr, data, elem_size);
+      return ptr;
+    }
+  }
+
+  void *remove(int index)
+  {
+    return remove_abs((index + read_idx) % count);
+  }
+
+  void *element_at(int index)
+  {
+    int idx = (read_idx + index) % count;
+    return get_pos(idx);
+  }
+
+  void clear()
+  {
+    read_idx = write_idx = 0;
+  }
+
+  bool empty() const
+  {
+    return get_count() == 0;
+  }
 	// получаем число элементов в очереди
 	int get_count() const
 	{

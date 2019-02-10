@@ -114,6 +114,7 @@ namespace CommonLib.Macros
     {
       (read_index + idx) % queue.Length
     }
+    
     // return absolute index of element
     public FindIndexOf(elem : T) : int
     {
