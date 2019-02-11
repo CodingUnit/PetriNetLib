@@ -312,11 +312,11 @@ namespace PetriNetLib
     {
       match (expr)
       {
+        | <[ {$seq} ]>                    => ConvExpr(seq, true)
         | <[ {..$seq} ]> when (statement) => match (seq)
                                              {
-                                               | [e] => ConvExpr(e, true)
-                                               | seq => 
-                                                        def seq = seq.Map(ConvExpr(_, true));
+                                               | []  => ""
+                                               | seq => def seq = seq.Map(ConvExpr(_, true));
                                                         $<#..$(seq;";\n")#>
                                             }
         | <[ $n ` $t]>          => $<#token_iter_utils.repeat($(ConvExpr(t)), $(ConvExpr(n)))#>
@@ -422,10 +422,12 @@ namespace PetriNetLib
                 {
                   | TExpr.DefFunctionsIn(h :: _, _) => def ret = h.ReturnType |> ConvType;
                                                       def expr = expr.Map(ConvExpr(_, true));
+                                                      def (last, expr) = expr.PartitionLast();
                                                       def parms = parms.Map(ConvParm);
                                                       $<#$ret $n(..$(parms; ","))
                                                        {
-                                                         $expr;
+                                                         ..$(expr;";\n")
+                                                         return $last;
                                                        }#>
                                                       //<[decl: $(n : usesite)(..$parms) : $(ret : typed)
                                                       //  {

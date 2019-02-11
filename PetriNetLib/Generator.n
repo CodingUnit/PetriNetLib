@@ -97,6 +97,22 @@ namespace PetriNetLib
             }
       
       def expr = <[ {..$body} ]>;
+      
+      def process(a, after, expr)
+      {
+        if (after)
+        match (expr)
+        {
+          | <[ (..$e)]> => match (e)
+                           {
+                             | [e] => e
+                             | _   => expr
+                           }
+          | e         => e
+        } else expr
+      }
+      
+      def expr = Macros.TraverseExpr(None(), expr, false, process);
       def (parms, expr) = parms.Fold(([], expr :: []), proc_parm);
       def parms = parms.Rev();
           

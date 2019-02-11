@@ -45,7 +45,7 @@ namespace PetriNetLib
         | <[ debug ]>          => assert2(false);
         | <[ $(n : usesite) ]> => page = n
         | _                    => ()
-      }
+     }
       
       match (expr)
       {

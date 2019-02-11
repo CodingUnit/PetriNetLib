@@ -286,6 +286,21 @@ namespace CommonLib.Macros
       loop(lst, [])
     }
 
+    public PartitionLast[T](this lst : list[T]) : T * list[T]
+    {
+      def loop(lst, res)
+      {
+        match (lst)
+        {
+          | []           => throw InvalidOperationException("no elements")
+          | head :: []   => (head, res.Rev())
+          | head :: tail => loop(tail, head :: res)
+        }
+      }
+
+      loop(lst, [])
+    }
+    
     public PartitionInclude[T](this lst : list[T], elem : T) : list[T] * list[T] where T : class
     {
       def loop(lst, res)
