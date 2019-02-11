@@ -149,6 +149,7 @@
   <ItemGroup>
     <ClInclude Include="..\random_array.h" />
     <ClInclude Include="..\rqueue.h" />
+    <ClInclude Include="math_utils.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>

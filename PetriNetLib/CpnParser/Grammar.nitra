@@ -99,8 +99,7 @@ namespace CpnML.Grammar
       | MultiSetConstr = Literal '`' Expr
 	      
       //| RecordAccess = !Char '#' AnyIdentifier Expr            
-      precedence Conditional:
-      | If = "if" Cond=Expr ^ Conditional "then" Then=Expr "else" Else=Expr
+      
       precedence And:
       | AndAlso = Expr "andalso" Expr
       precedence Or:
@@ -118,14 +117,16 @@ namespace CpnML.Grammar
       | Append  = Expr "^^" Expr
       | Concat  = Expr '^' Expr
       | ListCombine = Expr "::" Expr
-	  precedence Additive:
-      | Plus	   = Expr ^ Additive '+' Expr
-	    | Minus    = Expr ^ Additive '-' Expr
+	    precedence Additive:
+      | Plus	   = Expr '+' Expr
+	    | Minus    = Expr '-' Expr
       precedence MulDiv:
       | Multiply = Expr '*' Expr
       | Div      = Expr '/' Expr
       | IntDiv   = Expr "div" Expr
       | Mod      = Expr "mod" Expr
+      precedence Conditional:
+      | If = "if" Cond=Expr ^ Conditional "then" Then=Expr "else" Else=Expr ^ Conditional      
       precedence Not:
       | Not     = "not" Expr
       precedence Sharp:

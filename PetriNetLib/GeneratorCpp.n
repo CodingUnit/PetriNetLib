@@ -57,10 +57,11 @@ namespace PetriNetLib
       }
     }
     
-    public this(file : string, model : OutModel, proc : PetriNetProcessor)
+    public this(file : string, gen : Generator, model : OutModel, proc : PetriNetProcessor)
     {
       this.typer = proc.Typer;
       this.file = file;
+      this.gen = gen;
       this.typebuilder = proc.Typebuilder;
 
       this.model = model;
@@ -293,16 +294,36 @@ namespace PetriNetLib
 
     internal ConvType(te : TypeVar) : string
     {
-      te.ToString()
+      def ty = te.ToString().TrimEnd('-', '+');
+      def enum_ty = typer.BindType(<[ System.Collections.Generic.IEnumerable[_] ]>);
+      if (te.TryRequire(enum_ty))
+      {
+        def ty = te.Fix() :> FixedType.Class;
+        //def args = ty.args;
+        //def args = args.Map(ConvType);
+        <#token_iter#>
+      } else
+      {
+        ty
+      }
     }
 
     internal static ConvExpr(expr : PExpr, statement : bool = false) : string
     {
       match (expr)
       {
+        | <[ {..$seq} ]> when (statement) => match (seq)
+                                             {
+                                               | [e] => ConvExpr(e, true)
+                                               | seq => 
+                                                        def seq = seq.Map(ConvExpr(_, true));
+                                                        $<#..$(seq;";\n")#>
+                                            }
         | <[ $n ` $t]>          => $<#token_iter_utils.repeat($(ConvExpr(t)), $(ConvExpr(n)))#>
         | <[ $a %++ $b]>        => $<#token_iter_utils.concat($(ConvExpr(a)), $(ConvExpr(b)))#>
         | <[]>                  => ""
+        | <[ $a != $b]>         => $<#$(ConvExpr(a)) != $(ConvExpr(b))#>
+        | <[ $a == $b]>         => $<#$(ConvExpr(a)) == $(ConvExpr(b))#>
         | <[ $a + $b]>          => $<#$(ConvExpr(a)) + $(ConvExpr(b))#>
         | <[ $a * $b]>          => $<#$(ConvExpr(a)) * $(ConvExpr(b))#>
         | <[ $(n : usesite)]>   => $<#$n#>
@@ -316,6 +337,14 @@ namespace PetriNetLib
         | <[ $(_ : ushort)]> as e
         | <[ $(_ : byte)]> as e => $<#$e#>
         | <[ $(n : string)]>    => $<#$n#>
+        | <[ (..$e) ]>          => match (e)
+                                   {
+                                     | [e]                  => ConvExpr(e)
+                                     | [e1, e2]             => $<#tuple2($(ConvExpr(e1)), $(ConvExpr(e2)))#>
+                                     | [e1, e2, e3]         => $<#tuple3($(ConvExpr(e1)), $(ConvExpr(e2)), $(ConvExpr(e3)))#>
+                                     | [e1, e2, e3, e4]     => $<#tuple4($(ConvExpr(e1)), $(ConvExpr(e2)), $(ConvExpr(e3)), $(ConvExpr(e4)))#>
+                                     | [e1, e2, e3, e4, e5] => $<#tuple5($(ConvExpr(e1)), $(ConvExpr(e2)), $(ConvExpr(e3)), $(ConvExpr(e4)), $(ConvExpr(e5)))#>
+                                   }
         | <[ if ($a) $b else $c]> when statement => $<#if ($(ConvExpr(a))) $(ConvExpr(b)) else $(ConvExpr(c))#>
         | <[ if ($a) $b else $c]> when !statement => $<#$(ConvExpr(a)) ? $(ConvExpr(b)) : $(ConvExpr(c))#>
         | <[ array[..$val] ]>   => CreateArray(val)
@@ -364,7 +393,7 @@ namespace PetriNetLib
                 | <[parameter: $(n : usesite) : Index.[$(type : usesite)]]> => 
                   match (model.GetIndex(type))
                   {
-                    | Some((t, _)) => (<[parameter: $(n : usesite) : $(t : usesite)]> :: parm, <[def $(n : usesite) = $(n : usesite).num ]> :: e)
+                    | Some((t, _)) => (<[parameter: $(n : usesite) : $(t : usesite)]> :: parm, e)
                     | _            => (parm, e)
                   }
                   

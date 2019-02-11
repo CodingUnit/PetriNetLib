@@ -37,7 +37,7 @@ namespace PetriNetLib
       proc = PetriNetProcessor(file, Flags, typer, ty, parser.Places, parser.Transitions, parser.Arcs, parser.Decls);
       proc.Process();
       gen = Generator(proc.OutModel, proc);
-      cpp_gen = CppGenerator($"$file.h", proc.OutModel, proc);
+      cpp_gen = CppGenerator($"$file.h", gen, proc.OutModel, proc);
       gen.PhaseOne();
       cpp_gen.PhaseOne();
       ty.UserData["PetriNetGen"] = this;
