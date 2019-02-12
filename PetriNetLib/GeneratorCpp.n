@@ -378,7 +378,7 @@ namespace PetriNetLib
           def val = ConvExpr(val, false);
           //<[ decl: $(name : usesite) : $(ty : typed) = $val ]>
           //cpp("decl: $(type : type) $name = $val;")
-          $"$type $name = $val;"
+          $"const $type $name = $val;"
       | _ => null
     }
 
@@ -458,7 +458,7 @@ namespace PetriNetLib
                                                 //def al = TopDeclaration.Alias(name, mods, Typarms.Empty, <[ $(new_name : usesite) ]>);
                                                 //al |> ClassMember.TypeDeclaration.TypeDeclaration;
                                                 // cpp("typedef $n $new_name")
-          $"typedef $n $new_name;"
+                                                $"typedef $n $new_name;"
                                                 //CTypeDecl.Decl(CTree.Decl([CSpec.Typedef()], CType.Class(n), [CDecl.Id(CName.String(new_name), None())]))
       | ColourSet(n, Colour.Record(vals))     => def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
                                                 def fields = fields.Map((n, t) => $"$t $n;");
@@ -471,29 +471,33 @@ namespace PetriNetLib
                                                 //          ..$fields
                                                 //        }
                                                 //]>
-      //| ColourSet(n, Colour.Index(mn, mx, _i)) => def eval(m)
-      //                                           {
-      //                                              def expr = converter.ParseML(m);
-      //                                              match (expr)
-      //                                              {
-      //                                                | <[$(n : int)]>  => n
-      //                                                | <[$(name : usesite) ]> => 
-      //                                                                     def match_var(x)
-      //                                                                     {
-      //                                                                       | <[ def $(n : usesite) = $_]> => n == name 
-      //                                                                       | _                            => false
-      //                                                                     }
+      | ColourSet(n, Colour.Index(mn, mx, i)) =>   
+                                                   //def eval(m : string)
+                                                   //{
+                                                   //   def expr = converter.ParseML(m);
+                                                   //   match (expr)
+                                                   //   {
+                                                   //     | <[$(n : int)]>  => n
+                                                   //     | <[$(name : usesite) ]> => 
+                                                   //                          def match_var(x)
+                                                   //                          {
+                                                   //                            | <[ def $(n : usesite) = $_]> => n == name 
+                                                   //                            | _                            => false
+                                                   //                          }
 
-      //                                                                     match (model.ml_decls.Find(match_var))
-      //                                                                     {
-      //                                                                       | Some(<[ def $(_ : usesite) = $(v : int)]>) => v
-      //                                                                       | _                                  => throw InvalidOperationException()
-      //                                                                     }
-      //                                              }
-      //                                           }
-      //                                           def mn = mn |> eval;
-      //                                           def mx = mx |> eval;
-
+                                                   //                          match (model.ml_decls.Find(match_var))
+                                                   //                          {
+                                                   //                            | Some(<[ def $(_ : usesite) = $(v : int)]>) => v
+                                                   //                            | _                                  => throw InvalidOperationException()
+                                                   //                          }
+                                                   //   }
+                                                   //}
+                                                   
+                                                 //def mn = mn |> eval;
+                                                 //def mx = mx |> eval;
+                                                 private_fields ::= $<#typedef $n int;#>;
+                                                 private_fields ::= $<#typedef $i int;#>;
+                                                 null
       //                                            cpp((<#decl:
       //                                                class $n : public index<$n>
       //                                                {
