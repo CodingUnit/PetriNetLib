@@ -1,11 +1,11 @@
 #pragma once
+#include "time.h"
 
 typedef u32(*tval_func)();
 
 class random
 {
 	u32 next;
-	tval_func val_func;
 public:
 	random() : next(0) {}
 
@@ -14,10 +14,9 @@ public:
 		next = seed;
 	}
 
-	void init(u32 seed, tval_func val_func)
+	void init(u32 seed)
 	{
 		next = seed;
-		this.val_func = val_func;
 	}
 
 	int next(int min, int max)
@@ -39,9 +38,9 @@ public:
 	rand_seed=(rand_seed+value)*1103515245ul+12345ul;
 	return rand_seed;
 }*/
-		u32 value = val_func ? val_func() : 0;
+		u32 value = global_time::time();
 		next = (next + value) * 1103515245ul + 12345ul;
-		int count = max - min;
+		int count = max - min + 1;
 		return (next % count) + min;
 	}
 

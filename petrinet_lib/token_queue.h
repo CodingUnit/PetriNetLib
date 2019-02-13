@@ -6,14 +6,14 @@
 
 namespace petrinet_lib
 {
-	class random_array
+	class token_queue
 	{
 		rqueue queue;
-		random ran;
 	public:
 
 		void init(int size, int max_elem_size)
 		{
+			elem_size = max_elem_size;
 			queue.init(size, max_elem_size);
 		}
 
@@ -63,23 +63,21 @@ namespace petrinet_lib
 
 		void *peek()
 		{
-			int idx = ran.next(0, queue.get_count());
-			return queue.element_at(idx);
+			return queue.peek();
 		}
 
-		void get(void *elem)
+		/*void get(void *elem)
 		{
 			int idx = queue.index_of(elem);
 			queue.remove_abs(idx);
-		}
+		}*/
 
 		void *get()
 		{
-			int idx = ran.next(0, queue.get_count());
-			return queue.remove(idx);
+			return queue.deque();
 		}
 
-		void *peek_indexed(int &idx)
+		/*void *peek_indexed(int &idx)
 		{
 			int i = ran.next(0, queue.get_count());
 			idx = queue.real_index(i);
@@ -89,7 +87,7 @@ namespace petrinet_lib
 		void get_indexed(int idx)
 		{
 			queue.remove_abs(idx);
-		}
+		}*/
 	};
 
 }
