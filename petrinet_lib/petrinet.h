@@ -1,0 +1,88 @@
+#pragma once
+
+public class PetriNet : IPetriNet, IDisposable
+{
+	mutable main_task : Task;
+	mutable time_step : int;
+main_cancel: CancellationTokenSource = CancellationTokenSource();
+	mutable main_cancel_token : CancellationToken;
+	mutable locked : int;
+tran_queue: RQueue[Action] = RQueue(32);
+
+	public this(step : int = 15)
+	{
+		time_step = step;
+		main_cancel_token = main_cancel.Token;
+		main_task = Task(_ = > StepInternal(), main_cancel)
+	}
+
+	public static @`[T](count : int, tok : T) : IEnumerable[T]
+	{
+	  Enumerable.Repeat(tok, count)
+	}
+
+		public static @%++[T](tok1 : IEnumerable[T], tok2 : IEnumerable[T]) : IEnumerable[T]
+	{
+	  tok1.Concat(tok2)
+	}
+
+		protected Lock(act : Action) : bool
+	{
+		if (!ThreadSafeUtils.CAS(ref locked, 0, 1))
+		{
+			tran_queue.Enqueue(act);
+			false
+		}
+		else true
+	}
+
+	protected Unlock() : void
+	{
+		locked = 0;
+		CheckQueue()
+	}
+
+	CheckQueue() : void
+	{
+		mutable val;
+		while (tran_queue.DequeIfExist(ref val))
+		{
+			val()
+		}
+	}
+
+	public virtual Step() : void
+	{
+	}
+
+	public Dispose() : void
+	{
+		main_cancel.Cancel();
+		try
+		{
+			main_task.Wait()
+		}
+		catch
+		{
+			| AggregateException = > ()
+		}
+		finally
+		{
+		  main_cancel.Dispose()
+		}
+	}
+
+	public virtual Start() : void
+	{
+		main_task.Start()
+	}
+
+	StepInternal() : void
+	{
+		if (main_cancel_token.IsCancellationRequested)
+			main_cancel_token.ThrowIfCancellationRequested(); else
+			Step();
+		Thread.Sleep(time_step);
+		StepInternal()
+	}
+}

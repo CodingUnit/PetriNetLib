@@ -72,6 +72,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>D:\programs\opensource\PetriNetLib\petrinet_lib\arm_lib;D:\programs\opensource\PetriNetLib\petrinet_lib\arm_lib\arm_lib_hal;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -147,9 +148,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\buffer_utils.h" />
+    <ClInclude Include="..\math_utils.h" />
     <ClInclude Include="..\random_array.h" />
     <ClInclude Include="..\rqueue.h" />
-    <ClInclude Include="math_utils.h" />
+    <ClInclude Include="..\token_iter_utils.h" />
+    <ClInclude Include="..\token_queue.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
