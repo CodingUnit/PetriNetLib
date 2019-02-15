@@ -167,6 +167,7 @@ namespace petrinet_lib
 		{
 			return (read_idx + index) % count;
 		}
+
 		void *remove(int index)
 		{
 			return remove_abs(real_index(index));

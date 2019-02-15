@@ -1,88 +1,65 @@
 #pragma once
+#include "event_queue32.h"
 
-public class PetriNet : IPetriNet, IDisposable
+class petri_net32// : IPetriNet, IDisposable
 {
-	mutable main_task : Task;
-	mutable time_step : int;
-main_cancel: CancellationTokenSource = CancellationTokenSource();
-	mutable main_cancel_token : CancellationToken;
-	mutable locked : int;
-tran_queue: RQueue[Action] = RQueue(32);
+	u8 locked;
+	event_queue32_conc queue;
+	//tran_queue: RQueue[Action] = RQueue(32);
 
 	public this(step : int = 15)
 	{
 		time_step = step;
-		main_cancel_token = main_cancel.Token;
-		main_task = Task(_ = > StepInternal(), main_cancel)
 	}
 
-	public static @`[T](count : int, tok : T) : IEnumerable[T]
-	{
-	  Enumerable.Repeat(tok, count)
-	}
+	//public static @`[T](count : int, tok : T) : IEnumerable[T]
+	//{
+	//  Enumerable.Repeat(tok, count)
+	//}
 
-		public static @%++[T](tok1 : IEnumerable[T], tok2 : IEnumerable[T]) : IEnumerable[T]
-	{
-	  tok1.Concat(tok2)
-	}
+	//	public static @%++[T](tok1 : IEnumerable[T], tok2 : IEnumerable[T]) : IEnumerable[T]
+	//{
+	//  tok1.Concat(tok2)
+	//}
 
-		protected Lock(act : Action) : bool
+	protected:
+
+	bool lock(int evt)
 	{
-		if (!ThreadSafeUtils.CAS(ref locked, 0, 1))
+		if (!CAS8(&locked, 0, 1))
 		{
-			tran_queue.Enqueue(act);
-			false
+			queue.enqueue(evt);
+			return false;
 		}
-		else true
+		return true;
 	}
 
-	protected Unlock() : void
+	void unlock() 
 	{
 		locked = 0;
-		CheckQueue()
+		check_queue();
 	}
 
-	CheckQueue() : void
+	virtual function get_transition(int n)
 	{
-		mutable val;
-		while (tran_queue.DequeIfExist(ref val))
+		return function();
+	}
+
+private:
+	check_queue() : void
+	{
+		u32 val;
+		while (queue.deque_if_exist(val))
 		{
-			val()
+			function tran = get_transition(n);
+			tran.exec();
 		}
 	}
 
-	public virtual Step() : void
+public:
+
+	virtual void step() 
 	{
 	}
 
-	public Dispose() : void
-	{
-		main_cancel.Cancel();
-		try
-		{
-			main_task.Wait()
-		}
-		catch
-		{
-			| AggregateException = > ()
-		}
-		finally
-		{
-		  main_cancel.Dispose()
-		}
-	}
-
-	public virtual Start() : void
-	{
-		main_task.Start()
-	}
-
-	StepInternal() : void
-	{
-		if (main_cancel_token.IsCancellationRequested)
-			main_cancel_token.ThrowIfCancellationRequested(); else
-			Step();
-		Thread.Sleep(time_step);
-		StepInternal()
-	}
-}
+};
