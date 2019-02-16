@@ -89,7 +89,7 @@ namespace PetriNetLib
                 | <[parameter: $(n : usesite) : Index.[$(type : usesite)]]> => 
                   match (model.GetIndex(type))
                   {
-                    | Some((t, _)) => (<[parameter: $(n : usesite) : $(t : usesite)]> :: parm, <[def $(n : usesite) = $(n : usesite).num ]> :: e)
+                    | Some((t, _)) => (<[parameter: $($"$(n)" : usesite) : $(t : usesite)]> :: parm, e)//<[def $(n : usesite) = $($"$(n)" : usesite).num ]> :: 
                     | _            => (parm, e)
                   }
                   
@@ -143,13 +143,13 @@ namespace PetriNetLib
     
     CreateColourSet2(col : ColourSet) : ClassMember.TypeDeclaration
     {
-      | ColourSet(n, Colour.Index(_, _, i)) => 
-          <[decl: [Record]
-            class $(i : usesite) : $(n : usesite)
-            {
+      //| ColourSet(n, Colour.Index(_, _, i)) => 
+      //    <[decl: [Record]
+      //      class $(i : usesite) : $(n : usesite)
+      //      {
                                                        
-            }
-            ]>;
+      //      }
+      //      ]>;
       | _ => null    
     }
     
@@ -169,48 +169,53 @@ namespace PetriNetLib
                                                            ..$fields
                                                          }
                                                  ]>
-      | ColourSet(n, Colour.Index(mn, mx, _i)) => def eval(m)
-                                                 {
-                                                    def expr = converter.ParseML(m);
-                                                    match (expr)
-                                                    {
-                                                      | <[$(n : int)]>  => n
-                                                      | <[$(name : usesite) ]> => 
-                                                                           def match_var(x)
-                                                                           {
-                                                                             | <[ def $(n : usesite) = $_]> => n == name 
-                                                                             | _                            => false
-                                                                           }
+      | ColourSet(n, Colour.Index(_mn, _mx, i)) => 
+                                                 // def eval(m)
+                                                 //{
+                                                 //   def expr = converter.ParseML(m);
+                                                 //   match (expr)
+                                                 //   {
+                                                 //     | <[$(n : int)]>  => n
+                                                 //     | <[$(name : usesite) ]> => 
+                                                 //                          def match_var(x)
+                                                 //                          {
+                                                 //                            | <[ def $(n : usesite) = $_]> => n == name 
+                                                 //                            | _                            => false
+                                                 //                          }
                                                                            
-                                                                           match (model.ml_decls.Find(match_var))
-                                                                           {
-                                                                             | Some(<[ def $(_ : usesite) = $(v : int)]>) => v
-                                                                             | _                                  => throw InvalidOperationException()
-                                                                           }
-                                                    }
-                                                 }
-                                                 def mn = mn |> eval;
-                                                 def mx = mx |> eval;
-                                                 
-                                                     
-                                                  <[decl:
-                                                      class $(n : usesite) : Index[$(n : usesite)]
-                                                      {
-                                                        public this(num : int)
-                                                        {
-                                                          base($(mn : int), $(mx : int), num)
-                                                        }
+                                                 //                          match (model.ml_decls.Find(match_var))
+                                                 //                          {
+                                                 //                            | Some(<[ def $(_ : usesite) = $(v : int)]>) => v
+                                                 //                            | _                                  => throw InvalidOperationException()
+                                                 //                          }
+                                                 //   }
+                                                 //}
+                                                 //def mn = mn |> eval;
+                                                 //def mx = mx |> eval;
+                                                 fields ::= <[decl: $(i : usesite)(n : int) : int {n}]>;
+                                                 def name = Macros.UseSiteSymbol(n);
+                                                 def mods = AttributesAndModifiers(NemerleModifiers.Private, []);
+                                                 def al = TopDeclaration.Alias(name, mods, Typarms.Empty, <[ int ]>);
+                                                 al |> ClassMember.TypeDeclaration.TypeDeclaration;
+                                                   
+                                                  //<[decl: type $(n : usesite) = int;
+                                                  //    class $(n : usesite) : Index[$(n : usesite)]
+                                                  //    {
+                                                  //      public this(num : int)
+                                                  //      {
+                                                  //        base($(mn : int), $(mx : int), num)
+                                                  //      }
                                                         
-                                                        public override Name() : string {$n}
-                                                        public override Create(num : int) : $(n : usesite) {$(n : usesite)(num)}
-                                                        static Instance : $(n : usesite) = $(n : usesite)(0);
+                                                  //      public override Name() : string {$n}
+                                                  //      public override Create(num : int) : $(n : usesite) {$(n : usesite)(num)}
+                                                  //      static Instance : $(n : usesite) = $(n : usesite)(0);
                                                         
-                                                        public static all() : IEnumerable[$(n : usesite)]
-                                                        {
-                                                          Instance.all_impl
-                                                        }
-                                                      }
-                                                     ]>
+                                                  //      public static all() : IEnumerable[$(n : usesite)]
+                                                  //      {
+                                                  //        Instance.all_impl
+                                                  //      }
+                                                  //    }
+                                                  //   ]>
       | ColourSet(n, Colour.Enum(vals)) => def vals = vals.Map(x => <[decl: | $(x : usesite) ]>);
                                            <[decl: enum $(n : usesite)
                                            {
@@ -242,9 +247,44 @@ namespace PetriNetLib
             => <[ $e1.Concat($e2)]> 
       }
       
-      def unfold(expr)
+      def unfold(expr) : PExpr
       {
         | <[ () ]> => <[ Unit.Instance ]>
+        | <[ $(n : usesite).all() ]> => 
+        
+           def eval(m : string) : int
+            {
+              def expr = converter.ParseML(m);
+              match (expr)
+              {
+                | <[$(n : int)]>         => n
+                | <[$(name : usesite) ]> => 
+                                      def match_var(x)
+                                      {
+                                        | <[ def $(n : usesite) = $_]> => n == name 
+                                        | _                            => false
+                                      }
+                                                                           
+                                      match (model.ml_decls.Find(match_var))
+                                      {
+                                        | Some(<[ def $(_ : usesite) = $(v : int)]>) => v
+                                        | _                                  => throw InvalidOperationException()
+                                      }
+              }
+            }
+            
+              match (model.colour_sets.Find(x => x.Key == n))
+              {
+                | Some(t) => match (t.Value.type)
+                             {
+                               | Colour.Index(mn, mx, _i) => 
+                                  def mn = mn |> eval;
+                                  def mx = mx |> eval;
+                                  <[ Enumerable.Range($(mn : int), $(mx : int)) ]>
+                             }
+                | _       => expr
+              }
+            
         | e        => e
       }
       
