@@ -29,6 +29,12 @@ namespace CpnML.Grammar
       | NilList = "nil"
     }
 
+		syntax SharpIndex
+		{
+			| Identifier
+			| Numeric
+		}
+
     token Char = '#' '"' Any '"';
 
     syntax IndexVar = Name=Identifier '(' Idx=Expr')';
@@ -37,6 +43,11 @@ namespace CpnML.Grammar
 
     syntax TypeExpr
     {
+			| Named  = Identifier
+			| Time	 = "time"
+			| IntInf = "intinf"
+			| Unit	 = "unit"
+			| Bool	 = "bool"
       | Int    = "int"
       | Real   = "real"
       | String = "string"
@@ -49,7 +60,7 @@ namespace CpnML.Grammar
 
 	syntax ExprList = (Expr; ";"; ?)+;
 
-	syntax BraceFunc  = Name=(Identifier;'.')+ '(' Parms=(Expr)* ')';
+	syntax BraceFunc  = Name=(Identifier;'.')+ '(' Parms=(Expr;",")* ')';
 
 	syntax Expr
     {	  
@@ -129,7 +140,7 @@ namespace CpnML.Grammar
       precedence Not:
       | Not     = "not" Expr
       precedence Sharp:
-      | SharpOper = '#' Expr
+      | SharpOper = '#' SharpIndex Expr
       precedence Braces:
       | BraceExpr = '(' (Expr;',')* ')'
       precedence FigBraces:
@@ -148,13 +159,15 @@ namespace CpnML.Grammar
       | Var = "var" Names=(Identifier;",")+ Type
     }
 
+		syntax Parm = Name=Identifier Type?;
+
 	  syntax Declaration
     {
       | LowerDecl
       | GlobRef  = "globref" Name=Identifier "=" Expr
       | PageRef  = "pageref" Name=Identifier "=" Expr
       | InstRef  = "instref" Name=Identifier "=" Expr
-      | Func     = "fun" Name=Identifier '(' Parms=(Expr;",")* ')' Type? '=' Body=ExprList
+      | Func     = "fun" Name=Identifier '(' Parms=Parm* ')' Type? '=' Body=ExprList
       | FunMatch = "fun" MatchCase "|" (MatchCase;"|")+
       {
         syntax MatchCase = Name=Identifier Pat=Expr '=' Expr=Expr;

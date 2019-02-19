@@ -18,7 +18,7 @@ namespace PetriNetLib
   [Record]
   public variant Colour
   {
-    | List {type : string; with_range : int * int;}
+    | List {type : string; with_range : option[int * int];}
     | Union { types : list[string * string]}
     | Product {tuple : list[string]}
     | Record {vals : list[string * string]}

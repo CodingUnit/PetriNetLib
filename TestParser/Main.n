@@ -16,7 +16,7 @@ using System.Diagnostics;
 
 module Program
 {
-  [PetriNet("DiningPhilosophers.cpn", debug)]
+  [PetriNet("DiningPhilosophers.cpn")]
   class DiningPhilosophers
   {
     //Chopsticks(i : PH) : IEnumerable[PH]

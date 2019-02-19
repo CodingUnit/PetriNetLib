@@ -40,6 +40,7 @@ namespace PetriNetLib
                                       <[ $(val : string) ]>
       | Literal.Boolean(Boolean = BaseParseTree.Boolean.True) => <[ $(true : bool) ]>
       | Literal.Boolean(Boolean = BaseParseTree.Boolean.False) => <[ $(false : bool) ]>
+      | Literal.EmptyMultiSet => <[ empty() ]>
     }
     
     GetExpr(expr : MainParseTree.Expr) : PExpr
@@ -48,7 +49,7 @@ namespace PetriNetLib
       | Var as v     => def name = v.Identifier.GetText();
                         <[ $(name : usesite) ]>
       | FuncCall(NameData = (n, _), ParmsData = p)
-      | BraceFunc(BraceFunc = MainParseTree.BraceFunc(NameData = (n, _), ParmsData = p)) => 
+      | BraceFunc(BraceFunc = MainParseTree.BraceFunc(NameData = (n, _), ParmsData = (p, _))) => 
            def parms = match (p)
            {
              | [BraceExpr(ExprsData = (e, _))] => e
@@ -117,6 +118,7 @@ namespace PetriNetLib
       | RefContents(Identifier = i)          => def i = i.GetText();
                                                 <[ $(i : usesite) ]>
       | AndAlso(Expr1 = e, Expr2 = e2) => <[ $(GetExpr(e)) && $(GetExpr(e2))]>
+      | IntDiv(Expr1 = e, Expr2 = e2)  => <[ $(GetExpr(e)) / $(GetExpr(e2))]>
     }
     
     ConvertTree(tree : MainParseTree.LangExpr) : PExpr
@@ -166,9 +168,9 @@ namespace PetriNetLib
           
     }
     
-    public ParseML(text : string) : PExpr
+    public ParseML(text : string) : option[PExpr]
     {
-      if (string.IsNullOrWhiteSpace(text)) null else
+      if (string.IsNullOrWhiteSpace(text)) Some(<[]>) else
       {
         def source = SourceSnapshot(text, file);
         def result = parserHost.Parse(source);//Main.StateMachine(source, parserHost);
@@ -177,15 +179,13 @@ namespace PetriNetLib
         {
           match (ast)
           {
-            | MainParseTree.LangExpr as a => ConvertTree(a);
-            | _                           => null
-          }
-
-           
+            | MainParseTree.LangExpr as a => ConvertTree(a) |> Some
+            | _                           => None()
+          }           
         } else 
         {
           def msg = msg.GetMessages();
-          null
+          None()
           //(null, msg.GetMessages().NToList())
         }
         //    def (line, col) = error.Location.StartLineColumn;

@@ -254,7 +254,7 @@ namespace PetriNetLib
         
            def eval(m : string) : int
             {
-              def expr = converter.ParseML(m);
+              def expr = converter.ParseML(m).Value;
               match (expr)
               {
                 | <[$(n : int)]>         => n

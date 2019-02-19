@@ -67,7 +67,7 @@
 
     regex KeywordToken =   "fun"    | "var" | "val" | "orelse" | "andalso" 
                            | "case" | "in"  | "end" | "int"    | "string" 
-                           | "real" | "if";
+                           | "real" | "if"  | "intinf" | "bool" | "unit";
 
     regex IdentifierBody = IdentifierStartCharacter IdentifierPartCharacters*;
 

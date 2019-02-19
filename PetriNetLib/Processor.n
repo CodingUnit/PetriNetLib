@@ -145,7 +145,7 @@ namespace PetriNetLib
         | CpnTree.Place(n, id, t, i) =>
             def col = colour_sets[t];
             def expr = i |> converter.ParseML;
-            def place = Place(pidx, id, n, col, expr, p, this);
+            def place = Place(pidx, id, n, col, expr.Value, p, this);
             pidx += 1;
             place
       }
@@ -167,17 +167,18 @@ namespace PetriNetLib
                 def len = lastbrace - firstbrace;
                 match (converter.ParseML(firstbrace_str.Substring(firstbrace, len)))
                 {
-                  | <[]>               => <[]>
-                  | <[ {..$_} ]> as e
-                  | e                  => e
+                  | Some(<[]>)               => <[]>
+                  | Some(<[ {..$_} ]> as e)
+                  | Some(e)                  => e
+                  | _                        => throw InvalidOperationException("parsing error")
                 }
               }
           
             
             }
         
-            def guard = g.MapDefault(x => converter.ParseML(x.Trim('[', ']')), <[]>);
-            def time  = t.MapDefault(converter.ParseML, <[]>);
+            def guard = g.MapDefault(x => converter.ParseML(x.Trim('[', ']')).Value, <[]>);
+            def time  = t.MapDefault(converter.ParseML, Some(<[]>)).Value;
             def code  = c.MapDefault(get_func, <[]>);
             
             
@@ -189,7 +190,7 @@ namespace PetriNetLib
       def create_arcs(a)
       {
         | CpnTree.Arc(t, from, to, dir) => 
-            def expr = converter.ParseML(t);
+            def expr = converter.ParseML(t).Value;
             def placeend = end => places.First(x => x.id == end) |> ArcSource.PlaceEnd;
             def transend = end => transitions.First(x => x.id == end) |> ArcSource.TransitionEnd;
             def (f, t, k) = match (dir)
@@ -223,9 +224,9 @@ namespace PetriNetLib
       foreach (d in decls)
       {
         | CpnDecl.Var(i, c) => vars[i] = colour_sets[c]
-        | GlobRef(i, v)     => def expr = converter.ParseML(v);
+        | GlobRef(i, v)     => def expr = converter.ParseML(v).Value;
                                glob_refs[i] = expr
-        | ML(str)           => def expr = converter.ParseML(str);
+        | ML(str)           => def expr = converter.ParseML(str).Value;
                                ml_decls ::= expr
         | _                 => ()
       }

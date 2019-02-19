@@ -53,6 +53,11 @@ namespace PetriNetLib
                     def alias = col.GetOneText("alias", "id");
                     Colour.Alias(alias)
                   } else
+                  if (col.Contains("list"))
+                  {
+                    def type = col.GetOneText("list", "id");
+                    Colour.List(type, None())
+                  } else
                     if (col.Contains("product"))
                     {
                       def vals = col.Get("product", "id");

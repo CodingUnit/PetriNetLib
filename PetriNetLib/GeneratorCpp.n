@@ -21,6 +21,14 @@ namespace PetriNetLib
 {
   using CommonLib.Macros.LensUtils;
 
+  /*
+  - если число позиций переходов не превышает 32, то их можно запаковать в слово
+    создается переменная places в которой бит показывает одной позиции наличие токена
+    создается переменная ena в которой каждый бит означает включенность перехода 
+    при добавлении токена бит устанавливается в places в 1
+    при удалении токена проверяется на пустоту и если пусто то сбрасывается в 0
+    бит ena = 1 в битах позиций, например ena = places & (A|B) == (A|B) << 16
+  */
   /// <summary>
   /// Description of Generator.
   /// </summary>
@@ -80,6 +88,7 @@ namespace PetriNetLib
     
     internal GetTypeExpr(p : Colour) : string
     {
+      | Colour.Alias(type)
       | Colour.Simple(type) => TypeFromStr(type)
       | Integer       => "int"//cpp("type: int")
       | Unit(None())  => "unit"//cpp("type: Unit")
@@ -92,7 +101,9 @@ namespace PetriNetLib
 
     internal GetTypeExpr(p : ColourSet) : string
     {
+      | ColourSet(n, Alias)
       | ColourSet(n, Index)
+      | ColourSet(n, Record)
       | ColourSet(n, Enum)          => n//cpp("type: $n")
       | ColourSet(_, Timed(p))
       | ColourSet(_, p)             => GetTypeExpr(p)
@@ -101,8 +112,8 @@ namespace PetriNetLib
     internal TypeFromStr(str : string) : string
     {
       | "string" => "char *"//cpp("type: char *")
-      | "int"//    => "int"//cpp("type: int")
-      | "intinf" => "int"//cpp("type: int")
+      | "int"    => "int"//cpp("type: int")
+      | "intinf" => "long long"//cpp("type: int")
       | "real"   => "float"//cpp("type: float")
       | "time"   => "int"//cpp("type: int")
       | "bool"   => "bool"//cpp("type: bool")
