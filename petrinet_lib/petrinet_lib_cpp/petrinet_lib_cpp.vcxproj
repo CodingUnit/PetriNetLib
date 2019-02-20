@@ -150,6 +150,7 @@
   <ItemGroup>
     <ClInclude Include="..\buffer_utils.h" />
     <ClInclude Include="..\math_utils.h" />
+    <ClInclude Include="..\petrinet.h" />
     <ClInclude Include="..\random_array.h" />
     <ClInclude Include="..\rqueue.h" />
     <ClInclude Include="..\token_iter_utils.h" />

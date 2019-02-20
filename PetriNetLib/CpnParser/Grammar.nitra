@@ -101,8 +101,8 @@ namespace CpnML.Grammar
       | SetLowerEqual = Expr "<<==" Expr
       | SetUpperEqualAlt = Expr ">>=" Expr
       | SetLowerEqualAlt = Expr "<<=" Expr
-	  | SetScalarMult    = Expr "**" Expr
-      | SetScalarMultAlt = Expr "*" Expr
+	    | SetScalarMult    = Expr "**" Expr
+      //| SetScalarMultAlt = Expr "*" Expr
       precedence Func:
 	    | FuncCall   = Name=(Identifier;'.')+ !'(' Parms=(Expr)+// ^ Func)+
 		  | BraceFunc      	  
@@ -159,7 +159,11 @@ namespace CpnML.Grammar
       | Var = "var" Names=(Identifier;",")+ Type
     }
 
-		syntax Parm = Name=Identifier Type?;
+		syntax Parm
+    {
+      | Normal = Name=Identifier Type?
+      | Index  = Name=Identifier "(" Index=Identifier ")"
+    }
 
 	  syntax Declaration
     {
@@ -167,7 +171,7 @@ namespace CpnML.Grammar
       | GlobRef  = "globref" Name=Identifier "=" Expr
       | PageRef  = "pageref" Name=Identifier "=" Expr
       | InstRef  = "instref" Name=Identifier "=" Expr
-      | Func     = "fun" Name=Identifier '(' Parms=Parm* ')' Type? '=' Body=ExprList
+      | Func     = "fun" Name=Identifier '(' Parms=(Parm;",")* ')' Type? '=' Body=ExprList
       | FunMatch = "fun" MatchCase "|" (MatchCase;"|")+
       {
         syntax MatchCase = Name=Identifier Pat=Expr '=' Expr=Expr;

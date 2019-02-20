@@ -30,12 +30,23 @@ namespace PetriNetLib
       parserHost = ParseSession(Main.LangExpr, compilerMessages = msg);
     }
     
+    GetNumeric(n : BaseParseTree.Numeric) : PExpr
+    {
+      def val = n.ValData;
+      def min = n.MinusData;
+      def val = if (val.StartsWith("0x")) 
+                int.Parse(val.Substring(2), System.Globalization.NumberStyles.AllowHexSpecifier | System.Globalization.NumberStyles.HexNumber);
+                else int.Parse(val);
+      def val = if (min) -val else val;
+      <[ $(val : int) ]>
+  }
+  
     GetLiteral(l : Literal) : PExpr
     {
       | Literal.FloatingNumber as n => def val = n.FloatingNumber.GetValue();
                                       <[ $(val : double) ]>
-      | Literal.Numeric as n        => def val = n.Numeric.GetValue();
-                                      <[ $(val : int) ]>
+      | Literal.Numeric as n        => GetNumeric(n.Numeric)
+                                       
       | Literal.String as n         => def val = n.GetText();
                                       <[ $(val : string) ]>
       | Literal.Boolean(Boolean = BaseParseTree.Boolean.True) => <[ $(true : bool) ]>
@@ -67,9 +78,9 @@ namespace PetriNetLib
            <[ $path(..$parms)]>
            
       | MultiSetConstr(Literal = Literal.Numeric as i, Expr = e) => 
-          def count = i.Numeric.GetValue();
+          def count = i |> GetLiteral;
           def expr = GetExpr(e);
-          <[ $(count : int) ` $expr ]>
+          <[ $count ` $expr ]>
       //| MultiSetConstr(Expr1 = i, Expr2 = e) => 
       //    def count = GetExpr(i);
       //    def expr  = GetExpr(e);
@@ -119,6 +130,33 @@ namespace PetriNetLib
                                                 <[ $(i : usesite) ]>
       | AndAlso(Expr1 = e, Expr2 = e2) => <[ $(GetExpr(e)) && $(GetExpr(e2))]>
       | IntDiv(Expr1 = e, Expr2 = e2)  => <[ $(GetExpr(e)) / $(GetExpr(e2))]>
+      | SharpOper(SharpIndex = i, Expr = e) => match (i)
+                                               {
+                                                 | SharpIndex.Identifier as i => 
+                                                     def i = <[ $(i.Identifier.IdentifierBodyData : usesite) ]>;
+                                                     <[ $(GetExpr(e)).$i]>
+                                                 | SharpIndex.Numeric as n => 
+                                                     def i = n.Numeric |> GetNumeric;
+                                                     <[ $(GetExpr(e))[$i]]>
+                                               }
+      | List(ExprsData = (e, _))             => def e = e.Map(GetExpr);
+                                                <[ [..$e] ]>
+      | Record(ElemsData = (e, _))           => 
+          def get_elem(e)
+          {
+            def n = e.Name.IdentifierBodyData;
+            def e = e.Expr |> GetExpr;
+            <[ $(n : usesite) = $e ]>
+          }
+          
+          def e = e.Map(get_elem);
+          <[ (..$e) ]>
+    }
+    
+    GetType(t : TypeExpr) : PExpr
+    {
+      def t = t.GetText();
+      <[ $(t : usesite) ]>
     }
     
     ConvertTree(tree : MainParseTree.LangExpr) : PExpr
@@ -128,13 +166,17 @@ namespace PetriNetLib
           def map_decls(x)
           {
             | MainParseTree.Declaration.Func(Name = n, TypeOpt = t, ParmsData = (p, _), Body = MainParseTree.ExprList(ExprsData = (b, _))) => 
+              
               def get_parm(p)
               {
-                | <[ $(n : usesite)]>                 => <[parameter: $(n : usesite) ]>
-                | <[ $(n : usesite)($(i : usesite))]> => <[parameter: $(i : usesite) : Index.[$(n : usesite)]]>
+                | Parm.Normal(Name = n, TypeOptData = Some(t)) => def n = n.IdentifierBodyData;
+                                                                  def t = GetType(t.TypeExpr);
+                                                                  <[parameter: $(n : usesite) : $t]>
+                | Parm.Normal(Name = n, TypeOptData = None())  => <[parameter: $(n.IdentifierBodyData : usesite) ]>
+                | Parm.Index(Name = n, Index = i)              => <[parameter: $(i.IdentifierBodyData : usesite) : Index.[$(n.IdentifierBodyData : usesite)]]>
               }
         
-              def parms = p.Map(x => x |> GetExpr |> get_parm);
+              def parms = p.Map(get_parm);
               def n = n.GetText();
               def body = b.Map(GetExpr);
               <[
