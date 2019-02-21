@@ -62,7 +62,7 @@ namespace PetriNetLib
     
     CreateGlobRef(name : string, val : PExpr) : ClassMember
     {
-      def ty = Typer(typing_method);
+      def ty = Typer(TypingMethod);
       def te = ty.TypeExpr(val);
       
       <[decl: mutable $(name : usesite) : $(te.ty : typed) = $val]>
@@ -92,7 +92,7 @@ namespace PetriNetLib
                     | Some((t, _)) => (<[parameter: $($"$(n)" : usesite) : $(t : usesite)]> :: parm, e)//<[def $(n : usesite) = $($"$(n)" : usesite).num ]> :: 
                     | _            => (parm, e)
                   }
-                  
+                | p => (p :: parm, e)
               }
             }
       
@@ -123,8 +123,9 @@ namespace PetriNetLib
     {
       | <[ def $(_ : usesite)(..$_) { ..$_ } ]> => 
           
+      //def expr = <[ def abc() : A * B * C {} ]>;
           def func = ProcessFun(expr);
-          def ty = Typer(typing_method);
+          def ty = Typer(TypingMethod);
           def te = ty.TypeExpr(func);
           match (func)
           {
@@ -424,7 +425,7 @@ namespace PetriNetLib
     
     public PhaseTwo() : void
     {
-      CreateDummyMethod();
+      //CreateDummyMethod();
       def methods = model.transitions.MapToList(CreateTran);
       def vals = model.ml_decls.Map(CreateVals).Filter(_ != null);
       foreach (m in vals) _ = typebuilder.DefineWithSource(m);

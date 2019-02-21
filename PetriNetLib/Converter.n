@@ -137,7 +137,8 @@ namespace PetriNetLib
                                                      <[ $(GetExpr(e)).$i]>
                                                  | SharpIndex.Numeric as n => 
                                                      def i = n.Numeric |> GetNumeric;
-                                                     <[ $(GetExpr(e))[$i]]>
+                                                     def field = $"field$i";
+                                                     <[ $(GetExpr(e)).$(field : usesite)]>
                                                }
       | List(ExprsData = (e, _))             => def e = e.Map(GetExpr);
                                                 <[ [..$e] ]>
@@ -165,7 +166,7 @@ namespace PetriNetLib
            
           def map_decls(x)
           {
-            | MainParseTree.Declaration.Func(Name = n, TypeOpt = t, ParmsData = (p, _), Body = MainParseTree.ExprList(ExprsData = (b, _))) => 
+            | MainParseTree.Declaration.Func(Name = n, TypeOptData = t, ParmsData = (p, _), Body = MainParseTree.ExprList(ExprsData = (b, _))) => 
               
               def get_parm(p)
               {
@@ -179,6 +180,18 @@ namespace PetriNetLib
               def parms = p.Map(get_parm);
               def n = n.GetText();
               def body = b.Map(GetExpr);
+              if (t is Some(t))
+              {
+                def t = t.TypeExpr |> GetType;
+              <[
+                def $(n : usesite)(..$parms) : $t
+                {
+                  ..$body
+                }
+                
+              ]>
+            } else
+            {
               <[
                 def $(n : usesite)(..$parms)
                 {
@@ -186,6 +199,7 @@ namespace PetriNetLib
                 }
                 
               ]>
+            }
              | Declaration.GlobRef(Name = n, Expr = e) 
              | Declaration.PageRef(Name = n, Expr = e)
              | Declaration.InstRef(Name = n, Expr = e) => 

@@ -23,8 +23,16 @@ namespace PetriNetLib
     converter   : Converter;
     typer       : Typer;
     typebuilder : TypeBuilder;
-    [Accessor]
-    mutable typing_method : MethodBuilder;
+    
+    public TypingMethod : MethodBuilder
+    {
+      [Memoize]
+      get
+      {
+        def meth = typebuilder.DefineAndReturn(<[decl: TypingMethod() : void {}]>);
+        meth :> MethodBuilder
+      }
+    }
     //compiler : CompilerHost = CompilerHost();
     mutable cons_expr : list[PExpr] = [];
     mutable fields    : list[ClassMember] = [];
@@ -57,7 +65,7 @@ namespace PetriNetLib
         | Unit(None())  => <[ Unit ]>
         | Unit(Some(t)) => <[ $(t : usesite) ]>
         | Product(vals) => def vals = vals.Map(x => <[ $(TypeFromStr(x)) ]>);
-                                         <[ (..$vals) ]>
+                           <[ @*(..$vals) ]>
         | List(t, _)    => def inner = t |> TypeFromStr;
                                          <[ list[$inner]]>
     }
@@ -97,11 +105,11 @@ namespace PetriNetLib
       | _                    => true
     }
     
-    CreateDummyMethod() : void
-    {
-      def meth = typebuilder.DefineAndReturn(<[decl: TypingMethod() : void {}]>);
-      typing_method = meth :> MethodBuilder;
-    }
+    //CreateDummyMethod() : void
+    //{
+    //  def meth = typebuilder.DefineAndReturn(<[decl: TypingMethod() : void {}]>);
+    //  typing_method = meth :> MethodBuilder;
+    //}
     
     
     

@@ -57,15 +57,15 @@ namespace PetriNetLib
         $<#class $Name : public $Base
             {
               ..$(private_fields;"\n")
-              
+
               public:
-                
+
               ..$(public_fields;"\n")
             };
         #>
       }
     }
-    
+
     public this(file : string, gen : Generator, model : OutModel, proc : PetriNetProcessor)
     {
       this.typer = proc.Typer;
@@ -86,7 +86,7 @@ namespace PetriNetLib
         proc.Name
       }
     }
-    
+
     internal GetTypeExpr(p : Colour) : string
     {
       | Colour.Alias(type)
@@ -95,7 +95,7 @@ namespace PetriNetLib
       | Unit(None())  => "unit"//cpp("type: Unit")
       | Unit(Some(t)) => t//cpp("type: $t")
       | Product(vals) => def vals = vals.Map(TypeFromStr);
-                         $<#type: tuple2<..$vals>#>//cpp(<#type: tuple2<..$vals>#>)
+                        $<#type: tuple2<..$vals>#>//cpp(<#type: tuple2<..$vals>#>)
       | List(t, _)    => t |> TypeFromStr
                         //cpp("type: $(inner : type) *")
     }
@@ -140,7 +140,7 @@ namespace PetriNetLib
       def expr = expr.Map(ConvExpr(_, false));
       $<#{..$(expr; ",")}#>
     }
-    
+
     internal static GetTokenExpr(expr : PExpr) : string
     {
       def loop(e)
@@ -160,7 +160,7 @@ namespace PetriNetLib
         | <[ $(_ : byte)]> as e
         | <[ $(_ : string)]> as e => e |> ConvExpr(_, true)
         | e                       => def e = loop(e);
-                                     CreateArray(e)//<[array[..$e]]>
+                                    CreateArray(e)//<[array[..$e]]>
       }
     }
 
@@ -199,16 +199,16 @@ namespace PetriNetLib
       def code = tran.code_segment |> ConvExpr(_, true) ?? "";
       def body = extract + (code :: add_body);
       def body = if (tran.guard is <[]>) body else 
-                {
-                  def guard = tran.guard |> ConvExpr(_, false);
+                  {
+                    def guard = tran.guard |> ConvExpr(_, false);
                   $<#if ($guard) 
                   {
                     ..$(body;"\n")
                   }#> :: [];
-                }
+                  }
 
       def tran_evt = if (proc.Flags.HasFlag(PetriNetFlags.Events)) $<#On$name()#> else "";
-      
+
       def fold(x, a)
       {
         if (a : object == null)
@@ -234,7 +234,8 @@ namespace PetriNetLib
           $<#  
               $(x.bind_expr)
               $a
-          #> else
+              #>
+          else
           $<#  
               if ($(x.check_expr))
               {
@@ -294,11 +295,11 @@ namespace PetriNetLib
       match (model.vars.Find(x => x.Key == name))
       {
         | Some(x) => def col = x.Value;
-                     GetTypeExpr(col)
+                    GetTypeExpr(col)
         | _       => ""
       }
     }
-    
+
     internal ConvType(te : TExpr) : string
     {
       te.Type.ToString()
@@ -326,11 +327,11 @@ namespace PetriNetLib
       {
         | <[ {$seq} ]>                    => ConvExpr(seq, true)
         | <[ {..$seq} ]> when (statement) => match (seq)
-                                             {
-                                               | []  => ""
-                                               | seq => def seq = seq.Map(ConvExpr(_, true));
+            {
+              | []  => ""
+              | seq => def seq = seq.Map(ConvExpr(_, true));
                                                         $<#..$(seq;";\n")#>
-                                            }
+            }
         | <[ $n ` $t]>          => $<#token_iter_utils.repeat($(ConvExpr(t)), $(ConvExpr(n)))#>
         | <[ $a %++ $b]>        => $<#token_iter_utils.concat($(ConvExpr(a)), $(ConvExpr(b)))#>
         | <[]>                  => ""
@@ -341,8 +342,23 @@ namespace PetriNetLib
         | <[ $(n : usesite)]>   => $<#$n#>
         | <[ Enumerable.Repeat($tok, $n) ]> => $<#token_iter_utils.repeat($(ConvExpr(tok)), $(ConvExpr(n)))#>
         | <[ $(e1).Concat($e2) ]> => $<#token_iter_utils.concat($(ConvExpr(e1)), $(ConvExpr(e2))#>
-        | <[ $func(..$parms) ]> => def parms = parms.Map(ConvExpr(_, false));
-                                   $<#$func(..$(parms; ","))#>
+        //| <[ $func(..$parms) ]> when (parms.All(x => x is PExpr.Assign)) =>
+
+
+        | <[ $func(..$parms) ]> => if (parms.All(x => x is PExpr.Assign)) 
+                                   {
+                                     def get_rec_parm(x)
+                                     {
+                                       | <[$_ = $v]> => v |> ConvExpr(_, false)
+                                     }
+
+                                     def parms = parms.Map(get_rec_parm);
+                                     $<#$func(..$(parms; ","))#>
+                                   } else
+                                   {
+                                     def parms = parms.Map(ConvExpr(_, false));
+                                     $<#$func(..$(parms; ","))#>
+                                   }
         | <[ $(_ : int)]> as e
         | <[ $(_ : long)]> as e
         | <[ $(_ : short)]> as e
@@ -350,16 +366,19 @@ namespace PetriNetLib
         | <[ $(_ : byte)]> as e => $<#$e#>
         | <[ $(n : string)]>    => $<#$n#>
         | <[ (..$e) ]>          => match (e)
-                                   {
-                                     | [e]                  => ConvExpr(e)
-                                     | [e1, e2]             => $<#tuple2($(ConvExpr(e1)), $(ConvExpr(e2)))#>
-                                     | [e1, e2, e3]         => $<#tuple3($(ConvExpr(e1)), $(ConvExpr(e2)), $(ConvExpr(e3)))#>
-                                     | [e1, e2, e3, e4]     => $<#tuple4($(ConvExpr(e1)), $(ConvExpr(e2)), $(ConvExpr(e3)), $(ConvExpr(e4)))#>
-                                     | [e1, e2, e3, e4, e5] => $<#tuple5($(ConvExpr(e1)), $(ConvExpr(e2)), $(ConvExpr(e3)), $(ConvExpr(e4)), $(ConvExpr(e5)))#>
-                                   }
+            {
+              | [e]                  => ConvExpr(e)
+              | [e1, e2]             => $<#tuple2($(ConvExpr(e1)), $(ConvExpr(e2)))#>
+              | [e1, e2, e3]         => $<#tuple3($(ConvExpr(e1)), $(ConvExpr(e2)), $(ConvExpr(e3)))#>
+              | [e1, e2, e3, e4]     => $<#tuple4($(ConvExpr(e1)), $(ConvExpr(e2)), $(ConvExpr(e3)), $(ConvExpr(e4)))#>
+              | [e1, e2, e3, e4, e5] => $<#tuple5($(ConvExpr(e1)), $(ConvExpr(e2)), $(ConvExpr(e3)), $(ConvExpr(e4)), $(ConvExpr(e5)))#>
+            }
+        | <[()]>                 => <#unit.instance()#>
+        | <[$o.$m]>              => $<#$(ConvExpr(o)).$m#>
         | <[ if ($a) $b else $c]> when statement => $<#if ($(ConvExpr(a))) $(ConvExpr(b)) else $(ConvExpr(c))#>
         | <[ if ($a) $b else $c]> when !statement => $<#$(ConvExpr(a)) ? $(ConvExpr(b)) : $(ConvExpr(c))#>
         | <[ array[..$val] ]>   => CreateArray(val)
+        | <[ [..$e]]>           => CreateArray(e)
       }
     }
 
@@ -396,27 +415,61 @@ namespace PetriNetLib
 
     ProcessFun(expr : PExpr) : PExpr
     {
-      | <[ def $(n : usesite)(..$parms) { ..$body } ]> => 
-      
-            def proc_parm(p, (parm, e))
-            {
-              match (p)
-              {
-                | <[parameter: $(n : usesite) : Index.[$(type : usesite)]]> => 
-                  match (model.GetIndex(type))
+
+
+      def proc_parms(p, t, b)
+      {
+        def proc_parm(p, (parm, e))
+        {
+          def (p, e) = match (p)
+                        {
+                          | <[parameter: $(n : usesite) : Index.[$(type : usesite)]]> => 
+                              match (model.GetIndex(type))
+                              {
+                                | Some((t, _)) => (<[parameter: $(n : usesite) : $(t : usesite)]> :: parm, e)
+                                | _            => (parm, e)
+                              }
+                          | p => (p :: parm, e)  
+                        }
+
+          def e = if (t is Some(t))      
+                    match (e)
+                    {
+                      | [] => e
+                      | lst => def (last, e : list[PExpr]) = lst.PartitionLast();
+                  def last = match (last)
                   {
-                    | Some((t, _)) => (<[parameter: $(n : usesite) : $(t : usesite)]> :: parm, e)
-                    | _            => (parm, e)
+                    | <[ {(..$e)} ]>
+                    | <[(..$e)]> when e.All(x => x is PExpr.Assign) => <[ $t(..$e)]>
+                    | e => e
                   }
-                  
-              }
-            }
-      
-      def expr = <[ {..$body} ]>;
-      def (parms, expr) = parms.Fold(([], expr :: []), proc_parm);
-      def parms = parms.Rev();
-          
-      <[ def $(n : usesite)(..$parms) { ..$expr } ]>
+                  e + [last]
+                    } else e;
+
+          (p, e)
+        }
+
+        def expr = <[ {..$b} ]>;
+        def (p, expr) = p.Fold(([], expr :: []), proc_parm);
+        (p.Rev(), expr)
+      }
+
+      match (expr)
+      {
+        | <[ def $(n : usesite)(..$parms) { ..$body } ]> => 
+
+          def (parms, expr) = proc_parms(parms, None(), body);
+
+          <[ def $(n : usesite)(..$parms) { ..$expr } ]>
+
+        | <[ def $(n : usesite)(..$parms) : $t { ..$body } ]> => 
+
+          def (parms, expr) = proc_parms(parms, Some(t), body);
+
+          <[ def $(n : usesite)(..$parms) : $t { ..$expr } ]>
+
+
+      }
     }
 
     CreateDecl(expr : PExpr) : string
@@ -447,6 +500,26 @@ namespace PetriNetLib
                                                       //  }]>
                 }
         }
+      | <[ def $(_ : usesite)(..$_) : $_t { ..$_ } ]> => 
+
+          def func = ProcessFun(expr);
+          match (func)
+          {
+            | <[ def $(n : usesite)(..$parms) : $t { ..$expr } ]> =>
+                  def ret = t;
+
+                  def expr = expr.Map(ConvExpr(_, true));
+                  def (last, expr) = expr.PartitionLast();
+                  def parms = parms.Map(ConvParm);
+                  $<#$ret $n(..$(parms; ","))
+                    {
+                      ..$(expr;";\n")
+                      return $last;
+                    }#>
+                                                      //<[decl: $(n : usesite)(..$parms) : $(ret : typed)
+                                                      //  {
+                                                      //    ..$expr
+                }                                           //  }]>
       | _ => null
     }
 
@@ -470,7 +543,7 @@ namespace PetriNetLib
                                                 //def al = TopDeclaration.Alias(name, mods, Typarms.Empty, <[ $(new_name : usesite) ]>);
                                                 //al |> ClassMember.TypeDeclaration.TypeDeclaration;
                                                 // cpp("typedef $n $new_name")
-                                                $"typedef $n $new_name;"
+          $"typedef $n $new_name;"
                                                 //CTypeDecl.Decl(CTree.Decl([CSpec.Typedef()], CType.Class(n), [CDecl.Id(CName.String(new_name), None())]))
       | ColourSet(n, Colour.Record(vals))     => def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
                                                 def fields = fields.Map((n, t) => $"$t $n;");
@@ -484,32 +557,32 @@ namespace PetriNetLib
                                                 //        }
                                                 //]>
       | ColourSet(n, Colour.Index(mn, mx, i)) =>   
-                                                   //def eval(m : string)
-                                                   //{
-                                                   //   def expr = converter.ParseML(m);
-                                                   //   match (expr)
-                                                   //   {
-                                                   //     | <[$(n : int)]>  => n
-                                                   //     | <[$(name : usesite) ]> => 
-                                                   //                          def match_var(x)
-                                                   //                          {
-                                                   //                            | <[ def $(n : usesite) = $_]> => n == name 
-                                                   //                            | _                            => false
-                                                   //                          }
+                                                  //def eval(m : string)
+                                                  //{
+                                                  //   def expr = converter.ParseML(m);
+                                                  //   match (expr)
+                                                  //   {
+                                                  //     | <[$(n : int)]>  => n
+                                                  //     | <[$(name : usesite) ]> => 
+                                                  //                          def match_var(x)
+                                                  //                          {
+                                                  //                            | <[ def $(n : usesite) = $_]> => n == name 
+                                                  //                            | _                            => false
+                                                  //                          }
 
-                                                   //                          match (model.ml_decls.Find(match_var))
-                                                   //                          {
-                                                   //                            | Some(<[ def $(_ : usesite) = $(v : int)]>) => v
-                                                   //                            | _                                  => throw InvalidOperationException()
-                                                   //                          }
-                                                   //   }
-                                                   //}
-                                                   
-                                                 //def mn = mn |> eval;
-                                                 //def mx = mx |> eval;
-                                                 private_fields ::= $<#typedef $n int;#>;
-                                                 private_fields ::= $<#typedef $i int;#>;
-                                                 null
+                                                  //                          match (model.ml_decls.Find(match_var))
+                                                  //                          {
+                                                  //                            | Some(<[ def $(_ : usesite) = $(v : int)]>) => v
+                                                  //                            | _                                  => throw InvalidOperationException()
+                                                  //                          }
+                                                  //   }
+                                                  //}
+
+                                                //def mn = mn |> eval;
+                                                //def mx = mx |> eval;
+                                                private_fields ::= $<#typedef $n int;#>;
+                                                private_fields ::= $<#typedef $i int;#>;
+                                                null
       //                                            cpp((<#decl:
       //                                                class $n : public index<$n>
       //                                                {
@@ -551,20 +624,20 @@ namespace PetriNetLib
             => <[Enumerable.Repeat($tok, $(n2 + n))]>
         | (<[Enumerable.Repeat($(tok : int), $(n : int))]>, <[Enumerable.Repeat($(tok2 : int), $(n2 : int))]>)                         
             => def val = Enumerable.Repeat(tok, n).Concat(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : int)]>).ToArray();
-               if (val.Length > 50) <[ $(e1).Concat($e2)]> else
-               <[ array[..$val] ]>
+              if (val.Length > 50) <[ $(e1).Concat($e2)]> else
+              <[ array[..$val] ]>
         | (<[Enumerable.Repeat($(tok : string), $(n : int))]>, <[Enumerable.Repeat($(tok2 : string), $(n2 : int))]>)                         
             => def val = Enumerable.Repeat(tok, n).Concat(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : string)]>).ToArray();
-               if (val.Length > 50) <[ $(e1).Concat($e2)]> else
-               <[ array[..$val] ]>
+              if (val.Length > 50) <[ $(e1).Concat($e2)]> else
+              <[ array[..$val] ]>
         | (<[Enumerable.Repeat($(tok : double), $(n : int))]>, <[Enumerable.Repeat($(tok2 : double), $(n2 : int))]>)                         
             => def val = Enumerable.Repeat(tok, n).Concat(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : double)]>).ToArray();
-               if (val.Length > 50) <[ $(e1).Concat($e2)]> else
-               <[ array[..$val] ]>       
+              if (val.Length > 50) <[ $(e1).Concat($e2)]> else
+              <[ array[..$val] ]>       
         | _  //(<[Enumerable.Repeat($_, $(_ : int))]>, <[Enumerable.Repeat($_, $(_ : int))]>)                         
             => <[ $e1.Concat($e2)]> 
       }
-      
+
       def unfold(expr)
       {
         | <[ () ]> => <[unit.instance()]>
@@ -575,8 +648,8 @@ namespace PetriNetLib
       {
         //| <[ {..$e} ]>   => e.Fold(acc, fold)
         | <[ 1 ` $tok %@ $time ]>             => def time = time |> ConvExpr(_, false);
-                                                 def tok = unfold(tok);
-                                                 <[at_time($tok, $time)]>
+                                                def tok = unfold(tok);
+                                                <[at_time($tok, $time)]>
         | <[ 1 ` $tok]>                       => <[$(unfold(tok))]>
         | <[ $(n : int) ` $tok %@ $time ]>    => <[IEnumerable.Repeat(at_time($(unfold(tok)), $time), $n)]>
         | <[ $(n : int) ` $tok]>              => <[IEnumerable.Repeat($(unfold(tok)), $n)]>
@@ -613,7 +686,7 @@ namespace PetriNetLib
         if (model.IsTimed) "timed_petri_net" else "petri_net"
       }
     }
-    
+
     CreateCons() : void
     {
       def marking = model.places.MapToList(CreateInitMarking).Filter(_ != null);
@@ -624,7 +697,7 @@ namespace PetriNetLib
         ..$(marking;"\n")
         ..$(cons_expr;"\n")
       }#>; 
-      else $<#$Name(int time_step = 15) 
+                        else $<#$Name(int time_step = 15) 
       { 
         ..$(marking;"\n")
         ..$(cons_expr;"\n")
@@ -722,7 +795,7 @@ namespace PetriNetLib
       if (pub)
         foreach (d in decl) public_fields ::= d; else
         foreach (d in decl) private_fields ::= d;
-        
+
     }
 
     Define(decl : string) : void
@@ -737,7 +810,7 @@ namespace PetriNetLib
     public PhaseOne() : void
     {
       //def name = proc.Name;
-      
+
       //main_class = cpp(<#class $name : public $(bas : type)
       //                {
       //                };#>);
