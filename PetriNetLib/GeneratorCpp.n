@@ -309,18 +309,17 @@ namespace PetriNetLib
     internal ConvType(te : TypeVar) : string
     {
       def tystr = te.ToString().TrimEnd('-', '+');
-      def enum_ty = typer.BindType(<[ System.Collections.Generic.IEnumerable[_] ]>);
-      def tuple2 = typer.BindType(<[Nemerle.Builtins.Tuple[_, _]]>);
-      def tuple3 = typer.BindType(<[Nemerle.Builtins.Tuple[_, _, _]]>);
-      def tuple4 = typer.BindType(<[Nemerle.Builtins.Tuple[_, _, _, _]]>);
-      def tuple5 = typer.BindType(<[Nemerle.Builtins.Tuple[_, _, _, _, _]]>);
+      //def enum_ty = typer.BindType(<[ System.Collections.Generic.IEnumerable[_] ]>);
+      def list_ty = typer.BindType(<[ list[_] ]>);
       def ty = te.Fix();
-      if (te.TryRequire(enum_ty))
+      if (te.TryRequire(list_ty))
       {
-        def ty = te.Fix() :> FixedType.Class;
+        def ty = ty :> FixedType.Class;
         //def args = ty.args;
         //def args = args.Map(ConvType);
-        <#token_iter#>
+        //<#token_iter#>
+        def t = ty.args.Map(ConvType).First();
+        $<#$t *#>
       } else
       match (ty)
       {
