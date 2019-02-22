@@ -65,13 +65,6 @@
           </product>
           <layout>colset TSYNC = product INT * BOOL;</layout>
         </color>
-        <color id="ID5">
-          <id>STRING</id>
-          <list>
-            <id>INT</id>
-          </list>
-          <layout>colset STRING = list INT;</layout>
-        </color>
         <color id="ID1419680547">
           <id>LONGTIME</id>
           <alias>
@@ -109,6 +102,25 @@
           </list>
           <layout>colset BYTES = list INT;</layout>
         </color>
+        <color id="ID5">
+          <id>STRING</id>
+          <product>
+            <id>INT</id>
+            <id>BYTES</id>
+          </product>
+          <layout>colset STRING = product INT * BYTES;</layout>
+        </color>
+        <color id="ID1420384748">
+          <id>BYTES8</id>
+          <list>
+            <with>
+              <ml>0</ml>
+              <ml>7</ml>
+            </with>
+            <id>INT</id>
+          </list>
+          <layout>colset BYTES8 = list INT with 0..7;</layout>
+        </color>
         <color id="ID1418876556">
           <id>CACHED_INT</id>
           <alias>
@@ -121,9 +133,10 @@
           <product>
             <id>INT</id>
             <id>INTINF</id>
-            <id>BYTES</id>
+            <id>INT</id>
+            <id>BYTES8</id>
           </product>
-          <layout>colset CAN_MESSAGE = product INT * INTINF * BYTES;</layout>
+          <layout>colset CAN_MESSAGE = product INT * INTINF * INT * BYTES8;</layout>
         </color>
         <color id="ID1419308733">
           <id>CACHED_BOOL</id>
@@ -156,11 +169,15 @@
               <id>LONGTIME</id>
             </recordfield>
             <recordfield>
+              <id>len</id>
+              <id>INT</id>
+            </recordfield>
+            <recordfield>
               <id>data</id>
               <id>BYTES</id>
             </recordfield>
           </record>
-          <layout>colset CAN_UDP_MESSAGE = record COUNT : INT * ID : INT * timestamp : LONGTIME * data : BYTES;</layout>
+          <layout>colset CAN_UDP_MESSAGE = record COUNT : INT * ID : INT * timestamp : LONGTIME * len : INT * data : BYTES;</layout>
         </color>
         <color id="ID1417030964">
           <id>BUF_INT</id>
@@ -188,26 +205,26 @@
         <ml id="ID1420175037">fun EXT_get_time() = IntInf.fromInt(0);
           <layout>fun EXT_get_time() = IntInf.fromInt(0);</layout>
         </ml>
-        <ml id="ID1420325284">fun EXT_get_control_msg(m : CAN_UDP_MESSAGE) = (#ID m, #timestamp m, []);
-          <layout>fun EXT_get_control_msg(m : CAN_UDP_MESSAGE) = (#ID m, #timestamp m, []);</layout>
+        <ml id="ID1420325284">fun EXT_get_control_msg(m : CAN_UDP_MESSAGE) : CAN_MESSAGE = (#ID m, #timestamp m, 0, []);
+          <layout>fun EXT_get_control_msg(m : CAN_UDP_MESSAGE) : CAN_MESSAGE = (#ID m, #timestamp m, 0, []);</layout>
         </ml>
         <ml id="ID1417932792">fun is_sens(m : CAN_UDP_MESSAGE) = #ID m = 0x297;
           <layout>fun is_sens(m : CAN_UDP_MESSAGE) = #ID m = 0x297;</layout>
         </ml>
-        <ml id="ID1418622610">fun adc2bat(q : INT) = ((q - 757) * 26 div 10, q);
-          <layout>fun adc2bat(q : INT) = ((q - 757) * 26 div 10, q);</layout>
+        <ml id="ID1418622610">fun EXT_adc2bat(q : INT) = (0, q);
+          <layout>fun EXT_adc2bat(q : INT) = (0, q);</layout>
         </ml>
-        <ml id="ID1418367818">fun bt2can_message(bt : INT) = (0x2D1, IntInf.fromInt(0), [1,  bt]);
-          <layout>fun bt2can_message(bt : INT) = (0x2D1, IntInf.fromInt(0), [1,  bt]);</layout>
+        <ml id="ID1418367818">fun bt2can_message(bt : INT) : CAN_MESSAGE = (0x2D1, IntInf.fromInt(0), 2, [1,  bt]);
+          <layout>fun bt2can_message(bt : INT) : CAN_MESSAGE = (0x2D1, IntInf.fromInt(0), 2, [1,  bt]);</layout>
         </ml>
-        <ml id="ID1419770381">fun udp2can(m : CAN_UDP_MESSAGE) = (#ID m, #timestamp m, #data m);
-          <layout>fun udp2can(m : CAN_UDP_MESSAGE) = (#ID m, #timestamp m, #data m);</layout>
+        <ml id="ID1419770381">fun udp2can(m : CAN_UDP_MESSAGE) = (#ID m, #timestamp m, #len m, #data m);
+          <layout>fun udp2can(m : CAN_UDP_MESSAGE) = (#ID m, #timestamp m, #len m, #data m);</layout>
         </ml>
-        <ml id="ID1419845758">fun can2udp(m : CAN_MESSAGE, c : INT) : CAN_UDP_MESSAGE = {COUNT = c, ID = #1 m, timestamp = #2 m, data = #3 m};
-          <layout>fun can2udp(m : CAN_MESSAGE, c : INT) : CAN_UDP_MESSAGE = {COUNT = c, ID = #1 m, timestamp = #2 m, data = #3 m};</layout>
+        <ml id="ID1419845758">fun can2udp(m : CAN_MESSAGE, c : INT) : CAN_UDP_MESSAGE = {COUNT = c, ID = #1 m, timestamp = #2 m, len = #3 m, data = #4 m};
+          <layout>fun can2udp(m : CAN_MESSAGE, c : INT) : CAN_UDP_MESSAGE = {COUNT = c, ID = #1 m, timestamp = #2 m, len = #3 m, data = #4 m};</layout>
         </ml>
-        <ml id="ID1420295219">fun EXT_get_ssi_bytes(c : INT, dir : BOOL, flags : INT, ssi : TSSI) = [];
-          <layout>fun EXT_get_ssi_bytes(c : INT, dir : BOOL, flags : INT, ssi : TSSI) = [];</layout>
+        <ml id="ID1420295219">fun EXT_get_ssi_bytes(c : INT, dir : BOOL, flags : INT, ssi : TSSI) : BYTES = [];
+          <layout>fun EXT_get_ssi_bytes(c : INT, dir : BOOL, flags : INT, ssi : TSSI) : BYTES = [];</layout>
         </ml>
         <color id="ID1412515884">
           <id>MINUS_SINGLE_INT</id>
@@ -218,10 +235,10 @@
         </color>
         <color id="ID1419199566">
           <id>DEBUG_INFO</id>
-          <list>
-            <id>INT</id>
-          </list>
-          <layout>colset DEBUG_INFO = list INT;</layout>
+          <alias>
+            <id>STRING</id>
+          </alias>
+          <layout>colset DEBUG_INFO = STRING;</layout>
         </color>
         <var id="ID1413922527">
           <type>
@@ -6607,8 +6624,8 @@ action(EXT_can_process(cm));</text>
                     bold="false"/>
         </bendpoint>
         <annot id="ID1417332368">
-          <posattr x="151.000000"
-                   y="-115.000000"/>
+          <posattr x="138.000000"
+                   y="-99.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -6618,7 +6635,7 @@ action(EXT_can_process(cm));</text>
           <textattr colour="Black"
                     bold="false"/>
           <text tool="CPN Tools"
-                version="4.0.1">(0x100, EXT_get_time(), s)</text>
+                version="4.0.1">(0x100, EXT_get_time(), #1 s, #2 s)</text>
         </annot>
       </arc>
       <arc id="ID1417334261"
@@ -6729,7 +6746,7 @@ action(EXT_can_process(cm));</text>
                     bold="false"/>
         </bendpoint>
         <annot id="ID1417346832">
-          <posattr x="96.500000"
+          <posattr x="126.500000"
                    y="-434.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
@@ -6740,7 +6757,7 @@ action(EXT_can_process(cm));</text>
           <textattr colour="Black"
                     bold="false"/>
           <text tool="CPN Tools"
-                version="4.0.1">(0, EXT_get_time(), d)</text>
+                version="4.0.1">(0, EXT_get_time(), #1 d, #2 d)</text>
         </annot>
       </arc>
       <arc id="ID1417373430"
@@ -7022,7 +7039,7 @@ action(EXT_can_process(cm));</text>
           <textattr colour="Black"
                     bold="false"/>
           <text tool="CPN Tools"
-                version="4.0.1">(0x297, EXT_get_time(), EXT_get_ssi_bytes(n, dir, 1, ssi))</text>
+                version="4.0.1">(0x297, EXT_get_time(), 8 * 2, EXT_get_ssi_bytes(n, dir, 1, ssi))</text>
         </annot>
       </arc>
       <arc id="ID1417616174"
@@ -7170,7 +7187,7 @@ action(EXT_can_process(cm));</text>
           <textattr colour="Black"
                     bold="false"/>
           <text tool="CPN Tools"
-                version="4.0.1">(0x297, EXT_get_time(), EXT_get_ssi_bytes(n, dir, 0, ssi))</text>
+                version="4.0.1">(0x297, EXT_get_time(), 8 * 2, EXT_get_ssi_bytes(n, dir, 0, ssi))</text>
         </annot>
       </arc>
       <arc id="ID1417677732"
@@ -8153,7 +8170,7 @@ action(EXT_can_process(cm));</text>
                     bold="false"/>
         </bendpoint>
         <annot id="ID1418613804">
-          <posattr x="775.500000"
+          <posattr x="760.000000"
                    y="280.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
@@ -8164,7 +8181,7 @@ action(EXT_can_process(cm));</text>
           <textattr colour="Black"
                     bold="false"/>
           <text tool="CPN Tools"
-                version="4.0.1">adc2bat(sum div n)</text>
+                version="4.0.1">EXT_adc2bat(sum div n)</text>
         </annot>
       </arc>
       <arc id="ID1419158052"
@@ -8587,7 +8604,7 @@ action(EXT_can_process(cm));</text>
           <textattr colour="Black"
                     bold="false"/>
           <text tool="CPN Tools"
-                version="4.0.1">(0x2D1, EXT_get_time(), [1, inp])</text>
+                version="4.0.1">(0x2D1, EXT_get_time(), 2, [1, inp])</text>
         </annot>
       </arc>
       <arc id="ID1420331132"
@@ -8621,7 +8638,7 @@ action(EXT_can_process(cm));</text>
                     bold="false"/>
         </bendpoint>
         <annot id="ID1420331133">
-          <posattr x="824.000000"
+          <posattr x="832.000000"
                    y="-23.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
@@ -8632,7 +8649,7 @@ action(EXT_can_process(cm));</text>
           <textattr colour="Black"
                     bold="false"/>
           <text tool="CPN Tools"
-                version="4.0.1">(0x150, EXT_get_time(), EXT_intToList(bt + n * 65536))</text>
+                version="4.0.1">(0x150, EXT_get_time(), 4, EXT_intToList(bt + n * 65536))</text>
         </annot>
       </arc>
       <arc id="ID1420354569"
@@ -8677,7 +8694,7 @@ action(EXT_can_process(cm));</text>
           <textattr colour="Black"
                     bold="false"/>
           <text tool="CPN Tools"
-                version="4.0.1">(0x2D1, EXT_get_time(), 0x33 :: EXT_intToList(n))</text>
+                version="4.0.1">(0x2D1, EXT_get_time(), 4, 0x33 :: EXT_intToList(n))</text>
         </annot>
       </arc>
       <arc id="ID1420381098"
@@ -8994,14 +9011,14 @@ action(EXT_can_process(cm));</text>
     </options>
     <binders>
       <cpnbinder id="ID1412530056"
-                 x="743"
-                 y="182"
+                 x="850"
+                 y="168"
                  width="1447"
                  height="753">
         <sheets>
           <cpnsheet id="ID1417185260"
-                    panx="-109.353086"
-                    pany="-384.850285"
+                    panx="-364.353086"
+                    pany="-387.850285"
                     zoom="1.007080"
                     instance="ID1417185244">
             <zorder>
@@ -9100,7 +9117,9 @@ action(EXT_can_process(cm));</text>
           <IndexNode expanded="false"/>
         </IndexNode>
       </IndexNode>
-      <IndexNode expanded="false"/>
+      <IndexNode expanded="false">
+        <IndexNode expanded="false"/>
+      </IndexNode>
       <IndexNode expanded="true">
         <IndexNode expanded="true">
           <IndexNode expanded="true"/>
@@ -9114,6 +9133,7 @@ action(EXT_can_process(cm));</text>
           <IndexNode expanded="true"/>
           <IndexNode expanded="true"/>
           <IndexNode expanded="false"/>
+          <IndexNode expanded="true"/>
           <IndexNode expanded="true"/>
           <IndexNode expanded="true"/>
           <IndexNode expanded="true"/>

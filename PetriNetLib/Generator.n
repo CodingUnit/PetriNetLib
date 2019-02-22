@@ -164,7 +164,7 @@ namespace PetriNetLib
                                                    al |> ClassMember.TypeDeclaration.TypeDeclaration;
                                                  } else null
       | ColourSet(n, Colour.Record(vals))     => def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
-                                                 def fields = fields.Map((n, t) => <[decl: $(n : usesite) : $t]>);
+                                                 def fields = fields.Map((n, t) => <[decl: public $(n : usesite) : $t]>);
                                                  <[decl: [Record] class $(n : usesite)
                                                          {
                                                            ..$fields

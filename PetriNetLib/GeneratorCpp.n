@@ -2,7 +2,7 @@
 using Nemerle.Collections;
 using Nemerle.Text;
 using Nemerle.Utility;
-
+using Nemerle.Builtins;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -94,8 +94,8 @@ namespace PetriNetLib
       | Integer       => "int"//cpp("type: int")
       | Unit(None())  => "unit"//cpp("type: Unit")
       | Unit(Some(t)) => t//cpp("type: $t")
-      | Product(vals) => def vals = vals.Map(TypeFromStr);
-                        $<#type: tuple2<..$vals>#>//cpp(<#type: tuple2<..$vals>#>)
+      //| Product(vals) => def vals = vals.Map(TypeFromStr);
+      //                  $<#type: tuple2<..$vals>#>//cpp(<#type: tuple2<..$vals>#>)
       | List(t, _)    => t |> TypeFromStr
                         //cpp("type: $(inner : type) *")
     }
@@ -105,6 +105,7 @@ namespace PetriNetLib
       | ColourSet(n, Alias)
       | ColourSet(n, Index)
       | ColourSet(n, Record)
+      | ColourSet(n, Product)
       | ColourSet(n, Enum)          => n//cpp("type: $n")
       | ColourSet(_, Timed(p))
       | ColourSet(_, p)             => GetTypeExpr(p)
@@ -307,8 +308,13 @@ namespace PetriNetLib
 
     internal ConvType(te : TypeVar) : string
     {
-      def ty = te.ToString().TrimEnd('-', '+');
+      def tystr = te.ToString().TrimEnd('-', '+');
       def enum_ty = typer.BindType(<[ System.Collections.Generic.IEnumerable[_] ]>);
+      def tuple2 = typer.BindType(<[Nemerle.Builtins.Tuple[_, _]]>);
+      def tuple3 = typer.BindType(<[Nemerle.Builtins.Tuple[_, _, _]]>);
+      def tuple4 = typer.BindType(<[Nemerle.Builtins.Tuple[_, _, _, _]]>);
+      def tuple5 = typer.BindType(<[Nemerle.Builtins.Tuple[_, _, _, _, _]]>);
+      def ty = te.Fix();
       if (te.TryRequire(enum_ty))
       {
         def ty = te.Fix() :> FixedType.Class;
@@ -316,8 +322,12 @@ namespace PetriNetLib
         //def args = args.Map(ConvType);
         <#token_iter#>
       } else
+      match (ty)
       {
-        ty
+        | FixedType.Tuple(args) => def vals = args.Map(ConvType);
+                                   def n = vals.Length;
+                                   $<#tuple$n<..$(vals;",")>#>
+        | _                     => tystr
       }
     }
 
@@ -538,6 +548,12 @@ namespace PetriNetLib
 
     CreateColourSet(col : ColourSet) : string
     {
+      | ColourSet(n, Colour.Product(vals))   => def fields = vals.MapI((i, t) => ($"field$i", TypeFromStr(t)));
+                                                def fields = fields.Map((n, t) => $"$t $n;");
+                                                $<#struct $n
+                                                      {
+                                                        ..$(fields;"\n")
+                                                      };#>
       | ColourSet(n, Colour.Alias(new_name))  => //def name = Macros.UseSiteSymbol(n);
                                                 //def mods = AttributesAndModifiers(NemerleModifiers.Private, []);
                                                 //def al = TopDeclaration.Alias(name, mods, Typarms.Empty, <[ $(new_name : usesite) ]>);

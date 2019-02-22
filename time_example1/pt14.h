@@ -15,12 +15,12 @@ token_iter EXT_intToList(INT n)
                                                          
                                                          return {};
                                                        }
-token_iter EXT_get_time()
+? EXT_get_time()
                                                        {
                                                          
                                                          return IntInf.fromInt(0);
                                                        }
-(? * ? * list[?]-) EXT_get_control_msg(CAN_UDP_MESSAGE m)
+tuple3<int,object,token_iter> EXT_get_control_msg(CAN_UDP_MESSAGE m)
                                                        {
                                                          
                                                          return tuple3(m.ID, m.timestamp, {});
@@ -30,17 +30,17 @@ bool is_sens(CAN_UDP_MESSAGE m)
                                                          
                                                          return m.ID == 663;
                                                        }
-(? * object) adc2bat(INT q)
+tuple2<int,object> EXT_adc2bat(INT q)
                                                        {
                                                          
-                                                         return tuple2(/(-(q,757) * 26,10), q);
+                                                         return tuple2(0, q);
                                                        }
-(int- * ? * list[object]-) bt2can_message(INT bt)
+tuple3<int,?,token_iter> bt2can_message(INT bt)
                                                        {
                                                          
                                                          return tuple3(721, IntInf.fromInt(0), {1,bt});
                                                        }
-(? * ? * ?) udp2can(CAN_UDP_MESSAGE m)
+tuple3<int,object,token_iter> udp2can(CAN_UDP_MESSAGE m)
                                                        {
                                                          
                                                          return tuple3(m.ID, m.timestamp, m.data);
@@ -111,10 +111,26 @@ int data;
                                                       };
 typedef SINGLE_TIMED_VOID UNIT;
 typedef CACHED_BOOL BOOL;
+struct CAN_MESSAGE
+                                                      {
+                                                        int field0;
+long long field1;
+int field2;
+                                                      };
 typedef CACHED_INT INT;
 typedef TIMED_INT INT;
 typedef QUEUE_INT INT;
+struct INTxINT
+                                                      {
+                                                        int field0;
+int field1;
+                                                      };
 typedef LONGTIME INTINF;
+struct TSYNC
+                                                      {
+                                                        int field0;
+bool field1;
+                                                      };
 typedef UNIT_TIMED UNIT;
 
               public:
@@ -127,7 +143,7 @@ typedef UNIT_TIMED UNIT;
               if (UDP_AND_CAN_SEND.have_tokens())
               {
                  int cm_idx;
-                                          type: tuple2<int, long long, int> cm = UDP_AND_CAN_SEND.peek_indexed(cm_idx);
+                                          CAN_MESSAGE cm = UDP_AND_CAN_SEND.peek_indexed(cm_idx);
                 UDP_AND_CAN_SEND.get_indexed(cm_idx);
 
 CAN_OUT.add(cm);
@@ -146,7 +162,7 @@ void UnnamedTransition16()
               if (UDP_AND_CAN_SEND.have_tokens())
               {
                  int cm_idx;
-                                          type: tuple2<int, long long, int> cm = UDP_AND_CAN_SEND.peek_indexed(cm_idx);
+                                          CAN_MESSAGE cm = UDP_AND_CAN_SEND.peek_indexed(cm_idx);
                 UDP_AND_CAN_SEND.get_indexed(cm_idx);
 
 UDP_SEND.add(cm);
@@ -170,7 +186,7 @@ void UnnamedTransition15()
               if (UDP_SEND.have_tokens())
               {
                  int cm_idx;
-                                          type: tuple2<int, long long, int> cm = UDP_SEND.peek_indexed(cm_idx);
+                                          CAN_MESSAGE cm = UDP_SEND.peek_indexed(cm_idx);
                 UDP_SEND.get_indexed(cm_idx);
 COUNTER.get_indexed(n_idx);
 
@@ -197,7 +213,7 @@ void UnnamedTransition14()
                   {
                     ADC_SUM.get((sum, n));
 
-BatLevel.add(adc2bat(sum(div(n))));
+BatLevel.add(EXT_adc2bat(sum(div(n))));
 ADC_SUM.add(tuple2(0, 0));
                   }
                 OnUnnamedTransition14()
@@ -521,7 +537,7 @@ void UnnamedTransition9()
               if (CAN_IN.have_tokens())
               {
                  int cm_idx;
-                                          type: tuple2<int, long long, int> cm = CAN_IN.peek_indexed(cm_idx);
+                                          CAN_MESSAGE cm = CAN_IN.peek_indexed(cm_idx);
                 CAN_IN.get_indexed(cm_idx);
 EXT_can_process(cm)
 UDP_SEND.add(cm);
