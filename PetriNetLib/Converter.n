@@ -142,6 +142,7 @@ namespace PetriNetLib
                                                }
       | List(ExprsData = (e, _))             => def e = e.Map(GetExpr);
                                                 <[ [..$e] ]>
+      | TypeAnnot(Type = t, Expr = e)        => <[ $(GetExpr(e)) : $(GetType(t.TypeExpr)) ]>
       | Record(ElemsData = (e, _))           => 
           def get_elem(e)
           {

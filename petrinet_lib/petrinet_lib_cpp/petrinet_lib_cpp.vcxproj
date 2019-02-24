@@ -72,7 +72,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>D:\programs\opensource\PetriNetLib\petrinet_lib\arm_lib;D:\programs\opensource\PetriNetLib\petrinet_lib\arm_lib\arm_lib_hal;$(IncludePath)</IncludePath>
+    <IncludePath>D:\programs\opensource\PetriNetLib\petrinet_lib\arm_lib;D:\programs\opensource\PetriNetLib\petrinet_lib\arm_lib\arm_lib_hal;D:\programs\opensource\PetriNetLib\petrinet_lib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -85,7 +85,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
@@ -155,15 +155,12 @@
     <ClInclude Include="..\rqueue.h" />
     <ClInclude Include="..\token_iter_utils.h" />
     <ClInclude Include="..\token_queue.h" />
+    <ClInclude Include="..\tuple.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="pch.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="..\arm_lib\arm_lib_hal\memory.c" />
+    <ClCompile Include="pch.cpp" />
     <ClCompile Include="petrinet_lib_cpp.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

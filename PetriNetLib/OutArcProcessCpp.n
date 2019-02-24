@@ -22,7 +22,8 @@ namespace PetriNetLib
     public place      : Place;
     public transition : Transition;
     public arc        : Arc;
-
+    public gen        : CppGenerator;
+    
     public name : string
     {
       [Memoize]
@@ -63,7 +64,7 @@ namespace PetriNetLib
         def unfold(e)
         {
           | <[ () ]> => <#unit.instance()#>
-          | e        => e |> CppGenerator.ConvExpr(_, false)
+          | e        => e |> gen.ConvExpr(_, false)
         }
         
         def add(e)
@@ -76,12 +77,12 @@ namespace PetriNetLib
                                               } 
                                               
           | <[ $e %@+ $time]>              => $<#add_time($(unfold(e)), $time + $global_time_str)#>
-          | <[ $_ %++ $_ ]> as e           => CppGenerator.GetTokenExpr(e)
+          | <[ $_ %++ $_ ]> as e           => gen.GetTokenExpr(e)
           | <[ 1 ` $e ]>                   => add(e)
           | <[ $_(..$_)]> as e
           | <[ $(_ : usesite) ]> as e
           | <[ $(_ : int) ` $_ ]> as e     
-          | e                              => e |> CppGenerator.ConvExpr(_, false)
+          | e                              => e |> gen.ConvExpr(_, false)
         }
         
         add(expr)
@@ -93,7 +94,7 @@ namespace PetriNetLib
       [Memoize]
       get
       {
-        global_time |> CppGenerator.ConvExpr(_, false)
+        global_time |> gen.ConvExpr(_, false)
       }
     }
     

@@ -197,7 +197,7 @@ namespace PetriNetLib
     unfold(e : PExpr) : string
     {
       | <[ () ]> => <#unit.instance()#>
-      | e        => e |> CppGenerator.ConvExpr(_, false)
+      | e        => e |> gen.ConvExpr(_, false)
     }
         
         //match (expr)

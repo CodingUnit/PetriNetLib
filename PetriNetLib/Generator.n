@@ -154,15 +154,20 @@ namespace PetriNetLib
       | _ => null    
     }
     
+    TypeDecl(new_n : string, n : string) : ClassMember.TypeDeclaration
+    {
+      def name = Macros.UseSiteSymbol(n);
+      def mods = AttributesAndModifiers(NemerleModifiers.Private, []);
+      def al = TopDeclaration.Alias(name, mods, Typarms.Empty, <[ $(new_n : usesite) ]>);
+      al |> ClassMember.TypeDeclaration.TypeDeclaration
+    }
+    
     CreateColourSet(col : ColourSet) : ClassMember.TypeDeclaration
     {
-      | ColourSet(n, Colour.Alias(new_name))  => if (model.colour_sets[new_name].type.IsComplex)
+      | ColourSet(n, Colour.Alias(new_name))  => //if (model.colour_sets[new_name].type.IsComplex)
                                                  {
-                                                   def name = Macros.UseSiteSymbol(n);
-                                                   def mods = AttributesAndModifiers(NemerleModifiers.Private, []);
-                                                   def al = TopDeclaration.Alias(name, mods, Typarms.Empty, <[ $(new_name : usesite) ]>);
-                                                   al |> ClassMember.TypeDeclaration.TypeDeclaration;
-                                                 } else null
+                                                   TypeDecl(new_name, n)
+                                                 }// else null
       | ColourSet(n, Colour.Record(vals))     => def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
                                                  def fields = fields.Map((n, t) => <[decl: public $(n : usesite) : $t]>);
                                                  <[decl: [Record] class $(n : usesite)
@@ -223,6 +228,14 @@ namespace PetriNetLib
                                              ..$vals
                                            }]>
       | ColourSet(n, Colour.Timed(c))   => CreateColourSet(ColourSet(n, c))
+      | ColourSet(n, Colour.Integer)    => match (n)
+                                           {
+                                             | "BYTE"   => TypeDecl("byte", "BYTE")
+                                             | "SHORT"  => TypeDecl("short", "SHORT")
+                                             | "INT"    => TypeDecl("int", "INT")
+                                             | "UINT"   => TypeDecl("uint", "UINT")
+                                             | "USHORT" => TypeDecl("ushort", "USHORT")
+                                           }
       | _                               => null
     }    
     

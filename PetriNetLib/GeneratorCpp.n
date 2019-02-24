@@ -92,7 +92,7 @@ namespace PetriNetLib
       | Colour.Alias(type)
       | Colour.Simple(type) => TypeFromStr(type)
       | Integer       => "int"//cpp("type: int")
-      | Unit(None())  => "unit"//cpp("type: Unit")
+      | Unit(None())  => "char"//cpp("type: Unit")
       | Unit(Some(t)) => t//cpp("type: $t")
       //| Product(vals) => def vals = vals.Map(TypeFromStr);
       //                  $<#type: tuple2<..$vals>#>//cpp(<#type: tuple2<..$vals>#>)
@@ -119,7 +119,7 @@ namespace PetriNetLib
       | "real"   => "float"//cpp("type: float")
       | "time"   => "int"//cpp("type: int")
       | "bool"   => "bool"//cpp("type: bool")
-      | "unit"   => "unit"//cpp("type: Unit")
+      | "unit"   => "char"//cpp("type: Unit")
       | str      => proc.colour_sets[str] |> GetTypeExpr
 
     }
@@ -136,13 +136,63 @@ namespace PetriNetLib
     //  typing_method = meth :> MethodBuilder;
     //}
 
-    internal static CreateArray(expr : list[PExpr]) : string
+    mutable ctx : list[string];
+    
+    internal CreateArray(expr : list[PExpr]) : string
     {
+      def ty = Typer(gen.TypingMethod);
+      def te = ty.TypeExpr(<[ [..$expr] ]>);
+      def ty = te.ty;
+      def len = expr.Length;
+      def (type, n, ty) = match (ty)
+      {
+        | FixedType.Class(_, [args]) => def byte = typer.BindType(<[ byte ]>);
+                                        if (args.TryRequire(byte))
+                                        {
+                                          
+                                          if (len <= 10)
+                                          {
+                                            ($"byte$len", false, "u8")
+                                          } else
+                                          {
+                                            ("byten", true, "u8")
+                                          }
+                                        } else (null, false, null)
+                                        //if (args.TryRequire(integer))
+                                        //{
+                                        //} else
+                                        //if (args.TryRequire(uinteger))
+                                        //{
+                                        //} else
+                                        //if (args.TryRequire(longint))
+                                        //{
+                                        //} else
+                                        //if (args.TryRequire(ulongint))
+                                        //{
+                                        //} else
+                                        //if (args.TryRequire(shortint))
+                                        //{
+                                        //} else
+                                        //if (args.TryRequire(ushortint))
+                                        //{
+                                        //}
+      }
+      //mutable lst = [];
       def expr = expr.Map(ConvExpr(_, false));
-      $<#{..$(expr; ",")}#>
+      //{..$(expr; ",")}
+      def var = Macros.NewSymbol();
+      if (n)
+      {
+        ctx ::= $<#$ty $var[] = {..$(expr;", ")};#>;
+        $<#$type($var, $len)#>
+      } else
+      {
+        ctx ::= $<#$ty $var[] = {..$(expr;", ")};#>;
+        $<#$type($var)#>
+      }
     }
 
-    internal static GetTokenExpr(expr : PExpr) : string
+    internal GetTokenExpr(expr : PExpr) : string
     {
       def loop(e)
       {
@@ -193,7 +243,7 @@ namespace PetriNetLib
       }
 
       def input    = input.Sort((x, y) => y.priority - x.priority); 
-      def add_proc = output.Map((p, a) => OutArcProcessCpp(p, tran, a));
+      def add_proc = output.Map((p, a) => OutArcProcessCpp(p, tran, a, this));
 
       def extract = input.Map(_.extract_expr);
       def add_body = add_proc.Map(_.add_token);
@@ -301,6 +351,15 @@ namespace PetriNetLib
       }
     }
 
+    FinalType(str : string) : string
+    {
+      match (str.Trim())
+      {
+        | "BYTES" => "bytesn"
+        | t       => t
+      }
+    }
+    
     internal ConvType(te : TExpr) : string
     {
       te.Type.ToString()
@@ -319,7 +378,7 @@ namespace PetriNetLib
         //def args = args.Map(ConvType);
         //<#token_iter#>
         def t = ty.args.Map(ConvType).First();
-        $<#$t *#>
+        <#bytesn#>
       } else
       match (ty)
       {
@@ -330,8 +389,9 @@ namespace PetriNetLib
       }
     }
 
-    internal static ConvExpr(expr : PExpr, statement : bool = false) : string
+    internal ConvExpr(expr : PExpr, statement : bool = false) : string
     {
+      when (statement) ctx = [];
       match (expr)
       {
         | <[ {$seq} ]>                    => ConvExpr(seq, true)
@@ -382,19 +442,50 @@ namespace PetriNetLib
               | [e1, e2, e3, e4]     => $<#tuple4($(ConvExpr(e1)), $(ConvExpr(e2)), $(ConvExpr(e3)), $(ConvExpr(e4)))#>
               | [e1, e2, e3, e4, e5] => $<#tuple5($(ConvExpr(e1)), $(ConvExpr(e2)), $(ConvExpr(e3)), $(ConvExpr(e4)), $(ConvExpr(e5)))#>
             }
-        | <[()]>                 => <#unit.instance()#>
+           
+        | <[()]>                 => <#'u'#>
         | <[$o.$m]>              => $<#$(ConvExpr(o)).$m#>
         | <[ if ($a) $b else $c]> when statement => $<#if ($(ConvExpr(a))) $(ConvExpr(b)) else $(ConvExpr(c))#>
         | <[ if ($a) $b else $c]> when !statement => $<#$(ConvExpr(a)) ? $(ConvExpr(b)) : $(ConvExpr(c))#>
         | <[ array[..$val] ]>   => CreateArray(val)
         | <[ [..$e]]>           => CreateArray(e)
-      }
+        | <[ $e : $t]>          => $<#($(ConvExpr(t)))$(ConvExpr(e))#>
+      }      
     }
 
+    IsComplexType(expr : string) : bool
+    {
+      def loop(t)
+      {
+        def loop2(t2)
+        {
+          | Colour.Timed(t) => loop2(t)
+          | Colour.Union
+          | Colour.String
+          | Colour.Record
+          | Colour.Product
+          | Colour.List     => true
+          | Colour.Integer
+          | Colour.Index
+          | Colour.Enum
+          | Colour.Simple
+          | Colour.Unit
+          | Colour.Bool     => false
+          | Colour.Alias(t) => loop(t)
+        }
+        
+        loop2(model.colour_sets[t].type)
+      }
+      
+      loop(expr)
+    }
+   
     internal ConvParm(expr : PParameter) : string
     {
       def deflt = expr.DefaultValue.Map(x => $" = $(ConvExpr(x, false))").WithDefault("");
-      $<#$(expr.Type) $(expr.Name)$deflt#>;
+      def t = expr.Type;
+      def type = if (IsComplexType(t.ToString())) $<#const $t &#> else $<#$t #>;
+      $<#$type$(expr.Name)$deflt#>;
     }
 
     CreateGlobRef(name : string, val : PExpr) : string
@@ -515,9 +606,10 @@ namespace PetriNetLib
           match (func)
           {
             | <[ def $(n : usesite)(..$parms) : $t { ..$expr } ]> =>
-                  def ret = t;
-
+                  def ret = FinalType(t.ToString());
+                  
                   def expr = expr.Map(ConvExpr(_, true));
+                  def expr = if (ctx.IsEmpty()) expr else $<#..$(ctx;"\n")#> :: expr;
                   def (last, expr) = expr.PartitionLast();
                   def parms = parms.Map(ConvParm);
                   $<#$ret $n(..$(parms; ","))
@@ -547,23 +639,31 @@ namespace PetriNetLib
 
     CreateColourSet(col : ColourSet) : string
     {
-      | ColourSet(n, Colour.Product(vals))   => def fields = vals.MapI((i, t) => ($"field$i", TypeFromStr(t)));
-                                                def fields = fields.Map((n, t) => $"$t $n;");
+      | ColourSet(n, Colour.Product(vals))   => def ftypes = vals.MapI((i, t) => ($"field$(i + 1)", TypeFromStr(t)));
+                                                def fields = ftypes.Map((n, t) => $"$t $n;");
+                                                def ctor = ftypes.Map((f, t) => $"$t $f");
+                                                def ctorbody = ftypes.Map((f, _) => $"this->$f = $f;");
                                                 $<#struct $n
                                                       {
+                                                        $n(..$(ctor;", ")) 
+                                                        {
+                                                          ..$(ctorbody;"\n")
+                                                        }
+                                                        
                                                         ..$(fields;"\n")
                                                       };#>
-      | ColourSet(n, Colour.Alias(new_name))  => //def name = Macros.UseSiteSymbol(n);
-                                                //def mods = AttributesAndModifiers(NemerleModifiers.Private, []);
-                                                //def al = TopDeclaration.Alias(name, mods, Typarms.Empty, <[ $(new_name : usesite) ]>);
-                                                //al |> ClassMember.TypeDeclaration.TypeDeclaration;
-                                                // cpp("typedef $n $new_name")
-          $"typedef $n $new_name;"
+      
                                                 //CTypeDecl.Decl(CTree.Decl([CSpec.Typedef()], CType.Class(n), [CDecl.Id(CName.String(new_name), None())]))
-      | ColourSet(n, Colour.Record(vals))     => def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
-                                                def fields = fields.Map((n, t) => $"$t $n;");
+      | ColourSet(n, Colour.Record(vals))     => def ftypes = vals.Map((n, t) => (n, TypeFromStr(t)));
+                                                def fields = ftypes.Map((n, t) => $"$t $n;");
+                                                def ctor = ftypes.Map((f, t) => $"$t $f");
+                                                def ctorbody = ftypes.Map((f, _) => $"this->$f = $f;");
                                                 $<#struct $n
                                                       {
+                                                        $n(..$(ctor;", ")) 
+                                                        {
+                                                          ..$(ctorbody;"\n")
+                                                        }
                                                         ..$(fields;"\n")
                                                       };#>
                                                 //<[decl: [Record] class $(n : usesite)
@@ -622,12 +722,35 @@ namespace PetriNetLib
                                                           return Instance.all_impl;
                                                         }
       */
+      | ColourSet(n, Colour.Alias(t)) //def name = Macros.UseSiteSymbol(n);
+                                                //def mods = AttributesAndModifiers(NemerleModifiers.Private, []);
+                                                //def al = TopDeclaration.Alias(name, mods, Typarms.Empty, <[ $(new_name : usesite) ]>);
+                                                //al |> ClassMember.TypeDeclaration.TypeDeclaration;
+                                                // cpp("typedef $n $new_name")
+          //$"typedef $n $new_name;"
+      //| ColourSet(n, Colour.Unit(Some(t))) => 
+      | ColourSet(n, Colour.Unit(Some(t))) => $<#typedef $t $n;
+                                                 typedef char $t;
+                                                #>
+      
+      | ColourSet(n, Colour.Integer) => def (t, n) = match (n)
+                                                      {
+                                                        | "BYTE"   => ("byte", "BYTE")
+                                                        | "SHORT"  => ("short", "SHORT")
+                                                        | "INT"    => ("int", "INT")
+                                                        | "UINT"   => ("uint", "UINT")
+                                                        | "USHORT" => ("ushort", "USHORT")
+                                                      }
+                                        $<#typedef $t $n;#>               
+      | ColourSet(n, Colour.Unit) with t = "char"                                                       
+      | ColourSet(n, Colour.Simple(t))  => $<#typedef $t $n;#>
       | ColourSet(n, Colour.Enum(vals)) => //def vals = vals.Map(x => $"$x");
                                           $<#    enum $n
                                                  {
                                                    ..$vals;
                                                  };#>
       | ColourSet(n, Colour.Timed(c))   => CreateColourSet(ColourSet(n, c))
+      
       | _                               => null
     }    
 
@@ -655,7 +778,7 @@ namespace PetriNetLib
 
       def unfold(expr)
       {
-        | <[ () ]> => <[unit.instance()]>
+        | <[ () ]> => <[()]>
         | e        => e
       }
 
