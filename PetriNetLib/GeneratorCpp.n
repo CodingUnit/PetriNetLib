@@ -851,7 +851,7 @@ namespace PetriNetLib
                        {
                          | []    => "return 0xFFFFFFFF;"
                          | [one] => one
-                         | lst   => def next = lst.Map(x => $<#expr: min = math_utils::min(min, $x); #>);
+                         | lst   => def next = lst.Map(x => $<#min = math_utils::min(min, $x); #>);
                           $<#
                                   int min = 0xFFFFFFFF;
                                   ..$(next;"\n");
