@@ -1,10 +1,10 @@
 class DiningPhilosophers : public petri_net
             {
-              token_iter Chopsticks(PH i)
+              System.Collections.Generic.IEnumerable[int-] Chopsticks(PH i)
                                                        {
-                                                         
                                                          return token_iter_utils.concat(token_iter_utils.repeat(cs(i), 1), token_iter_utils.repeat(cs(i == n ? 1 : i + 1), 1));
                                                        }
+                                                       
 const int n = 5;
 multi_set UnusedChopsticks;
 random_array Think;

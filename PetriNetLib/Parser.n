@@ -56,7 +56,9 @@ namespace PetriNetLib
                   if (col.Contains("list"))
                   {
                     def type = col.GetOneText("list", "id");
-                    Colour.List(type, None())
+                    def wth = col.GetText("list", "with", "ml");
+                    def range = if (wth.IsEmpty()) None() else Some((wth[0] |> int.Parse, wth[1] |> int.Parse));
+                    Colour.List(type, range)
                   } else
                     if (col.Contains("product"))
                     {

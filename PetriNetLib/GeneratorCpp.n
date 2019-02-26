@@ -96,7 +96,17 @@ namespace PetriNetLib
       | Unit(Some(t)) => t//cpp("type: $t")
       //| Product(vals) => def vals = vals.Map(TypeFromStr);
       //                  $<#type: tuple2<..$vals>#>//cpp(<#type: tuple2<..$vals>#>)
-      | List(t, _)    => t |> TypeFromStr
+      | List(t, r)    => match (t)
+                         {
+                           | "INT"
+                           | "SHORT"
+                           | "USHORT"
+                           | "BYTE"   => if (r is Some((mn, mx))) 
+                                         {
+                                           def diff = mx - mn;
+                                           $"bytes$diff" 
+                                         } else "bytesn"
+                         }
                         //cpp("type: $(inner : type) *")
     }
 
@@ -590,10 +600,10 @@ namespace PetriNetLib
                                                       def (last, expr) = expr.PartitionLast();
                                                       def parms = parms.Map(ConvParm);
                                                       $<#$ret $n(..$(parms; ","))
-                                                       {
-                                                         ..$(expr;";\n")
+                                                       {..$(expr;";\n")
                                                          return $last;
-                                                       }#>
+                                                       }
+                                                       #>
                                                       //<[decl: $(n : usesite)(..$parms) : $(ret : typed)
                                                       //  {
                                                       //    ..$expr
@@ -613,10 +623,10 @@ namespace PetriNetLib
                   def (last, expr) = expr.PartitionLast();
                   def parms = parms.Map(ConvParm);
                   $<#$ret $n(..$(parms; ","))
-                    {
-                      ..$(expr;";\n")
+                    {..$(expr;";\n")
                       return $last;
-                    }#>
+                    }
+                    #>
                                                       //<[decl: $(n : usesite)(..$parms) : $(ret : typed)
                                                       //  {
                                                       //    ..$expr
@@ -931,14 +941,26 @@ namespace PetriNetLib
     Define(decl : list[string], pub : bool = false) : void
     {
       if (pub)
-        foreach (d in decl) public_fields ::= d; else
-        foreach (d in decl) private_fields ::= d;
-
+      {
+        foreach (d in decl) 
+        {
+          public_fields ::= d;
+          //public_fields ::= "\n"
+        }
+      } else
+      {
+        foreach (d in decl)
+        {
+          private_fields ::= d;
+          //private_fields ::= "\n"
+        }
+      }
     }
 
     Define(decl : string) : void
     {
-      private_fields ::= decl
+      private_fields ::= decl;
+      //private_fields ::= "\n"
       //def ty = CTree.Type.type_lens >> CComplexType.Class.decls_lens;
       //main_class = ty.Update(main_class, x => x.Append(decl));
       //(main_class.type :> CComplexType.Class).

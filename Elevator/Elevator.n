@@ -10,7 +10,7 @@ using PetriNetModel;
 
 namespace Elevator
 {
-  [PetriNet("elevator.cpn", debug)]
+  [PetriNet("elevator.cpn")]
   public class Elevator
   {
   }
