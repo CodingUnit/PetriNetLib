@@ -3,7 +3,7 @@
 
 class petri_net32// : IPetriNet, IDisposable
 {
-	u8 locked;
+	u32 locked;
 	event_queue32_conc queue;
 	//tran_queue: RQueue[Action] = RQueue(32);
 
@@ -24,19 +24,28 @@ class petri_net32// : IPetriNet, IDisposable
 
 	protected:
 
-	bool lock(int evt)
+	bool lock(u32 pl, u32 tr)
 	{
-		if (!CAS8(&locked, 0, 1))
+		u32 lock;
+		do
 		{
-			queue.enqueue(evt);
-			return false;
-		}
+			lock = LL(&locked);
+			if (lock & pl != 0)// если элементы заблокированы хотя бы один
+			{
+				queue.enqueue(tr);
+				return false;
+			}
+		} while (SC(&locked, lock, lock | pl));
 		return true;
 	}
 
-	void unlock() 
+	void unlock(u32 pl) 
 	{
-		locked = 0;
+		u32 lock;
+		do
+		{
+			lock = LL(&locked);
+		} while (SC(&locked, lock, lock & ~pl)); // сбрасываем заблокированные позиции
 		check_queue();
 	}
 

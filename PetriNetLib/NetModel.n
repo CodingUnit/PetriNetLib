@@ -271,6 +271,62 @@ namespace PetriNetLib
   {
     public name : string;
     public type : Colour;
+    
+    public Name : string
+    {
+      [Memoize]
+      get
+      {
+        def splitted = Name.Split('_').Filter(x => !Opts.Contains(x));
+        string.Join("_", splitted)
+      }
+    }
+    
+    public Opts : list[string]
+    {
+      [Memoize]
+      get
+      {
+        name.Split('_').ChopLast().NToList()
+      }
+    }
+    
+    public Req : bool
+    {
+      [Memoize]
+      get
+      {
+        Opts.Exists(x => x == "REQ")
+      }
+    }
+    
+    public Cached : bool
+    {
+      [Memoize]
+      get
+      {
+        Opts.Exists(x => x == "CACHED")
+      }
+    }
+    
+    public Var : bool
+    {
+      [Memoize]
+      get
+      {
+        Opts.Exists(x => x == "Var")
+      }
+    }
+
+    public Single : bool
+    {
+      [Memoize]
+      get
+      {
+        Opts.Exists(x => x == "SINGLE")
+      }
+    }
+
   }
 
   variant ExecError
