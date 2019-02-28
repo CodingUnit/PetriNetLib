@@ -91,7 +91,8 @@ namespace PetriNetLib
       [Memoize]
       get
       {
-        place.colour |> gen.GetTypeExpr
+        def gc = place.colour |> GenColour(_, gen);
+        gc.DestType
       }
     }
     

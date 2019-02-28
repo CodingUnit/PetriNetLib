@@ -110,6 +110,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GenColour.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="GeneratorCpp.n">
       <SubType>Code</SubType>
     </Compile>
