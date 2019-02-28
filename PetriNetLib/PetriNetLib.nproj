@@ -113,6 +113,9 @@
     <Compile Include="GenColour.n">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="GenCppImpl.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="GeneratorCpp.n">
       <SubType>Code</SubType>
     </Compile>

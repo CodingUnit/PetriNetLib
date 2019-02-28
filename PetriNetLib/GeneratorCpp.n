@@ -62,81 +62,6 @@ namespace PetriNetLib
         throw InvalidOperationException("colour not found")
       }
     }
-    //mutable typing_method : MethodBuilder;
-    //compiler : CompilerHost = CompilerHost();
-    mutable cons_expr : list[string] = [];
-    mutable private_fields    : list[string] = [];
-    mutable public_fields    : list[string] = [];
-    mutable init_body : list[string] = [];
-    file : string;
-    //mutable main_class : CTree.Type;
-
-    main_class : string
-    {
-      [Memoize]
-      get
-      {
-        $<#class $Name : public $Base
-            {
-              ..$(private_fields.Rev();"\n")
-
-              public:
-
-              ..$(public_fields.Rev();"\n")
-            };
-        #>
-      }
-    }
-
-    public this(file : string, gen : Generator, model : OutModel, proc : PetriNetProcessor)
-    {
-      this.typer = proc.Typer;
-      this.file = file;
-      this.gen = gen;
-      this.typebuilder = proc.Typebuilder;
-
-      this.model = model;
-      this.proc = proc;
-      this.converter = proc.Converter;
-    }
-
-    Name : string
-    {
-      [Memoize]
-      get
-      {
-        proc.Name
-      }
-    }
-
-
-
-    //internal GetTypeExpr(p : ColourSet) : string
-    //{
-    //  | ColourSet(n, Alias)
-    //  | ColourSet(n, Index)
-    //  | ColourSet(n, Record)
-    //  | ColourSet(n, Product)
-    //  | ColourSet(n, Enum)          => n//cpp("type: $n")
-    //  | ColourSet(_, Timed(p))
-    //  | ColourSet(_, p)             => GetTypeExpr(p)
-    //}
-
-
-
-    IsTokenExpr(expr : PExpr) : bool
-    {
-      | <[ $(_ : usesite) ]> => false
-      | _                    => true
-    }
-
-    //CreateDummyMethod() : void
-    //{
-    //  def meth = typebuilder.DefineAndReturn(<[decl: TypingMethod() : void {}]>);
-    //  typing_method = meth :> MethodBuilder;
-    //}
-
-    mutable ctx : list[string];
 
     internal CreateArray(expr : list[PExpr]) : string
     {
@@ -192,28 +117,6 @@ namespace PetriNetLib
       }
     }
 
-    internal GetTokenExpr(expr : PExpr) : string
-    {
-      def loop(e)
-      {
-        | <[ $(count : int) ` $expr ]> => Enumerable.Repeat(expr, count).NToList()
-        | <[ $left %++ $right ]>       => loop(left) + loop(right)
-        | _                            => [expr]
-      }
-
-      match (expr)
-      {
-        | <[$_(..$_)]> as e       => e |> ConvExpr(_, true)
-        | <[ $(_ : int)]> as e
-        | <[ $(_ : long)]> as e
-        | <[ $(_ : short)]> as e
-        | <[ $(_ : ushort)]> as e
-        | <[ $(_ : byte)]> as e
-        | <[ $(_ : string)]> as e => e |> ConvExpr(_, true)
-        | e                       => def e = loop(e);
-                                    CreateArray(e)//<[array[..$e]]>
-      }
-    }
 
     CreateTranBody(tran : Transition) : string
     {
@@ -353,40 +256,6 @@ namespace PetriNetLib
 
 
 
-    internal ConvType(te : TExpr) : string
-    {
-      te.Type.ToString()
-    }
-
-    internal ConvType(te : TypeVar) : string
-    {
-      def tystr = te.ToString().TrimEnd('-', '+');
-      //def enum_ty = typer.BindType(<[ System.Collections.Generic.IEnumerable[_] ]>);
-      def list_ty = typer.BindType(<[ list[_] ]>);
-      def ty = te.Fix();
-      if (te.TryRequire(list_ty))
-      {
-        def ty = ty :> FixedType.Class;
-        //def args = ty.args;
-        //def args = args.Map(ConvType);
-        //<#token_iter#>
-        def t = ty.args.Map(ConvType).First();
-        <#bytesn#>
-      } else
-        match (ty)
-        {
-          | FixedType.Tuple(args) => def vals = args.Map(ConvType);
-                                  def n = vals.Length;
-                                  $<#tuple$n<..$(vals;",")>#>
-          | _                     => tystr
-        }
-    }
-
-    ConvFunc(func : string) : string
-    {
-      if (func.StartsWith("EXT_")) func.Substring(4) else
-      if (func.StartsWith("FUNC_")) func.Substring(5) else func
-    }
     
     internal ConvExpr(expr : PExpr, statement : bool = false) : string
     {
@@ -454,23 +323,6 @@ namespace PetriNetLib
         | <[ [..$e]]>           => CreateArray(e)
         | <[ $e : $t]>          => $<#($(ConvExpr(t)))$(ConvExpr(e))#>
       }      
-    }
-
-    
-    ConvParm(n : string, t : string) : string
-    {
-      def col = ColourFromStr(t);
-      def type = col.ParmType;
-      $<#$type$n#>;
-    }
-
-    internal ConvParm(expr : PParameter) : string
-    {
-      def deflt = expr.DefaultValue.Map(x => $" = $(ConvExpr(x, false))").WithDefault("");
-      //def t = expr.Type;
-      //def type = if (IsComplexType(t.ToString())) $<#const $t &#> else $<#$t #>;
-      def expr = ConvParm(expr.Name, expr.Type.ToString());
-      $<#$expr$deflt#>;
     }
 
     CreateGlobRef(name : string, val : PExpr) : string
@@ -625,19 +477,6 @@ namespace PetriNetLib
       | _ => null
     }
 
-    CreateColourSet2(col : ColourSet) : ClassMember.TypeDeclaration
-    {
-      //| ColourSet(n, Colour.Index(_, _, i)) => 
-      //    <[decl: [Record]
-      //      class $(i : usesite) : $(n : usesite)
-      //      {
-
-      //      }
-      //      ]>;
-      //| _ => null    
-      null
-    }
-
     CreateColourSet(col : GenColour) : string
     {
       match (col.Colour)
@@ -762,14 +601,6 @@ namespace PetriNetLib
     //  }]>
     //}
 
-    Base : string
-    {
-      [Memoize]
-      get
-      {
-        if (model.IsTimed) "timed_petri_net" else "petri_net"
-      }
-    }
 
     CreateCons() : void
     {
@@ -854,15 +685,14 @@ namespace PetriNetLib
     {      
       //CreateOperators();
       //assert2(false);
+    // создаем типы генерации из цветов
       foreach (c in model.colour_sets)
       {
         colours.Add(c.Key, c.Value |> GenColour(_, this))
       }
 
       def sets = colours.Values.Map(x => CreateColourSet(x) + "\n").Filter(_ != null);
-      //def sets2 = model.colour_sets.Values.Map(CreateColourSet2).Filter(_ != null);
-      //def sets = sets + sets2;
-      foreach (m in sets) Define(m);//typebuilder.DefineNestedTypeWithSource(m).Compile();
+      Define(sets);//typebuilder.DefineNestedTypeWithSource(m).Compile();
 
       def places = model.places.MapToList(CreatePlace);      
 
@@ -876,7 +706,7 @@ namespace PetriNetLib
       CreateCons();
 
       def members = places;
-      foreach (m in members) Define(m)//_ = typebuilder.DefineWithSource(m);
+      Define(members)//_ = typebuilder.DefineWithSource(m);
     }
 
     Define(decl : list[string], pub : bool = false) : void

@@ -1,0 +1,164 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+using Nemerle.Builtins;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Nemerle.Compiler;
+using Nemerle.Compiler.Parsetree;
+using Nemerle.Compiler.Typedtree;
+using CommonLib.Macros;
+using PetriNetModel;
+using System.Reactive.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using CppParserPrinter;
+using CppMacro;
+
+namespace PetriNetLib
+{
+  /// <summary>
+  /// Description of GenCppImpl.
+  /// </summary>
+  partial class CppGenerator
+  {
+        //mutable typing_method : MethodBuilder;
+    //compiler : CompilerHost = CompilerHost();
+    mutable cons_expr : list[string] = [];
+    mutable private_fields    : list[string] = [];
+    mutable public_fields    : list[string] = [];
+    mutable init_body : list[string] = [];
+    file : string;
+    mutable ctx : list[string];
+    
+    main_class : string
+    {
+      [Memoize]
+      get
+      {
+        $<#class $Name : public $Base
+            {
+              ..$(private_fields.Rev();"\n")
+
+              public:
+
+              ..$(public_fields.Rev();"\n")
+            };
+        #>
+      }
+    }
+
+    public this(file : string, gen : Generator, model : OutModel, proc : PetriNetProcessor)
+    {
+      this.typer = proc.Typer;
+      this.file = file;
+      this.gen = gen;
+      this.typebuilder = proc.Typebuilder;
+
+      this.model = model;
+      this.proc = proc;
+      this.converter = proc.Converter;
+    }
+
+    Name : string
+    {
+      [Memoize]
+      get
+      {
+        proc.Name
+      }
+    }
+
+    IsTokenExpr(expr : PExpr) : bool
+    {
+      | <[ $(_ : usesite) ]> => false
+      | _                    => true
+    }
+
+    internal GetTokenExpr(expr : PExpr) : string
+    {
+      def loop(e)
+      {
+        | <[ $(count : int) ` $expr ]> => Enumerable.Repeat(expr, count).NToList()
+        | <[ $left %++ $right ]>       => loop(left) + loop(right)
+        | _                            => [expr]
+      }
+
+      match (expr)
+      {
+        | <[$_(..$_)]> as e       => e |> ConvExpr(_, true)
+        | <[ $(_ : int)]> as e
+        | <[ $(_ : long)]> as e
+        | <[ $(_ : short)]> as e
+        | <[ $(_ : ushort)]> as e
+        | <[ $(_ : byte)]> as e
+        | <[ $(_ : string)]> as e => e |> ConvExpr(_, true)
+        | e                       => def e = loop(e);
+                                    CreateArray(e)//<[array[..$e]]>
+      }
+    }
+    
+    internal ConvType(te : TExpr) : string
+    {
+      te.Type.ToString()
+    }
+
+    internal ConvType(te : TypeVar) : string
+    {
+      def tystr = te.ToString().TrimEnd('-', '+');
+      //def enum_ty = typer.BindType(<[ System.Collections.Generic.IEnumerable[_] ]>);
+      def list_ty = typer.BindType(<[ list[_] ]>);
+      def ty = te.Fix();
+      if (te.TryRequire(list_ty))
+      {
+        def ty = ty :> FixedType.Class;
+        //def args = ty.args;
+        //def args = args.Map(ConvType);
+        //<#token_iter#>
+        def t = ty.args.Map(ConvType).First();
+        <#bytesn#>
+      } else
+        match (ty)
+        {
+          | FixedType.Tuple(args) => def vals = args.Map(ConvType);
+                                  def n = vals.Length;
+                                  $<#tuple$n<..$(vals;",")>#>
+          | _                     => tystr
+        }
+    }
+
+    ConvFunc(func : string) : string
+    {
+      if (func.StartsWith("EXT_")) func.Substring(4) else
+      if (func.StartsWith("FUNC_")) func.Substring(5) else func
+    }
+
+    ConvParm(n : string, t : string) : string
+    {
+      def col = ColourFromStr(t);
+      def type = col.ParmType;
+      $<#$type$n#>;
+    }
+
+    internal ConvParm(expr : PParameter) : string
+    {
+      def deflt = expr.DefaultValue.Map(x => $" = $(ConvExpr(x, false))").WithDefault("");
+      //def t = expr.Type;
+      //def type = if (IsComplexType(t.ToString())) $<#const $t &#> else $<#$t #>;
+      def expr = ConvParm(expr.Name, expr.Type.ToString());
+      $<#$expr$deflt#>;
+    }
+
+    Base : string
+    {
+      [Memoize]
+      get
+      {
+        if (model.IsTimed) "timed_petri_net" else "petri_net"
+      }
+    }
+    
+  }
+}
