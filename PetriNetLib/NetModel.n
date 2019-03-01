@@ -20,6 +20,12 @@ namespace PetriNetLib
     | TokenQueue
     | SortedSet
     | TimedSimpleMultiset
+    | Var    // имеет 1 фишку, аналогично обычному полю
+    | Single // имеет 0 или 1 фишку, для отсутствия использует -1 если INT
+    | ReqContainer    // значение запрашивается из внешней функции
+    | ZeroSingle // имеет 0 или 1 фишку, для отсутствия используется 0 если INT
+    // возможно PUSH сочетать с Var, Single и ZeroSingle для 
+    // выдвигания фишек в именованый переход, подобно событию
   }
 
   [Record]
@@ -35,39 +41,6 @@ namespace PetriNetLib
     public tree      : CpnTree.Place;
     public net       : PetriNetProcessor;
     
-    public IsIndexedContainer : bool
-    {
-      [Memoize]
-      get
-      {
-        true
-        //match (DestContainerType)
-        //{
-        //  | TDestCont.RandomEnumerable
-        //  | TDestCont.MultiSet          => true
-        //  | _                           => false
-        //}
-      }
-    }
-    
-    public DestContainerType : TDestCont
-    {
-      [Memoize]
-      get
-      {
-        match (colour.type)
-        {
-          | Colour.Sorted => TDestCont.SortedSet
-          | Timed         => TDestCont.TimedSimpleMultiset
-          | Queue         => TDestCont.TokenQueue
-          | _             => def tran = OutputTransitions;
-                             def one = tran.Select((_, x) => x.NumberTokensGet).All(_ == 1);
-                             if (one) TDestCont.RandomEnumerable else TDestCont.MultiSet
-
-        }
-      }
-    }
-
     public Name : string
     {
       [Memoize]

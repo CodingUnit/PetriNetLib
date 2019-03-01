@@ -115,6 +115,24 @@ namespace PetriNetLib
       }
     }
 
+    public ZeroSingle : bool
+    {
+      [Memoize]
+      get
+      {
+        Opts.Exists(_ == "ZEROSINGLE") 
+      }
+    }
+    
+    public Push : bool
+    {
+      [Memoize]
+      get
+      {
+        Opts.Exists(_ == "PUSH") 
+      }
+    }
+    
     public Cached : bool
     {
       [Memoize]
@@ -142,6 +160,23 @@ namespace PetriNetLib
       }
     }
 
+    public Queue : bool
+    {
+      [Memoize]
+      get
+      {
+        Opts.Exists(_ == "QUEUE")
+      }
+    }
+
+    public Sorted : bool
+    {
+      [Memoize]
+      get
+      {
+        Opts.Exists(_ == "SORTED")
+      }
+    }
     //public static TypeFromStr(str : string, gen : CppGenerator) : string
     //{
     //  match (str)
