@@ -14,8 +14,6 @@ using PetriNetModel;
 using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using CppParserPrinter;
-using CppMacro;
 
 namespace PetriNetLib
 {
@@ -43,25 +41,9 @@ namespace PetriNetLib
     typer       : Typer;
     typebuilder : TypeBuilder;
     gen         : Generator;
-    colours     : Hashtable[string, GenColour] = Hashtable();
+    colours     : Hashtable[string, GenColourCpp] = Hashtable();
+    places      : array[GenPlaceCpp];
     
-    ColourFromStr(type : string) : GenColour
-    {
-      //| "string" => "char *"//cpp("type: char *")
-      //| "int"    => "int"//cpp("type: int")
-      //| "intinf" => "long long"//cpp("type: int")
-      //| "real"   => "float"//cpp("type: float")
-      //| "time"   => "int"//cpp("type: int")
-      //| "bool"   => "bool"//cpp("type: bool")
-      //| "unit"   => "char"//cpp("type: Unit")
-      if (colours.ContainsKey(type))
-      {
-        colours[type]
-      } else//GetTypeExpr
-      {
-        throw InvalidOperationException("colour not found")
-      }
-    }
 
     internal CreateArray(expr : list[PExpr]) : string
     {
@@ -125,7 +107,7 @@ namespace PetriNetLib
       def name   = tran.Name;
       //def map    = Hashtable();
 
-      def input = input.Map((x, a) => InArcBindingCpp(x, this, tran, [], a));
+      def input = input.Map((x, a) => InArcBindingCpp(places[x.idx], this, tran, [], a));
 
       foreach (i in input)
       {
@@ -206,20 +188,38 @@ namespace PetriNetLib
       input.Fold(null, fold)
     }
 
-    CreatePlace(place : Place) : string
+    CreatePlace(place : GenPlaceCpp) : string
     {
       def name = place.Name;
       //def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
-      def type = (place.colour |> GenColour(_, this)).DestType;
-      def dest_cont = match (place.DestContainerType)
+      def type = place.Colour.DestType;
+      def dtype = place.DestContainerType;
+      def dest_cont = match (dtype)
                        {
                          | TDestCont.MultiSet  => "multi_set"//cpp("type: multi_set")
                          | RandomEnumerable    => "random_array"//cpp("type: random_array")
                          | SortedSet           => "sorted_array"//cpp("type: sorted_array")
                          | TokenQueue          => "token_queue"//cpp("type: token_queue")
                          | TimedSimpleMultiset => "timed_heap"//cpp("type: timed_heap")
+                         | ZeroSingle
+                         | MinusSingle
+                         | Var
+                         | Single              => type
+                         | ReqContainer        => "req_tokens"
                        }
-      $<#$dest_cont $name;#>
+      def flag = match (dtype)
+      {
+        | Single              => $"$(name)_flag"
+        | _                   => ""
+      }
+      def deflt = match (dtype)
+      {
+        | ZeroSingle  => " = 0"
+        | MinusSingle => " = -1"
+        | _           => ""
+      }
+      def flag = if (flag.IsEmpty()) "" else $"\nbool $flag = false;";
+      $<#$dest_cont $name$deflt;$flag#>
       //cpp(<#decl: $(dest_cont : type) $name;#>)
       //if (place.IsTimed)
       //<[decl: $(name : usesite) : PetriNetModel.TimedPlace.[$type] = PetriNetModel.TimedPlace($(name : string), $dest_cont)]> else
@@ -248,7 +248,7 @@ namespace PetriNetLib
     {
       match (model.vars.Find(x => x.Key == name))
       {
-        | Some(x) => def col = x.Value |> GenColour(_, this);
+        | Some(x) => def col = colours[x.Value.name];
                      col.DestType
         | _       => ""
       }
@@ -477,13 +477,13 @@ namespace PetriNetLib
       | _ => null
     }
 
-    CreateColourSet(col : GenColour) : string
+    CreateColourSet(col : GenColourCpp) : string
     {
       match (col.Colour)
       {
         | ColourSet(n, Colour.Product(vals))   => def fnames = vals.MapI((i, t) => ($"field$(i + 1)", t));
                                                   def ctor = fnames.Map(ConvParm);
-                                                  def ftypes = fnames.Map((n, t) => (n, ColourFromStr(t).DestType));
+                                                  def ftypes = fnames.Map((n, t) => (n, colours[t].DestType));
                                                   def fields = ftypes.Map((n, t) => $"$t $n;");
                                                   def ctorbody = fnames.Map((f, _) => $"this->$f = $f;");
                                                   $<#struct $n
@@ -499,7 +499,7 @@ namespace PetriNetLib
                                                   //CTypeDecl.Decl(CTree.Decl([CSpec.Typedef()], CType.Class(n), [CDecl.Id(CName.String(new_name), None())]))
         | ColourSet(n, Colour.Record(vals))     => 
                                                   def ctor = vals.Map(ConvParm);
-                                                  def ftypes = vals.Map((n, t) => (n, ColourFromStr(t).DestType));
+                                                  def ftypes = vals.Map((n, t) => (n, colours[t].DestType));
                                                   def fields = ftypes.Map((n, t) => $"$t $n;");
                                                   def ctorbody = vals.Map((f, _) => $"this->$f = $f;");
                                                   $<#struct $n
@@ -533,7 +533,7 @@ namespace PetriNetLib
                                                    {
                                                      ..$vals;
                                                    };#>
-        | ColourSet(n, Colour.Timed(c))   => CreateColourSet(ColourSet(n, c) |> GenColour(_, this))
+        | ColourSet(n, Colour.Timed(c))   => CreateColourSet(ColourSet(n, c) |> GenColourCpp(_, this))
 
         | _                               => null
       }
@@ -688,13 +688,13 @@ namespace PetriNetLib
     // создаем типы генерации из цветов
       foreach (c in model.colour_sets)
       {
-        colours.Add(c.Key, c.Value |> GenColour(_, this))
+        colours.Add(c.Key, c.Value |> GenColourCpp(_, this))
       }
 
       def sets = colours.Values.Map(x => CreateColourSet(x) + "\n").Filter(_ != null);
       Define(sets);//typebuilder.DefineNestedTypeWithSource(m).Compile();
 
-      def places = model.places.MapToList(CreatePlace);      
+      def places = places.Map(CreatePlace);      
 
       when (model.IsTimed) CreateTimeMethods();
       CreateStepMethod();
@@ -705,11 +705,10 @@ namespace PetriNetLib
       CreateStartMethod();
       CreateCons();
 
-      def members = places;
-      Define(members)//_ = typebuilder.DefineWithSource(m);
+      Define(places)//_ = typebuilder.DefineWithSource(m);
     }
 
-    Define(decl : list[string], pub : bool = false) : void
+    Define(decl : IEnumerable[string], pub : bool = false) : void
     {
       if (pub)
       {

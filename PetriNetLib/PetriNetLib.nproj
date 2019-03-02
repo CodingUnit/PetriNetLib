@@ -113,6 +113,9 @@
     <Compile Include="GenColour.n">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="GenColourCpp.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="GenCppImpl.n">
       <SubType>Code</SubType>
     </Compile>
@@ -123,6 +126,12 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="GenImpl.n">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="GenPlace.n">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="GenPlaceCpp.n">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="GenTran.n">
@@ -174,16 +183,6 @@
     <ProjectReference Include="..\CommonLib.Macros\CommonLib.Macros.nproj">
       <Name>CommonLib.Macros</Name>
       <Project>{5e9cfda7-975a-4ef5-a7e7-b638df3d19f7}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\CppMacro\CppMacro.nproj">
-      <Name>CppMacro</Name>
-      <Project>{89ed5472-dd7b-4c4a-a9be-59d2c5fd2acf}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\CppParserPrinter\CppParserPrinter.nproj">
-      <Name>CppParserPrinter</Name>
-      <Project>{44db92ca-f807-45af-b498-9b87ddc761bd}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\PetriNetModel\PetriNetModel.nproj">

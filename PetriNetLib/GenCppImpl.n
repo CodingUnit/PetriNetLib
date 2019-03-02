@@ -14,8 +14,6 @@ using PetriNetModel;
 using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using CppParserPrinter;
-using CppMacro;
 
 namespace PetriNetLib
 {
@@ -60,6 +58,7 @@ namespace PetriNetLib
       this.model = model;
       this.proc = proc;
       this.converter = proc.Converter;
+      this.places = model.places.Map(x => GenPlaceCpp(x, this));
     }
 
     Name : string
@@ -137,7 +136,7 @@ namespace PetriNetLib
 
     ConvParm(n : string, t : string) : string
     {
-      def col = ColourFromStr(t);
+      def col = colours[t];
       def type = col.ParmType;
       $<#$type$n#>;
     }

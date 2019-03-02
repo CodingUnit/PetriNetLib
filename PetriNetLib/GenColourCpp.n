@@ -3,9 +3,6 @@ using Nemerle.Collections;
 using Nemerle.Text;
 using Nemerle.Utility;
 
-using Nemerle.Compiler;
-using Nemerle.Compiler.Parsetree;
-using Nemerle.Compiler.Typedtree;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,11 +13,11 @@ namespace PetriNetLib
   /// Description of GenColour.
   /// </summary>
   [Record]
-  class GenColour
+  class GenColourCpp
   {
     [Accessor]
     colour : ColourSet;
-    gen : Generator;
+    gen : CppGenerator;
 
     public type : Colour
     {
@@ -127,15 +124,6 @@ namespace PetriNetLib
       }
     }
     
-    public MinusSingle : bool
-    {
-      [Memoize]
-      get
-      {
-        Opts.Exists(_ == "MINUSSINGLE") 
-      }
-    }
-    
     public Push : bool
     {
       [Memoize]
@@ -204,25 +192,24 @@ namespace PetriNetLib
     //  }
     //}
 
-    //public ParmType : string
-    //{
-    //  [Memoize]
-    //  get
-    //  {
-    //    def type = match (DestType)
-    //              {
-    //                | x when x.StartsWith("bytes") => "bytes"
-    //                | x                            => x
-    //              }
-    //    if (IsComplexType) 
-    //    {
-    //      $<#const $type &#> 
-    //    } else $<#$type #>;
-    //  }
-    //}
+    public ParmType : string
+    {
+      [Memoize]
+      get
+      {
+        def type = match (DestType)
+                  {
+                    | x when x.StartsWith("bytes") => "bytes"
+                    | x                            => x
+                  }
+        if (IsComplexType) 
+        {
+          $<#const $type &#> 
+        } else $<#$type #>;
+      }
+    }
     
-    
-    public DestType : PExpr
+    public DestType : string
     {
       [Memoize]
       get
@@ -232,41 +219,51 @@ namespace PetriNetLib
           | Colour.Integer =>
               match (Name)
               {
-                | "SBYTE"  => <[sbyte]>
-                | "BYTE"   => <[ byte ]>
-                | "SHORT"  => <[ short ]>
-                | "INT"    => <[ int ]>
-                | "UINT"   => <[ uint ]>
-                | "USHORT" => <[ ushort]>
+                | "SBYTE"  => "s8"
+                | "BYTE"   => "u8"
+                | "SHORT"  => "short"
+                | "INT"    => "int"
+                | "UINT"   => "u32"
+                | "USHORT" => "u16"
               }
 
           | Colour.Alias(type)
           | Colour.Simple(type) => 
               match (type)
               {
-                | "string" => <[ string ]>
-                | "INT"    => <[ int ]>
-                | "int"    => <[ int ]>
-                | "intinf" => <[ IntInf ]>
-                | "real"   => <[ double ]>
-                | "time"   => <[ long ]>
-                | "bool"   => <[ bool ]>
-                | "unit"   => <[ bool ]>
-                | "SBYTE"  => <[ sbyte ]>
-                | "BYTE"   => <[ byte ]>
-                | "SHORT"  => <[ short ]>
-                | "UINT"   => <[ uint ]>
-                | "USHORT" => <[ ushort ]>
+                | "string" => "char *"//cpp("type: char *")
+                | "int"    => "int"//cpp("type: int")
+                | "intinf" => "long long"//cpp("type: int")
+                | "real"   => "float"//cpp("type: float")
+                | "time"   => "int"//cpp("type: int")
+                | "bool"   => "bool"//cpp("type: bool")
+                | "unit"   => "char"//cpp("type: Unit")
+                | "SBYTE"  => "s8"
+                | "BYTE"   => "u8"
+                | "SHORT"  => "short"
+                | "INT"    => "int"
+                | "UINT"   => "u32"
+                | "USHORT" => "u16"
                 | str      => get_type(gen.Proc.colour_sets[str].type)
               }
-          | Unit(None())  => <[bool]>//cpp("type: Unit")
-          | Unit(Some(t)) => <[ $(t : usesite) ]>//cpp("type: $t")
+          | Unit(None())  => "char"//cpp("type: Unit")
+          | Unit(Some(t)) => t//cpp("type: $t")
       //| Product(vals) => def vals = vals.Map(TypeFromStr);
       //                  $<#type: tuple2<..$vals>#>//cpp(<#type: tuple2<..$vals>#>)
-          | List(t, _r)    => def inner = gen.Colours[t].DestType;
-                             <[ list[$inner]]>
+          | List(t, r)    => match (t)
+              {
+                | "INT"
+                | "SHORT"
+                | "USHORT"
+                | "BYTE"   => if (r is Some((mn, mx))) 
+                              {
+                                def diff = mx - mn + 1;
+                                $"bytes$diff" 
+                              } else "bytesn"
+                | _ => null               
+              }
           | Timed(p) => p |> get_type
-          | _        => <[ $(Name : usesite) ]>//cpp("type: $n")
+          | _        => Name//cpp("type: $n")
                         //cpp("type: $(inner : type) *")
 
         }

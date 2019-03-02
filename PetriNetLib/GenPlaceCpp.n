@@ -13,22 +13,22 @@ namespace PetriNetLib
   /// Description of GenPlace.
   /// </summary>
   [Record]
-  class GenPlace : Place
+  class GenPlaceCpp : Place
   {
-    gen : Generator;
+    gen : CppGenerator;
     
-    public this(pl : Place, gen : Generator)
+    public this(pl : Place, gen : CppGenerator)
     {
       base(pl.idx, pl.id, pl.name, pl.colour, pl.init_mark, pl.tree, pl.net);
       this.gen = gen;
     }
     
-    public Colour : GenColour
+    public Colour : GenColourCpp
     {
       [Memoize]
       get
       {
-        GenColour(colour, gen)
+        GenColourCpp(colour, gen)
       }
     }
     
@@ -76,7 +76,6 @@ namespace PetriNetLib
                                if (Colour.Var) TDestCont.Var else
                                if (Colour.Single) TDestCont.Single else
                                if (Colour.Req) TDestCont.ReqContainer else
-                               if (Colour.MinusSingle) TDestCont.MinusSingle else
                                if (Colour.ZeroSingle) TDestCont.ZeroSingle else TDestCont.RandomEnumerable
                              }
 

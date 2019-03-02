@@ -24,11 +24,11 @@ namespace PetriNetLib
   {
     
     
-    CreatePlace(place : Place) : ClassMember
+    CreatePlace(place : GenPlace) : ClassMember
     {
       def name = place.Name;
       //def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
-      def type = GetTypeExpr(place.colour);
+      def type = place.Colour.DestType;//GetTypeExpr(place.colour);
       def dest_cont = match (place.DestContainerType)
       {
         | TDestCont.MultiSet  => <[ MultiSet() ]>
@@ -36,10 +36,28 @@ namespace PetriNetLib
         | SortedSet           => <[ SortedArray() ]>
         | TokenQueue          => <[ TokenQueue() ]>
         | TimedSimpleMultiset => <[ TimedHeap() ]>
+        | ZeroSingle
+        | MinusSingle
+        | Var
+        | Single              => <[ $type ]>
+        | ReqContainer        => <[ ReqTokens ]>
       }
-      if (place.IsTimed)
-      <[decl: $(name : usesite) : PetriNetModel.TimedPlace.[$type] = PetriNetModel.TimedPlace($(name : string), $dest_cont)]> else
-      <[decl: $(name : usesite) : PetriNetModel.Place.[$type] = PetriNetModel.Place($(name : string), $dest_cont)]>
+      match (place.DestContainerType)
+      {
+        | TDestCont.MultiSet  
+        | RandomEnumerable    
+        | SortedSet           
+        | TokenQueue          
+        | TimedSimpleMultiset => 
+            if (place.IsTimed)
+            <[decl: $(name : usesite) : PetriNetModel.TimedPlace.[$type] = PetriNetModel.TimedPlace($(name : string), $dest_cont)]> else
+            <[decl: $(name : usesite) : PetriNetModel.Place.[$type] = PetriNetModel.Place($(name : string), $dest_cont)]>
+        | ZeroSingle
+        | MinusSingle
+        | Var
+        | Single              => <[decl: $(name : usesite) : $type ]>
+        | ReqContainer        => <[decl: $(name : usesite) : ReqTokens ]>
+      }
     }
     
     
@@ -154,7 +172,7 @@ namespace PetriNetLib
       | _ => null    
     }
     
-    TypeDecl(new_n : string, n : string) : ClassMember.TypeDeclaration
+    internal TypeDecl(new_n : string, n : string) : ClassMember.TypeDeclaration
     {
       def name = Macros.UseSiteSymbol(n);
       def mods = AttributesAndModifiers(NemerleModifiers.Private, []);
@@ -168,7 +186,7 @@ namespace PetriNetLib
                                                  {
                                                    TypeDecl(new_name, n)
                                                  }// else null
-      | ColourSet(n, Colour.Record(vals))     => def fields = vals.Map((n, t) => (n, TypeFromStr(t)));
+      | ColourSet(n, Colour.Record(vals))     => def fields = vals.Map((n, t) => (n, colours[t].DestType));
                                                  def fields = fields.Map((n, t) => <[decl: public $(n : usesite) : $t]>);
                                                  <[decl: [Record] class $(n : usesite)
                                                          {
@@ -408,12 +426,17 @@ namespace PetriNetLib
     {      
       //CreateOperators();
       //assert2(false);
+    // создаем типы генерации из цветов
+      foreach (c in model.colour_sets)
+      {
+        colours.Add(c.Key, c.Value |> GenColour(_, this))
+      }
       def sets = model.colour_sets.Values.Map(CreateColourSet).Filter(_ != null);
       def sets2 = model.colour_sets.Values.Map(CreateColourSet2).Filter(_ != null);
       def sets = sets + sets2;
       foreach (m in sets) typebuilder.DefineNestedTypeWithSource(m).Compile();
       
-      def places = model.places.MapToList(CreatePlace);      
+      def places = places.MapToList(CreatePlace);      
       
       when (model.IsTimed) CreateTimeMethods();
       CreateStepMethod();

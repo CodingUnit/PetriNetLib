@@ -68,18 +68,6 @@
   <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\CppParserPrinter\CppParserPrinter.nproj">
-      <Name>CppParserPrinter</Name>
-      <Project>{44db92ca-f807-45af-b498-9b87ddc761bd}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\CppParser\CppParser.nproj">
-      <Name>CppParser</Name>
-      <Project>{f5786dc6-5865-42ff-8d7e-526fb753821f}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(Nemerle)\Nemerle.MSBuild.targets" />
   <!--
 		To modify your build process, add your task inside one of the targets below and uncomment it. 
