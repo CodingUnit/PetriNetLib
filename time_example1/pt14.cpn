@@ -5367,7 +5367,7 @@
       <trans id="ID1417259257"
              explicit="false">
         <posattr x="-462.000000"
-                 y="-650.000000"/>
+                 y="-605.000000"/>
         <fillattr colour="White"
                   pattern=""
                   filled="false"/>
@@ -5383,7 +5383,7 @@
                  y="-3.000000"/>
         <cond id="ID1417980126">
           <posattr x="-501.000000"
-                   y="-619.000000"/>
+                   y="-574.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -5397,7 +5397,7 @@
         </cond>
         <time id="ID1417259259">
           <posattr x="-417.500000"
-                   y="-619.000000"/>
+                   y="-574.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -5411,7 +5411,7 @@
         </time>
         <code id="ID1417259260">
           <posattr x="-397.500000"
-                   y="-702.000000"/>
+                   y="-657.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -5425,7 +5425,7 @@
         </code>
         <priority id="ID1417259262">
           <posattr x="-530.000000"
-                   y="-681.000000"/>
+                   y="-636.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -6822,7 +6822,7 @@ action(EXT_can_process(cm));</text>
         <placeend idref="ID1417186646"/>
         <annot id="ID1417264707">
           <posattr x="-420.500000"
-                   y="-703.000000"/>
+                   y="-681.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -7816,7 +7816,7 @@ action(EXT_can_process(cm));</text>
         <placeend idref="ID1417186466"/>
         <annot id="ID1417909688">
           <posattr x="-471.500000"
-                   y="-553.000000"/>
+                   y="-531.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -9496,9 +9496,9 @@ action(EXT_can_process(cm));</text>
                  height="1027">
         <sheets>
           <cpnsheet id="ID1417185260"
-                    panx="-19.882469"
-                    pany="-466.480228"
-                    zoom="0.805664"
+                    panx="319.896914"
+                    pany="-23.100285"
+                    zoom="1.007080"
                     instance="ID1417185244">
             <zorder>
               <position value="0"/>
