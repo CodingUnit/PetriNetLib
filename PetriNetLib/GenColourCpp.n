@@ -209,6 +209,15 @@ namespace PetriNetLib
       }
     }
     
+    public IsUnit : bool
+    {
+      [Memoize]
+      get
+      {
+        Name == "UNIT" || colour.type is Colour.Unit 
+      }
+    }
+    
     public DestType : string
     {
       [Memoize]
@@ -225,9 +234,20 @@ namespace PetriNetLib
                 | "INT"    => "int"
                 | "UINT"   => "u32"
                 | "USHORT" => "u16"
+                | _        => "int"
               }
 
-          | Colour.Alias(type)
+          | Colour.Alias(type)  => 
+              match (Name)
+              {
+                | "SBYTE"  => "s8"
+                | "BYTE"   => "u8"
+                | "SHORT"  => "short"
+                | "INT"    => "int"
+                | "UINT"   => "u32"
+                | "USHORT" => "u16"
+                | _        => get_type(gen.Proc.colour_sets[type].type)
+              }
           | Colour.Simple(type) => 
               match (type)
               {

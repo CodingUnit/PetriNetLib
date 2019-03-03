@@ -60,21 +60,88 @@ namespace PetriNetLib
       [Memoize]
       get
       {
-        def loop(name, res)
+        def start_idx = name.IndexOf("[");
+        def end_idx = name.IndexOf("]");
+        if (start_idx != -1 && end_idx != -1)
         {
-          def start_idx = name.IndexOf("]");
-          if (start_idx != -1)
-          {
-            def idx = name.IndexOf("]");
-            def attr = name.Substring(start_idx, idx - start_idx);
-            loop(name.Substring(idx + 1), attr :: res)
-          } else res
-        }
-
-        loop(name, [])
+          def str = name.Substring(start_idx + 1, end_idx - start_idx - 1);
+          str.Split(',').NToList()
+        } else []
       }
     }
 
+    public Req : bool
+    {
+      [Memoize]
+      get
+      {
+        Attributes.Exists(_ == "REQ")
+      }
+    }
+
+    public ZeroSingle : bool
+    {
+      [Memoize]
+      get
+      {
+        Attributes.Exists(_ == "ZEROSINGLE") 
+      }
+    }
+    
+    public Push : bool
+    {
+      [Memoize]
+      get
+      {
+        Attributes.Exists(_ == "PUSH") 
+      }
+    }
+    
+    public Cached : bool
+    {
+      [Memoize]
+      get
+      {
+        Attributes.Exists(_ == "CACHED")
+      }
+    }
+
+    public Var : bool
+    {
+      [Memoize]
+      get
+      {
+        Attributes.Exists(_ == "VAR")
+      }
+    }
+
+    public Single : bool
+    {
+      [Memoize]
+      get
+      {
+        Attributes.Exists(_ == "SINGLE")
+      }
+    }
+
+    public Queue : bool
+    {
+      [Memoize]
+      get
+      {
+        Attributes.Exists(_ == "QUEUE")
+      }
+    }
+
+    public Sorted : bool
+    {
+      [Memoize]
+      get
+      {
+        Attributes.Exists(_ == "SORTED")
+      }
+    }
+    
     public IsTimed : bool
     {
       [Memoize]

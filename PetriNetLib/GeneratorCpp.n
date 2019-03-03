@@ -209,7 +209,7 @@ namespace PetriNetLib
                        }
       def flag = match (dtype)
       {
-        | Single              => $"$(name)_flag"
+        | Single              => if (place.Colour.IsUnit) "" else $"$(name)_flag"
         | _                   => ""
       }
       def deflt = match (dtype)
@@ -703,7 +703,7 @@ namespace PetriNetLib
       //CreateTranQueue();
       //CreateToString();
       CreateStartMethod();
-      CreateCons();
+      
 
       Define(places)//_ = typebuilder.DefineWithSource(m);
     }
@@ -753,6 +753,7 @@ namespace PetriNetLib
     public PhaseTwo() : void
     {
       //CreateDummyMethod();
+      CreateCons();
       def methods = model.transitions.MapToList(CreateTran);
       def vals = model.ml_decls.Map(CreateVals).Filter(_ != null);
       Define(vals);//_ = typebuilder.DefineWithSource(m);
