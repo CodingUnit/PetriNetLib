@@ -1,805 +1,787 @@
 class pt14 : public timed_petri_net
 {
-  typedef char UNIT;
+	typedef char UNIT;
 
-  typedef bool BOOL;
+	typedef bool BOOL;
 
-  typedef int INT;
+	typedef int INT;
 
-  typedef intinf INTINF;
+	typedef intinf INTINF;
 
-  typedef time TIME;
+	typedef time TIME;
 
-  typedef short SHORT;
+	typedef short SHORT;
 
-  typedef real REAL;
+	typedef real REAL;
 
-  typedef u8 BYTE;
+	typedef u8 BYTE;
 
-  typedef UNIT VAR__UNIT_TIMED;
+	typedef UNIT VAR__UNIT_TIMED;
 
-  typedef INT UINT;
+	typedef INT UINT;
 
-  typedef UNIT SINGLE__UNIT;
+	typedef UNIT SINGLE__UNIT;
 
-  struct TSYNC
-  {
-    TSYNC(int field1, bool field2)
-    {
-      this->field1 = field1;
-      this->field2 = field2;
-    }
+	struct TSYNC
+	{
+		TSYNC(int field1, bool field2)
+		{
+			this->field1 = field1;
+			this->field2 = field2;
+		}
 
-    int field1;
-    bool field2;
-  };
+		int field1;
+		bool field2;
+	};
 
-  typedef INT SINGLE__INT;
+	typedef INT SINGLE__INT;
 
-  typedef INTINF LONGTIME;
+	typedef INTINF LONGTIME;
 
-  struct SINGLE__INTxINT
-  {
-    SINGLE__INTxINT(int field1, int field2)
-    {
-      this->field1 = field1;
-      this->field2 = field2;
-    }
+	struct SINGLE__INTxINT
+	{
+		SINGLE__INTxINT(int field1, int field2)
+		{
+			this->field1 = field1;
+			this->field2 = field2;
+		}
 
-    int field1;
-    int field2;
-  };
+		int field1;
+		int field2;
+	};
 
-  typedef INT QUEUE__INT;
+	typedef INT QUEUE__INT;
 
-  typedef INT ZEROSINGLE__TIMED_INT;
+	typedef INT ZEROSINGLE__TIMED_INT;
 
-  typedef BYTE SINGLE__BYTE;
+	typedef BYTE SINGLE__BYTE;
 
-  typedef INT USHORT;
-
-
-
-  struct STRING
-  {
-    STRING(int field1, const bytes &field2)
-    {
-      this->field1 = field1;
-      this->field2 = field2;
-    }
-
-    int field1;
-    bytesn field2;
-  };
-
-  typedef INT REQ__INT;
+	typedef INT USHORT;
 
 
 
-  typedef INT VAR_PUSH__BYTE;
+	struct STRING
+	{
+		STRING(int field1, const bytes &field2)
+		{
+			this->field1 = field1;
+			this->field2 = field2;
+		}
 
-  typedef BYTES SINGLE__BYTES;
+		int field1;
+		bytesn field2;
+	};
 
-  typedef INT VAR__UINT;
-
-  struct CAN_MESSAGE
-  {
-    CAN_MESSAGE(int field1, long long field2, const bytes &field3)
-    {
-      this->field1 = field1;
-      this->field2 = field2;
-      this->field3 = field3;
-    }
-
-    int field1;
-    long long field2;
-    bytes8 field3;
-  };
-
-  typedef BOOL VAR_PUSH__BOOL;
-
-  typedef UNIT SINGLE__TIMED_VOID;
-
-  struct CAN_UDP_MESSAGE
-  {
-    CAN_UDP_MESSAGE(int COUNT, int ID, long long timestamp, const bytes &data)
-    {
-      this->COUNT = COUNT;
-      this->ID = ID;
-      this->timestamp = timestamp;
-      this->data = data;
-    }
-    int COUNT;
-    int ID;
-    long long timestamp;
-    bytesn data;
-  };
+	typedef INT REQ__INT;
 
 
 
-  typedef INT MINUS_SINGLE_INT;
+	typedef INT VAR_PUSH__BYTE;
 
-  typedef INT VAR__INT;
+	typedef BYTES SINGLE__BYTES;
+
+	typedef INT VAR__UINT;
+
+	struct CAN_MESSAGE
+	{
+		CAN_MESSAGE(int field1, long long field2, const bytes &field3)
+		{
+			this->field1 = field1;
+			this->field2 = field2;
+			this->field3 = field3;
+		}
+
+		int field1;
+		long long field2;
+		bytes8 field3;
+	};
+
+	typedef BOOL VAR_PUSH__BOOL;
+
+	typedef UNIT SINGLE__TIMED_VOID;
+
+	struct CAN_UDP_MESSAGE
+	{
+		CAN_UDP_MESSAGE(int COUNT, int ID, long long timestamp, const bytes &data)
+		{
+			this->COUNT = COUNT;
+			this->ID = ID;
+			this->timestamp = timestamp;
+			this->data = data;
+		}
+		int COUNT;
+		int ID;
+		long long timestamp;
+		bytesn data;
+	};
 
 
 
-  typedef STRING DEBUG_INFO;
+	typedef INT MINUS_SINGLE_INT;
 
-  struct CAN_RESULT
-  {
-    CAN_RESULT(const CAN_MESSAGE &field1, bool field2)
-    {
-      this->field1 = field1;
-      this->field2 = field2;
-    }
+	typedef INT VAR__INT;
 
-    CAN_MESSAGE field1;
-    bool field2;
-  };
 
-  int get_next_time()
-  {
 
-    int min = 0xFFFFFFFF;
-    min = math_utils::min(min, DELAY.NextTokenDelay);
-    min = math_utils::min(min, BinTimer.NextTokenDelay);
-    min = math_utils::min(min, SyncFreq.NextTokenDelay);
-    min = math_utils::min(min, TempTimer.NextTokenDelay);
-    min = math_utils::min(min, TIMER.NextTokenDelay);
-    min = math_utils::min(min, DEBUG_TIMER.NextTokenDelay); ;
-    return min;
-    ;
-  }
-  void time_step()
-  {
-    UnnamedTransition0(), UnnamedTransition1(), UnnamedTransition2(), UnnamedTransition3(), UnnamedTransition4(), UnnamedTransition5();
-  }
-  bool DPS;
-  int SYNC;
-  req_tokens SSI;
-  req_tokens TEMP;
-  u8 BUTTONS;
-  CAN_UDP_MESSAGE UDP_IN;
-  bool UDP_IN_flag = false;
-  token_queue CAN;
-  token_queue UDP_SEND;
-  CAN_MESSAGE CAN_IN;
-  bool CAN_IN_flag = false;
-  random_array GPS;
-  random_array SEND_DEBUG;
-  char SYNC_BUF;
-  timed_heap DELAY;
-  timed_heap BinTimer;
-  timed_heap SyncFreq;
-  timed_heap TempTimer;
-  char SEND_SENS;
-  INTxINT BatLevel;
-  bool BatLevel_flag = false;
-  req_tokens ADC;
-  timed_heap TIMER;
-  INTxINT ADC_SUM;
-  bool ADC_SUM_flag = false;
-  timed_heap DEBUG_TIMER;
-  multi_set UDP_OUT;
-  u16 COUNTER;
-  token_queue UDP_AND_CAN_SEND;
-  multi_set CAN_OUT;
-  static const int P_LOW = 10000;
-  static const int P_NORMAL = 1000;
-  static const int P_HIGH = 100;
-  CAN_UDP_MESSAGE  can2udp(const CAN_MESSAGE &m, int c)
-  {
-    return CAN_UDP_MESSAGE(c, m.field1, m.field2, m.field3);
-  }
+	typedef STRING DEBUG_INFO;
 
-  CAN_MESSAGE  udp2can(const CAN_UDP_MESSAGE &m)
-  {
-    return CAN_MESSAGE(m.ID, m.timestamp, m.data);
-  }
+	struct CAN_RESULT
+	{
+		CAN_RESULT(const CAN_MESSAGE &field1, bool field2)
+		{
+			this->field1 = field1;
+			this->field2 = field2;
+		}
 
-  CAN_MESSAGE  bt2can_message(int bt)
-  {
-    u8 _N__4538[] = { (BYTE)1, bt };
-    return CAN_MESSAGE(721, IntInf.fromInt(0), byte2(_N__4538));
-  }
+		CAN_MESSAGE field1;
+		bool field2;
+	};
 
-  bool is_sens(const CAN_UDP_MESSAGE &m)
-  {
-    return m.ID == 663;
-  }
+	int get_next_time()
+	{
 
-  bool is_control(const CAN_UDP_MESSAGE &m)
-  {
-    return m.ID == 80;
-  }
+		int min = 0xFFFFFFFF;
+		min = math_utils::min(min, DELAY.NextTokenDelay);
+		min = math_utils::min(min, BinTimer.NextTokenDelay);
+		min = math_utils::min(min, SyncFreq.NextTokenDelay);
+		min = math_utils::min(min, TempTimer.NextTokenDelay);
+		min = math_utils::min(min, TIMER.NextTokenDelay);
+		min = math_utils::min(min, DEBUG_TIMER.NextTokenDelay); ;
+		return min;
+		;
+	}
+	void time_step()
+	{
+		UnnamedTransition0(), UnnamedTransition1(), UnnamedTransition2(), UnnamedTransition3(), UnnamedTransition4(), UnnamedTransition5();
+	}
+	bool DPS;
+	int SYNC;
+	req_tokens SSI;
+	req_tokens TEMP;
+	u8 BUTTONS;
+	CAN_UDP_MESSAGE UDP_IN;
+	bool UDP_IN_flag = false;
+	token_queue CAN;
+	random_array UDP_SEND;
+	CAN_MESSAGE CAN_IN;
+	bool CAN_IN_flag = false;
+	random_array GPS;
+	random_array SEND_DEBUG;
+	char SYNC_BUF;
+	timed_heap DELAY;
+	timed_heap BinTimer;
+	timed_heap SyncFreq;
+	timed_heap TempTimer;
+	char SEND_SENS;
+	INTxINT BatLevel;
+	bool BatLevel_flag = false;
+	req_tokens ADC;
+	timed_heap TIMER;
+	INTxINT ADC_SUM;
+	bool ADC_SUM_flag = false;
+	timed_heap DEBUG_TIMER;
+	multi_set UDP_OUT;
+	u16 COUNTER;
+	random_array UDP_AND_CAN_SEND;
+	CAN_RESULT CAN_OUT;
+	bool CAN_OUT_flag = false;
+	static const int P_LOW = 10000;
+	static const int P_NORMAL = 1000;
+	static const int P_HIGH = 100;
+	CAN_UDP_MESSAGE  can2udp(const CAN_MESSAGE &m, int c)
+	{
+		return CAN_UDP_MESSAGE(c, m.field1, m.field2, m.field3);
+	}
+
+	CAN_MESSAGE  udp2can(const CAN_UDP_MESSAGE &m)
+	{
+		return CAN_MESSAGE(m.ID, m.timestamp, m.data);
+	}
+
+	CAN_MESSAGE  bt2can_message(int bt)
+	{
+		u8 _N__4527[] = { (BYTE)1, bt };
+		return CAN_MESSAGE(721, IntInf.fromInt(0), byte2(_N__4527));
+	}
+
+	bool is_sens(const CAN_UDP_MESSAGE &m)
+	{
+		return m.ID == 663;
+	}
+
+	bool is_control(const CAN_UDP_MESSAGE &m)
+	{
+		return m.ID == 80;
+	}
 
 
 public:
 
-  void step()
-  {
-    UnnamedTransition6()
-      UnnamedTransition7()
-      UnnamedTransition8()
-      UnnamedTransition9()
-      UnnamedTransition10()
-      UnnamedTransition11()
-      UnnamedTransition12()
-      UnnamedTransition13()
-      UnnamedTransition14()
-      UnnamedTransition15()
-      UnnamedTransition16()
-      UnnamedTransition17()
-      UnnamedTransition18()
-      UnnamedTransition19()
-  }
-  pt14(int time_step = 15)
-  {
-    timed_petri_net(time_step);
-    DPS.add(false);
-    SYNC.add(0);
-    SSI.add(byte0(_N__4524));
-    TEMP.add(0);
-    BUTTONS.add(0);
-    [SINGLE]UDP_IN.add();
-    [QUEUE]CAN.add();
-    [QUEUE]UDP_SEND.add();
-    [SINGLE]CAN_IN.add();
-    GPS.add();
-    SEND_DEBUG.add();
-    SYNC_BUF.add();
-    DELAY.add(add_time('u', 0););
-    BinTimer.add(add_time(at_time('u', 1000000), 0););
-    SyncFreq.add(add_time(, 0););
-    TempTimer.add(add_time(at_time('u', 500000), 0););
-    SEND_SENS.add();
-    BatLevel.add();
-    ADC.add();
-    TIMER.add(add_time(at_time('u', 0), 0););
-    ADC_SUM.add(tuple2(0, 0));
-    DEBUG_TIMER.add(add_time(at_time('u', 0), 0););
-    UDP_OUT.add();
-    [VAR]COUNTER.add(0);
-    [QUEUE]UDP_AND_CAN_SEND.add();
-    CAN_OUT.add();
-
-  }
-  void UnnamedTransition6()
-  {
-    if (lock(UnnamedTransition6))
-    {
-
-      if (GPS.have_tokens())
-      {
-        int s_idx;
-        STRING s = GPS.peek_indexed(s_idx);
-        GPS.get_indexed(s_idx);
-
-        [QUEUE]UDP_SEND.add(tuple3(256, get_time(), s.field2));
-        OnUnnamedTransition6()
-      }
-      ;
-      unlock();
-    }
-  }
-
-  void UnnamedTransition7()
-  {
-    if (lock(UnnamedTransition7))
-    {
-
-      if ([SINGLE]UDP_IN.have_tokens())
-      {
-        int m_idx;
-        CAN_UDP_MESSAGE m = [SINGLE]UDP_IN.peek_indexed(m_idx);
-        if (is_control(m))
-        {
-          [SINGLE]UDP_IN.get_indexed(m_idx);
-
-          [QUEUE]UDP_SEND.add(get_control_msg(m));
-        }
-        OnUnnamedTransition7()
-      }
-      ;
-      unlock();
-    }
-  }
-
-  void UnnamedTransition8()
-  {
-    if (lock(UnnamedTransition8))
-    {
-
-      if ([SINGLE]UDP_IN.have_tokens())
-      {
-        int m_idx;
-        CAN_UDP_MESSAGE m = [SINGLE]UDP_IN.peek_indexed(m_idx);
-        [SINGLE]UDP_IN.get_indexed(m_idx);
-
-        [QUEUE]CAN.add(udp2can(m));
-        OnUnnamedTransition8()
-      }
-      ;
-      unlock();
-    }
-  }
-
-  void UnnamedTransition9()
-  {
-    if (lock(UnnamedTransition9))
-    {
-
-      if ([SINGLE]CAN_IN.have_tokens())
-      {
-        int cm_idx;
-        CAN_MESSAGE cm = [SINGLE]CAN_IN.peek_indexed(cm_idx);
-        [SINGLE]CAN_IN.get_indexed(cm_idx);
-        can_process(cm)
-          [QUEUE]UDP_SEND.add(cm);
-        OnUnnamedTransition9()
-      }
-      ;
-      unlock();
-    }
-  }
-
-  void DPS()
-  {
-    if (lock(DPS))
-    {
-
-      ; ;
-
-      if (SSI.have_tokens())
-      {
-        int ssi_idx;
-        bytesn ssi = SSI.peek_indexed(ssi_idx);
-
-        if (SYNC.have_tokens())
-        {
-          int n_idx;
-          int n = SYNC.peek_indexed(n_idx);
-
-          if (DPS.have_tokens())
-          {
-            int dir_idx;
-            bool dir = DPS.peek_indexed(dir_idx);
-            DPS.get_indexed(dir_idx);
-            SYNC.get_indexed(n_idx);
-            SSI.get_indexed(ssi_idx);
-            DELAY.get_all()
-
-              SYNC.add(n + 1);
-            [QUEUE]UDP_SEND.add(tuple3(663, get_time(), get_ssi_bytes(n, dir, 1, ssi)));
-            SYNC_BUF.add(unit.instance());
-            OnDPS()
-          }
-
-        }
-
-      }
-
-      ;
-      unlock();
-    }
-  }
-
-  void UnnamedTransition0()
-  {
-    if (lock(UnnamedTransition0))
-    {
-
-      if (DEBUG_TIMER.have_tokens())
-      {
-        ; ;
-
-        if (SEND_DEBUG.have_tokens())
-        {
-          int d_idx;
-          DEBUG_INFO d = SEND_DEBUG.peek_indexed(d_idx);
-          SEND_DEBUG.get_indexed(d_idx);
-          DEBUG_TIMER.get();
-
-          [QUEUE]UDP_SEND.add(tuple3(0, get_time(), d.field2));
-          DEBUG_TIMER.add(add_time(unit.instance(), 333000));
-          OnUnnamedTransition0()
-        }
-
-      }
-      ;
-      unlock();
-    }
-  }
-
-  void UnnamedTransition10()
-  {
-    if (lock(UnnamedTransition10))
-    {
-
-      if (SYNC_BUF.have_tokens())
-      {
-
-        SYNC_BUF.get();
-
-        DELAY.add(add_time(unit.instance(), 0));
-        OnUnnamedTransition10()
-      }
-      ;
-      unlock();
-    }
-  }
-
-  void UnnamedTransition11()
-  {
-    if (lock(UnnamedTransition11))
-    {
-
-      if (SEND_SENS.have_tokens())
-      {
-
-
-        if (SSI.have_tokens())
-        {
-          int ssi_idx;
-          bytesn ssi = SSI.peek_indexed(ssi_idx);
-
-          if (SYNC.have_tokens())
-          {
-            int n_idx;
-            int n = SYNC.peek_indexed(n_idx);
-
-            if (DPS.have_tokens())
-            {
-              int dir_idx;
-              bool dir = DPS.peek_indexed(dir_idx);
-              DPS.get_indexed(dir_idx);
-              SYNC.get_indexed(n_idx);
-              SSI.get_indexed(ssi_idx);
-              SEND_SENS.get();
-
-              [QUEUE]UDP_SEND.add(tuple3(663, get_time(), get_ssi_bytes(n, dir, 0, ssi)));
-              OnUnnamedTransition11()
-            }
-
-          }
-
-        }
-
-      }
-      ;
-      unlock();
-    }
-  }
-
-  void UnnamedTransition1()
-  {
-    if (lock(UnnamedTransition1))
-    {
-
-      if (BatLevel.have(IEnumerable[(bt, n)]))
-      {
-
-
-        if (BinTimer.have_tokens())
-        {
-          ; ;
-
-          if (BUTTONS.have_tokens())
-          {
-            int inp_idx;
-            int inp = BUTTONS.peek_indexed(inp_idx);
-            BUTTONS.get_indexed(inp_idx);
-            BinTimer.get();
-            BatLevel.get((bt, n));
-
-            BinTimer.add(add_time(unit.instance(), 1000000));
-            [QUEUE]UDP_AND_CAN_SEND.add(tuple3(336, get_time(), (_N__4536)));
-            [QUEUE]UDP_AND_CAN_SEND.add(tuple3(721, get_time(), (_N__4537)));
-            OnUnnamedTransition1()
-          }
-
-        }
-
-      }
-      ;
-      unlock();
-    }
-  }
-
-  void UnnamedTransition2()
-  {
-    if (lock(UnnamedTransition2))
-    {
-
-      if (SyncFreq.have_tokens())
-      {
-        int freq_idx;
-        int SyncFreq_tok = SyncFreq.peek_indexed(freq);; int freq = SyncFreq_tok;;
-        SyncFreq.get_indexed(freq_idx);
-
-        SYNC.add(0);
-        SyncFreq.add(add_time(freq(Delay(/ (1000000, freq))), 0));
-        OnUnnamedTransition2()
-      }
-      ;
-      unlock();
-    }
-  }
-
-  void UnnamedTransition3()
-  {
-    if (lock(UnnamedTransition3))
-    {
-
-      if (TempTimer.have_relative_time(unit.instance(), 500000))
-      {
-        ; ;
-
-        if (TEMP.have_tokens())
-        {
-          int n_idx;
-          int n = TEMP.peek_indexed(n_idx);
-          TEMP.get_indexed(n_idx);
-          TempTimer.get_relative_time(unit.instance(), 500000);
-
-          TempTimer.add(add_time(unit.instance(), 0));
-          [QUEUE]UDP_AND_CAN_SEND.add(tuple3(721, get_time(), list.Cons(51, IntToList(n))));
-          OnUnnamedTransition3()
-        }
-
-      }
-      ;
-      unlock();
-    }
-  }
-
-  void UnnamedTransition12()
-  {
-    if (lock(UnnamedTransition12))
-    {
-
-      if ([SINGLE]UDP_IN.have_tokens())
-      {
-        int m_idx;
-        CAN_UDP_MESSAGE m = [SINGLE]UDP_IN.peek_indexed(m_idx);
-        if (is_sens(m))
-        {
-          [SINGLE]UDP_IN.get_indexed(m_idx);
-
-          SEND_SENS.add(unit.instance());
-        }
-        OnUnnamedTransition12()
-      }
-      ;
-      unlock();
-    }
-  }
-
-  void UnnamedTransition4()
-  {
-    if (lock(UnnamedTransition4))
-    {
-
-      if (DELAY.have_relative_time(unit.instance(), 200000))
-      {
-        ; ;
-        DELAY.get_relative_time(unit.instance(), 200000);
-
-        DELAY.add(add_time(unit.instance(), 0));
-        SEND_SENS.add(unit.instance());
-        OnUnnamedTransition4()
-      }
-      ;
-      unlock();
-    }
-  }
-
-  void BUTTONS()
-  {
-    if (lock(BUTTONS))
-    {
-
-      if (BUTTONS.have_tokens())
-      {
-        int bt_idx;
-        u8 bt = BUTTONS.peek_indexed(bt_idx);
-        BUTTONS.get_indexed(bt_idx);
-
-        [QUEUE]UDP_AND_CAN_SEND.add(bt2can_message(bt));
-        OnBUTTONS()
-      }
-      ;
-      unlock();
-    }
-  }
-
-  void UnnamedTransition5()
-  {
-    if (lock(UnnamedTransition5))
-    {
-
-      if (ADC_SUM.have(IEnumerable[(sum, n)]))
-      {
-
-
-        if (TIMER.have_tokens())
-        {
-          ; ;
-
-          if (ADC.have_tokens())
-          {
-            int q_idx;
-            int q = ADC.peek_indexed(q_idx);
-            if (< (n, 10))
-            {
-              ADC.get_indexed(q_idx);
-              TIMER.get();
-              ADC_SUM.get((sum, n));
-
-              TIMER.add(add_time(unit.instance(), 50000));
-              ADC_SUM.add(tuple2(sum + q, n + 1));
-            }
-            OnUnnamedTransition5()
-          }
-
-        }
-
-      }
-      ;
-      unlock();
-    }
-  }
-
-  void UnnamedTransition13()
-  {
-    if (lock(UnnamedTransition13))
-    {
-
-      if (ADC_SUM.have(IEnumerable[(sum, n)]))
-      {
-
-        if (>= (n, 10))
-        {
-          ADC_SUM.get((sum, n));
-
-          BatLevel.add(adc2bat(sum(div(n))));
-          ADC_SUM.add(tuple2(0, 0));
-        }
-        OnUnnamedTransition13()
-      }
-      ;
-      unlock();
-    }
-  }
-
-  void UnnamedTransition14()
-  {
-    if (lock(UnnamedTransition14))
-    {
-
-      if ([VAR]COUNTER.have_tokens())
-      {
-        int n_idx;
-        int n = [VAR]COUNTER.peek_indexed(n_idx);
-
-        if ([QUEUE]UDP_SEND.have_tokens())
-        {
-          int cm_idx;
-          CAN_MESSAGE cm = [QUEUE]UDP_SEND.peek_indexed(cm_idx);
-          [QUEUE]UDP_SEND.get_indexed(cm_idx);
-          [VAR]COUNTER.get_indexed(n_idx);
-
-          UDP_OUT.add(can2udp(cm, n));
-          [VAR]COUNTER.add(n + 1);
-          OnUnnamedTransition14()
-        }
-
-      }
-      ;
-      unlock();
-    }
-  }
-
-  void UnnamedTransition15()
-  {
-    if (lock(UnnamedTransition15))
-    {
-
-      if ([QUEUE]UDP_AND_CAN_SEND.have_tokens())
-      {
-        int cm_idx;
-        CAN_MESSAGE cm = [QUEUE]UDP_AND_CAN_SEND.peek_indexed(cm_idx);
-        [QUEUE]UDP_AND_CAN_SEND.get_indexed(cm_idx);
-
-        [QUEUE]UDP_SEND.add(cm);
-        OnUnnamedTransition15()
-      }
-      ;
-      unlock();
-    }
-  }
-
-  void UnnamedTransition16()
-  {
-    if (lock(UnnamedTransition16))
-    {
-
-      if ([QUEUE]UDP_AND_CAN_SEND.have_tokens())
-      {
-        int cm_idx;
-        CAN_MESSAGE cm = [QUEUE]UDP_AND_CAN_SEND.peek_indexed(cm_idx);
-        [QUEUE]UDP_AND_CAN_SEND.get_indexed(cm_idx);
-
-        [QUEUE]CAN.add(cm);
-        OnUnnamedTransition16()
-      }
-      ;
-      unlock();
-    }
-  }
-
-  void UnnamedTransition17()
-  {
-    if (lock(UnnamedTransition17))
-    {
-
-      if ([QUEUE]CAN.have_tokens())
-      {
-        int cm_idx;
-        CAN_MESSAGE cm = [QUEUE]CAN.peek_indexed(cm_idx);
-        [QUEUE]CAN.get_indexed(cm_idx);
-
-        CAN_OUT.add(tuple2(cm, can_send(cm)));
-        OnUnnamedTransition17()
-      }
-      ;
-      unlock();
-    }
-  }
-
-  void UnnamedTransition18()
-  {
-    if (lock(UnnamedTransition18))
-    {
-
-      if (CAN_OUT.have(IEnumerable[(cm, res)]))
-      {
-
-        if (not(res))
-        {
-          CAN_OUT.get((cm, res));
-
-          [QUEUE]CAN.add(cm);
-        }
-        OnUnnamedTransition18()
-      }
-      ;
-      unlock();
-    }
-  }
-
-  void UnnamedTransition19()
-  {
-    if (lock(UnnamedTransition19))
-    {
-
-      if (CAN_OUT.have(IEnumerable[(cm, res)]))
-      {
-
-        if (res)
-        {
-          CAN_OUT.get((cm, res));
-
-        }
-        OnUnnamedTransition19()
-      }
-      ;
-      unlock();
-    }
-  }
-
-  function adc2bat;
-  function get_ssi_bytes;
-  function get_control_msg;
-  function can_process;
+	void step()
+	{
+		UnnamedTransition6()
+			UnnamedTransition7()
+			UnnamedTransition8()
+			UnnamedTransition9()
+			UnnamedTransition10()
+			UnnamedTransition11()
+			UnnamedTransition12()
+			UnnamedTransition13()
+			UnnamedTransition14()
+			UnnamedTransition15()
+			UnnamedTransition16()
+			UnnamedTransition17()
+			UnnamedTransition18()
+	}
+	pt14(int time_step = 15)
+	{
+		timed_petri_net(time_step);
+		DPS.add(false);
+		SYNC.add(0);
+		SSI.add(byte0(_N__4513));
+		TEMP.add(0);
+		BUTTONS.add(0);
+		[SINGLE]UDP_IN.add();
+		[QUEUE]CAN.add();
+		[TRANSPARENT]UDP_SEND.add();
+		[SINGLE]CAN_IN.add();
+		GPS.add();
+		SEND_DEBUG.add();
+		[TRANSPARENT]SYNC_BUF.add();
+		DELAY.add(add_time('u', 0););
+		BinTimer.add(add_time(at_time('u', 1000000), 0););
+		SyncFreq.add(add_time(, 0););
+		TempTimer.add(add_time(at_time('u', 500000), 0););
+		[TRANSPARENT]SEND_SENS.add();
+		[TRANSPARENT]BatLevel.add();
+		ADC.add();
+		TIMER.add(add_time(at_time('u', 0), 0););
+		ADC_SUM.add(tuple2(0, 0));
+		DEBUG_TIMER.add(add_time(at_time('u', 0), 0););
+		UDP_OUT.add();
+		[VAR]COUNTER.add(0);
+		[TRANSPARENT]UDP_AND_CAN_SEND.add();
+		[SINGLE]CAN_OUT.add();
+
+	}
+	void UnnamedTransition6()
+	{
+		if (lock(UnnamedTransition6))
+		{
+
+			if (GPS.have_tokens())
+			{
+				int s_idx;
+				STRING s = GPS.peek_indexed(s_idx);
+				GPS.get_indexed(s_idx);
+
+				[TRANSPARENT]UDP_SEND.add(tuple3(256, get_time(), s.field2));
+				OnUnnamedTransition6()
+			}
+			;
+			unlock();
+		}
+	}
+
+	void UnnamedTransition7()
+	{
+		if (lock(UnnamedTransition7))
+		{
+
+			if ([SINGLE]UDP_IN.have_tokens())
+			{
+				int m_idx;
+				CAN_UDP_MESSAGE m = [SINGLE]UDP_IN.peek_indexed(m_idx);
+				if (is_control(m))
+				{
+					[SINGLE]UDP_IN.get_indexed(m_idx);
+
+					[TRANSPARENT]UDP_SEND.add(get_control_msg(m));
+				}
+				OnUnnamedTransition7()
+			}
+			;
+			unlock();
+		}
+	}
+
+	void UnnamedTransition8()
+	{
+		if (lock(UnnamedTransition8))
+		{
+
+			if ([SINGLE]UDP_IN.have_tokens())
+			{
+				int m_idx;
+				CAN_UDP_MESSAGE m = [SINGLE]UDP_IN.peek_indexed(m_idx);
+				[SINGLE]UDP_IN.get_indexed(m_idx);
+
+				[QUEUE]CAN.add(udp2can(m));
+				OnUnnamedTransition8()
+			}
+			;
+			unlock();
+		}
+	}
+
+	void UnnamedTransition9()
+	{
+		if (lock(UnnamedTransition9))
+		{
+
+			if ([SINGLE]CAN_IN.have_tokens())
+			{
+				int cm_idx;
+				CAN_MESSAGE cm = [SINGLE]CAN_IN.peek_indexed(cm_idx);
+				[SINGLE]CAN_IN.get_indexed(cm_idx);
+				can_process(cm)
+					[TRANSPARENT]UDP_SEND.add(cm);
+				OnUnnamedTransition9()
+			}
+			;
+			unlock();
+		}
+	}
+
+	void DPS()
+	{
+		if (lock(DPS))
+		{
+
+			; ;
+
+			if (SSI.have_tokens())
+			{
+				int ssi_idx;
+				bytesn ssi = SSI.peek_indexed(ssi_idx);
+
+				if (SYNC.have_tokens())
+				{
+					int n_idx;
+					int n = SYNC.peek_indexed(n_idx);
+
+					if (DPS.have_tokens())
+					{
+						int dir_idx;
+						bool dir = DPS.peek_indexed(dir_idx);
+						DPS.get_indexed(dir_idx);
+						SYNC.get_indexed(n_idx);
+						SSI.get_indexed(ssi_idx);
+						DELAY.get_all()
+
+							SYNC.add(n + 1);
+						[TRANSPARENT]UDP_SEND.add(tuple3(663, get_time(), get_ssi_bytes(n, dir, 1, ssi)));
+						[TRANSPARENT]SYNC_BUF.add(unit.instance());
+						OnDPS()
+					}
+
+				}
+
+			}
+
+			;
+			unlock();
+		}
+	}
+
+	void UnnamedTransition0()
+	{
+		if (lock(UnnamedTransition0))
+		{
+
+			if (DEBUG_TIMER.have_tokens())
+			{
+				; ;
+
+				if (SEND_DEBUG.have_tokens())
+				{
+					int d_idx;
+					DEBUG_INFO d = SEND_DEBUG.peek_indexed(d_idx);
+					SEND_DEBUG.get_indexed(d_idx);
+					DEBUG_TIMER.get();
+
+					[TRANSPARENT]UDP_SEND.add(tuple3(0, get_time(), d.field2));
+					DEBUG_TIMER.add(add_time(unit.instance(), 333000));
+					OnUnnamedTransition0()
+				}
+
+			}
+			;
+			unlock();
+		}
+	}
+
+	void UnnamedTransition10()
+	{
+		if (lock(UnnamedTransition10))
+		{
+
+			if ([TRANSPARENT]SYNC_BUF.have_tokens())
+			{
+
+				[TRANSPARENT]SYNC_BUF.get();
+
+				DELAY.add(add_time(unit.instance(), 0));
+				OnUnnamedTransition10()
+			}
+			;
+			unlock();
+		}
+	}
+
+	void UnnamedTransition11()
+	{
+		if (lock(UnnamedTransition11))
+		{
+
+			if ([TRANSPARENT]SEND_SENS.have_tokens())
+			{
+
+
+				if (SSI.have_tokens())
+				{
+					int ssi_idx;
+					bytesn ssi = SSI.peek_indexed(ssi_idx);
+
+					if (SYNC.have_tokens())
+					{
+						int n_idx;
+						int n = SYNC.peek_indexed(n_idx);
+
+						if (DPS.have_tokens())
+						{
+							int dir_idx;
+							bool dir = DPS.peek_indexed(dir_idx);
+							DPS.get_indexed(dir_idx);
+							SYNC.get_indexed(n_idx);
+							SSI.get_indexed(ssi_idx);
+							[TRANSPARENT]SEND_SENS.get();
+
+							[TRANSPARENT]UDP_SEND.add(tuple3(663, get_time(), get_ssi_bytes(n, dir, 0, ssi)));
+							OnUnnamedTransition11()
+						}
+
+					}
+
+				}
+
+			}
+			;
+			unlock();
+		}
+	}
+
+	void UnnamedTransition1()
+	{
+		if (lock(UnnamedTransition1))
+		{
+
+			if ([TRANSPARENT]BatLevel.have(IEnumerable[(bt, n)]))
+			{
+
+
+				if (BinTimer.have_tokens())
+				{
+					; ;
+
+					if (BUTTONS.have_tokens())
+					{
+						int inp_idx;
+						int inp = BUTTONS.peek_indexed(inp_idx);
+						BUTTONS.get_indexed(inp_idx);
+						BinTimer.get();
+						[TRANSPARENT]BatLevel.get((bt, n));
+
+						BinTimer.add(add_time(unit.instance(), 1000000));
+						[TRANSPARENT]UDP_AND_CAN_SEND.add(tuple3(336, get_time(), (_N__4525)));
+						[TRANSPARENT]UDP_AND_CAN_SEND.add(tuple3(721, get_time(), (_N__4526)));
+						OnUnnamedTransition1()
+					}
+
+				}
+
+			}
+			;
+			unlock();
+		}
+	}
+
+	void UnnamedTransition2()
+	{
+		if (lock(UnnamedTransition2))
+		{
+
+			if (SyncFreq.have_tokens())
+			{
+				int freq_idx;
+				int SyncFreq_tok = SyncFreq.peek_indexed(freq);; int freq = SyncFreq_tok;;
+				SyncFreq.get_indexed(freq_idx);
+
+				SYNC.add(0);
+				SyncFreq.add(add_time(freq(Delay(/ (1000000, freq))), 0));
+				OnUnnamedTransition2()
+			}
+			;
+			unlock();
+		}
+	}
+
+	void UnnamedTransition3()
+	{
+		if (lock(UnnamedTransition3))
+		{
+
+			if (TempTimer.have_relative_time(unit.instance(), 500000))
+			{
+				; ;
+
+				if (TEMP.have_tokens())
+				{
+					int n_idx;
+					int n = TEMP.peek_indexed(n_idx);
+					TEMP.get_indexed(n_idx);
+					TempTimer.get_relative_time(unit.instance(), 500000);
+
+					TempTimer.add(add_time(unit.instance(), 0));
+					[TRANSPARENT]UDP_AND_CAN_SEND.add(tuple3(721, get_time(), list.Cons(51, IntToList(n))));
+					OnUnnamedTransition3()
+				}
+
+			}
+			;
+			unlock();
+		}
+	}
+
+	void UnnamedTransition12()
+	{
+		if (lock(UnnamedTransition12))
+		{
+
+			if ([SINGLE]UDP_IN.have_tokens())
+			{
+				int m_idx;
+				CAN_UDP_MESSAGE m = [SINGLE]UDP_IN.peek_indexed(m_idx);
+				if (is_sens(m))
+				{
+					[SINGLE]UDP_IN.get_indexed(m_idx);
+
+					[TRANSPARENT]SEND_SENS.add(unit.instance());
+				}
+				OnUnnamedTransition12()
+			}
+			;
+			unlock();
+		}
+	}
+
+	void UnnamedTransition4()
+	{
+		if (lock(UnnamedTransition4))
+		{
+
+			if (DELAY.have_relative_time(unit.instance(), 200000))
+			{
+				; ;
+				DELAY.get_relative_time(unit.instance(), 200000);
+
+				DELAY.add(add_time(unit.instance(), 0));
+				[TRANSPARENT]SEND_SENS.add(unit.instance());
+				OnUnnamedTransition4()
+			}
+			;
+			unlock();
+		}
+	}
+
+	void BUTTONS()
+	{
+		if (lock(BUTTONS))
+		{
+
+			if (BUTTONS.have_tokens())
+			{
+				int bt_idx;
+				u8 bt = BUTTONS.peek_indexed(bt_idx);
+				BUTTONS.get_indexed(bt_idx);
+
+				[TRANSPARENT]UDP_AND_CAN_SEND.add(bt2can_message(bt));
+				OnBUTTONS()
+			}
+			;
+			unlock();
+		}
+	}
+
+	void UnnamedTransition5()
+	{
+		if (lock(UnnamedTransition5))
+		{
+
+			if (ADC_SUM.have(IEnumerable[(sum, n)]))
+			{
+
+
+				if (TIMER.have_tokens())
+				{
+					; ;
+
+					if (ADC.have_tokens())
+					{
+						int q_idx;
+						int q = ADC.peek_indexed(q_idx);
+						if (< (n, 10))
+						{
+							ADC.get_indexed(q_idx);
+							TIMER.get();
+							ADC_SUM.get((sum, n));
+
+							TIMER.add(add_time(unit.instance(), 50000));
+							ADC_SUM.add(tuple2(sum + q, n + 1));
+						}
+						OnUnnamedTransition5()
+					}
+
+				}
+
+			}
+			;
+			unlock();
+		}
+	}
+
+	void UnnamedTransition13()
+	{
+		if (lock(UnnamedTransition13))
+		{
+
+			if (ADC_SUM.have(IEnumerable[(sum, n)]))
+			{
+
+				if (>= (n, 10))
+				{
+					ADC_SUM.get((sum, n));
+
+					[TRANSPARENT]BatLevel.add(adc2bat(sum(div(n))));
+					ADC_SUM.add(tuple2(0, 0));
+				}
+				OnUnnamedTransition13()
+			}
+			;
+			unlock();
+		}
+	}
+
+	void UnnamedTransition14()
+	{
+		if (lock(UnnamedTransition14))
+		{
+
+			if ([VAR]COUNTER.have_tokens())
+			{
+				int n_idx;
+				int n = [VAR]COUNTER.peek_indexed(n_idx);
+
+				if ([TRANSPARENT]UDP_SEND.have_tokens())
+				{
+					int cm_idx;
+					CAN_MESSAGE cm = [TRANSPARENT]UDP_SEND.peek_indexed(cm_idx);
+					[TRANSPARENT]UDP_SEND.get_indexed(cm_idx);
+					[VAR]COUNTER.get_indexed(n_idx);
+
+					UDP_OUT.add(can2udp(cm, n));
+					[VAR]COUNTER.add(n + 1);
+					OnUnnamedTransition14()
+				}
+
+			}
+			;
+			unlock();
+		}
+	}
+
+	void UnnamedTransition15()
+	{
+		if (lock(UnnamedTransition15))
+		{
+
+			if ([TRANSPARENT]UDP_AND_CAN_SEND.have_tokens())
+			{
+				int cm_idx;
+				CAN_MESSAGE cm = [TRANSPARENT]UDP_AND_CAN_SEND.peek_indexed(cm_idx);
+				[TRANSPARENT]UDP_AND_CAN_SEND.get_indexed(cm_idx);
+
+				[QUEUE]CAN.add(cm);
+				[TRANSPARENT]UDP_SEND.add(cm);
+				OnUnnamedTransition15()
+			}
+			;
+			unlock();
+		}
+	}
+
+	void UnnamedTransition16()
+	{
+		if (lock(UnnamedTransition16))
+		{
+
+			if ([QUEUE]CAN.have_tokens())
+			{
+				int cm_idx;
+				CAN_MESSAGE cm = [QUEUE]CAN.peek_indexed(cm_idx);
+				[QUEUE]CAN.get_indexed(cm_idx);
+
+				[SINGLE]CAN_OUT.add(tuple2(cm, can_send(cm)));
+				OnUnnamedTransition16()
+			}
+			;
+			unlock();
+		}
+	}
+
+	void UnnamedTransition17()
+	{
+		if (lock(UnnamedTransition17))
+		{
+
+			if ([SINGLE]CAN_OUT.have(IEnumerable[(cm, res)]))
+			{
+
+				if (not(res))
+				{
+					[SINGLE]CAN_OUT.get((cm, res));
+
+					[QUEUE]CAN.add(cm);
+				}
+				OnUnnamedTransition17()
+			}
+			;
+			unlock();
+		}
+	}
+
+	void UnnamedTransition18()
+	{
+		if (lock(UnnamedTransition18))
+		{
+
+			if ([SINGLE]CAN_OUT.have(IEnumerable[(cm, res)]))
+			{
+
+				if (res)
+				{
+					[SINGLE]CAN_OUT.get((cm, res));
+
+				}
+				OnUnnamedTransition18()
+			}
+			;
+			unlock();
+		}
+	}
+
+	function adc2bat;
+	function get_ssi_bytes;
+	function get_control_msg;
+	function can_process;
 };
