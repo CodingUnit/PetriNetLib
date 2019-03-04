@@ -70,6 +70,22 @@ namespace PetriNetLib
       }
     }
 
+    public IsTransparent : bool
+    {
+      [Memoize]
+      get
+      {
+        match (OutputTransitions)
+        {
+          | [(tran, arc)] => def inpl = tran.InputPlaces.Length == 1;
+                             inpl && 
+                             tran.OutputPlaces.All((_, a) => a.expr.ToString() == arc.expr.ToString()) &&
+                             tran.code_segment
+          | _             => false                             
+        }
+      }
+    }
+    
     public Req : bool
     {
       [Memoize]
