@@ -70,15 +70,6 @@ namespace PetriNetLib
       }
     }
 
-    public Transparent : bool
-    {
-      [Memoize]
-      get
-      {
-        Attributes.Exists(_ == "TRANSPARENT")
-      }
-    }
-    
     public Req : bool
     {
       [Memoize]

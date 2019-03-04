@@ -15,7 +15,7 @@ namespace PetriNetLib
   [Record]
   class InArcBinding
   {
-    public place      : Place;
+    public place      : GenPlace;
 
     public transition : Transition;
     public Depends     : list[InArcBinding] {get;set;}

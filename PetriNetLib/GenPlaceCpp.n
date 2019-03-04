@@ -13,22 +13,22 @@ namespace PetriNetLib
   /// Description of GenPlace.
   /// </summary>
   [Record]
-  class GenPlace : Place
+  class GenPlaceCpp : Place
   {
-    gen : Generator;
+    gen : CppGenerator;
     
-    public this(pl : Place, gen : Generator)
+    public this(pl : Place, gen : CppGenerator)
     {
       base(pl.idx, pl.id, pl.name, pl.colour, pl.init_mark, pl.tree, pl.net);
       this.gen = gen;
     }
     
-    public Colour : GenColour
+    public Colour : GenColourCpp
     {
       [Memoize]
       get
       {
-        GenColour(colour, gen)
+        GenColourCpp(colour, gen)
       }
     }
     
@@ -58,26 +58,25 @@ namespace PetriNetLib
           | Timed         => TDestCont.TimedSimpleMultiset
           //| Queue         => TDestCont.TokenQueue
           | _             => def opts = Colour.Opts;
-                             if (opts.IsEmpty())
+                             if (opts.IsEmpty() && Attributes.IsEmpty())
                              {
                                def tran = OutputTransitions;
                                def one = tran.Select((_, x) => x.NumberTokensGet).All(_ == 1);
                                if (one) TDestCont.RandomEnumerable else TDestCont.MultiSet
                              } else
                              {
-                               if (Colour.Queue)
+                               if (Colour.Queue || Queue)
                                {
                                  TDestCont.TokenQueue
                                } else
-                               if (Colour.Sorted)
+                               if (Colour.Sorted || Sorted)
                                {
                                  TDestCont.SortedSet
                                } else
-                               if (Colour.Var) TDestCont.Var else
-                               if (Colour.Single) TDestCont.Single else
-                               if (Colour.Req) TDestCont.ReqContainer else
-                               if (Colour.MinusSingle) TDestCont.MinusSingle else
-                               if (Colour.ZeroSingle) TDestCont.ZeroSingle else TDestCont.RandomEnumerable
+                               if (Colour.Var || Var) TDestCont.Var else
+                               if (Colour.Single || Single) TDestCont.Single else
+                               if (Colour.Req || Req) TDestCont.ReqContainer else
+                               if (Colour.ZeroSingle || ZeroSingle) TDestCont.ZeroSingle else TDestCont.RandomEnumerable
                              }
 
         }

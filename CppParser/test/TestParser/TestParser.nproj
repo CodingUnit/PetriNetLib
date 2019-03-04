@@ -83,11 +83,6 @@
       <Project>{5e9cfda7-975a-4ef5-a7e7-b638df3d19f7}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\CppParser\CppParser.nproj">
-      <Name>CppParser</Name>
-      <Project>{f5786dc6-5865-42ff-8d7e-526fb753821f}</Project>
-      <Private>True</Private>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(Nemerle)\Nemerle.MSBuild.targets" />
   <!--

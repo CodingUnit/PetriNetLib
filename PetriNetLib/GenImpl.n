@@ -18,11 +18,16 @@ namespace PetriNetLib
   /// </summary>
   partial class Generator
   {
+    [Accessor]
     model       : OutModel;
+    [Accessor]
     proc        : PetriNetProcessor;
     converter   : Converter;
     typer       : Typer;
     typebuilder : TypeBuilder;
+    places      : array[GenPlace];
+    [Accessor]
+    colours     : Hashtable[string, GenColour] = Hashtable();
     
     public TypingMethod : MethodBuilder
     {
@@ -46,30 +51,33 @@ namespace PetriNetLib
       this.model = model;
       this.proc = proc;
       this.converter = proc.Converter;
+      this.places = model.places.Map(GenPlace(_, this));
+      
     }
     
-    GetTypeExpr(p : Colour) : PExpr
-    {      
-      | Colour.Alias(n)     => <[ $(n : usesite) ]>
-      | Colour.Simple(type) => 
-              match (type)
-              {
-                | "string" => <[ string ]>
-                | "int"    => <[ int ]>
-                | "intinf" => <[ IntInf ]>
-                | "real"   => <[ double ]>
-                | "time"   => <[ long ]>
-                | "bool"   => <[ bool ]>
-              }
-        | Integer       => <[ int ]>
-        | Unit(None())  => <[ Unit ]>
-        | Unit(Some(t)) => <[ $(t : usesite) ]>
-        | Product(vals) => def vals = vals.Map(x => <[ $(TypeFromStr(x)) ]>);
-                           <[ @*(..$vals) ]>
-        | List(t, _)    => def inner = t |> TypeFromStr;
-                                         <[ list[$inner]]>
-    }
-    
+    //GetTypeExpr(p : Colour) : PExpr
+    //{      
+    //  | Colour.Alias(n)     => <[ $(n : usesite) ]>
+    //  | Colour.Simple(type) => 
+    //          match (type)
+    //          {
+    //            | "string" => <[ string ]>
+    //            | "int"    => <[ int ]>
+    //            | "intinf" => <[ IntInf ]>
+    //            | "real"   => <[ double ]>
+    //            | "time"   => <[ long ]>
+    //            | "bool"   => <[ bool ]>
+    //          }
+    //    | Integer       => <[ int ]>
+    //    | Unit(None())  => <[ Unit ]>
+    //    | Unit(Some(t)) => <[ $(t : usesite) ]>
+    //    | Product(vals) => def vals = vals.Map(x => <[ $(TypeFromStr(x)) ]>);
+    //                       <[ @*(..$vals) ]>
+    //    | List(t, _)    => def inner = t |> TypeFromStr;
+    //                                     <[ list[$inner]]>
+    //}
+
+    /*
     GetTypeExpr(p : ColourSet) : PExpr
     {
         | ColourSet(n, Alias(n2))    => def col = model.colour_sets[n2].type;
@@ -84,20 +92,20 @@ namespace PetriNetLib
         | ColourSet(n, Enum)          => <[ $(n : usesite) ]>
         | ColourSet(_, Timed(p))
         | ColourSet(_, p)             => GetTypeExpr(p)
-    }
+    }*/
       
-    TypeFromStr(str : string) : PExpr
-    {
-      | "string" => <[ string ]>
-      | "int"    => <[ int ]>
-      | "intinf" => <[ IntInf ]>
-      | "real"   => <[ double ]>
-      | "time"   => <[ long ]>
-      | "bool"   => <[ bool ]>
-      | "unit"   => <[ Unit ]>
-      | str      => proc.colour_sets[str] |> GetTypeExpr
+    //TypeFromStr(str : string) : PExpr
+    //{
+    //  | "string" => <[ string ]>
+    //  | "int"    => <[ int ]>
+    //  | "intinf" => <[ IntInf ]>
+    //  | "real"   => <[ double ]>
+    //  | "time"   => <[ long ]>
+    //  | "bool"   => <[ bool ]>
+    //  | "unit"   => <[ Unit ]>
+    //  | str      => proc.colour_sets[str] |> GetTypeExpr
       
-    }
+    //}
     
     IsTokenExpr(expr : PExpr) : bool
     {

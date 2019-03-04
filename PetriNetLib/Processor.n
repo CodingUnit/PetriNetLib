@@ -51,9 +51,9 @@ namespace PetriNetLib
     }
     
     mutable matrix_len         : array[int];
-    mutable input_matrix       : array[2, Arc];
-    mutable output_matrix      : array[2, Arc];
-    mutable incidence_matrix   : array[2, int];
+    mutable input_matrix       : array[2, list[Arc]];
+    mutable output_matrix      : array[2, list[Arc]];
+    //mutable incidence_matrix   : array[2, int];
     colours            : list[Colour] = [];
     [Accessor]
     converter          : Converter = Converter();
@@ -62,25 +62,33 @@ namespace PetriNetLib
     
     public InputTransitionArcs(tran : Transition) : list[Place * Arc]
     {
-      places.MapIndex((p, i) => (p, output_matrix[i, tran.idx])).Filter((_, a) => a != null)
+      places.MapIndex((p, i) => (p, output_matrix[i, tran.idx]))
+      .Filter((_, a) => a != null)
+      .SelectMany((p, a) => a.Map(x => (p, x))).NToList()
     }
     
     public OutputTransitionArcs(tran : Transition) : list[Place * Arc]
     {
-      places.MapIndex((p, i) => (p, input_matrix[i, tran.idx])).Filter((_, a) => a != null)
+      places.MapIndex((p, i) => (p, input_matrix[i, tran.idx]))
+      .Filter((_, a) => a != null)
+      .SelectMany((p, a) => a.Map(x => (p, x))).NToList()
     }
     
     public InputPlaceArcs(place : Place) : list[Transition * Arc]
     {
-      transitions.MapIndex((p, i) => (p, output_matrix[place.idx, i])).Filter((_, a) => a != null)
+      transitions.MapIndex((p, i) => (p, output_matrix[place.idx, i]))
+      .Filter((_, a) => a != null)
+      .SelectMany((p, a) => a.Map(x => (p, x))).NToList()
     }
     
     public OutputPlaceArcs(place : Place) : list[Transition * Arc]
     {
-      transitions.MapIndex((p, i) => (p, input_matrix[place.idx, i])).Filter((_, a) => a != null)
+      transitions.MapIndex((p, i) => (p, input_matrix[place.idx, i]))
+      .Filter((_, a) => a != null)
+      .SelectMany((p, a) => a.Map(x => (p, x))).NToList()
     }
     
-    public InputArcs() : IEnumerable[Place * Transition * Arc]
+    public InputArcs() : IEnumerable[Place * Transition * list[Arc]]
     {
       foreach (_ in places with p)
       {
@@ -94,7 +102,7 @@ namespace PetriNetLib
       }
     }
 
-    public OutputArcs() : IEnumerable[Place * Transition * Arc]
+    public OutputArcs() : IEnumerable[Place * Transition * list[Arc]]
     {
       foreach (_ in places with p)
       {
@@ -117,7 +125,6 @@ namespace PetriNetLib
       {
         input_matrix     = array(places, tran);
         output_matrix    = array(places, tran);
-        incidence_matrix = array(places, tran);
       }
       
       matrix_len = array[places, tran];
@@ -146,7 +153,7 @@ namespace PetriNetLib
             def col = colour_sets[t];
             def expr = i |> converter.ParseML;
             def place = Place(pidx, id, n, col, expr.Value, p, this);
-            pidx += 1;
+            pidx++;
             place
       }
       
@@ -183,7 +190,7 @@ namespace PetriNetLib
             
             
             def tran = Transition(tidx, id, n, guard, time, code, 0, this);
-            tidx += 1;
+            tidx++;
             tran
       }
       
@@ -252,8 +259,14 @@ namespace PetriNetLib
       {
         match (f, t)
         {
-          | (ArcSource.PlaceEnd(p),      ArcSource.TransitionEnd(t)) => output_matrix[p.idx, t.idx] = a;
-          | (ArcSource.TransitionEnd(t), ArcSource.PlaceEnd(p))      => input_matrix[p.idx, t.idx] = a;
+          | (ArcSource.PlaceEnd(p),      ArcSource.TransitionEnd(t)) => 
+            def val = output_matrix[p.idx, t.idx];
+            def val = if (val == null) [a] else a :: val;
+            output_matrix[p.idx, t.idx] = val
+          | (ArcSource.TransitionEnd(t), ArcSource.PlaceEnd(p))      => 
+            def val = input_matrix[p.idx, t.idx];
+            def val = if (val == null) [a] else a :: val;
+            input_matrix[p.idx, t.idx] = val
           | _                                                        => ()
         }
       }

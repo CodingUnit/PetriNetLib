@@ -15,7 +15,7 @@ namespace PetriNetLib
   [Record]
   class InArcBindingCpp
   {
-    public place      : Place;
+    public place      : GenPlaceCpp;
 
     public gen : CppGenerator;
     public transition : Transition;
@@ -91,7 +91,7 @@ namespace PetriNetLib
       [Memoize]
       get
       {
-        def gc = place.colour |> GenColour(_, gen);
+        def gc = place.Colour;
         gc.DestType
       }
     }

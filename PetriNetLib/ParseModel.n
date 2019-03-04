@@ -47,9 +47,7 @@ namespace PetriNetLib
           | Record
           | Index
           | Unit
-          | Alias
-          | Queue
-          | Sorted => true
+          | Alias  => true
           | _      => false
         }
       }
