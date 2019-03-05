@@ -13,8 +13,11 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Исходные файлы\NewFilter1">
+    <Filter Include="Исходные файлы\arm_lib">
       <UniqueIdentifier>{45bcca52-31f4-4fda-aac4-72efb001f590}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\arm_lib\arm_lib_hal">
+      <UniqueIdentifier>{e181a657-ff81-420c-9f99-f4f4dd92794e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -45,6 +48,39 @@
     <ClInclude Include="..\tuple.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="..\arm_lib\event_queue32.h">
+      <Filter>Исходные файлы\arm_lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arm_lib\atomic.h">
+      <Filter>Исходные файлы\arm_lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arm_lib\lib_incl.h">
+      <Filter>Исходные файлы\arm_lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arm_lib\math.h">
+      <Filter>Исходные файлы\arm_lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arm_lib\memory.h">
+      <Filter>Исходные файлы\arm_lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arm_lib\types.h">
+      <Filter>Исходные файлы\arm_lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arm_lib\arm_lib_hal\bits.h">
+      <Filter>Исходные файлы\arm_lib\arm_lib_hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arm_lib\arm_lib_hal\common.h">
+      <Filter>Исходные файлы\arm_lib\arm_lib_hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arm_lib\arm_lib_hal\common_hal.h">
+      <Filter>Исходные файлы\arm_lib\arm_lib_hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arm_lib\arm_lib_hal\lib_incl.h">
+      <Filter>Исходные файлы\arm_lib\arm_lib_hal</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arm_lib\arm_lib_hal\memory.h">
+      <Filter>Исходные файлы\arm_lib\arm_lib_hal</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="petrinet_lib_cpp.cpp">
@@ -55,6 +91,9 @@
     </ClCompile>
     <ClCompile Include="..\arm_lib\arm_lib_hal\memory.c">
       <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="..\arm_lib\atomic.c">
+      <Filter>Исходные файлы\arm_lib</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

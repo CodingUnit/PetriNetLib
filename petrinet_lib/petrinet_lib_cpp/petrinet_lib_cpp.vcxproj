@@ -148,6 +148,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\arm_lib\arm_lib_hal\bits.h" />
+    <ClInclude Include="..\arm_lib\arm_lib_hal\common.h" />
+    <ClInclude Include="..\arm_lib\arm_lib_hal\common_hal.h" />
+    <ClInclude Include="..\arm_lib\arm_lib_hal\lib_incl.h" />
+    <ClInclude Include="..\arm_lib\arm_lib_hal\memory.h" />
+    <ClInclude Include="..\arm_lib\atomic.h" />
+    <ClInclude Include="..\arm_lib\event_queue32.h" />
+    <ClInclude Include="..\arm_lib\lib_incl.h" />
+    <ClInclude Include="..\arm_lib\math.h" />
+    <ClInclude Include="..\arm_lib\memory.h" />
+    <ClInclude Include="..\arm_lib\types.h" />
     <ClInclude Include="..\buffer_utils.h" />
     <ClInclude Include="..\math_utils.h" />
     <ClInclude Include="..\petrinet.h" />
@@ -160,6 +171,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\arm_lib\arm_lib_hal\memory.c" />
+    <ClCompile Include="..\arm_lib\atomic.c" />
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="petrinet_lib_cpp.cpp" />
   </ItemGroup>
