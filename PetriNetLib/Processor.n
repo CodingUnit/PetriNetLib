@@ -50,7 +50,7 @@ namespace PetriNetLib
       }
     }
     
-    mutable matrix_len         : array[int];
+    //mutable matrix_len         : array[int];
     mutable input_matrix       : array[2, list[Arc]];
     mutable output_matrix      : array[2, list[Arc]];
     //mutable incidence_matrix   : array[2, int];
@@ -121,13 +121,13 @@ namespace PetriNetLib
       def tran   = transitions.Length;
       
       
-      when (matrix_len == null || matrix_len[0] != places || matrix_len[1] != tran)
-      {
-        input_matrix     = array(places, tran);
-        output_matrix    = array(places, tran);
-      }
+      //when (matrix_len == null || matrix_len[0] != places || matrix_len[1] != tran)
+      //{
+      input_matrix     = array(places, tran);
+      output_matrix    = array(places, tran);
+      //}
       
-      matrix_len = array[places, tran];
+      //matrix_len = array[places, tran];
     }
     
     public this(name : string, flags : PetriNetFlags, ty : Typer, typebuilder : TypeBuilder, places : list[CpnTree.Place], tran : list[CpnTree.Transition], arcs : list[CpnTree.Arc], decls : list[CpnDecl])
@@ -152,7 +152,7 @@ namespace PetriNetLib
         | CpnTree.Place(n, id, t, i) =>
             def col = colour_sets[t];
             def expr = i |> converter.ParseML;
-            def place = Place(pidx, id, n, col, expr.Value, p, this);
+            def place = Place(pidx, id, n, col, expr.Value, p, this, 0);
             pidx++;
             place
       }
@@ -270,7 +270,7 @@ namespace PetriNetLib
           | _                                                        => ()
         }
       }
-      ProcessTransparent();
+      //ProcessTransparent();
       //BuildMatrix();
     }
     
@@ -317,43 +317,43 @@ namespace PetriNetLib
       }
       places[pl.idx] = null;
     }
-    // TODO: сделать прозрачные если переходы после позиций имеют входы
-    ProcessTransparent() : void
-    {
-      def transparent = places.Where(_.IsTransparent);
-      foreach (p in transparent)
-      {
-        def (tran, outarc) = p.OutputTransitions.First();
-        //def place = outarc.to;
-        def input = p.InputTransitions;
+    //// TODO: сделать прозрачные если переходы после позиций имеют входы
+    //ProcessTransparent() : void
+    //{
+    //  def transparent = places.Where(_.IsTransparent);
+    //  foreach (p in transparent)
+    //  {
+    //    def (tran, outarc) = p.OutputTransitions.First();
+    //    //def place = outarc.to;
+    //    def input = p.InputTransitions;
         
-        foreach ((t, a) in input)
-        {
-          def expr = match (a.expr, outarc.expr)
-                    {
-                      | (<[ () ]>, <[ () ]>)                      => <[ () ]>
-                      | (<[ $(_ : usesite) ]> as b, <[ () ]>)
-                      | (<[ () ]>, <[ $(_ : usesite) ]> as b)
-                      | (<[ () ]>, <[ (..$_) ]> as b)
-                      | (<[ $(_ : usesite) ]>, <[ (..$_) ]> as b)
-                      | (<[ (..$_) ]> as b, <[ $(_ : usesite) ]>)
-                      | (<[ (..$_) ]> as b, <[ () ]>)             => b
-                    }
-          foreach ((p, _) in tran.OutputPlaces)
-          {
-            def arc = Arc.expr_lens.Set(a, expr);
-            AddArc(t, arc, p);
-            //RetargetTranTo(t, arc, place);
-          }
-        }
-      }
+    //    foreach ((t, a) in input)
+    //    {
+    //      def expr = match (a.expr, outarc.expr)
+    //                {
+    //                  | (<[ () ]>, <[ () ]>)                      => <[ () ]>
+    //                  | (<[ $(_ : usesite) ]> as b, <[ () ]>)
+    //                  | (<[ () ]>, <[ $(_ : usesite) ]> as b)
+    //                  | (<[ () ]>, <[ (..$_) ]> as b)
+    //                  | (<[ $(_ : usesite) ]>, <[ (..$_) ]> as b)
+    //                  | (<[ (..$_) ]> as b, <[ $(_ : usesite) ]>)
+    //                  | (<[ (..$_) ]> as b, <[ () ]>)             => b
+    //                }
+    //      foreach ((p, _) in tran.OutputPlaces)
+    //      {
+    //        def arc = Arc.expr_lens.Set(a, expr);
+    //        AddArc(t, arc, p);
+    //        //RetargetTranTo(t, arc, place);
+    //      }
+    //    }
+    //  }
       
-      foreach (p in transparent)
-      {
-        def (output, _) = p.OutputTransitions.First();
-        DeleteTran(output);
-        DeletePlace(p);
-      }
-    }
+    //  foreach (p in transparent)
+    //  {
+    //    def (output, _) = p.OutputTransitions.First();
+    //    DeleteTran(output);
+    //    DeletePlace(p);
+    //  }
+    //}
   }
 }

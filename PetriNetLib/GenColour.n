@@ -238,6 +238,7 @@ namespace PetriNetLib
                 | "INT"    => <[ int ]>
                 | "UINT"   => <[ uint ]>
                 | "USHORT" => <[ ushort]>
+                | _        => throw InvalidOperationException();
               }
 
           | Colour.Alias(type)

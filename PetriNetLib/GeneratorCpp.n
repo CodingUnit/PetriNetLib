@@ -65,6 +65,7 @@ namespace PetriNetLib
                                             ("byten", true, "u8")
                                           }
                                         } else (null, false, null)
+                            | _ => throw InvalidOperationException()
                                         //if (args.TryRequire(integer))
                                         //{
                                         //} else
@@ -188,38 +189,63 @@ namespace PetriNetLib
       input.Fold(null, fold)
     }
 
+    CreatePlaces() : string
+    {
+      mutable gen_idx = 0;
+      foreach (p in places)
+      {
+        when (!p.IsTransparent)
+        {
+          p.gen_idx = gen_idx;
+          gen_idx++;    
+        }
+      }
+        
+      def enums = places.Where(x => !x.IsTransparent).Map(x => $"pl_$(x.Name) = $(1 << x.gen_idx)");
+      $<#typedef enum
+         {
+           ..$(enums;",\n")
+         } tplace;#>
+    }
+    
     CreatePlace(place : GenPlaceCpp) : string
     {
-      def name = place.Name;
-      //def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
-      def type = place.Colour.DestType;
-      def dtype = place.DestContainerType;
-      def dest_cont = match (dtype)
-                       {
-                         | TDestCont.MultiSet  => "multi_set"//cpp("type: multi_set")
-                         | RandomEnumerable    => "random_array"//cpp("type: random_array")
-                         | SortedSet           => "sorted_array"//cpp("type: sorted_array")
-                         | TokenQueue          => "token_queue"//cpp("type: token_queue")
-                         | TimedSimpleMultiset => "timed_heap"//cpp("type: timed_heap")
-                         | ZeroSingle
-                         | MinusSingle
-                         | Var
-                         | Single              => type
-                         | ReqContainer        => "req_tokens"
-                       }
-      def flag = match (dtype)
+      
+      // TODO: transparent place
+      if (place.IsTransparent) null else
       {
-        | Single              => if (place.Colour.IsUnit) "" else $"$(name)_flag"
-        | _                   => ""
+        
+        def name = place.Name;
+        //def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
+        def type = place.Colour.DestType;
+        def dtype = place.DestContainerType;
+        def dest_cont = match (dtype)
+                         {
+                           | TDestCont.MultiSet  => "multi_set"//cpp("type: multi_set")
+                           | RandomEnumerable    => "random_array"//cpp("type: random_array")
+                           | SortedSet           => "sorted_array"//cpp("type: sorted_array")
+                           | TokenQueue          => "token_queue"//cpp("type: token_queue")
+                           | TimedSimpleMultiset => "timed_heap"//cpp("type: timed_heap")
+                           | ZeroSingle
+                           | MinusSingle
+                           | Var
+                           | Single              => type
+                           | ReqContainer        => "req_tokens"
+                         }
+        def flag = match (dtype)
+        {
+          | Single              => if (place.Colour.IsUnit) "" else $"$(name)_flag"
+          | _                   => ""
+        }
+        def deflt = match (dtype)
+        {
+          | ZeroSingle  => " = 0"
+          | MinusSingle => " = -1"
+          | _           => ""
+        }
+        def flag = if (flag.IsEmpty()) "" else $"\nbool $flag = false;";
+        $<#$dest_cont $name$deflt;$flag#>
       }
-      def deflt = match (dtype)
-      {
-        | ZeroSingle  => " = 0"
-        | MinusSingle => " = -1"
-        | _           => ""
-      }
-      def flag = if (flag.IsEmpty()) "" else $"\nbool $flag = false;";
-      $<#$dest_cont $name$deflt;$flag#>
       //cpp(<#decl: $(dest_cont : type) $name;#>)
       //if (place.IsTimed)
       //<[decl: $(name : usesite) : PetriNetModel.TimedPlace.[$type] = PetriNetModel.TimedPlace($(name : string), $dest_cont)]> else
@@ -232,13 +258,15 @@ namespace PetriNetLib
       def name = tran.Name;
 
       def body = CreateTranBody(tran);      
+      //def places = tran.InputPlaces.Map((x, _) => x.gen_idx);
+      def places = tran.InputPlaces.Fold("", ((x, _), a) => if (a.IsEmpty()) $"pl_$(x.Name)" else $"pl_$(x.Name) | $a");
       //cpp(<#
         $<#void $name()
             {
-              if (lock($name))
+              if (lock($places))
               {
                 $body;
-                unlock();
+                unlock($places);
               }
             }
           #>//)
@@ -254,9 +282,6 @@ namespace PetriNetLib
       }
     }
 
-
-
-    
     internal ConvExpr(expr : PExpr, statement : bool = false) : string
     {
       when (statement) ctx = [];
@@ -290,6 +315,7 @@ namespace PetriNetLib
                                      def get_rec_parm(x)
                                      {
                                        | <[$_ = $v]> => v |> ConvExpr(_, false)
+                                       | _                     => throw InvalidOperationException()
                                      }
 
                                      
@@ -313,6 +339,7 @@ namespace PetriNetLib
               | [e1, e2, e3]         => $<#tuple3($(ConvExpr(e1)), $(ConvExpr(e2)), $(ConvExpr(e3)))#>
               | [e1, e2, e3, e4]     => $<#tuple4($(ConvExpr(e1)), $(ConvExpr(e2)), $(ConvExpr(e3)), $(ConvExpr(e4)))#>
               | [e1, e2, e3, e4, e5] => $<#tuple5($(ConvExpr(e1)), $(ConvExpr(e2)), $(ConvExpr(e3)), $(ConvExpr(e4)), $(ConvExpr(e5)))#>
+              | _                     => throw InvalidOperationException()
             }
 
         | <[()]>                 => <#'u'#>
@@ -322,6 +349,7 @@ namespace PetriNetLib
         | <[ array[..$val] ]>   => CreateArray(val)
         | <[ [..$e]]>           => CreateArray(e)
         | <[ $e : $t]>          => $<#($(ConvExpr(t)))$(ConvExpr(e))#>
+        | _                     => throw InvalidOperationException()
       }      
     }
 
@@ -405,7 +433,7 @@ namespace PetriNetLib
 
           <[ def $(n : usesite)(..$parms) : $t { ..$expr } ]>
 
-
+        | _                     => throw InvalidOperationException()
       }
     }
 
@@ -442,7 +470,9 @@ namespace PetriNetLib
                                                       //  {
                                                       //    ..$expr
                                                       //  }]>
+                     | _                     => throw InvalidOperationException()                                  
                   }
+               | _                     => throw InvalidOperationException()
             }
           }
       | <[ def $(n : usesite)(..$_) : $_t { ..$_ } ]> => 
@@ -469,7 +499,7 @@ namespace PetriNetLib
                       return $last;
                     }
                     #>
-                                                      //<[decl: $(n : usesite)(..$parms) : $(ret : typed)
+              | _                     => throw InvalidOperationException()                                       //<[decl: $(n : usesite)(..$parms) : $(ret : typed)
                                                       //  {
                                                       //    ..$expr
             }                                           //  }]>
@@ -585,7 +615,7 @@ namespace PetriNetLib
         def mark = fold(place.init_mark);
         def mark = mark |> ConvExpr(_, false);
         def mark = if (place.IsTimed) $"add_time($mark, 0);" else mark;
-        def name = place.name;
+        def name = place.Name;
         //<[ $(name : usesite).Add($mark)]>
         $"$name.add($mark);"
       }
@@ -668,10 +698,10 @@ namespace PetriNetLib
     {
       when (proc.Flags.HasFlag(PetriNetFlags.Events))
       {
-        foreach (t in model.transitions)
+        foreach (_t in model.transitions)
         {
-          def name = t.Name;
-          def evt = $"evt_$name";
+          //def name = t.Name;
+          //def evt = $"evt_$name";
           //fields ::= $<#decl: public event $(evt : usesite) : Action#>;
           //fields ::= <[decl: $($"On$name" : usesite)() : void
           //            {
@@ -685,17 +715,21 @@ namespace PetriNetLib
     {      
       //CreateOperators();
       //assert2(false);
+      
     // создаем типы генерации из цветов
       foreach (c in model.colour_sets)
       {
         colours.Add(c.Key, c.Value |> GenColourCpp(_, this))
       }
 
+      def places_enum = CreatePlaces();
+      Define(places_enum);
       def sets = colours.Values.Map(x => CreateColourSet(x) + "\n").Filter(_ != null);
       Define(sets);//typebuilder.DefineNestedTypeWithSource(m).Compile();
 
-      def places = places.Map(CreatePlace);      
-
+      def places = places.Map(CreatePlace).Filter(_ != null);      
+      
+      
       when (model.IsTimed) CreateTimeMethods();
       CreateStepMethod();
 

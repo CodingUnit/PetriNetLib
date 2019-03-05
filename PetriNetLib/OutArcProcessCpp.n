@@ -29,7 +29,7 @@ namespace PetriNetLib
       [Memoize]
       get
       {
-        place.name
+        place.Name
       }
     }
     

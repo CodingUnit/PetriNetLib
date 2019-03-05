@@ -96,3 +96,5 @@ inline u8 atomic_dec8(u8 *pAddr)
 {
 	return FAA8(pAddr, -1);
 }
+
+u32 atomic_and_or(u32 *addr, u32 and, u32 or);

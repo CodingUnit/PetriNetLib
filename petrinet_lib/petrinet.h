@@ -5,6 +5,7 @@ class petri_net32// : IPetriNet, IDisposable
 {
 	u32 locked;
 	event_queue32_conc queue;
+	u32 places;
 	//tran_queue: RQueue[Action] = RQueue(32);
 
 	public this(step : int = 15)
@@ -30,7 +31,7 @@ class petri_net32// : IPetriNet, IDisposable
 		do
 		{
 			lock = LL(&locked);
-			if (lock & pl != 0)// если элементы заблокированы хотя бы один
+			if (lock & pl)// если элементы заблокированы хотя бы один
 			{
 				queue.enqueue(tr);
 				return false;
@@ -41,12 +42,18 @@ class petri_net32// : IPetriNet, IDisposable
 
 	void unlock(u32 pl) 
 	{
-		u32 lock;
-		do
-		{
-			lock = LL(&locked);
-		} while (SC(&locked, lock, lock & ~pl)); // сбрасываем заблокированные позиции
+		atomic_and(&locked, ~pl);
 		check_queue();
+	}
+
+	void places_ena(bool have_rem, u32 rem_mask, u32 add_mask)
+	{
+		atomic_and_or(&places, rem_mask, add_mask | have_rem * rem_mask);
+	}
+
+	void tran_ena(u32 trmask, u32 pl_mask)
+	{
+		queue.set_elem(trmask, (places & pl_mask == pl_mask) * trmask);
 	}
 
 	virtual function get_transition(int n)

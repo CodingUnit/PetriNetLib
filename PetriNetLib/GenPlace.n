@@ -19,7 +19,7 @@ namespace PetriNetLib
     
     public this(pl : Place, gen : Generator)
     {
-      base(pl.idx, pl.id, pl.name, pl.colour, pl.init_mark, pl.tree, pl.net);
+      base(pl.idx, pl.id, pl.name, pl.colour, pl.init_mark, pl.tree, pl.net, 0);
       this.gen = gen;
     }
     

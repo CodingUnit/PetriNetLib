@@ -116,7 +116,7 @@ namespace PetriNetLib
       
       def expr = <[ {..$body} ]>;
       
-      def process(a, after, expr)
+      def process(_a, after, expr)
       {
         if (after)
         match (expr)
@@ -135,6 +135,7 @@ namespace PetriNetLib
       def parms = parms.Rev();
           
       <[ def $(n : usesite)(..$parms) { ..$expr } ]>
+      | _ => null
     }
     
     CreateDecl(expr : PExpr) : ClassMember
@@ -155,7 +156,9 @@ namespace PetriNetLib
                                                         {
                                                           ..$expr
                                                         }]>
+                  | _ => null
                 }
+            | _ => null
         }
       | _ => null
     }
@@ -253,6 +256,7 @@ namespace PetriNetLib
                                              | "INT"    => TypeDecl("int", "INT")
                                              | "UINT"   => TypeDecl("uint", "UINT")
                                              | "USHORT" => TypeDecl("ushort", "USHORT")
+                                             | _        => throw InvalidOperationException()
                                            }
       | _                               => null
     }    
@@ -302,6 +306,7 @@ namespace PetriNetLib
                                         | Some(<[ def $(_ : usesite) = $(v : int)]>) => v
                                         | _                                  => throw InvalidOperationException()
                                       }
+                | _  => throw InvalidOperationException()
               }
             }
             
@@ -313,6 +318,7 @@ namespace PetriNetLib
                                   def mn = mn |> eval;
                                   def mx = mx |> eval;
                                   <[ Enumerable.Range($(mn : int), $(mx : int)) ]>
+                               | _  => throw InvalidOperationException()
                              }
                 | _       => expr
               }

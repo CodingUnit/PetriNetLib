@@ -58,7 +58,18 @@ namespace PetriNetLib
       this.model = model;
       this.proc = proc;
       this.converter = proc.Converter;
-      this.places = model.places.Map(x => GenPlaceCpp(x, this));
+      
+      def create_place(x, a)
+      {
+        if (a.IsEmpty()) GenPlaceCpp(x, this, 0) :: a 
+        else 
+        {
+          def idx = if (x.IsTransparent) a.Head.gen_idx else a.Head.gen_idx + 1;
+          GenPlaceCpp(x, this, idx) :: a
+        }
+      }
+      
+      this.places = model.places.Fold([], create_place).ToArray();
     }
 
     Name : string
@@ -112,11 +123,11 @@ namespace PetriNetLib
       def ty = te.Fix();
       if (te.TryRequire(list_ty))
       {
-        def ty = ty :> FixedType.Class;
+        def _ty = ty :> FixedType.Class;
         //def args = ty.args;
         //def args = args.Map(ConvType);
         //<#token_iter#>
-        def t = ty.args.Map(ConvType).First();
+        //def t = ty.args.Map(ConvType).First();
         <#bytesn#>
       } else
         match (ty)

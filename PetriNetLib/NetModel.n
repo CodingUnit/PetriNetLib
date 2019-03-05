@@ -42,6 +42,7 @@ namespace PetriNetLib
     public tree      : CpnTree.Place;
     public net       : PetriNetProcessor;
     
+    public gen_idx : int {get;set;}
     public Name : string
     {
       [Memoize]
@@ -77,10 +78,12 @@ namespace PetriNetLib
       {
         match (OutputTransitions)
         {
-          | [(tran, arc)] => def inpl = tran.InputPlaces.Length == 1;
-                             inpl && 
-                             tran.OutputPlaces.All((_, a) => a.expr.ToString() == arc.expr.ToString()) &&
-                             tran.code_segment
+          | [(tran, _arc)] => 
+                             def inpl = tran.InputPlaces.Exclude((x, _) => x.idx  == this.idx);
+                             inpl.All((x, _) => x.Var || x.Req) &&
+                             tran.guard is <[]>
+                             //tran.OutputPlaces.All((_, a) => a.expr.ToString() == arc.expr.ToString()) &&
+                             //tran.code_segment
           | _             => false                             
         }
       }

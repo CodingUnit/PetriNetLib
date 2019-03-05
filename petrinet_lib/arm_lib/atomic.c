@@ -70,3 +70,12 @@ u32 atomic_and(u32 *addr, u32 val)
 	return cur;
 }
 
+u32 atomic_and_or(u32 *addr, u32 clr, u32 set)
+{
+	u32 cur;
+	do
+	{
+		cur = *addr;
+	} while (!CAS(addr, cur, cur & ~clr | set));
+	return cur;
+}

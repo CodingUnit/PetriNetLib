@@ -17,12 +17,13 @@ namespace PetriNetLib
   {
     gen : CppGenerator;
     
-    public this(pl : Place, gen : CppGenerator)
+    public this(pl : Place, gen : CppGenerator, idx : int)
     {
-      base(pl.idx, pl.id, pl.name, pl.colour, pl.init_mark, pl.tree, pl.net);
+      base(pl.idx, pl.id, pl.name, pl.colour, pl.init_mark, pl.tree, pl.net, 0);
       this.gen = gen;
+      this.gen_idx = idx;
     }
-    
+       
     public Colour : GenColourCpp
     {
       [Memoize]
