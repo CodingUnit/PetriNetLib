@@ -46,7 +46,7 @@ namespace PetriNetLib
       [Memoize]
       get
       {
-        OutModel(places.FilterToArray(_ != null), transitions.FilterToArray(_ != null), arcs, vars, glob_refs, colour_sets, ml_decls)
+        OutModel(places, transitions, arcs, vars, glob_refs, colour_sets, ml_decls)
       }
     }
     

@@ -2868,7 +2868,7 @@
           <textattr colour="Black"
                     bold="false"/>
         </bendpoint>
-        <annot id="ID1420588115">
+        <annot id="ID1420596190">
           <posattr x="-486.000000"
                    y="-212.000000"/>
           <fillattr colour="White"
@@ -2913,7 +2913,7 @@
           <textattr colour="Black"
                     bold="false"/>
         </bendpoint>
-        <annot id="ID1420588116">
+        <annot id="ID1420596191">
           <posattr x="-206.000000"
                    y="-211.000000"/>
           <fillattr colour="White"
@@ -2958,7 +2958,7 @@
           <textattr colour="Black"
                     bold="false"/>
         </bendpoint>
-        <annot id="ID1420588117">
+        <annot id="ID1420596192">
           <posattr x="-486.000000"
                    y="-33.000000"/>
           <fillattr colour="White"
@@ -3003,7 +3003,7 @@
           <textattr colour="Black"
                     bold="false"/>
         </bendpoint>
-        <annot id="ID1420588118">
+        <annot id="ID1420596193">
           <posattr x="-332.000000"
                    y="-138.000000"/>
           <fillattr colour="White"
@@ -3048,7 +3048,7 @@
           <textattr colour="Black"
                     bold="false"/>
         </bendpoint>
-        <annot id="ID1420588119">
+        <annot id="ID1420596194">
           <posattr x="-360.000000"
                    y="-178.000000"/>
           <fillattr colour="White"
@@ -3208,7 +3208,7 @@
                    currentcyckle="2"/>
         <transend idref="ID1412815775"/>
         <placeend idref="ID1414043980"/>
-        <annot id="ID1420588120">
+        <annot id="ID1420596195">
           <posattr x="-336.000000"
                    y="159.000000"/>
           <fillattr colour="White"
@@ -3240,7 +3240,7 @@
                    currentcyckle="2"/>
         <transend idref="ID1414045158"/>
         <placeend idref="ID1414043980"/>
-        <annot id="ID1420588121">
+        <annot id="ID1420596196">
           <posattr x="-336.000000"
                    y="245.000000"/>
           <fillattr colour="White"
@@ -6049,7 +6049,7 @@ action(EXT_can_process(cm));</text>
         <binding x="7.200000"
                  y="-3.000000"/>
         <cond id="ID1417958424">
-          <posattr x="-258.000000"
+          <posattr x="-263.500000"
                    y="-431.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
@@ -7115,9 +7115,9 @@ action(EXT_can_process(cm));</text>
                    currentcyckle="2"/>
         <transend idref="ID1417292263"/>
         <placeend idref="ID1417360908"/>
-        <annot id="ID1420485200">
-          <posattr x="-400.000000"
-                   y="156.000000"/>
+        <annot id="ID1420596197">
+          <posattr x="0.000000"
+                   y="0.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -7127,7 +7127,7 @@ action(EXT_can_process(cm));</text>
           <textattr colour="Black"
                     bold="false"/>
           <text tool="CPN Tools"
-                version="4.0.1">()</text>
+                version="4.0.1">1`()</text>
         </annot>
       </arc>
       <arc id="ID1417380949"
@@ -7147,9 +7147,9 @@ action(EXT_can_process(cm));</text>
                    currentcyckle="2"/>
         <transend idref="ID1417378777"/>
         <placeend idref="ID1417360908"/>
-        <annot id="ID1420485201">
-          <posattr x="-400.000000"
-                   y="283.000000"/>
+        <annot id="ID1420596198">
+          <posattr x="0.000000"
+                   y="0.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -7159,7 +7159,7 @@ action(EXT_can_process(cm));</text>
           <textattr colour="Black"
                     bold="false"/>
           <text tool="CPN Tools"
-                version="4.0.1">()</text>
+                version="4.0.1">1`()</text>
         </annot>
       </arc>
       <arc id="ID1417382044"
@@ -9237,37 +9237,12 @@ action(EXT_can_process(cm));</text>
           <text>&lt;same as model&gt;</text>
         </value>
       </option>
-      <option name="extensions.10004.enable">
-        <value>
-          <boolean>true</boolean>
-        </value>
-      </option>
-      <option name="extensions.10003.enable">
-        <value>
-          <boolean>true</boolean>
-        </value>
-      </option>
-      <option name="extensions.10007.enable">
-        <value>
-          <boolean>true</boolean>
-        </value>
-      </option>
       <option name="extensions.10002.enable">
         <value>
           <boolean>true</boolean>
         </value>
       </option>
-      <option name="extensions.10005.enable">
-        <value>
-          <boolean>true</boolean>
-        </value>
-      </option>
       <option name="extensions.10006.enable">
-        <value>
-          <boolean>true</boolean>
-        </value>
-      </option>
-      <option name="extensions.10011.enable">
         <value>
           <boolean>true</boolean>
         </value>
@@ -9278,6 +9253,31 @@ action(EXT_can_process(cm));</text>
         </value>
       </option>
       <option name="extensions.10008.enable">
+        <value>
+          <boolean>true</boolean>
+        </value>
+      </option>
+      <option name="extensions.10007.enable">
+        <value>
+          <boolean>true</boolean>
+        </value>
+      </option>
+      <option name="extensions.10011.enable">
+        <value>
+          <boolean>true</boolean>
+        </value>
+      </option>
+      <option name="extensions.10003.enable">
+        <value>
+          <boolean>true</boolean>
+        </value>
+      </option>
+      <option name="extensions.10005.enable">
+        <value>
+          <boolean>true</boolean>
+        </value>
+      </option>
+      <option name="extensions.10004.enable">
         <value>
           <boolean>true</boolean>
         </value>
@@ -9496,8 +9496,8 @@ action(EXT_can_process(cm));</text>
                  height="1027">
         <sheets>
           <cpnsheet id="ID1417185260"
-                    panx="-234.103086"
-                    pany="71.899715"
+                    panx="-1018.103086"
+                    pany="-29.100285"
                     zoom="1.007080"
                     instance="ID1417185244">
             <zorder>
@@ -9596,9 +9596,7 @@ action(EXT_can_process(cm));</text>
           <IndexNode expanded="false"/>
         </IndexNode>
       </IndexNode>
-      <IndexNode expanded="false">
-        <IndexNode expanded="false"/>
-      </IndexNode>
+      <IndexNode expanded="false"/>
       <IndexNode expanded="true">
         <IndexNode expanded="true">
           <IndexNode expanded="true"/>

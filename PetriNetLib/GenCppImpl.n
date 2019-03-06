@@ -27,6 +27,7 @@ namespace PetriNetLib
     mutable cons_expr : list[string] = [];
     mutable private_fields    : list[string] = [];
     mutable public_fields    : list[string] = [];
+    mutable protected_fields : list[string] = [];
     mutable init_body : list[string] = [];
     file : string;
     mutable ctx : list[string];
@@ -40,6 +41,8 @@ namespace PetriNetLib
             {
               ..$(private_fields.Rev();"\n")
 
+              protected:
+                ..$(protected_fields.Rev();"\n")
               public:
 
               ..$(public_fields.Rev();"\n")
@@ -59,17 +62,7 @@ namespace PetriNetLib
       this.proc = proc;
       this.converter = proc.Converter;
       
-      def create_place(x, a)
-      {
-        if (a.IsEmpty()) GenPlaceCpp(x, this, 0) :: a 
-        else 
-        {
-          def idx = if (x.IsTransparent) a.Head.gen_idx else a.Head.gen_idx + 1;
-          GenPlaceCpp(x, this, idx) :: a
-        }
-      }
-      
-      this.places = model.places.Fold([], create_place).ToArray();
+      this.places = model.places.MapToArray(GenPlaceCpp(_, this, 0));
     }
 
     Name : string

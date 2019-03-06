@@ -134,7 +134,21 @@ namespace PetriNetLib
       def extract = input.Map(_.extract_expr);
       def add_body = add_proc.Map(_.add_token);
       def code = tran.code_segment |> ConvExpr(_, true) ?? "";
-      def body = extract + (code :: add_body);
+      
+      def combine(x, a)
+      {
+        if (x.IsEmpty())
+        if (a.IsEmpty()) "" else a else 
+        {
+           $"$x && $a"
+        }
+        
+      }
+      def check_in = input.Fold("", (x, a) => combine(x.check_expr, a));
+      def rem_mask = input.Fold("", (x, a) => if (a.IsEmpty()) $"pl_$(x.place.Name)" else $"pl_$(x.place.Name) | $a");
+      def add_mask = output.Fold("", ((x, _), a) => if (a.IsEmpty()) $"pl_$(x.Name)" else $"pl_$(x.Name) | $a");
+      def ena = $<#places_ena($check_in, $rem_mask, $add_mask);#>;
+      def body = extract + (code :: add_body) + [ena];
       def body = if (tran.guard is <[]>) body else 
                   {
                     def guard = tran.guard |> ConvExpr(_, false);
@@ -252,7 +266,20 @@ namespace PetriNetLib
       //<[decl: $(name : usesite) : PetriNetModel.Place.[$type] = PetriNetModel.Place($(name : string), $dest_cont)]>
     }
 
-
+    CreateTransitions() : void
+    {
+      def func = $<#      
+      tran_func get_transition(int n) const
+	    {
+		    return tran_funcs[n];
+	    }
+      #>;
+      protected_fields ::= func;
+      def tran = model.transitions.Map(x => x.Name);
+      private_fields ::= $<#tranfunc tran_funcs[] = {..$(tran;",\n")
+      };#>
+    }
+    
     CreateTran(tran : Transition) : string
     {
       def name = tran.Name;
@@ -260,7 +287,9 @@ namespace PetriNetLib
       def body = CreateTranBody(tran);      
       //def places = tran.InputPlaces.Map((x, _) => x.gen_idx);
       def places = tran.InputPlaces.Fold("", ((x, _), a) => if (a.IsEmpty()) $"pl_$(x.Name)" else $"pl_$(x.Name) | $a");
+      //def rem = tran.InputPlaces.Fold("", ((x, _), a) => if (a.IsEmpty()) $"pl_$(x.Name)" else $"pl_$(x.Name) | $a");
       //cpp(<#
+      
         $<#void $name()
             {
               if (lock($places))
@@ -553,11 +582,14 @@ namespace PetriNetLib
                                                    typedef char $t;
                                                   #>
 
+        | ColourSet("REAL", Colour.Simple(_t))  => null
+        | ColourSet(n, Colour.Simple)
         | ColourSet(n, Colour.Integer) => def t = col.DestType;
                                           $<#typedef $t $n;#>   
         | ColourSet(n, Colour.Alias(t))
         | ColourSet(n, Colour.Unit) with t = "char"                                                       
-        | ColourSet(n, Colour.Simple(t))  => $<#typedef $t $n;#>
+                                          => $<#typedef $t $n;#> 
+        
         | ColourSet(n, Colour.Enum(vals)) => //def vals = vals.Map(x => $"$x");
                                             $<#    enum $n
                                                    {
@@ -788,6 +820,7 @@ namespace PetriNetLib
     {
       //CreateDummyMethod();
       CreateCons();
+      CreateTransitions();
       def methods = model.transitions.MapToList(CreateTran);
       def vals = model.ml_decls.Map(CreateVals).Filter(_ != null);
       Define(vals);//_ = typebuilder.DefineWithSource(m);

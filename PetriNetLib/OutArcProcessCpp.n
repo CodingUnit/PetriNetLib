@@ -111,6 +111,15 @@ namespace PetriNetLib
       }
     }
     
+    public place_ena : string
+    {
+      [Memoize]
+      get
+      {
+        $"pl_$name"
+      }
+    }
+    
     public add_token : string
     {
       [Memoize]
