@@ -232,6 +232,7 @@ namespace PetriNetLib
                 | "BYTE"   => "u8"
                 | "SHORT"  => "short"
                 | "INT"    => "int"
+                | "INTINF" => "long long"//cpp("type: int")
                 | "UINT"   => "u32"
                 | "USHORT" => "u16"
                 | _        => "int"
@@ -243,6 +244,7 @@ namespace PetriNetLib
                 | "SBYTE"  => "s8"
                 | "BYTE"   => "u8"
                 | "SHORT"  => "short"
+                | "INTINF" => "long long"//cpp("type: int")
                 | "INT"    => "int"
                 | "UINT"   => "u32"
                 | "USHORT" => "u16"
@@ -253,6 +255,8 @@ namespace PetriNetLib
               {
                 | "string" => "char *"//cpp("type: char *")
                 | "int"    => "int"//cpp("type: int")
+                | "TIME"   => "int"
+                | "INTINF"
                 | "intinf" => "long long"//cpp("type: int")
                 | "real"   => "float"//cpp("type: float")
                 | "time"   => "int"//cpp("type: int")
