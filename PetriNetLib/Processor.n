@@ -149,10 +149,10 @@ namespace PetriNetLib
       
       def create_place(p)
       {
-        | CpnTree.Place(n, id, t, i) =>
+        | CpnTree.Place(n, id, t, i, port) =>
             def col = colour_sets[t];
             def expr = i |> converter.ParseML;
-            def place = Place(pidx, id, n, col, expr.Value, p, this, 0);
+            def place = Place(pidx, id, n, col, expr.Value, port, p, this, 0);
             pidx++;
             place
       }

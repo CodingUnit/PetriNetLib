@@ -39,6 +39,7 @@ namespace PetriNetLib
     public colour : ColourSet;
 
     public init_mark : PExpr;
+    public port      : option[PortType];
     public tree      : CpnTree.Place;
     public net       : PetriNetProcessor;
     

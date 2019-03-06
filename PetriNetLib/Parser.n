@@ -111,8 +111,19 @@ namespace PetriNetLib
       def name = p.GetOneText("text");
       def type = p.GetOneText("type", "text");
       def initmark = p.GetOneText("initmark", "text");
+      
+      def get_attr(i)
+      {
+        match (i.GetAttrText("type"))
+        {
+          | "In"  => PortType.In
+          | "Out" => PortType.Out
+        }
+      }
+      
+      def port = p.GetOneOpt("port").Map(get_attr);
       def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
-      CpnTree.Place(name, id, type, initmark)
+      CpnTree.Place(name, id, type, initmark, port)
     }
 
     get_tran(p : XmlElement) : CpnTree.Transition

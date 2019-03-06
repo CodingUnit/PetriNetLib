@@ -77,11 +77,17 @@ namespace PetriNetLib
     | Inhibitor
   }
   
+  public enum PortType
+  {
+    | In
+    | Out
+  }
+  
   [Record]
   public variant CpnTree
   {
     | Declaration {decl : list[CpnDecl]}
-    | Place       {name : string; id : string; type : string; init_mark : string;}
+    | Place       {name : string; id : string; type : string; init_mark : string; port : option[PortType]}
     | Transition  {name : string; id : string;guard : option[string];time : option[string];code : option[string]}
     | Arc         {text : string;from : string; to : string;type : Dir;}
   }
