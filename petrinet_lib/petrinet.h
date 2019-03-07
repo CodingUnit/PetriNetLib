@@ -4,8 +4,7 @@
 class petri_net32// : IPetriNet, IDisposable
 {
 	u32 locked;
-	event_queue32_conc queue;
-	u32 places;
+	event_queue32_conc queue;	
 	u16 max_steps;
 	//tran_queue: RQueue[Action] = RQueue(32);
 
@@ -26,6 +25,7 @@ class petri_net32// : IPetriNet, IDisposable
 	//}
 
 protected:
+	//u32 places;
 
 	typedef void(*tran_func)(void *);
 
@@ -50,14 +50,19 @@ protected:
 		//check_queue();
 	}
 
-	void places_ena(bool have_rem, u32 rem_mask, u32 add_mask)
+	/*void places_ena(bool have_rem, u32 rem_mask, u32 add_mask)
 	{
 		atomic_and_or(&places, rem_mask, add_mask | have_rem * rem_mask);
+	}*/
+
+	void tran_ena(u32 trmask)
+	{
+		queue.enqueue(trmask);//trmask, (places & pl_mask == pl_mask) * trmask);
 	}
 
-	void tran_ena(u32 trmask, u32 pl_mask)
+	void tran_ena_set(u32 trmask, u32 tr_ena_mask)
 	{
-		queue.set_elem(trmask, (places & pl_mask == pl_mask) * trmask);
+		queue.set_elem(trmask, tr_ena_mask);
 	}
 
 	virtual tran_func get_transition(int n) const

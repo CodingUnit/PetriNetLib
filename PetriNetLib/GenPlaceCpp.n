@@ -19,11 +19,30 @@ namespace PetriNetLib
     
     public this(pl : Place, gen : CppGenerator, idx : int)
     {
-      base(pl.idx, pl.id, pl.name, pl.colour, pl.init_mark, pl.tree, pl.net, 0);
+      base(pl.idx, pl.id, pl.name, pl.colour, pl.init_mark, pl.port, pl.tree, pl.net, 0);
       this.gen = gen;
       this.gen_idx = idx;
     }
        
+    public IsInteger : bool
+    {
+      [Memoize]
+      get
+      {
+        match (Colour.Colour)
+        {
+          | ColourSet(_, Colour.Integer)
+          | ColourSet("SBYTE", _)
+          | ColourSet("BYTE", _)
+          | ColourSet("INT", _)
+          | ColourSet("UINT", _)
+          | ColourSet("SHORT", _)
+          | ColourSet("USHORT", _) => true
+          | _                      => false
+        }
+      }
+    }
+    
     public Colour : GenColourCpp
     {
       [Memoize]

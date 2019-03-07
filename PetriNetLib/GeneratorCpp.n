@@ -135,21 +135,37 @@ namespace PetriNetLib
       def add_body = add_proc.Map(_.add_token);
       def code = tran.code_segment |> ConvExpr(_, true) ?? "";
       
-      def combine(x, a)
-      {
-        if (x.IsEmpty())
-        if (a.IsEmpty()) "" else a else 
-        {
-           $"$x && $a"
-        }
-        
-      }
-      def check_in = input.Fold("", (x, a) => combine(x.check_expr, a));
-      def rem_mask = input.Fold("", (x, a) => if (a.IsEmpty()) $"pl_$(x.place.Name)" else $"pl_$(x.place.Name) | $a");
-      def add_mask = output.Fold("", ((x, _), a) => if (a.IsEmpty()) $"pl_$(x.Name)" else $"pl_$(x.Name) | $a");
-      def ena = $<#places_ena($check_in, $rem_mask, $add_mask);#>;
-      def body = extract + (code :: add_body) + [ena];
-      def body = if (tran.guard is <[]>) body else 
+      //def combine(x, a)
+      //{
+      //  def expr = x.check_explicit_expr;
+      //  match (expr.IsEmpty(), a.IsEmpty())
+      //  {
+      //    | (true, true)   => ""
+      //    | (false, true)  => expr
+      //    | (true, false)  => a
+      //    | (false, false) => $"$expr && $a"
+      //  }
+      //}
+      //def mask_for_places(pl)
+      //{
+      //  pl.Fold("", (x, a) => if (a.IsEmpty()) $"pl_$(x.Name)" else $"pl_$(x.Name) | $a");
+      //}
+      
+      //def check_in = input.Fold("", combine);
+      //def check_in = if (check_in.IsEmpty()) "true" else check_in;
+      //def rem_mask = input.Select(x => x.place) |> mask_for_places;
+      //def add_mask = output.Select(x => x[0]) |> mask_for_places;//Fold("", ((x, _), a) => if (a.IsEmpty()) $"pl_$(x.Name)" else $"pl_$(x.Name) | $a");
+      
+      //def ena = $<#places_ena($check_in, $rem_mask, $add_mask);#>;
+      def out_tran = tran.OutputPlaces.SelectMany((x : Place, _) => x.OutputTransitions.Select((x : Transition, a) => x)).NToList();
+      def participate_tran = tran :: out_tran;
+      def tr_pl_mask = participate_tran.Where(_.IsImmediate).Map(x => $"tr_$(x.Name)");//, x.InputPlaces.Select(x => x[0]) |> mask_for_places));
+      //def tr_ena = tr_pl_mask.Map((t, p) => $<#tr_ena |= ((places & ($p)) == ($p)) * $t;#>);
+      def tr_mask = tr_pl_mask.Fold("", (t, a) => if (a.IsEmpty()) t else $"$t | $a");
+      def tr_ena = $"tran_ena($tr_mask);";
+      //def tr = "ttran ena_tr = (ttran)0;";
+      def body = extract + (code :: add_body) + [tr_ena];
+      def body = if (tran.guard is <[]>) body else //tran_ena($t, $p);
                   {
                     def guard = tran.guard |> ConvExpr(_, false);
                     $<#if ($guard) 
@@ -215,7 +231,7 @@ namespace PetriNetLib
         }
       }
         
-      def enums = places.Where(x => !x.IsTransparent).Map(x => $"pl_$(x.Name) = $(1 << x.gen_idx)");
+      def enums = places.Where(x => !x.IsTransparent).Map(x => $<#pl_$(x.Name) = 0x$((1 << x.gen_idx).ToString("X"))#>);
       $<#typedef enum
          {
            ..$(enums;",\n")
@@ -277,7 +293,13 @@ namespace PetriNetLib
       protected_fields ::= func;
       def tran = model.transitions.Map(x => x.Name);
       private_fields ::= $<#tranfunc tran_funcs[] = {..$(tran;",\n")
-      };#>
+      };#>;
+      
+      def tran = model.transitions.Map(x => $<#tr_$(x.Name) = 0x$((1 << x.idx).ToString("X"))#>);
+      private_fields ::= $<#typedef enum 
+      {
+        ..$(tran;",\n")
+      } ttran;#>
     }
     
     CreateTran(tran : Transition) : string

@@ -213,6 +213,15 @@ namespace PetriNetLib
         //  | <[ $e %@+ $time]>              => <[ $(unfold(e)) %@+ ($time + $global_time)]>
       //}
 
+    public IsInhibitor : bool
+    {
+      [Memoize]
+      get
+      {
+        arc_kind == ArcKind.Inhibitor
+      }
+    }
+    
     public check_expr : string
     {
       [Memoize]
@@ -220,7 +229,7 @@ namespace PetriNetLib
       {
         def check_func(e)
         {
-          | <[ 1 ` $expr]>      => check_func(expr)
+          | <[ 1 ` $expr]>      => expr |> check_func
           | <[ () ]>            => $<#$name.have_tokens()#>
           | <[ $e %@+ $time]>   => $<#$name.have_relative_time($(unfold(e)), $time)#>
           | <[ $(_ : usesite)]> => $<#$name.have_tokens()#>
@@ -228,15 +237,27 @@ namespace PetriNetLib
                                    $<#$name.have($tok)#>
         }
         
+        def cont_proc(other)
+        {
+          match (place.DestContainerType)
+          {
+            | Var 
+            | ReqContainer => ""
+            | Single       => $<#$(name)_flag#>
+            | ZeroSingle   => $<#$(name) == 0#>
+            | MinusSingle  => $<#$(name) == -1#>
+            | _            => other()
+          }
+        }
+        
         match (arc_kind)
         {
-          | ArcKind.Normal    => check_func(expr)
-          | ArcKind.Inhibitor => $<#!$name.have_tokens()#>
+          | ArcKind.Normal    => cont_proc(_ => check_func(expr))
+          | ArcKind.Inhibitor => cont_proc(_ => $<#!$name.have_tokens()#>)
           | _                 => ""
         }
       }
     }
-
     public extract_expr   : string
     {
       [Memoize]
@@ -254,12 +275,25 @@ namespace PetriNetLib
           | _                   => $<#$name.get($expr);#>
         }
         
+        def cont_proc(other)
+        {
+          match (place.DestContainerType)
+          {
+            | Var 
+            | ReqContainer => ""
+            | Single       => $<#$(name)_flag = false;#>
+            | ZeroSingle   => $<#$(name) = 0;#>
+            | MinusSingle  => $<#$(name) = -1;#>
+            | _            => other()
+          }
+        }
+        
         match (arc_kind)
         {
-         | ArcKind.Normal         => extract(expr)
-         | ArcKind.Reset          => $<#$name.get_all()#>
+         | ArcKind.Normal         => cont_proc(_ => extract(expr))
+         | ArcKind.Reset          => cont_proc(_ => $<#$name.get_all()#>)
          | _                      => ""
-       }
+        }
       }
     }
 
