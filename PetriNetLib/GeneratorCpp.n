@@ -20,13 +20,16 @@ namespace PetriNetLib
   using CommonLib.Macros.LensUtils;
 
   /*
-  - то их можно запаковать в слово или несколько слов переходы и позиции, наличие токенов и разрешенность
-    создается переменная places в которой бит показывает одной позиции наличие токена
-    создается переменная ena в которой каждый бит означает включенность перехода 
-    при добавлении токена бит устанавливается в places в 1
-    при удалении токена проверяется на пустоту и если пусто то сбрасывается в 0
-    бит ena = 1 в битах позиций, например ena = places & (A|B) == (A|B) << 16
-    биты из разрешенных переходов быстро определяется первый установленный и его позиция и
+  - вводится понятие переходов функций они действую совместно со своими позициями, когда вызывается 
+    функция, то вызывается переход и сеть срабатывает, фишки выходят в позицию как результат функции
+    для правильной работы нужно чтобы эта функция могла блокировать сеть на время своей работы, 
+    если другой переход срабатывает во время вызова функции, то функция должна вернуть
+    переход к его начальному состоянию, для этого переходы которые может прерывать функция,
+    те с пересекающимися позициями, должны сохранять свое состояние до перехода и надо восстанавливать
+    это состояние из перехода функции, тогда сеть должна функционировать правильно,
+    после того как функция сработала и фишки извлечены можно запустить отложенный переход который был 
+    прерван, если в момент сохранения состояния вызывается переход функции, то переход срабатывает, а состояние
+    должно сохранятся снова сначала после изменения состояния функции-перехода
   */
   /// <summary>
   /// Description of Generator.
@@ -129,11 +132,11 @@ namespace PetriNetLib
       }
 
       def input    = input.Sort((x, y) => y.priority - x.priority); 
-      def add_proc = output.Map((p, a) => OutArcProcessCpp(p, tran, a, this));
+      def add_proc = output.Map((p, a) => OutArcProcessCpp(places[p.idx], tran, a, this));
 
       def extract = input.Map(_.extract_expr);
       def add_body = add_proc.Map(_.add_token);
-      def code = tran.code_segment |> ConvExpr(_, true) ?? "";
+      def code = (tran.code_segment |> ConvExpr(_, true)) + ";" ?? "";
       
       //def combine(x, a)
       //{
@@ -157,14 +160,18 @@ namespace PetriNetLib
       //def add_mask = output.Select(x => x[0]) |> mask_for_places;//Fold("", ((x, _), a) => if (a.IsEmpty()) $"pl_$(x.Name)" else $"pl_$(x.Name) | $a");
       
       //def ena = $<#places_ena($check_in, $rem_mask, $add_mask);#>;
-      def out_tran = tran.OutputPlaces.SelectMany((x : Place, _) => x.OutputTransitions.Select((x : Transition, a) => x)).NToList();
-      def participate_tran = tran :: out_tran;
+      def out_tran = tran.OutputPlaces.SelectMany((x : Place, _) => x.OutputTransitions.Select((x : Transition, _) => x)).NToList();
+      def participate_tran = out_tran;
+      
       def tr_pl_mask = participate_tran.Where(_.IsImmediate).Map(x => $"tr_$(x.Name)");//, x.InputPlaces.Select(x => x[0]) |> mask_for_places));
+      def tr_comp_mask = if (tran.IsImmediate) $"tr_$(tran.Name)" else "0";
       //def tr_ena = tr_pl_mask.Map((t, p) => $<#tr_ena |= ((places & ($p)) == ($p)) * $t;#>);
       def tr_mask = tr_pl_mask.Fold("", (t, a) => if (a.IsEmpty()) t else $"$t | $a");
-      def tr_ena = $"tran_ena($tr_mask);";
+      def tr_mask = if (tr_mask.IsEmpty()) "0" else tr_mask;
+      def tr_ena = $"tran_ena($tr_mask, $tr_comp_mask);";
       //def tr = "ttran ena_tr = (ttran)0;";
       def body = extract + (code :: add_body) + [tr_ena];
+      def body = body.Filter(x => !x.IsEmpty());
       def body = if (tran.guard is <[]>) body else //tran_ena($t, $p);
                   {
                     def guard = tran.guard |> ConvExpr(_, false);
@@ -180,36 +187,32 @@ namespace PetriNetLib
       {
         if (a : object == null)
         {
+          def expr = x.bind_expr :: body + [tran_evt];
+          def expr = expr.Filter(x => !x.IsEmpty());
+          def expr = $<#..$(expr;"\n")#>;
           if (x.check_expr.IsEmpty())
-            $<#  
-              $(x.bind_expr)
-              ..$(body;"\n")
-              $tran_evt
-            #>
+          {
+            expr
+          }
           else
-          $<#  
-              if ($(x.check_expr))
-              {
-                $(x.bind_expr)
-                ..$(body; "\n")
-                $tran_evt
-              }
-          #>
+          {
+            $<# if ($(x.check_expr))
+                {
+                  $expr
+                }#>
+          }
         } else
         {
+          def expr = [x.bind_expr] + [a];
+          def expr = expr.Filter(x => !x.IsEmpty());
+          def expr = $<#..$(expr;"\n")#>;
           if (x.check_expr.IsEmpty())
-          $<#  
-              $(x.bind_expr)
-              $a
-              #>
+            expr
           else
-          $<#  
-              if ($(x.check_expr))
+            $<# if ($(x.check_expr))
               {
-                $(x.bind_expr)
-                $a
-              }
-          #>
+                $expr
+              }#>
         }
       }
 
@@ -308,7 +311,8 @@ namespace PetriNetLib
 
       def body = CreateTranBody(tran);      
       //def places = tran.InputPlaces.Map((x, _) => x.gen_idx);
-      def places = tran.InputPlaces.Fold("", ((x, _), a) => if (a.IsEmpty()) $"pl_$(x.Name)" else $"pl_$(x.Name) | $a");
+      def places_participate = tran.InputPlaces + tran.OutputPlaces;
+      def places = places_participate.Fold("", ((x, _), a) => if (a.IsEmpty()) $"pl_$(x.Name)" else $"pl_$(x.Name) | $a");
       //def rem = tran.InputPlaces.Fold("", ((x, _), a) => if (a.IsEmpty()) $"pl_$(x.Name)" else $"pl_$(x.Name) | $a");
       //cpp(<#
       
@@ -706,7 +710,7 @@ namespace PetriNetLib
     CreateTimeMethods() : void
     {
       def body = model.transitions.Where(_.IsTimed).Map(x => <[ $(x.Name : usesite)() ]>);
-      def next = model.places.Where(_.IsTimed).Map(x => $"$(x.name).NextTokenDelay");
+      def next = model.places.Where(_.IsTimed).Map(x => $"$(x.Name).NextTokenDelay");
 
       def time_body = match (next)
                        {

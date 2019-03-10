@@ -88,32 +88,32 @@ namespace PetriNetLib
       .SelectMany((p, a) => a.Map(x => (p, x))).NToList()
     }
     
-    public InputArcs() : IEnumerable[Place * Transition * list[Arc]]
-    {
-      foreach (_ in places with p)
-      {
-        foreach (_ in transitions with t)
-        {
-          def arc = input_matrix[p, t];
-          if (arc != null) 
-            yield (places[p], transitions[t], arc) 
-          else ()
-        }
-      }
-    }
+    //public InputArcs() : IEnumerable[Place * Transition * list[Arc]]
+    //{
+    //  foreach (_ in places with p)
+    //  {
+    //    foreach (_ in transitions with t)
+    //    {
+    //      def arc = input_matrix[p, t];
+    //      if (arc != null) 
+    //        yield (places[p], transitions[t], arc) 
+    //      else ()
+    //    }
+    //  }
+    //}
 
-    public OutputArcs() : IEnumerable[Place * Transition * list[Arc]]
-    {
-      foreach (_ in places with p)
-      {
-        foreach (_ in transitions with t)
-        {
-          def arc = output_matrix[p, t];
-          when (arc != null)
-            yield (places[p], transitions[t], arc)
-        }
-      }
-    }
+    //public OutputArcs() : IEnumerable[Place * Transition * list[Arc]]
+    //{
+    //  foreach (_ in places with p)
+    //  {
+    //    foreach (_ in transitions with t)
+    //    {
+    //      def arc = output_matrix[p, t];
+    //      when (arc != null)
+    //        yield (places[p], transitions[t], arc)
+    //    }
+    //  }
+    //}
     
     BuildMatrix() : void
     {
@@ -260,13 +260,9 @@ namespace PetriNetLib
         match (f, t)
         {
           | (ArcSource.PlaceEnd(p),      ArcSource.TransitionEnd(t)) => 
-            def val = output_matrix[p.idx, t.idx];
-            def val = if (val == null) [a] else a :: val;
-            output_matrix[p.idx, t.idx] = val
+            add_arc(output_matrix, p.idx, t.idx, a);
           | (ArcSource.TransitionEnd(t), ArcSource.PlaceEnd(p))      => 
-            def val = input_matrix[p.idx, t.idx];
-            def val = if (val == null) [a] else a :: val;
-            input_matrix[p.idx, t.idx] = val
+            add_arc(input_matrix, p.idx, t.idx, a);
           | _                                                        => ()
         }
       }
@@ -281,42 +277,42 @@ namespace PetriNetLib
       matrix[p, t] = val
     }
     
-    AddArc(from : Transition, a : Arc, to : Place) : void
-    {
-      //def place = (a.to :> ArcSource.PlaceEnd).place;
-      //def toplace = (to :> ArcSource.PlaceEnd).place;
-      //input_matrix[place.idx, tran.idx] = null;
-      def a = Arc.to_lens.Set(a, to |> ArcSource.PlaceEnd);
-      add_arc(input_matrix, to.idx, from.idx, a);
-    }
+    //AddArc(from : Transition, a : Arc, to : Place) : void
+    //{
+    //  //def place = (a.to :> ArcSource.PlaceEnd).place;
+    //  //def toplace = (to :> ArcSource.PlaceEnd).place;
+    //  //input_matrix[place.idx, tran.idx] = null;
+    //  def a = Arc.to_lens.Set(a, to |> ArcSource.PlaceEnd);
+    //  add_arc(input_matrix, to.idx, from.idx, a);
+    //}
     
-    DeleteTran(tran : Transition) : void
-    {
-      def idx = tran.idx;
-      foreach ((p, _) in tran.OutputPlaces)
-      {
-        input_matrix[p.idx, idx] = null;
-      }
-      foreach ((p, _) in tran.InputPlaces)
-      {
-        output_matrix[p.idx, idx] = null;
-      }
-      transitions[tran.idx] = null;
-    }
+    //DeleteTran(tran : Transition) : void
+    //{
+    //  def idx = tran.idx;
+    //  foreach ((p, _) in tran.OutputPlaces)
+    //  {
+    //    input_matrix[p.idx, idx] = null;
+    //  }
+    //  foreach ((p, _) in tran.InputPlaces)
+    //  {
+    //    output_matrix[p.idx, idx] = null;
+    //  }
+    //  transitions[tran.idx] = null;
+    //}
     
-    DeletePlace(pl : Place) : void
-    {
-      def idx = pl.idx;
-      foreach ((p, _) in pl.InputTransitions)
-      {
-        input_matrix[idx, p.idx] = null;
-      }
-      foreach ((p, _) in pl.OutputTransitions)
-      {
-        output_matrix[idx, p.idx] = null;
-      }
-      places[pl.idx] = null;
-    }
+    //DeletePlace(pl : Place) : void
+    //{
+    //  def idx = pl.idx;
+    //  foreach ((p, _) in pl.InputTransitions)
+    //  {
+    //    input_matrix[idx, p.idx] = null;
+    //  }
+    //  foreach ((p, _) in pl.OutputTransitions)
+    //  {
+    //    output_matrix[idx, p.idx] = null;
+    //  }
+    //  places[pl.idx] = null;
+    //}
     //// TODO: сделать прозрачные если переходы после позиций имеют входы
     //ProcessTransparent() : void
     //{

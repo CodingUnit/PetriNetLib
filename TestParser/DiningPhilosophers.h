@@ -46,49 +46,40 @@ UnusedChopsticks.add(CS.all());
       }
 void TakeChopsticks()
             {
-              if (lock(pl_UnusedChopsticks | pl_Think))
+              if (lock(pl_Eat | pl_UnusedChopsticks | pl_Think))
               {
-                  
-              if (Think.have_tokens())
+                 if (Think.have_tokens())
               {
                  int p_idx;
                                           PH p = Think.peek_indexed(p_idx);
-                  
-              if (UnusedChopsticks.have(Chopsticks(p)))
-              {
-                
-                UnusedChopsticks.get(Chopsticks(p));
+ if (UnusedChopsticks.have(Chopsticks(p)))
+                {
+                  UnusedChopsticks.get(Chopsticks(p));
 Think.get_indexed(p_idx);
-
+;
 Eat.add(p);
-tran_ena();
-                
-              }
-          
-              }
-          ;
-                unlock(pl_UnusedChopsticks | pl_Think);
+tran_ena(0, 0);
+                }
+              };
+                unlock(pl_Eat | pl_UnusedChopsticks | pl_Think);
               }
             }
           
 void PutDownChopsticks()
             {
-              if (lock(pl_Eat))
+              if (lock(pl_UnusedChopsticks | pl_Think | pl_Eat))
               {
-                  
-              if (Eat.have_tokens())
-              {
-                 int p_idx;
+                 if (Eat.have_tokens())
+                {
+                   int p_idx;
                                           PH p = Eat.peek_indexed(p_idx);
-                Eat.get_indexed(p_idx);
-
+Eat.get_indexed(p_idx);
+;
 Think.add(p);
 UnusedChopsticks.add(Chopsticks(p));
-tran_ena();
-                
-              }
-          ;
-                unlock(pl_Eat);
+tran_ena(0, 0);
+                };
+                unlock(pl_UnusedChopsticks | pl_Think | pl_Eat);
               }
             }
           

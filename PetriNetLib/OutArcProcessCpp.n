@@ -19,7 +19,7 @@ namespace PetriNetLib
   class OutArcProcessCpp
   {
 
-    public place      : Place;
+    public place      : GenPlaceCpp;
     public transition : Transition;
     public arc        : Arc;
     public gen        : CppGenerator;
@@ -63,25 +63,25 @@ namespace PetriNetLib
       {
         def unfold(e)
         {
-          | <[ () ]> => <#unit.instance()#>
+          | <[ () ]> => <#1#>
           | e        => e |> gen.ConvExpr(_, false)
         }
         
         def add(e)
         {
-          | <[ () ]>                       => <#unit.instance()#>
+          | <[ () ]>                       => <#1#>
           | <[ $e %@+ $(time : int)]>      => match (global_time)
                                               {
                                                 | <[ $(t : int)]> => def time = time + t;     
                                                                      $<#add_time($(unfold(e)), $time)#>
+                                                | _               => null
                                               } 
-                                              
+          | <[ $(_ : int) ` $_ ]> as e     => e |> gen.ConvExpr(_, false)                                    
           | <[ $e %@+ $time]>              => $<#add_time($(unfold(e)), $time + $global_time_str)#>
           | <[ $_ %++ $_ ]> as e           => gen.GetTokenExpr(e)
           | <[ 1 ` $e ]>                   => add(e)
           | <[ $_(..$_)]> as e
           | <[ $(_ : usesite) ]> as e
-          | <[ $(_ : int) ` $_ ]> as e     
           | e                              => e |> gen.ConvExpr(_, false)
         }
         
@@ -107,6 +107,7 @@ namespace PetriNetLib
         {
           | <[]>            => <[0]>
           | <[ @Delay($t)]> => t
+          | _               => null
         }
       }
     }
@@ -136,7 +137,22 @@ namespace PetriNetLib
           }
         } else
         {
-          $<#$name.add($add_token_expr);#>
+          match (place.DestContainerType)
+          {
+            | ZeroSingle // имеет 0 или 1 фишку, для отсутствия используется 0 если INT
+            | MinusSingle 
+            | Var       => $"$(name) = $add_token_expr;"
+            | Single    => if (place.IsUnit)
+                           {
+                             $<#$(name) = $add_token_expr;#>
+                           } else
+                           {
+                             $<#$(name) = $add_token_expr;
+                              $(name)_flag = true;#>
+                           }
+            | _ => $<#$name.add($add_token_expr);#>
+          }
+          
         }
       }
       

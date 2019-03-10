@@ -105,7 +105,17 @@ namespace PetriNetLib
         //} else
       if (place.IsIndexedContainer)
         $<#$name.peek_indexed($n)#> else
-        $<#$name.peek()#>
+      {
+        match (place.DestContainerType)
+        {
+          | ZeroSingle // имеет 0 или 1 фишку, для отсутствия используется 0 если INT
+          | MinusSingle
+          | Var    // имеет 1 фишку, аналогично обычному полю
+          | Single => $<#$name#>// имеет 0 или 1 фишку, для отсутствия использует отдельный флаг
+          | _      => $<#$name.peek()#>    // значение запрашивается из внешней функции
+        }
+        
+      }
     }
 
     source_token_name : string
@@ -291,7 +301,7 @@ namespace PetriNetLib
         match (arc_kind)
         {
          | ArcKind.Normal         => cont_proc(_ => extract(expr))
-         | ArcKind.Reset          => cont_proc(_ => $<#$name.get_all()#>)
+         | ArcKind.Reset          => cont_proc(_ => $<#$name.get_all();#>)
          | _                      => ""
         }
       }

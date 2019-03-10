@@ -107,11 +107,11 @@ namespace PetriNetLib
       
     //}
     
-    IsTokenExpr(expr : PExpr) : bool
-    {
-      | <[ $(_ : usesite) ]> => false
-      | _                    => true
-    }
+    //IsTokenExpr(expr : PExpr) : bool
+    //{
+    //  | <[ $(_ : usesite) ]> => false
+    //  | _                    => true
+    //}
     
     //CreateDummyMethod() : void
     //{

@@ -58,7 +58,7 @@ namespace PetriNetLib
       
     }
     
-    public static ParseAndGenerate(ty : TypeBuilder, typer : Typer, expr : PExpr, other : array[PExpr]) : void
+    public static ParseAndGenerate(ty : TypeBuilder, _typer : Typer, _expr : PExpr, _other : array[PExpr]) : void
     {
       //Macros.DefineCTX(typer);
       //assert2(false);
@@ -75,7 +75,7 @@ namespace PetriNetLib
       gen.MainGen();
     }
     
-    public static ParseAndGenerate2(ty : TypeBuilder, typer : Typer, expr : PExpr, other : array[PExpr]) : void
+    public static ParseAndGenerate2(ty : TypeBuilder, _typer : Typer, _expr : PExpr, _other : array[PExpr]) : void
     {
       //Macros.DefineCTX(typer);
       //assert2(false);

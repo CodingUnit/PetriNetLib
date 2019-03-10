@@ -19,7 +19,7 @@ namespace PetriNetLib
   /// </summary>
   class Converter
   {
-    file : string;
+    //file : string;
     parserHost : ParseSession;
     msg : Nitra.ProjectSystem.CompilerMessageList;
     //host : CompilerHost = CompilerHost();
@@ -52,6 +52,7 @@ namespace PetriNetLib
       | Literal.Boolean(Boolean = BaseParseTree.Boolean.True) => <[ $(true : bool) ]>
       | Literal.Boolean(Boolean = BaseParseTree.Boolean.False) => <[ $(false : bool) ]>
       | Literal.EmptyMultiSet => <[ empty() ]>
+      | _                     => throw InvalidOperationException()
     }
     
     GetExpr(expr : MainParseTree.Expr) : PExpr
@@ -139,6 +140,7 @@ namespace PetriNetLib
                                                      def i = n.Numeric |> GetNumeric;
                                                      def field = $"field$i";
                                                      <[ $(GetExpr(e)).$(field : usesite)]>
+                                                 | _ => null
                                                }
       | List(ExprsData = (e, _))             => def e = e.Map(GetExpr);
                                                 <[ [..$e] ]>
@@ -153,6 +155,7 @@ namespace PetriNetLib
           
           def e = e.Map(get_elem);
           <[ (..$e) ]>
+      | _ => throw InvalidOperationException()
     }
     
     GetType(t : TypeExpr) : PExpr
@@ -176,6 +179,7 @@ namespace PetriNetLib
                                                                   <[parameter: $(n : usesite) : $t]>
                 | Parm.Normal(Name = n, TypeOptData = None())  => <[parameter: $(n.IdentifierBodyData : usesite) ]>
                 | Parm.Index(Name = n, Index = i)              => <[parameter: $(i.IdentifierBodyData : usesite) : Index.[$(n.IdentifierBodyData : usesite)]]>
+                | _ => throw InvalidOperationException()
               }
         
               def parms = p.Map(get_parm);
@@ -207,6 +211,7 @@ namespace PetriNetLib
                 def n = n.GetText();
                 def e = e |> GetExpr;
                 <[ $(n : usesite) = $e ]>
+             | _ => throw InvalidOperationException()
           }
           
           match (decls.Map(map_decls))
@@ -222,14 +227,14 @@ namespace PetriNetLib
             | [e] => e
             | e   => <[ {..$e} ]>
           }
-          
+      | _ => throw InvalidOperationException()    
     }
     
     public ParseML(text : string) : option[PExpr]
     {
       if (string.IsNullOrWhiteSpace(text)) Some(<[]>) else
       {
-        def source = SourceSnapshot(text, file);
+        def source = SourceSnapshot(text, null : string);
         def result = parserHost.Parse(source);//Main.StateMachine(source, parserHost);
         def ast = result.CreateParseTree();
         if (result.IsSuccess) 
@@ -241,7 +246,7 @@ namespace PetriNetLib
           }           
         } else 
         {
-          def msg = msg.GetMessages();
+          def _msg = msg.GetMessages();
           None()
           //(null, msg.GetMessages().NToList())
         }

@@ -24,6 +24,20 @@ namespace PetriNetLib
       this.gen_idx = idx;
     }
        
+    public IsUnit : bool
+    {
+      [Memoize]
+      get
+      {
+        match (Colour.Colour)
+        {
+          | ColourSet(_, Colour.Unit)
+          | ColourSet("UNIT", _)  => true
+          | _                     => false
+        }
+      }
+    }
+    
     public IsInteger : bool
     {
       [Memoize]
@@ -57,13 +71,12 @@ namespace PetriNetLib
       [Memoize]
       get
       {
-        true
-        //match (DestContainerType)
-        //{
-        //  | TDestCont.RandomEnumerable
-        //  | TDestCont.MultiSet          => true
-        //  | _                           => false
-        //}
+        match (DestContainerType)
+        {
+          | TDestCont.RandomEnumerable
+          | TDestCont.MultiSet          => true
+          | _                           => false
+        }
       }
     }
     

@@ -118,6 +118,7 @@ namespace PetriNetLib
         {
           | "In"  => PortType.In
           | "Out" => PortType.Out
+          | _     => throw InvalidOperationException()
         }
       }
       

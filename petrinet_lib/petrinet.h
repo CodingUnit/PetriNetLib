@@ -5,11 +5,13 @@ class petri_net32// : IPetriNet, IDisposable
 {
 	u32 locked;
 	event_queue32_conc queue;	
+  u32 completed_tran;
 	u16 max_steps;
 	//tran_queue: RQueue[Action] = RQueue(32);
 
 	public this(step : int = 15)
 	{
+    completed_tran = 0;
 		time_step = step;
 		max_steps = 1;
 	}
@@ -55,9 +57,10 @@ protected:
 		atomic_and_or(&places, rem_mask, add_mask | have_rem * rem_mask);
 	}*/
 
-	void tran_ena(u32 trmask)
+	void tran_ena(u32 trmask, u32 completed)
 	{
 		queue.enqueue(trmask);//trmask, (places & pl_mask == pl_mask) * trmask);
+    atomic_or(&completed_tran, completed);
 	}
 
 	void tran_ena_set(u32 trmask, u32 tr_ena_mask)
@@ -79,6 +82,8 @@ public:
 	{
 		u32 val;
 		u16 step = 0;
+    u32 comp = atomic_and(&completed_tran, ~completed_tran);
+    queue.enqueue(comp); 
 		for (u16 step = 0; step < max_steps; step++)
 		{
 			if (queue.deque_if_exist(val))

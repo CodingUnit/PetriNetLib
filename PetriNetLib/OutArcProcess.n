@@ -73,14 +73,15 @@ namespace PetriNetLib
                                               {
                                                 | <[ $(t : int)]> => def time = time + t;     
                                                                      <[ $(unfold(e)) %@+ $time]>
+                                                | _               => null                     
                                               } 
-                                              
+          | <[ $(_ : int) ` $_ ]> as e     => e                                    
           | <[ $e %@+ $time]>              => <[ $(unfold(e)) %@+ ($time + $global_time)]>
           | <[ $_ %++ $_ ]> as e           => Generator.GetTokenExpr(e)
           | <[ 1 ` $e ]>                   => add(e)
           | <[ $_(..$_)]> as e
           | <[ $(_ : usesite) ]> as e
-          | <[ $(_ : int) ` $_ ]> as e     
+          
           | e                              => e
         }
         
@@ -97,6 +98,7 @@ namespace PetriNetLib
         {
           | <[]>            => <[ 0 ]>
           | <[ @Delay($t)]> => t
+          | _               => null
         }
       }
     }
