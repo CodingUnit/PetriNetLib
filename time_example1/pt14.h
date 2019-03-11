@@ -154,7 +154,7 @@ min = math_utils::min(min, DEBUG_TIMER.NextTokenDelay); ;
                       }
 void time_step()
                       {
-                        UnnamedTransition0(), UnnamedTransition1(), UnnamedTransition2(), UnnamedTransition3(), UnnamedTransition4(), UnnamedTransition5();
+                        UnnamedTransition76(), UnnamedTransition77(), UnnamedTransition78(), UnnamedTransition79(), UnnamedTransition80(), UnnamedTransition81();
                       }
 bool DPS;
 u32 SYNC;
@@ -174,60 +174,52 @@ random_array UDP_OUT;
 u16 COUNTER;
 CAN_RESULT CAN_OUT;
 bool CAN_OUT_flag = false;
-tran_func tran_funcs[] = {UnnamedTransition7,
-UnnamedTransition12,
-BUTTONS,
-UnnamedTransition5,
-UnnamedTransition18,
-UnnamedTransition4,
-UnnamedTransition13,
-UnnamedTransition16,
-UnnamedTransition17,
-UnnamedTransition14,
-UnnamedTransition15,
+tranfunc tran_funcs[] = {UnnamedTransition82,
+UnnamedTransition83,
+UnnamedTransition84,
+UnnamedTransition85,
 DPS,
-UnnamedTransition0,
-UnnamedTransition9,
-UnnamedTransition6,
-UnnamedTransition8,
-UnnamedTransition2,
-UnnamedTransition3,
-UnnamedTransition1,
-UnnamedTransition10,
-UnnamedTransition11
+UnnamedTransition76,
+UnnamedTransition86,
+UnnamedTransition87,
+UnnamedTransition77,
+UnnamedTransition78,
+UnnamedTransition79,
+UnnamedTransition88,
+UnnamedTransition80,
+BUTTONS,
+UnnamedTransition81,
+UnnamedTransition89,
+UnnamedTransition90,
+UnnamedTransition91,
+UnnamedTransition92,
+UnnamedTransition93,
+UnnamedTransition94
       };
 typedef enum 
       {
-        tr_UnnamedTransition7 = 0x1,
-tr_UnnamedTransition12 = 0x2,
-tr_BUTTONS = 0x4,
-tr_UnnamedTransition5 = 0x8,
-tr_UnnamedTransition18 = 0x10,
-tr_UnnamedTransition4 = 0x20,
-tr_UnnamedTransition13 = 0x40,
-tr_UnnamedTransition16 = 0x80,
-tr_UnnamedTransition17 = 0x100,
-tr_UnnamedTransition14 = 0x200,
-tr_UnnamedTransition15 = 0x400,
-tr_DPS = 0x800,
-tr_UnnamedTransition0 = 0x1000,
-tr_UnnamedTransition9 = 0x2000,
-tr_UnnamedTransition6 = 0x4000,
-tr_UnnamedTransition8 = 0x8000,
-tr_UnnamedTransition2 = 0x10000,
-tr_UnnamedTransition3 = 0x20000,
-tr_UnnamedTransition1 = 0x40000,
-tr_UnnamedTransition10 = 0x80000,
-tr_UnnamedTransition11 = 0x100000
+        tr_UnnamedTransition82 = 0x1,
+tr_UnnamedTransition83 = 0x2,
+tr_UnnamedTransition84 = 0x4,
+tr_UnnamedTransition85 = 0x8,
+tr_DPS = 0x10,
+tr_UnnamedTransition76 = 0x20,
+tr_UnnamedTransition86 = 0x40,
+tr_UnnamedTransition87 = 0x80,
+tr_UnnamedTransition77 = 0x100,
+tr_UnnamedTransition78 = 0x200,
+tr_UnnamedTransition79 = 0x400,
+tr_UnnamedTransition88 = 0x800,
+tr_UnnamedTransition80 = 0x1000,
+tr_BUTTONS = 0x2000,
+tr_UnnamedTransition81 = 0x4000,
+tr_UnnamedTransition89 = 0x8000,
+tr_UnnamedTransition90 = 0x10000,
+tr_UnnamedTransition91 = 0x20000,
+tr_UnnamedTransition92 = 0x40000,
+tr_UnnamedTransition93 = 0x80000,
+tr_UnnamedTransition94 = 0x100000
       } ttran;
-void GroupTransition1287()
-                              {
-                                if (!UnnamedTransition7()) 
-if (!UnnamedTransition12()) 
-if (!UnnamedTransition8()) 
-return;
-                                tran_ena(0, tr_GroupTransition1287);
-                              }
 static const int P_LOW = 10000;
 static const int P_NORMAL = 1000;
 static const int P_HIGH = 100;
@@ -242,8 +234,8 @@ CAN_MESSAGE  udp2can(const CAN_UDP_MESSAGE &m)
                     }
                     
 CAN_MESSAGE  bt2can_message(int bt)
-                    {u8 _N__4336[] = {(BYTE)1, bt};
-                      return CAN_MESSAGE (721,IntInf.fromInt(0),byte2(_N__4336));
+                    {u8 _N__4386[] = {(BYTE)1, bt};
+                      return CAN_MESSAGE (721,IntInf.fromInt(0),byte2(_N__4386));
                     }
                     
 bool is_sens(const CAN_UDP_MESSAGE &m)
@@ -268,26 +260,26 @@ bool is_control(const CAN_UDP_MESSAGE &m)
 
               void step()
       {
-        UnnamedTransition6()
-UnnamedTransition7()
-UnnamedTransition8()
-UnnamedTransition9()
-UnnamedTransition10()
-UnnamedTransition11()
-UnnamedTransition12()
-UnnamedTransition13()
-UnnamedTransition14()
-UnnamedTransition15()
-UnnamedTransition16()
-UnnamedTransition17()
-UnnamedTransition18()
+        UnnamedTransition82()
+UnnamedTransition83()
+UnnamedTransition84()
+UnnamedTransition85()
+UnnamedTransition86()
+UnnamedTransition87()
+UnnamedTransition88()
+UnnamedTransition89()
+UnnamedTransition90()
+UnnamedTransition91()
+UnnamedTransition92()
+UnnamedTransition93()
+UnnamedTransition94()
       }
 pt14(int time_step = 15) 
       { 
         timed_petri_net(time_step);
         DPS.add(false);
 SYNC.add(0);
-SSI.add(byte0(_N__4322));
+SSI.add(byte0(_N__4372));
 TEMP.add(0);
 BUTTONS.add(0);
 UDP_IN.add();
@@ -313,7 +305,23 @@ UDP_AND_CAN_SEND.add();
 CAN_OUT.add();
         
       }
-bool UnnamedTransition7()
+void UnnamedTransition82()
+            {
+              if (lock(pl_UDP_SEND | pl_GPS))
+              {
+                 if (GPS_flag)
+                {
+                  bytesn s = GPS; 
+GPS_flag = false;
+;
+UDP_SEND.add(tuple3(256, get_time(), s));
+tran_ena(tr_UnnamedTransition90, tr_UnnamedTransition82);
+                };
+                unlock(pl_UDP_SEND | pl_GPS);
+              }
+            }
+          
+void UnnamedTransition83()
             {
               if (lock(pl_UDP_SEND | pl_UDP_IN))
               {
@@ -325,16 +333,177 @@ if (is_control(m))
                       UDP_IN_flag = false;
 ;
 UDP_SEND.add(get_control_msg(m));
-tran_ena(tr_UnnamedTransition2, 0);
-return true;
+tran_ena(tr_UnnamedTransition90, tr_UnnamedTransition83);
                     }
                 };
                 unlock(pl_UDP_SEND | pl_UDP_IN);
               }
-              return false;
             }
           
-bool UnnamedTransition12()
+void UnnamedTransition84()
+            {
+              if (lock(pl_CAN | pl_UDP_IN))
+              {
+                 if (UDP_IN_flag)
+                {
+                  CAN_UDP_MESSAGE m = UDP_IN; 
+UDP_IN_flag = false;
+;
+CAN.add(udp2can(m));
+tran_ena(tr_UnnamedTransition92, tr_UnnamedTransition84);
+                };
+                unlock(pl_CAN | pl_UDP_IN);
+              }
+            }
+          
+void UnnamedTransition85()
+            {
+              if (lock(pl_UDP_SEND | pl_CAN_IN))
+              {
+                 if (CAN_IN_flag)
+                {
+                  CAN_MESSAGE cm = CAN_IN; 
+CAN_IN_flag = false;
+can_process(cm);
+UDP_SEND.add(cm);
+tran_ena(tr_UnnamedTransition90, tr_UnnamedTransition85);
+                };
+                unlock(pl_UDP_SEND | pl_CAN_IN);
+              }
+            }
+          
+void DPS()
+            {
+              if (lock(pl_SYNC_BUF | pl_UDP_SEND | pl_SYNC | pl_DELAY | pl_SSI | pl_SYNC | pl_DPS))
+              {
+                ; ;
+bytes8 ssi = SSI.peek(); 
+int n = SYNC; 
+bool dir = DPS; 
+DELAY.get_all();
+;
+SYNC = n + 1;
+UDP_SEND.add(tuple3(663, get_time(), get_ssi_bytes(n,dir,1,ssi)));
+SYNC_BUF = token_iter_utils.repeat('u', 1);
+tran_ena(tr_UnnamedTransition86 | tr_UnnamedTransition90 | tr_UnnamedTransition87, 0);;
+                unlock(pl_SYNC_BUF | pl_UDP_SEND | pl_SYNC | pl_DELAY | pl_SSI | pl_SYNC | pl_DPS);
+              }
+            }
+          
+void UnnamedTransition76()
+            {
+              if (lock(pl_DEBUG_TIMER | pl_UDP_SEND | pl_DEBUG_TIMER | pl_SEND_DEBUG))
+              {
+                 if (DEBUG_TIMER.have_tokens())
+              {
+                ; ;
+ if (SEND_DEBUG_flag)
+                {
+                  bytesn d = SEND_DEBUG; 
+SEND_DEBUG_flag = false;
+DEBUG_TIMER.get();
+;
+UDP_SEND.add(tuple3(0, get_time(), d));
+DEBUG_TIMER.add(add_time(1, 333000));
+tran_ena(tr_UnnamedTransition76 | tr_UnnamedTransition90, tr_UnnamedTransition76);
+                }
+              };
+                unlock(pl_DEBUG_TIMER | pl_UDP_SEND | pl_DEBUG_TIMER | pl_SEND_DEBUG);
+              }
+            }
+          
+void UnnamedTransition86()
+            {
+              if (lock(pl_DELAY | pl_SYNC_BUF))
+              {
+                 if (SYNC_BUF_flag)
+                {
+                  SYNC_BUF_flag = false;
+;
+DELAY.add(add_time(1, 0));
+tran_ena(tr_UnnamedTransition80, tr_UnnamedTransition86);
+                };
+                unlock(pl_DELAY | pl_SYNC_BUF);
+              }
+            }
+          
+void UnnamedTransition87()
+            {
+              if (lock(pl_UDP_SEND | pl_SEND_SENS | pl_SSI | pl_SYNC | pl_DPS))
+              {
+                 if (SEND_SENS_flag)
+              {
+                bytes8 ssi = SSI.peek(); 
+int n = SYNC; 
+bool dir = DPS; 
+SEND_SENS_flag = false;
+;
+UDP_SEND.add(tuple3(663, get_time(), get_ssi_bytes(n,dir,0,ssi)));
+tran_ena(tr_UnnamedTransition90, tr_UnnamedTransition87);
+              };
+                unlock(pl_UDP_SEND | pl_SEND_SENS | pl_SSI | pl_SYNC | pl_DPS);
+              }
+            }
+          
+void UnnamedTransition77()
+            {
+              if (lock(pl_UDP_AND_CAN_SEND | pl_UDP_AND_CAN_SEND | pl_BinTimer | pl_BatLevel | pl_BinTimer | pl_BUTTONS))
+              {
+                 if (BatLevel_flag)
+              {
+                 if (BinTimer.have_tokens())
+              {
+                ; ;
+int inp = BUTTONS; 
+BinTimer.get();
+BatLevel_flag = false;
+;
+BinTimer.add(add_time(1, 1000000));
+UDP_AND_CAN_SEND.add(tuple3(336, get_time(), (_N__4384)));
+UDP_AND_CAN_SEND.add(tuple3(721, get_time(), (_N__4385)));
+tran_ena(tr_UnnamedTransition91 | tr_UnnamedTransition91 | tr_UnnamedTransition77, tr_UnnamedTransition77);
+              }
+              };
+                unlock(pl_UDP_AND_CAN_SEND | pl_UDP_AND_CAN_SEND | pl_BinTimer | pl_BatLevel | pl_BinTimer | pl_BUTTONS);
+              }
+            }
+          
+void UnnamedTransition78()
+            {
+              if (lock(pl_SyncFreq | pl_SYNC | pl_SyncFreq))
+              {
+                 if (SyncFreq.have_tokens())
+                {
+                  int SyncFreq_tok = SyncFreq.peek();; int freq = SyncFreq_tok;;
+SyncFreq.get(freq);
+;
+SYNC = 0;
+SyncFreq.add(add_time(freq(Delay(/(1000000,freq))), 0));
+tran_ena(tr_UnnamedTransition78 | tr_UnnamedTransition87, tr_UnnamedTransition78);
+                };
+                unlock(pl_SyncFreq | pl_SYNC | pl_SyncFreq);
+              }
+            }
+          
+void UnnamedTransition79()
+            {
+              if (lock(pl_UDP_AND_CAN_SEND | pl_TempTimer | pl_TempTimer | pl_TEMP))
+              {
+                 if (TempTimer.have_relative_time(unit.instance(), 500000))
+              {
+                ; ;
+int n = TEMP.peek(); 
+TempTimer.get_relative_time(unit.instance(), 500000);
+;
+TempTimer.add(add_time(1, 0));
+UDP_AND_CAN_SEND.add(tuple3(721, get_time(), list.Cons(51,IntToList(n))));
+tran_ena(tr_UnnamedTransition91 | tr_UnnamedTransition79, tr_UnnamedTransition79);
+              };
+                unlock(pl_UDP_AND_CAN_SEND | pl_TempTimer | pl_TempTimer | pl_TEMP);
+              }
+            }
+          
+void UnnamedTransition88()
             {
               if (lock(pl_SEND_SENS | pl_UDP_IN))
               {
@@ -346,30 +515,43 @@ if (is_sens(m))
                       UDP_IN_flag = false;
 ;
 SEND_SENS = 1;
-tran_ena(tr_UnnamedTransition16, 0);
-return true;
+tran_ena(tr_UnnamedTransition87, tr_UnnamedTransition88);
                     }
                 };
                 unlock(pl_SEND_SENS | pl_UDP_IN);
               }
-              return false;
             }
           
-bool BUTTONS()
+void UnnamedTransition80()
+            {
+              if (lock(pl_SEND_SENS | pl_DELAY | pl_DELAY))
+              {
+                 if (DELAY.have_relative_time(unit.instance(), 200000))
+                {
+                  ; ;
+DELAY.get_relative_time(unit.instance(), 200000);
+;
+DELAY.add(add_time(1, 0));
+SEND_SENS = 1;
+tran_ena(tr_UnnamedTransition87 | tr_UnnamedTransition80, tr_UnnamedTransition80);
+                };
+                unlock(pl_SEND_SENS | pl_DELAY | pl_DELAY);
+              }
+            }
+          
+void BUTTONS()
             {
               if (lock(pl_UDP_AND_CAN_SEND | pl_BUTTONS))
               {
                 u8 bt = BUTTONS; 
 ;
 UDP_AND_CAN_SEND.add(bt2can_message(bt));
-tran_ena(tr_UnnamedTransition3, 0);
-return true;;
+tran_ena(tr_UnnamedTransition91, 0);;
                 unlock(pl_UDP_AND_CAN_SEND | pl_BUTTONS);
               }
-              return false;
             }
           
-bool UnnamedTransition5()
+void UnnamedTransition81()
             {
               if (lock(pl_ADC_SUM | pl_TIMER | pl_ADC_SUM | pl_TIMER | pl_ADC))
               {
@@ -387,55 +569,15 @@ ADC_SUM_flag = false;
 TIMER.add(add_time(1, 50000));
 ADC_SUM = tuple2(sum + q, n + 1);
                               ADC_SUM_flag = true;
-tran_ena(tr_UnnamedTransition8 | tr_UnnamedTransition6 | tr_UnnamedTransition6, tr_UnnamedTransition5);
-return true;
+tran_ena(tr_UnnamedTransition89 | tr_UnnamedTransition81 | tr_UnnamedTransition81, tr_UnnamedTransition81);
                     }
               }
               };
                 unlock(pl_ADC_SUM | pl_TIMER | pl_ADC_SUM | pl_TIMER | pl_ADC);
               }
-              return false;
             }
           
-bool UnnamedTransition18()
-            {
-              if (lock(pl_CAN_OUT))
-              {
-                 if (CAN_OUT_flag)
-                {
-                  if (res) 
-                    {
-                      CAN_OUT_flag = false;
-;
-tran_ena(0, tr_UnnamedTransition18);
-return true;
-                    }
-                };
-                unlock(pl_CAN_OUT);
-              }
-              return false;
-            }
-          
-bool UnnamedTransition4()
-            {
-              if (lock(pl_SEND_SENS | pl_DELAY | pl_DELAY))
-              {
-                 if (DELAY.have_relative_time(unit.instance(), 200000))
-                {
-                  ; ;
-DELAY.get_relative_time(unit.instance(), 200000);
-;
-DELAY.add(add_time(1, 0));
-SEND_SENS = 1;
-tran_ena(tr_UnnamedTransition16 | tr_UnnamedTransition0 | tr_UnnamedTransition18, tr_UnnamedTransition4);
-return true;
-                };
-                unlock(pl_SEND_SENS | pl_DELAY | pl_DELAY);
-              }
-              return false;
-            }
-          
-bool UnnamedTransition13()
+void UnnamedTransition89()
             {
               if (lock(pl_ADC_SUM | pl_BatLevel | pl_ADC_SUM))
               {
@@ -449,55 +591,14 @@ BatLevel = adc2bat(sum(div(n)));
                               BatLevel_flag = true;
 ADC_SUM = tuple2(0, 0);
                               ADC_SUM_flag = true;
-tran_ena(tr_UnnamedTransition8 | tr_UnnamedTransition6 | tr_UnnamedTransition17, tr_UnnamedTransition13);
-return true;
+tran_ena(tr_UnnamedTransition89 | tr_UnnamedTransition81 | tr_UnnamedTransition77, tr_UnnamedTransition89);
                     }
                 };
                 unlock(pl_ADC_SUM | pl_BatLevel | pl_ADC_SUM);
               }
-              return false;
             }
           
-bool UnnamedTransition16()
-            {
-              if (lock(pl_CAN_OUT | pl_CAN))
-              {
-                 if (CAN.have_tokens())
-                {
-                  CAN_MESSAGE cm = CAN.peek(); 
-CAN.get(cm);
-;
-CAN_OUT = tuple2(cm, can_send(cm));
-                              CAN_OUT_flag = true;
-tran_ena(tr_UnnamedTransition11 | tr_UnnamedTransition10, tr_UnnamedTransition16);
-return true;
-                };
-                unlock(pl_CAN_OUT | pl_CAN);
-              }
-              return false;
-            }
-          
-bool UnnamedTransition17()
-            {
-              if (lock(pl_CAN | pl_CAN_OUT))
-              {
-                 if (CAN_OUT_flag)
-                {
-                  if (not(res)) 
-                    {
-                      CAN_OUT_flag = false;
-;
-CAN.add(cm);
-tran_ena(tr_UnnamedTransition1, tr_UnnamedTransition17);
-return true;
-                    }
-                };
-                unlock(pl_CAN | pl_CAN_OUT);
-              }
-              return false;
-            }
-          
-bool UnnamedTransition14()
+void UnnamedTransition90()
             {
               if (lock(pl_COUNTER | pl_UDP_OUT | pl_COUNTER | pl_UDP_SEND))
               {
@@ -510,15 +611,13 @@ UDP_SEND.get_indexed(cm_idx);
 ;
 UDP_OUT.add(can2udp(cm,n));
 COUNTER = n + 1;
-tran_ena(tr_UnnamedTransition2, tr_UnnamedTransition14);
-return true;
+tran_ena(tr_UnnamedTransition90, tr_UnnamedTransition90);
                 };
                 unlock(pl_COUNTER | pl_UDP_OUT | pl_COUNTER | pl_UDP_SEND);
               }
-              return false;
             }
           
-bool UnnamedTransition15()
+void UnnamedTransition91()
             {
               if (lock(pl_UDP_SEND | pl_CAN | pl_UDP_AND_CAN_SEND))
               {
@@ -530,211 +629,62 @@ UDP_AND_CAN_SEND.get_indexed(cm_idx);
 ;
 CAN.add(cm);
 UDP_SEND.add(cm);
-tran_ena(tr_UnnamedTransition2 | tr_UnnamedTransition1, tr_UnnamedTransition15);
-return true;
+tran_ena(tr_UnnamedTransition90 | tr_UnnamedTransition92, tr_UnnamedTransition91);
                 };
                 unlock(pl_UDP_SEND | pl_CAN | pl_UDP_AND_CAN_SEND);
               }
-              return false;
             }
           
-bool DPS()
+void UnnamedTransition92()
             {
-              if (lock(pl_SYNC_BUF | pl_UDP_SEND | pl_SYNC | pl_DELAY | pl_SSI | pl_SYNC | pl_DPS))
+              if (lock(pl_CAN_OUT | pl_CAN))
               {
-                ; ;
-bytes8 ssi = SSI.peek(); 
-int n = SYNC; 
-bool dir = DPS; 
-DELAY.get_all();
-;
-SYNC = n + 1;
-UDP_SEND.add(tuple3(663, get_time(), get_ssi_bytes(n,dir,1,ssi)));
-SYNC_BUF = token_iter_utils.repeat('u', 1);
-tran_ena(tr_UnnamedTransition13 | tr_UnnamedTransition2 | tr_UnnamedTransition16 | tr_UnnamedTransition18, 0);
-return true;;
-                unlock(pl_SYNC_BUF | pl_UDP_SEND | pl_SYNC | pl_DELAY | pl_SSI | pl_SYNC | pl_DPS);
-              }
-              return false;
-            }
-          
-bool UnnamedTransition0()
-            {
-              if (lock(pl_DEBUG_TIMER | pl_UDP_SEND | pl_DEBUG_TIMER | pl_SEND_DEBUG))
-              {
-                 if (DEBUG_TIMER.have_tokens())
-              {
-                ; ;
- if (SEND_DEBUG_flag)
+                 if (CAN.have_tokens())
                 {
-                  bytesn d = SEND_DEBUG; 
-SEND_DEBUG_flag = false;
-DEBUG_TIMER.get();
+                  CAN_MESSAGE cm = CAN.peek(); 
+CAN.get(cm);
 ;
-UDP_SEND.add(tuple3(0, get_time(), d));
-DEBUG_TIMER.add(add_time(1, 333000));
-tran_ena(tr_UnnamedTransition4 | tr_UnnamedTransition2, tr_UnnamedTransition0);
-return true;
-                }
-              };
-                unlock(pl_DEBUG_TIMER | pl_UDP_SEND | pl_DEBUG_TIMER | pl_SEND_DEBUG);
-              }
-              return false;
-            }
-          
-bool UnnamedTransition9()
-            {
-              if (lock(pl_UDP_SEND | pl_CAN_IN))
-              {
-                 if (CAN_IN_flag)
-                {
-                  CAN_MESSAGE cm = CAN_IN; 
-CAN_IN_flag = false;
-can_process(cm);
-UDP_SEND.add(cm);
-tran_ena(tr_UnnamedTransition2, tr_UnnamedTransition9);
-return true;
+CAN_OUT = tuple2(cm, can_send(cm));
+                              CAN_OUT_flag = true;
+tran_ena(tr_UnnamedTransition94 | tr_UnnamedTransition93, tr_UnnamedTransition92);
                 };
-                unlock(pl_UDP_SEND | pl_CAN_IN);
+                unlock(pl_CAN_OUT | pl_CAN);
               }
-              return false;
             }
           
-bool UnnamedTransition6()
+void UnnamedTransition93()
             {
-              if (lock(pl_UDP_SEND | pl_GPS))
+              if (lock(pl_CAN | pl_CAN_OUT))
               {
-                 if (GPS_flag)
+                 if (CAN_OUT_flag)
                 {
-                  bytesn s = GPS; 
-GPS_flag = false;
+                  if (not(res)) 
+                    {
+                      CAN_OUT_flag = false;
 ;
-UDP_SEND.add(tuple3(256, get_time(), s));
-tran_ena(tr_UnnamedTransition2, tr_UnnamedTransition6);
-return true;
+CAN.add(cm);
+tran_ena(tr_UnnamedTransition92, tr_UnnamedTransition93);
+                    }
                 };
-                unlock(pl_UDP_SEND | pl_GPS);
+                unlock(pl_CAN | pl_CAN_OUT);
               }
-              return false;
             }
           
-bool UnnamedTransition8()
+void UnnamedTransition94()
             {
-              if (lock(pl_CAN | pl_UDP_IN))
+              if (lock(pl_CAN_OUT))
               {
-                 if (UDP_IN_flag)
+                 if (CAN_OUT_flag)
                 {
-                  CAN_UDP_MESSAGE m = UDP_IN; 
-UDP_IN_flag = false;
+                  if (res) 
+                    {
+                      CAN_OUT_flag = false;
 ;
-CAN.add(udp2can(m));
-tran_ena(tr_UnnamedTransition1, 0);
-return true;
+tran_ena(0, tr_UnnamedTransition94);
+                    }
                 };
-                unlock(pl_CAN | pl_UDP_IN);
+                unlock(pl_CAN_OUT);
               }
-              return false;
-            }
-          
-bool UnnamedTransition2()
-            {
-              if (lock(pl_SyncFreq | pl_SYNC | pl_SyncFreq))
-              {
-                 if (SyncFreq.have_tokens())
-                {
-                  int SyncFreq_tok = SyncFreq.peek();; int freq = SyncFreq_tok;;
-SyncFreq.get(freq);
-;
-SYNC = 0;
-SyncFreq.add(add_time(freq(Delay(/(1000000,freq))), 0));
-tran_ena(tr_UnnamedTransition14 | tr_UnnamedTransition16 | tr_UnnamedTransition18, tr_UnnamedTransition2);
-return true;
-                };
-                unlock(pl_SyncFreq | pl_SYNC | pl_SyncFreq);
-              }
-              return false;
-            }
-          
-bool UnnamedTransition3()
-            {
-              if (lock(pl_UDP_AND_CAN_SEND | pl_TempTimer | pl_TempTimer | pl_TEMP))
-              {
-                 if (TempTimer.have_relative_time(unit.instance(), 500000))
-              {
-                ; ;
-int n = TEMP.peek(); 
-TempTimer.get_relative_time(unit.instance(), 500000);
-;
-TempTimer.add(add_time(1, 0));
-UDP_AND_CAN_SEND.add(tuple3(721, get_time(), list.Cons(51,IntToList(n))));
-tran_ena(tr_UnnamedTransition3 | tr_UnnamedTransition15, tr_UnnamedTransition3);
-return true;
-              };
-                unlock(pl_UDP_AND_CAN_SEND | pl_TempTimer | pl_TempTimer | pl_TEMP);
-              }
-              return false;
-            }
-          
-bool UnnamedTransition1()
-            {
-              if (lock(pl_UDP_AND_CAN_SEND | pl_UDP_AND_CAN_SEND | pl_BinTimer | pl_BatLevel | pl_BinTimer | pl_BUTTONS))
-              {
-                 if (BatLevel_flag)
-              {
-                 if (BinTimer.have_tokens())
-              {
-                ; ;
-int inp = BUTTONS; 
-BinTimer.get();
-BatLevel_flag = false;
-;
-BinTimer.add(add_time(1, 1000000));
-UDP_AND_CAN_SEND.add(tuple3(336, get_time(), (_N__4334)));
-UDP_AND_CAN_SEND.add(tuple3(721, get_time(), (_N__4335)));
-tran_ena(tr_UnnamedTransition3 | tr_UnnamedTransition3 | tr_UnnamedTransition17, tr_UnnamedTransition1);
-return true;
-              }
-              };
-                unlock(pl_UDP_AND_CAN_SEND | pl_UDP_AND_CAN_SEND | pl_BinTimer | pl_BatLevel | pl_BinTimer | pl_BUTTONS);
-              }
-              return false;
-            }
-          
-bool UnnamedTransition10()
-            {
-              if (lock(pl_DELAY | pl_SYNC_BUF))
-              {
-                 if (SYNC_BUF_flag)
-                {
-                  SYNC_BUF_flag = false;
-;
-DELAY.add(add_time(1, 0));
-tran_ena(tr_UnnamedTransition0 | tr_UnnamedTransition18, tr_UnnamedTransition10);
-return true;
-                };
-                unlock(pl_DELAY | pl_SYNC_BUF);
-              }
-              return false;
-            }
-          
-bool UnnamedTransition11()
-            {
-              if (lock(pl_UDP_SEND | pl_SEND_SENS | pl_SSI | pl_SYNC | pl_DPS))
-              {
-                 if (SEND_SENS_flag)
-              {
-                bytes8 ssi = SSI.peek(); 
-int n = SYNC; 
-bool dir = DPS; 
-SEND_SENS_flag = false;
-;
-UDP_SEND.add(tuple3(663, get_time(), get_ssi_bytes(n,dir,0,ssi)));
-tran_ena(tr_UnnamedTransition2, tr_UnnamedTransition11);
-return true;
-              };
-                unlock(pl_UDP_SEND | pl_SEND_SENS | pl_SSI | pl_SYNC | pl_DPS);
-              }
-              return false;
             }
           
 function adc2bat;

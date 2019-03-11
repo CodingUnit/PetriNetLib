@@ -46,7 +46,7 @@ UnusedChopsticks.add(CS.all());
       }
 bool PutDownChopsticks()
             {
-              if (lock(pl_UnusedChopsticks | pl_Think | pl_Eat))
+              if (lock(pl_UnusedChopsticks | pl_Think | pl_Eat, tr_PutDownChopsticks))
               {
                  if (Eat.have_tokens())
                 {
@@ -66,7 +66,7 @@ return true;
           
 bool TakeChopsticks()
             {
-              if (lock(pl_Eat | pl_UnusedChopsticks | pl_Think))
+              if (lock(pl_Eat | pl_UnusedChopsticks | pl_Think, tr_TakeChopsticks))
               {
                  if (Think.have_tokens())
               {

@@ -224,10 +224,10 @@ namespace PetriNetLib
     
     CreateGroupTransitions() : void
     {
-      def places = places.Where(x => !CommonLib.Macros.ListUtils.ElementsEqual(x.OutputTransitions.Where((x, _) => x.IsImmediate).Map((x, _) => x.priority), _ == _));
+      def places = places.Where(x => !CommonLib.Macros.ListUtils.ElementsEqual(x.OutputTransitions.Where((x, _) => x.IsUnnamed).Map((x, _) => x.priority), _ == _));
       foreach (p in places)
       {
-        def tran = p.OutputTransitions.Where((x, _) => x.IsImmediate).NToList();
+        def tran = p.OutputTransitions.Where((x, _) => x.IsUnnamed).NToList();
         def sorted = tran.Sort(((x, _), (y, _)) => x.priority.CompareTo(y.priority)).Rev();
         def group = sorted.Fold("return;", ((x, _), a) => $"if (!$(x.Name)()) \n$a");
         def name = tran.Map((x, _) => x.UnnamedIdx);
@@ -334,10 +334,10 @@ namespace PetriNetLib
       def places = places_participate.Fold("", ((x, _), a) => if (a.IsEmpty()) $"pl_$(x.Name)" else $"pl_$(x.Name) | $a");
       //def rem = tran.InputPlaces.Fold("", ((x, _), a) => if (a.IsEmpty()) $"pl_$(x.Name)" else $"pl_$(x.Name) | $a");
       //cpp(<#
-      
+      def tr = if (tran.PartOfGroup is Some(g)) $"tr_GroupTransition$g" else $"tr_$(tran.Name)";
         $<#bool $name()
             {
-              if (lock($places))
+              if (lock($places, $tr))
               {
                 $body;
                 unlock($places);
