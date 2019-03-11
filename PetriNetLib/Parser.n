@@ -134,8 +134,9 @@ namespace PetriNetLib
       def guard = p.GetOneTextOpt("cond", "text");
       def time  = p.GetOneTextOpt("time", "text");
       def code  = p.GetOneTextOpt("code", "text");
+      def prio = p.GetOneTextOpt("priority", "text");
       def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
-      CpnTree.Transition(name, id, guard, time, code)
+      CpnTree.Transition(name, id, guard, time, code, prio)
     }
 
     get_arc(a : XmlElement) : CpnTree.Arc

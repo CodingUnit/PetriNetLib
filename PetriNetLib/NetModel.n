@@ -264,7 +264,7 @@ namespace PetriNetLib
 
     static mutable unnamed_idx : int;
 
-    public Name : string
+    public UnnamedIdx : int
     {
       [Memoize]
       get
@@ -273,7 +273,30 @@ namespace PetriNetLib
         {
           def idx = unnamed_idx;
           unnamed_idx++;
-          $"UnnamedTransition$idx"
+          idx
+        } else 0
+      }
+    }
+    
+    public IsPartOfGroupTransition : bool
+    {
+      [Memoize]
+      get
+      {
+        !InputPlaces.SelectMany((x : Place, _) => x.OutputTransitions
+        .Select(x => x[0].priority)).NToList()
+        .ElementsEqual(_ == _)
+      }
+    }
+    
+    public Name : string
+    {
+      [Memoize]
+      get
+      {
+        if (IsUnnamed)
+        {
+          $"UnnamedTransition$UnnamedIdx"
         } else
         {
           name

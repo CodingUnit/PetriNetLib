@@ -164,13 +164,13 @@ namespace PetriNetLib
       def participate_tran = out_tran;
       
       def tr_pl_mask = participate_tran.Where(_.IsImmediate).Map(x => $"tr_$(x.Name)");//, x.InputPlaces.Select(x => x[0]) |> mask_for_places));
-      def tr_comp_mask = if (tran.IsImmediate) $"tr_$(tran.Name)" else "0";
+      def tr_comp_mask = if (tran.IsImmediate && !tran.IsPartOfGroupTransition) $"tr_$(tran.Name)" else "0";
       //def tr_ena = tr_pl_mask.Map((t, p) => $<#tr_ena |= ((places & ($p)) == ($p)) * $t;#>);
       def tr_mask = tr_pl_mask.Fold("", (t, a) => if (a.IsEmpty()) t else $"$t | $a");
       def tr_mask = if (tr_mask.IsEmpty()) "0" else tr_mask;
       def tr_ena = $"tran_ena($tr_mask, $tr_comp_mask);";
       //def tr = "ttran ena_tr = (ttran)0;";
-      def body = extract + (code :: add_body) + [tr_ena];
+      def body = extract + (code :: add_body) + [tr_ena] + ["return true;"];
       def body = body.Filter(x => !x.IsEmpty());
       def body = if (tran.guard is <[]>) body else //tran_ena($t, $p);
                   {
@@ -192,7 +192,7 @@ namespace PetriNetLib
           def expr = $<#..$(expr;"\n")#>;
           if (x.check_expr.IsEmpty())
           {
-            expr
+            $<#$expr#>
           }
           else
           {
@@ -220,8 +220,27 @@ namespace PetriNetLib
       //def input = eval(input, []);
 
       input.Fold(null, fold)
+    }    
+    
+    CreateGroupTransitions() : void
+    {
+      def places = places.Where(x => !CommonLib.Macros.ListUtils.ElementsEqual(x.OutputTransitions.Where((x, _) => x.IsImmediate).Map((x, _) => x.priority), _ == _));
+      foreach (p in places)
+      {
+        def tran = p.OutputTransitions.Where((x, _) => x.IsImmediate).NToList();
+        def sorted = tran.Sort(((x, _), (y, _)) => x.priority.CompareTo(y.priority)).Rev();
+        def group = sorted.Fold("return;", ((x, _), a) => $"if (!$(x.Name)()) \n$a");
+        def name = tran.Map((x, _) => x.UnnamedIdx);
+        def name = name.Fold("", (x, a) => $"$x$a");
+        def tr_comp = $"tr_GroupTransition$name";
+        private_fields ::= $<#void GroupTransition$name()
+                              {
+                                $group
+                                tran_ena(0, $tr_comp);
+                              }#>;
+      }
     }
-
+    
     CreatePlaces() : string
     {
       mutable gen_idx = 0;
@@ -294,11 +313,11 @@ namespace PetriNetLib
 	    }
       #>;
       protected_fields ::= func;
-      def tran = model.transitions.Map(x => x.Name);
-      private_fields ::= $<#tranfunc tran_funcs[] = {..$(tran;",\n")
+      def tran = model.transitions.Sort(x => x.priority).Map(x => x.Name);
+      private_fields ::= $<#tran_func tran_funcs[] = {..$(tran;",\n")
       };#>;
       
-      def tran = model.transitions.Map(x => $<#tr_$(x.Name) = 0x$((1 << x.idx).ToString("X"))#>);
+      def tran = model.transitions.Select((x, i) => $<#tr_$(x.Name) = 0x$((1 << i).ToString("X"))#>);
       private_fields ::= $<#typedef enum 
       {
         ..$(tran;",\n")
@@ -316,13 +335,14 @@ namespace PetriNetLib
       //def rem = tran.InputPlaces.Fold("", ((x, _), a) => if (a.IsEmpty()) $"pl_$(x.Name)" else $"pl_$(x.Name) | $a");
       //cpp(<#
       
-        $<#void $name()
+        $<#bool $name()
             {
               if (lock($places))
               {
                 $body;
                 unlock($places);
               }
+              return false;
             }
           #>//)
     }
@@ -847,6 +867,7 @@ namespace PetriNetLib
       //CreateDummyMethod();
       CreateCons();
       CreateTransitions();
+      CreateGroupTransitions();
       def methods = model.transitions.MapToList(CreateTran);
       def vals = model.ml_decls.Map(CreateVals).Filter(_ != null);
       Define(vals);//_ = typebuilder.DefineWithSource(m);

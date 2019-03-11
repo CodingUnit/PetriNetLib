@@ -41,6 +41,22 @@ namespace PetriNetLib
     [Accessor]
     typebuilder : TypeBuilder;
     
+    public Vals : Hashtable[string, PExpr]
+    {
+      [Memoize]
+      get
+      {
+        def vars = ml_decls.Filter(x => x is <[def $(_n : usesite) = $_e]>);
+        def conv(v)
+        {
+          | <[def $(n : usesite) = $e]> => (n, e)
+          | _                           => (null, null)
+        }
+        
+        vars.Map(conv) |> Hashtable
+      }
+    }
+    
     public OutModel : OutModel
     {
       [Memoize]
@@ -142,6 +158,22 @@ namespace PetriNetLib
       this.typebuilder = typebuilder;
     }
     
+    normal_prio : int
+    {
+      [Memoize]
+      get
+      {
+        if (Vals.ContainsKey("P_NORMAL"))
+        {
+          match (Vals["P_NORMAL"])
+          {
+            | <[ $(v : int)]> => v
+            | _               => throw InvalidOperationException()
+          }
+        } else 1000
+      }
+    }
+    
     public Process() : void
     {
       mutable pidx : int = 0;
@@ -159,7 +191,7 @@ namespace PetriNetLib
       
       def create_tran(t)
       {
-        | CpnTree.Transition(n, id, g, t, c) =>
+        | CpnTree.Transition(n, id, g, t, c, p) =>
         
             def get_func(c)
             {
@@ -187,9 +219,23 @@ namespace PetriNetLib
             def guard = g.MapDefault(x => converter.ParseML(x.Trim('[', ']')).Value, <[]>);
             def time  = t.MapDefault(converter.ParseML, Some(<[]>)).Value;
             def code  = c.MapDefault(get_func, <[]>);
+            mutable prio_int;
+            def prio = if (p is Some(p)) 
+                       {
+                          if (int.TryParse(p, out prio_int)) prio_int
+                          else
+                          {
+                            match (Vals[p])
+                            {
+                              | <[ $(v : int)]> => v
+                              | _               => throw InvalidOperationException()
+                            }
+                            
+                          }
+                        }
+                        else normal_prio; 
             
-            
-            def tran = Transition(tidx, id, n, guard, time, code, 0, this);
+            def tran = Transition(tidx, id, n, guard, time, code, prio, this);
             tidx++;
             tran
       }

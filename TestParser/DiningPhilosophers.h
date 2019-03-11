@@ -13,13 +13,13 @@ typedef CS int;;
 
 random_array Think;
 multi_set UnusedChopsticks;
-tranfunc tran_funcs[] = {TakeChopsticks,
-PutDownChopsticks
+tran_func tran_funcs[] = {PutDownChopsticks,
+TakeChopsticks
       };
 typedef enum 
       {
-        tr_TakeChopsticks = 0x1,
-tr_PutDownChopsticks = 0x2
+        tr_PutDownChopsticks = 0x1,
+tr_TakeChopsticks = 0x2
       } ttran;
 static const int n = 5;
 System.Collections.Generic.IEnumerable[int-] Chopsticks(PH i)
@@ -44,7 +44,27 @@ Think.add(PH.all());
 UnusedChopsticks.add(CS.all());
         
       }
-void TakeChopsticks()
+bool PutDownChopsticks()
+            {
+              if (lock(pl_UnusedChopsticks | pl_Think | pl_Eat))
+              {
+                 if (Eat.have_tokens())
+                {
+                   int p_idx;
+                                          PH p = Eat.peek_indexed(p_idx);
+Eat.get_indexed(p_idx);
+;
+Think.add(p);
+UnusedChopsticks.add(Chopsticks(p));
+tran_ena(0, 0);
+return true;
+                };
+                unlock(pl_UnusedChopsticks | pl_Think | pl_Eat);
+              }
+              return false;
+            }
+          
+bool TakeChopsticks()
             {
               if (lock(pl_Eat | pl_UnusedChopsticks | pl_Think))
               {
@@ -59,28 +79,12 @@ Think.get_indexed(p_idx);
 ;
 Eat.add(p);
 tran_ena(0, 0);
+return true;
                 }
               };
                 unlock(pl_Eat | pl_UnusedChopsticks | pl_Think);
               }
-            }
-          
-void PutDownChopsticks()
-            {
-              if (lock(pl_UnusedChopsticks | pl_Think | pl_Eat))
-              {
-                 if (Eat.have_tokens())
-                {
-                   int p_idx;
-                                          PH p = Eat.peek_indexed(p_idx);
-Eat.get_indexed(p_idx);
-;
-Think.add(p);
-UnusedChopsticks.add(Chopsticks(p));
-tran_ena(0, 0);
-                };
-                unlock(pl_UnusedChopsticks | pl_Think | pl_Eat);
-              }
+              return false;
             }
           
             };
