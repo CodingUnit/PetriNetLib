@@ -48,6 +48,15 @@ namespace PetriNetLib
     places      : array[GenPlaceCpp];
     
 
+    PlacesWithGroup : list[GenPlaceCpp]
+    {
+      [Memoize]
+      get
+      {
+        places.Filter(x => !CommonLib.Macros.ListUtils.ElementsEqual(x.OutputTransitions.Where((x, _) => x.IsUnnamed).Map((x, _) => x.priority), _ == _))
+      }
+    }
+    
     internal CreateArray(expr : list[PExpr]) : string
     {
       def ty = Typer(gen.TypingMethod);
@@ -131,7 +140,7 @@ namespace PetriNetLib
         //map[i.name] = i;
       }
 
-      def input    = input.Sort((x, y) => y.priority - x.priority); 
+      def input    = input.OrderBy(_.priority); 
       def add_proc = output.Map((p, a) => OutArcProcessCpp(places[p.idx], tran, a, this));
 
       def extract = input.Map(_.extract_expr);
@@ -221,14 +230,16 @@ namespace PetriNetLib
 
       input.Fold(null, fold)
     }    
+
+    
     
     CreateGroupTransitions() : void
     {
-      def places = places.Where(x => !CommonLib.Macros.ListUtils.ElementsEqual(x.OutputTransitions.Where((x, _) => x.IsUnnamed).Map((x, _) => x.priority), _ == _));
-      foreach (p in places)
+      //def places = places.Where(x => !CommonLib.Macros.ListUtils.ElementsEqual(x.OutputTransitions.Where((x, _) => x.IsUnnamed).Map((x, _) => x.priority), _ == _));
+      foreach (p in PlacesWithGroup)
       {
         def tran = p.OutputTransitions.Where((x, _) => x.IsUnnamed).NToList();
-        def sorted = tran.Sort(((x, _), (y, _)) => x.priority.CompareTo(y.priority)).Rev();
+        def sorted = tran.OrderByDescending((x, _) => x.priority);
         def group = sorted.Fold("return;", ((x, _), a) => $"if (!$(x.Name)()) \n$a");
         def name = tran.Map((x, _) => x.UnnamedIdx);
         def name = name.Fold("", (x, a) => $"$x$a");
@@ -313,15 +324,22 @@ namespace PetriNetLib
 	    }
       #>;
       protected_fields ::= func;
-      def tran = model.transitions.Sort(x => x.priority).Map(x => x.Name);
-      private_fields ::= $<#tran_func tran_funcs[] = {..$(tran;",\n")
-      };#>;
       
-      def tran = model.transitions.Select((x, i) => $<#tr_$(x.Name) = 0x$((1 << i).ToString("X"))#>);
+      
+      def tran = model.transitions.Select(x => ($"$(x.Name)", x.priority));
+      def groups = PlacesWithGroup.Select(x => x.OutputTransitions.Where(x => x[0].IsUnnamed));
+      def groups = groups.Select(x => ("GroupTransition" + x.Fold("", ((x, _), a) => $"$(x.UnnamedIdx)$a"), x.Select(x => x[0].priority).Max()));
+      def tran = groups.Concat(tran).OrderBy((_, p) => p);
+      def restran = tran.Select(((x, _), i) => $<#tr_$x = 0x$((1 << i).ToString("X"))#>);
+      
       private_fields ::= $<#typedef enum 
       {
-        ..$(tran;",\n")
-      } ttran;#>
+        ..$(restran;",\n")
+      } ttran;#>;
+      
+      def tran = tran.Map((x, _) => x);
+      private_fields ::= $<#tran_func tran_funcs[] = {..$(tran;",\n")
+      };#>;
     }
     
     CreateTran(tran : Transition) : string
@@ -329,11 +347,8 @@ namespace PetriNetLib
       def name = tran.Name;
 
       def body = CreateTranBody(tran);      
-      //def places = tran.InputPlaces.Map((x, _) => x.gen_idx);
       def places_participate = tran.InputPlaces + tran.OutputPlaces;
       def places = places_participate.Fold("", ((x, _), a) => if (a.IsEmpty()) $"pl_$(x.Name)" else $"pl_$(x.Name) | $a");
-      //def rem = tran.InputPlaces.Fold("", ((x, _), a) => if (a.IsEmpty()) $"pl_$(x.Name)" else $"pl_$(x.Name) | $a");
-      //cpp(<#
       def tr = if (tran.PartOfGroup is Some(g)) $"tr_GroupTransition$g" else $"tr_$(tran.Name)";
         $<#bool $name()
             {

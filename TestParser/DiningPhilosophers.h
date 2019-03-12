@@ -13,14 +13,14 @@ typedef CS int;;
 
 random_array Think;
 multi_set UnusedChopsticks;
-tran_func tran_funcs[] = {PutDownChopsticks,
-TakeChopsticks
-      };
 typedef enum 
       {
-        tr_PutDownChopsticks = 0x1,
-tr_TakeChopsticks = 0x2
+        tr_TakeChopsticks = 0x1,
+tr_PutDownChopsticks = 0x2
       } ttran;
+tran_func tran_funcs[] = {TakeChopsticks,
+PutDownChopsticks
+      };
 static const int n = 5;
 System.Collections.Generic.IEnumerable[int-] Chopsticks(PH i)
                                                        {
@@ -44,6 +44,29 @@ Think.add(PH.all());
 UnusedChopsticks.add(CS.all());
         
       }
+bool TakeChopsticks()
+            {
+              if (lock(pl_Eat | pl_UnusedChopsticks | pl_Think, tr_TakeChopsticks))
+              {
+                 if (UnusedChopsticks.have(Chopsticks(p)))
+              {
+                 if (Think.have_tokens())
+                {
+                   int p_idx;
+                                          PH p = Think.peek_indexed(p_idx);
+Think.get_indexed(p_idx);
+UnusedChopsticks.get(Chopsticks(p));
+;
+Eat.add(p);
+tran_ena(0, 0);
+return true;
+                }
+              };
+                unlock(pl_Eat | pl_UnusedChopsticks | pl_Think);
+              }
+              return false;
+            }
+          
 bool PutDownChopsticks()
             {
               if (lock(pl_UnusedChopsticks | pl_Think | pl_Eat, tr_PutDownChopsticks))
@@ -60,29 +83,6 @@ tran_ena(0, 0);
 return true;
                 };
                 unlock(pl_UnusedChopsticks | pl_Think | pl_Eat);
-              }
-              return false;
-            }
-          
-bool TakeChopsticks()
-            {
-              if (lock(pl_Eat | pl_UnusedChopsticks | pl_Think, tr_TakeChopsticks))
-              {
-                 if (Think.have_tokens())
-              {
-                 int p_idx;
-                                          PH p = Think.peek_indexed(p_idx);
- if (UnusedChopsticks.have(Chopsticks(p)))
-                {
-                  UnusedChopsticks.get(Chopsticks(p));
-Think.get_indexed(p_idx);
-;
-Eat.add(p);
-tran_ena(0, 0);
-return true;
-                }
-              };
-                unlock(pl_Eat | pl_UnusedChopsticks | pl_Think);
               }
               return false;
             }

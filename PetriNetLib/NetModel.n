@@ -264,17 +264,18 @@ namespace PetriNetLib
 
     public PartOfGroup : option[string]
     {
-      //[Memoize]
+      [Memoize]
       get
       {
-        def places = InputPlaces;//ElementsEqual((x, y) => x.priority == y.priority))
-        def place = places.Map(x => (x[0], x[0].OutputTransitions.Where((x : Transition, _) => x.IsUnnamed).Select(x => x[0])));
+        def places = InputPlaces;//
+        def place = places.Where(x => !x[0].OutputTransitions.ElementsEqual(((x, _), (y, _)) => x.priority == y.priority))
+                          .Map(x => (x[0], x[0].OutputTransitions.Where((x : Transition, _) => x.IsUnnamed)
+                          .Select(x => x[0])));
         match (place.Find(x => x[1].Contains(this)))
         {
-          | Some((_, g)) => g.Fold("", (x, a) => $"$x$a") |> Some
+          | Some((_, g)) => g.Fold("", (x, a) => $"$(x.UnnamedIdx)$a") |> Some
           | _            => None()
         }
-//=/.Select((x : Place, _) => x.OutputTransitions).Where(x => x[0].IsImmediate);
       }
     }
     
@@ -296,12 +297,10 @@ namespace PetriNetLib
     
     public IsPartOfGroupTransition : bool
     {
-      //[Memoize]
+      [Memoize]
       get
       {
-        !InputPlaces.SelectMany((x : Place, _) => x.OutputTransitions.Select(x => x[0]).Where(_.IsImmediate)
-        .Select(_.priority)).NToList()
-        .ElementsEqual(_ == _)
+        PartOfGroup.HasValue
       }
     }
     
