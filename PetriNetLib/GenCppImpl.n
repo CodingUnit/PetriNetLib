@@ -163,7 +163,7 @@ namespace PetriNetLib
       [Memoize]
       get
       {
-        def s32 = places.Length <= 32 && transitions.Length <= 32;
+        def s32 = if (places.Length <= 32 && transitions.Length <= 32) "32" else "";
         if (model.IsTimed) $"timed_petri_net$s32" else $"petri_net$s32"
       }
     }

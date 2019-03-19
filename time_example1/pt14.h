@@ -1,4 +1,4 @@
-class pt14 : public timed_petri_netTrue
+class pt14 : public timed_petri_net32
 {
   typedef enum
   {
@@ -45,8 +45,6 @@ class pt14 : public timed_petri_netTrue
   typedef UNIT UNIT_TIMED;
 
   typedef INT UINT;
-
-  typedef UNIT SINGLE__UNIT;
 
   struct TSYNC
   {
@@ -237,8 +235,8 @@ UnnamedTransition17
 
   CAN_MESSAGE  bt2can_message(int bt)
   {
-    u8 _N__4335[] = { (BYTE)1, bt };
-    return CAN_MESSAGE(721, time(), byte2(_N__4335));
+    u8 _N__4334[] = { (BYTE)1, bt };
+    return CAN_MESSAGE(721, time(), byte2(_N__4334));
   }
 
   bool is_sens(const CAN_UDP_MESSAGE &m)
@@ -338,10 +336,10 @@ public:
 
   pt14(int time_step = 15)
   {
-    timed_petri_netTrue(time_step);
+    timed_petri_net32(time_step);
     DPS.add(false);
     SYNC = 0;
-    SSI.add(byte0(_N__4321));
+    SSI.add(byte0(_N__4320));
     TEMP.add(0);
     BUTTONS = 0;
     UDP_IN_flag = false;
@@ -540,8 +538,8 @@ public:
         ;
 
         BinTimer_time = time() + 1000000;
-        UDP_AND_CAN_SEND(tuple3(336, time64(), (_N__4333)));
-        UDP_AND_CAN_SEND(tuple3(721, time64(), (_N__4334)));
+        UDP_AND_CAN_SEND(tuple3(336, time64(), (_N__4332)));
+        UDP_AND_CAN_SEND(tuple3(721, time64(), (_N__4333)));
         res = true;
       };
       unlock(pl_UDP_AND_CAN_SEND | pl_UDP_SEND | pl_UDP_OUT | pl_COUNTER | pl_CAN | pl_CAN_OUT | pl_BatLevel | pl_BinTimer | pl_BUTTONS);
