@@ -1,0 +1,83 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace PetriNetLib
+{
+    class DfsIter
+    {
+      gen : CppGenerator;
+      visit_place : array[int];
+      visit_tran : array[int];
+      
+      public this(gen : CppGenerator)
+      {
+        this.gen = gen;
+        visit_place = array(gen.Places.Length);
+        visit_tran = array(gen.Transitions.Length);
+      }
+      
+      
+      public Dfs(node : PetriNetNode) : IEnumerable[PetriNetNode]
+      {
+        // 0 - white, 1 - gray, 2 : black
+          | PetriNetNode.Place(p) => def idx = p.idx;
+                                     visit_place[idx] = 1;
+                                     yield node;
+                                     foreach (t in p.OutputGenTransitions)
+                                     {
+                                       match (visit_tran[t.idx])
+                                       {
+                                         | 0 => foreach (n in Dfs(PetriNetNode.Tran(t))) yield n;
+                                         | 1 => yield PetriNetNode.Tran(t) |> PetriNetNode.Cycle
+                                         | _ => ()
+                                       }
+                                     }
+                                     visit_place[idx] = 2;
+          | PetriNetNode.Tran(p) =>  def idx = p.idx;
+                                     visit_tran[idx] = 1;
+                                     yield node;
+                                     foreach (t in p.OutputGenPlaces)
+                                     {
+                                       match (visit_place[t.idx])
+                                       {
+                                         | 0 => foreach (n in Dfs(PetriNetNode.Place(t))) yield n;
+                                         | 1 => yield PetriNetNode.Place(t) |> PetriNetNode.Cycle
+                                         | _ => ()
+                                       }
+                                     }
+                                     visit_tran[idx] = 2;
+          | PetriNetNode.Cycle => ()
+        
+        
+      }
+    }
+    
+    module DfsUtils
+    {
+      public static Visit(this elems : IEnumerable[PetriNetNode], func : PetriNetNode -> bool) : IEnumerable[PetriNetNode]
+      {
+        def en = elems.GetEnumerator();
+        
+        def loop()
+        {
+          when (en.MoveNext())
+          {
+            if (func(en.Current)) 
+            {
+              yield en.Current;
+              loop()
+            } else ()
+          }
+        }
+        
+        loop()
+      }
+      
+    }
+}

@@ -2,13 +2,17 @@
 using Nemerle.Collections;
 using Nemerle.Text;
 using Nemerle.Utility;
-
+using Nemerle.Compiler;
+using Nemerle.Compiler.Parsetree;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using CommonLib.Macros;
 
 namespace PetriNetLib
 {
+  
+    
   /// <summary>
   /// Description of GenPlace.
   /// </summary>
@@ -24,6 +28,100 @@ namespace PetriNetLib
       this.gen_idx = idx;
     }
        
+
+    public OutputGenTransitionsArcs : list[GenTranCpp * Arc]
+    {
+      [Memoize]
+      get
+      {
+          gen.Transitions.MapIndex((p, i) => (p, gen.Proc.OutputMatrix[idx, i]))
+          .Filter((_, a) => a != null)
+          .SelectMany((p, a) => a.Map(x => (p, x))).NToList()
+
+      }
+    }
+
+    public InputGenTransitionsArcs : list[GenTranCpp * Arc]
+    {
+      [Memoize]
+      get
+      {
+        gen.Transitions.MapIndex((p, i) => (p, gen.Proc.InputMatrix[idx, i]))
+          .Filter((_, a) => a != null)
+          .SelectMany((p, a) => a.Map(x => (p, x))).NToList()
+      }
+    }
+    
+    public OutputGenTransitions : list[GenTranCpp]
+    {
+      [Memoize]
+      get
+      {
+          gen.Transitions.MapIndex((p, i) => (p, gen.Proc.OutputMatrix[idx, i]))
+          .Filter((_, a) => a != null)
+          .Map((p, _) => p)
+
+      }
+    }
+
+    public InitMarkWithoutTime : PExpr
+    {
+      [Memoize]
+      get
+      {
+        def fold(expr) : PExpr
+        {
+          //| <[ {..$e} ]>   => e.Fold(acc, fold)
+          | <[ 1 ` $tok %@ $_]>             
+          | <[ 1 ` $tok]>                       => tok
+          | <[ $(n : int) ` $tok %@ $_ ]>
+          | <[ $(n : int) ` $tok]>              => <[ $(n : int) ` $tok ]>
+          | <[ $l %++ $r]>                      => <[ $(fold(l)) %++ $(fold(r)) ]>
+          | e                                   => e
+        }
+        
+        fold(init_mark)
+      }
+    }
+    
+    public InitTime : int
+    {
+      [Memoize]
+      get
+      {
+        match (init_mark)
+        {
+          | null 
+          | <[]> 
+          | <[$(_ : int) ` $_ ]>               => 0
+          | <[$(_ : int) ` $_ %@ $(t : int) ]> => t
+          | _                                  => throw InvalidOperationException()
+        }
+      }
+    }
+    
+    public InputGenTransitions : list[GenTranCpp]
+    {
+      [Memoize]
+      get
+      {
+        gen.Transitions.MapIndex((p, i) => (p, gen.Proc.InputMatrix[idx, i]))
+          .Filter((_, a) => a != null)
+          .Map((p, _) => p)
+      }
+    }        
+    
+    public DfsIterator : IEnumerable[PetriNetNode]
+    {
+      [Memoize]
+      get
+      {
+        // 0 - white, 1 - gray, 2 : black
+        def it = DfsIter(gen);
+        it.Dfs(this |> PetriNetNode.Place).ToArray()
+      }
+    }
+    
     public IsUnit : bool
     {
       [Memoize]
@@ -80,6 +178,65 @@ namespace PetriNetLib
       }
     }
     
+    public FuncTran : GenTranCpp
+    {
+      [Memoize]
+      get
+      {
+        OutputGenTransitions.Where(x => x.IsImmediate).First()
+      }
+    }
+    
+    public LockPlaces : string
+    {
+      [Memoize]
+      get
+      {
+        def visit(x, a)
+        {
+          match (x)
+          {
+            | PetriNetNode.Place(p) => def pl = $"pl_$(p.Name)";
+                                       if (a.IsEmpty()) pl else $"$pl | $a"
+            | _                     => a
+          }
+        }
+        
+        DfsIterator.Fold("", visit)
+      }
+    }
+    
+    public PathThroughOrdinaryPlaces : IEnumerable[PetriNetNode]
+    {
+      [Memoize]
+      get
+      {
+        def visit(v)
+        {
+          | PetriNetNode.Place(p) when p.IsTimed => false
+          | _                                    => true
+        }
+        
+        DfsIterator.Visit(visit).ToArray()
+      }
+    }
+    
+    public IsFuncPlace : bool
+    {
+      [Memoize]
+      get
+      {
+        def tran = OutputGenTransitions.Where(x => x.IsImmediate);
+        !InputTransitions.IsEmpty() && // есть входные переходы
+        tran.Count() == 1           && // один выходной переход
+        tran.First().guard is <[]>  && // нет сторожевого условия
+        !tran.First().IsTimed       && // переход не временной
+        port.IsNone                 && // не порт
+        !PathThroughOrdinaryPlaces.Exists(x => if (x is PetriNetNode.Cycle(PetriNetNode.Place(p))) p : object == this else false) && // не имеет циклов на вход
+        tran.First().InputGenPlaces.Except(this).All(x => x.Var || x.Req) // из всех позиций перехода можно вынуть фишки с гарантией
+      }
+    }
+    
     public DestContainerType : TDestCont
     {
       [Memoize]
@@ -88,7 +245,12 @@ namespace PetriNetLib
         match (colour.type)
         {
           //| Colour.Sorted => TDestCont.SortedSet
-          | Timed         => TDestCont.TimedSimpleMultiset
+          | Timed         => if (Colour.Single || Single) TDestCont.Single else 
+                             if (Colour.Var || Var) TDestCont.Var else
+                             if (Colour.Req || Req) TDestCont.ReqContainer else
+                             if (Colour.ZeroSingle || ZeroSingle) TDestCont.ZeroSingle else 
+                             if (MinusSingle) TDestCont.MinusSingle else TDestCont.TimedSimpleMultiset
+                            
           //| Queue         => TDestCont.TokenQueue
           | _             => def opts = Colour.Opts;
                              if (opts.IsEmpty() && Attributes.IsEmpty())
@@ -109,13 +271,18 @@ namespace PetriNetLib
                                if (Colour.Var || Var) TDestCont.Var else
                                if (Colour.Single || Single) TDestCont.Single else
                                if (Colour.Req || Req) TDestCont.ReqContainer else
-                               if (Colour.ZeroSingle || ZeroSingle) TDestCont.ZeroSingle else TDestCont.RandomEnumerable
+                               if (Colour.ZeroSingle || ZeroSingle) TDestCont.ZeroSingle else 
+                               if (MinusSingle) TDestCont.MinusSingle else TDestCont.RandomEnumerable
                              }
 
         }
       }
     }
 
-
+    public override ToString() : string
+    {
+      Name
+    }
   }
 }
+

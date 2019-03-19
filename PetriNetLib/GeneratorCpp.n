@@ -45,8 +45,10 @@ namespace PetriNetLib
     typebuilder : TypeBuilder;
     gen         : Generator;
     colours     : Hashtable[string, GenColourCpp] = Hashtable();
+    [Accessor]
     places      : array[GenPlaceCpp];
-    
+    [Accessor]
+    transitions : array[GenTranCpp];
 
     PlacesWithGroup : list[GenPlaceCpp]
     {
@@ -113,174 +115,53 @@ namespace PetriNetLib
     }
 
 
-    CreateTranBody(tran : Transition) : string
-    {
-      def input  = tran.InputPlaces;
-      def output = tran.OutputPlaces;
-      def name   = tran.Name;
-      //def map    = Hashtable();
-
-      def input = input.Map((x, a) => InArcBindingCpp(places[x.idx], this, tran, [], a));
-
-      foreach (i in input)
-      {
-        match (i.expr)
-        {
-          | <[ $_(..$p) ]> => foreach (p in p)
-                                {
-                                  | <[ $(n : usesite)]> => match (input.Find(x => x.bind_var == n))
-                                      {
-                                        | Some(x) => i.Depends ::= x;
-                                        | _       => ()
-                                      }
-                                  | _                   => ()
-                                }
-          | _ => ()
-        }
-        //map[i.name] = i;
-      }
-
-      def input    = input.OrderBy(_.priority); 
-      def add_proc = output.Map((p, a) => OutArcProcessCpp(places[p.idx], tran, a, this));
-
-      def extract = input.Map(_.extract_expr);
-      def add_body = add_proc.Map(_.add_token);
-      def code = (tran.code_segment |> ConvExpr(_, true)) + ";" ?? "";
-      
-      //def combine(x, a)
-      //{
-      //  def expr = x.check_explicit_expr;
-      //  match (expr.IsEmpty(), a.IsEmpty())
-      //  {
-      //    | (true, true)   => ""
-      //    | (false, true)  => expr
-      //    | (true, false)  => a
-      //    | (false, false) => $"$expr && $a"
-      //  }
-      //}
-      //def mask_for_places(pl)
-      //{
-      //  pl.Fold("", (x, a) => if (a.IsEmpty()) $"pl_$(x.Name)" else $"pl_$(x.Name) | $a");
-      //}
-      
-      //def check_in = input.Fold("", combine);
-      //def check_in = if (check_in.IsEmpty()) "true" else check_in;
-      //def rem_mask = input.Select(x => x.place) |> mask_for_places;
-      //def add_mask = output.Select(x => x[0]) |> mask_for_places;//Fold("", ((x, _), a) => if (a.IsEmpty()) $"pl_$(x.Name)" else $"pl_$(x.Name) | $a");
-      
-      //def ena = $<#places_ena($check_in, $rem_mask, $add_mask);#>;
-      def out_tran = tran.OutputPlaces.SelectMany((x : Place, _) => x.OutputTransitions.Select((x : Transition, _) => x)).NToList();
-      def participate_tran = out_tran;
-      
-      def tr_pl_mask = participate_tran.Where(_.IsImmediate).Map(x => $"tr_$(x.Name)");//, x.InputPlaces.Select(x => x[0]) |> mask_for_places));
-      def tr_comp_mask = if (tran.IsImmediate && !tran.IsPartOfGroupTransition) $"tr_$(tran.Name)" else "0";
-      //def tr_ena = tr_pl_mask.Map((t, p) => $<#tr_ena |= ((places & ($p)) == ($p)) * $t;#>);
-      def tr_mask = tr_pl_mask.Fold("", (t, a) => if (a.IsEmpty()) t else $"$t | $a");
-      def tr_mask = if (tr_mask.IsEmpty()) "0" else tr_mask;
-      def tr_ena = $"tran_ena($tr_mask, $tr_comp_mask);";
-      //def tr = "ttran ena_tr = (ttran)0;";
-      def body = extract + (code :: add_body) + [tr_ena] + ["return true;"];
-      def body = body.Filter(x => !x.IsEmpty());
-      def body = if (tran.guard is <[]>) body else //tran_ena($t, $p);
-                  {
-                    def guard = tran.guard |> ConvExpr(_, false);
-                    $<#if ($guard) 
-                    {
-                      ..$(body;"\n")
-                    }#> :: [];
-                  }
-
-      def tran_evt = if (proc.Flags.HasFlag(PetriNetFlags.Events)) $<#On$name()#> else "";
-
-      def fold(x, a)
-      {
-        if (a : object == null)
-        {
-          def expr = x.bind_expr :: body + [tran_evt];
-          def expr = expr.Filter(x => !x.IsEmpty());
-          def expr = $<#..$(expr;"\n")#>;
-          if (x.check_expr.IsEmpty())
-          {
-            $<#$expr#>
-          }
-          else
-          {
-            $<# if ($(x.check_expr))
-                {
-                  $expr
-                }#>
-          }
-        } else
-        {
-          def expr = [x.bind_expr] + [a];
-          def expr = expr.Filter(x => !x.IsEmpty());
-          def expr = $<#..$(expr;"\n")#>;
-          if (x.check_expr.IsEmpty())
-            expr
-          else
-            $<# if ($(x.check_expr))
-              {
-                $expr
-              }#>
-        }
-      }
-
-
-      //def input = eval(input, []);
-
-      input.Fold(null, fold)
-    }    
-
-    
-    
-    CreateGroupTransitions() : void
-    {
-      //def places = places.Where(x => !CommonLib.Macros.ListUtils.ElementsEqual(x.OutputTransitions.Where((x, _) => x.IsUnnamed).Map((x, _) => x.priority), _ == _));
-      foreach (p in PlacesWithGroup)
-      {
-        def tran = p.OutputTransitions.Where((x, _) => x.IsUnnamed).NToList();
-        def sorted = tran.OrderByDescending((x, _) => x.priority);
-        def group = sorted.Fold("return;", ((x, _), a) => $"if (!$(x.Name)()) \n$a");
-        def name = tran.Map((x, _) => x.UnnamedIdx);
-        def name = name.Fold("", (x, a) => $"$x$a");
-        def tr_comp = $"tr_GroupTransition$name";
-        private_fields ::= $<#void GroupTransition$name()
-                              {
-                                $group
-                                tran_ena(0, $tr_comp);
-                              }#>;
-      }
-    }
     
     CreatePlaces() : string
     {
       mutable gen_idx = 0;
       foreach (p in places)
       {
-        when (!p.IsTransparent)
+        when (!p.IsFuncPlace)
         {
           p.gen_idx = gen_idx;
           gen_idx++;    
         }
       }
         
-      def enums = places.Where(x => !x.IsTransparent).Map(x => $<#pl_$(x.Name) = 0x$((1 << x.gen_idx).ToString("X"))#>);
+      def enums = places.Where(x => !x.IsFuncPlace).Map(x => $<#pl_$(x.Name) = 0x$((1 << x.gen_idx).ToString("X"))#>);
       $<#typedef enum
          {
            ..$(enums;",\n")
          } tplace;#>
     }
     
+    CreateFuncPlace(place : GenPlaceCpp) : string
+    {
+      def name = place.Name;
+        //def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
+      def tran = place.FuncTran;
+      def type = place.Colour.VarSpec;
+      $<#void $name($(type)param)
+      {
+        $(tran.Body)
+      }
+      #>
+    }
+    
     CreatePlace(place : GenPlaceCpp) : string
     {
       
       // TODO: transparent place
-      if (place.IsTransparent) null else
+      def name = place.Name;
+        //def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
+      def type = place.Colour.DestType;
+      if (place.IsFuncPlace) 
+      {
+        null
+      } else
       {
         
-        def name = place.Name;
-        //def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
-        def type = place.Colour.DestType;
+        
         def dtype = place.DestContainerType;
         def dest_cont = match (dtype)
                          {
@@ -300,6 +181,7 @@ namespace PetriNetLib
           | Single              => if (place.Colour.IsUnit) "" else $"$(name)_flag"
           | _                   => ""
         }
+        def time = if (place.IsTimed) $"\nu32 $(name)_time;" else "";
         def deflt = match (dtype)
         {
           | ZeroSingle  => " = 0"
@@ -307,7 +189,7 @@ namespace PetriNetLib
           | _           => ""
         }
         def flag = if (flag.IsEmpty()) "" else $"\nbool $flag = false;";
-        $<#$dest_cont $name$deflt;$flag#>
+        $<#$dest_cont $name$deflt;$flag$time#>
       }
       //cpp(<#decl: $(dest_cont : type) $name;#>)
       //if (place.IsTimed)
@@ -315,59 +197,13 @@ namespace PetriNetLib
       //<[decl: $(name : usesite) : PetriNetModel.Place.[$type] = PetriNetModel.Place($(name : string), $dest_cont)]>
     }
 
-    CreateTransitions() : void
-    {
-      def func = $<#      
-      tran_func get_transition(int n) const
-	    {
-		    return tran_funcs[n];
-	    }
-      #>;
-      protected_fields ::= func;
-      
-      
-      def tran = model.transitions.Select(x => ($"$(x.Name)", x.priority));
-      def groups = PlacesWithGroup.Select(x => x.OutputTransitions.Where(x => x[0].IsUnnamed));
-      def groups = groups.Select(x => ("GroupTransition" + x.Fold("", ((x, _), a) => $"$(x.UnnamedIdx)$a"), x.Select(x => x[0].priority).Max()));
-      def tran = groups.Concat(tran).OrderBy((_, p) => p);
-      def restran = tran.Select(((x, _), i) => $<#tr_$x = 0x$((1 << i).ToString("X"))#>);
-      
-      private_fields ::= $<#typedef enum 
-      {
-        ..$(restran;",\n")
-      } ttran;#>;
-      
-      def tran = tran.Map((x, _) => x);
-      private_fields ::= $<#tran_func tran_funcs[] = {..$(tran;",\n")
-      };#>;
-    }
     
-    CreateTran(tran : Transition) : string
-    {
-      def name = tran.Name;
-
-      def body = CreateTranBody(tran);      
-      def places_participate = tran.InputPlaces + tran.OutputPlaces;
-      def places = places_participate.Fold("", ((x, _), a) => if (a.IsEmpty()) $"pl_$(x.Name)" else $"pl_$(x.Name) | $a");
-      def tr = if (tran.PartOfGroup is Some(g)) $"tr_GroupTransition$g" else $"tr_$(tran.Name)";
-        $<#bool $name()
-            {
-              if (lock($places, $tr))
-              {
-                $body;
-                unlock($places);
-              }
-              return false;
-            }
-          #>//)
-    }
-
     internal TypeOfVar(name : string) : string
     {
       match (model.vars.Find(x => x.Key == name))
       {
         | Some(x) => def col = colours[x.Value.name];
-                     col.DestType
+                     col.VarSpec
         | _       => ""
       }
     }
@@ -389,9 +225,15 @@ namespace PetriNetLib
         | <[ $n ` $t]>          => $<#token_iter_utils.repeat($(ConvExpr(t)), $(ConvExpr(n)))#>
         | <[ $a %++ $b]>        => $<#token_iter_utils.concat($(ConvExpr(a)), $(ConvExpr(b)))#>
         | <[]>                  => ""
+        | <[ ! $e]>             => $<#!$(ConvExpr(e))#>
+        | <[ $a > $b]>          => $<#$(ConvExpr(a)) > $(ConvExpr(b))#>
+        | <[ $a < $b]>          => $<#$(ConvExpr(a)) < $(ConvExpr(b))#>
+        | <[ $a <= $b]>         => $<#$(ConvExpr(a)) <= $(ConvExpr(b))#>
+        | <[ $a >= $b]>         => $<#$(ConvExpr(a)) >= $(ConvExpr(b))#>
         | <[ $a != $b]>         => $<#$(ConvExpr(a)) != $(ConvExpr(b))#>
         | <[ $a == $b]>         => $<#$(ConvExpr(a)) == $(ConvExpr(b))#>
         | <[ $a + $b]>          => $<#$(ConvExpr(a)) + $(ConvExpr(b))#>
+        | <[ $a / $b]>          => $<#$(ConvExpr(a)) / $(ConvExpr(b))#>
         | <[ $a * $b]>          => $<#$(ConvExpr(a)) * $(ConvExpr(b))#>
         | <[ $(n : usesite)]>   => $<#$n#>
         | <[ Enumerable.Repeat($tok, $n) ]> => $<#token_iter_utils.repeat($(ConvExpr(tok)), $(ConvExpr(n)))#>
@@ -432,7 +274,7 @@ namespace PetriNetLib
               | _                     => throw InvalidOperationException()
             }
 
-        | <[()]>                 => <#'u'#>
+        | <[()]>                 => <#1#>
         | <[$o.$m]>              => $<#$(ConvExpr(o)).$m#>
         | <[ if ($a) $b else $c]> when statement => $<#if ($(ConvExpr(a))) $(ConvExpr(b)) else $(ConvExpr(c))#>
         | <[ if ($a) $b else $c]> when !statement => $<#$(ConvExpr(a)) ? $(ConvExpr(b)) : $(ConvExpr(c))#>
@@ -662,7 +504,7 @@ namespace PetriNetLib
       }
     }    
 
-    CreateInitMarking(place : Place) : string
+    CreateInitMarking(place : GenPlaceCpp) : string
     {
       def combine(e1, e2)
       {
@@ -686,7 +528,7 @@ namespace PetriNetLib
 
       def unfold(expr)
       {
-        | <[ () ]> => <[()]>
+        | <[ () ]> => <[ 1 ]>
         | e        => e
       }
 
@@ -705,12 +547,61 @@ namespace PetriNetLib
 
       if (place.init_mark == null) null else
       {
-        def mark = fold(place.init_mark);
-        def mark = mark |> ConvExpr(_, false);
-        def mark = if (place.IsTimed) $"add_time($mark, 0);" else mark;
+        def markexpr = fold(place.init_mark);
+        def mark = markexpr |> ConvExpr(_, false);
         def name = place.Name;
+        
+        
+        def mark = if (place.IsTimed) 
+        {
+          match (place.DestContainerType)
+          {
+            | TDestCont.MinusSingle
+            | TDestCont.Single     
+            | TDestCont.ZeroSingle
+            | TDestCont.Var         => place.InitMarkWithoutTime |> ConvExpr(_, false)
+            | _                     => $"add_time($mark, 0);"
+          }
+          
+        } else mark;
+        
+        def time = if (place.IsTimed) 
+        {
+          match (place.DestContainerType)
+          {
+            | TDestCont.MinusSingle
+            | TDestCont.Single     
+            | TDestCont.ZeroSingle
+            | TDestCont.Var         => $"\n$(name)_time = $(place.InitTime);"
+            | _                     => ""
+          }
+        } else "";
         //<[ $(name : usesite).Add($mark)]>
-        $"$name.add($mark);"
+        if (markexpr is <[]>)
+        {
+          match (place.DestContainerType)
+          {
+            | TDestCont.MinusSingle => $"$(name) = -1;"
+            | TDestCont.Single      => if (place.IsUnit)
+                                       {
+                                         $"$(name) = 0;"
+                                       } else $"$(name)_flag = false;"
+            | TDestCont.ZeroSingle  => $"$(name) = 0;"
+            | _                     => mark
+          }
+        } else 
+        match (place.DestContainerType)
+        {
+          
+          | TDestCont.Single      => $<#$name = $mark;
+                                       $(name)_flag = true;$time#>;
+          | TDestCont.Var
+          | TDestCont.ZeroSingle
+          | TDestCont.MinusSingle
+                                  => $"$name = $mark;$time"
+          | _                     => $"$name.add($mark);"
+        }
+        
       }
     }
 
@@ -727,7 +618,7 @@ namespace PetriNetLib
 
     CreateCons() : void
     {
-      def marking = model.places.MapToList(CreateInitMarking).Filter(_ != null);
+      def marking = places.MapToList(CreateInitMarking).Filter(x => x != null && !x.IsEmpty());
       public_fields ::= if (model.IsTimed || model.IsHaveImmediateTransitions) 
       $<#$Name(int time_step = 15) 
       { 
@@ -744,39 +635,79 @@ namespace PetriNetLib
 
     CreateTimeMethods() : void
     {
-      def body = model.transitions.Where(_.IsTimed).Map(x => <[ $(x.Name : usesite)() ]>);
-      def next = model.places.Where(_.IsTimed).Map(x => $"$(x.Name).NextTokenDelay");
+      //def body = transitions.Where(_.IsTimed).Map(x => <[ $(x.Name : usesite)() ]>);
+      def time_delay(p)
+      {
+        def time = match (p.DestContainerType)
+        {
+          | TDestCont.MinusSingle
+          | TDestCont.ZeroSingle
+          | TDestCont.Single
+          | TDestCont.Var    => 
+                                $"$(p.Name)_time"
+          | _                => $"$(p.Name).next_token_delay()"
+        }
+        def arc_dl = p.OutputTransitions.Where((_, a : Arc) => a.ArcDelay.HasValue);
+        def min_delay = if (arc_dl.Count() == 0) "" else
+                        if (arc_dl.Count() == 1) arc_dl.First()[1].ArcDelay.Value |> ConvExpr(_, false) else
+                        if (arc_dl.All((_, a) => a.ArcDelay.Value is <[ $(_ : int)]>)) arc_dl.Min((_, a) => if (a.ArcDelay.Value is <[ $(x : int) ]>) x else 0).ToString();
+                        else 
+                        {
+                          def delay = arc_dl.Select((_, a : Arc) => a.ArcDelay.Value |> ConvExpr(_, false));
+                          def min = delay.Select((x, i) => $<#int x$i = $x;
+                                                           if (min_delay > x$i) min_delay = x$i;#>);
+                          $<#u32 min_delay = 0xFFFFFFFF;
+                          ..$(min; "\n")
+                          #>                                          
+                        };
+        def arc_delay = if (!min_delay.IsEmpty()) " + " + min_delay else "";
+        (p, $"$time$arc_delay", !arc_delay.IsEmpty())
+      }
+      
+      def next = places.Where(_.IsTimed).Map(time_delay);
 
+      def tran = places.Where(_.IsTimed).Map(x => x.OutputGenTransitions.Where(x => x.IsUnnamed).Map(x => $"tr_$(x.Name)"));
       def time_body = match (next)
                        {
-                         | []    => "return 0xFFFFFFFF;"
-                         | [one] => one
-                         | lst   => def next = lst.Map(x => $<#min = math_utils::min(min, $x); #>);
+                         | []    => ""
+                         | [(_, one, _)] => one
+                         | lst   => def next = lst.ZipLazy(tran).Map(((_, x, _), t) => 
+                         {
+                           $<# time = $x;
+                               if (min > time) 
+                               {
+                                 min = time;
+                                 ..$(t.Map(x => $"tr = $x"); "\n");
+                               } else
+                               if (min == time)
+                               {
+                                 ..$(t.Map(x => $"tr |= $x"); "\n");
+                               }#>
+                         });
                           $<#
-                                  int min = 0xFFFFFFFF;
+                                  u32 min = 0xFFFFFFFF, time;
                                   ..$(next;"\n");
-                                  return min;
                               #>
                        }
-      private_fields ::= $<#int get_next_time()
+      private_fields ::= $<#u32 get_next_time(u32 &res_tr)
                       {
+                        u32 tr = 0;
                         $time_body;
+                        res_tr = tr;
+                        return min;
                       }#>;
-      private_fields ::= $<#void time_step()
-                      {
-                        ..$body;
-                      }#>
+      
     }
 
-    CreateStepMethod() : void
-    {
-      def body = model.transitions.Where(x => x.IsImmediate && !x.IsTimed).Map(x => $<#$(x.Name)()#>);
-      when (!body.IsEmpty())
-        public_fields ::= $<#void step()
-      {
-        ..$(body; "\n")
-      }#>
-    }
+    //CreateStepMethod() : void
+    //{
+    //  def body = model.transitions.Where(x => x.IsImmediate && !x.IsTimed).Map(x => $<#$(x.Name)()#>);
+    //  when (!body.IsEmpty())
+    //    public_fields ::= $<#void step()
+    //  {
+    //    ..$(body; "\n")
+    //  }#>
+    //}
 
     CreateStartMethod() : void
     {
@@ -791,7 +722,7 @@ namespace PetriNetLib
     {
       when (proc.Flags.HasFlag(PetriNetFlags.Events))
       {
-        foreach (_t in model.transitions)
+        foreach (_t in transitions)
         {
           //def name = t.Name;
           //def evt = $"evt_$name";
@@ -804,36 +735,7 @@ namespace PetriNetLib
       }
     }
 
-    public Generate() : void
-    {      
-      //CreateOperators();
-      //assert2(false);
-      
-    // создаем типы генерации из цветов
-      foreach (c in model.colour_sets)
-      {
-        colours.Add(c.Key, c.Value |> GenColourCpp(_, this))
-      }
-
-      def places_enum = CreatePlaces();
-      Define(places_enum);
-      def sets = colours.Values.Map(x => CreateColourSet(x) + "\n").Filter(_ != null);
-      Define(sets);//typebuilder.DefineNestedTypeWithSource(m).Compile();
-
-      def places = places.Map(CreatePlace).Filter(_ != null);      
-      
-      
-      when (model.IsTimed) CreateTimeMethods();
-      CreateStepMethod();
-
-      CreateEvents();
-      //CreateTranQueue();
-      //CreateToString();
-      CreateStartMethod();
-      
-
-      Define(places)//_ = typebuilder.DefineWithSource(m);
-    }
+    
 
     Define(decl : IEnumerable[string], pub : bool = false) : void
     {
@@ -866,32 +768,56 @@ namespace PetriNetLib
 
     public PhaseOne() : void
     {
-      //def name = proc.Name;
-
-      //main_class = cpp(<#class $name : public $(bas : type)
-      //                {
-      //                };#>);
-      //printer.
-      //typebuilder.AddImplementedInterface(<[ IDisposable ]>);
-      //typebuilder.AddImplementedInterface(if (model.IsTimed) <[ TimedPetriNet ]> 
-      //                                    else <[PetriNet]>);
     }
 
+    public Generate() : void
+    {      
+      //CreateOperators();
+      //assert2(false);
+      
+    // создаем типы генерации из цветов
+      foreach (c in model.colour_sets)
+      {
+        colours.Add(c.Key, c.Value |> GenColourCpp(_, this))
+      }
+
+      def places_enum = CreatePlaces();
+      Define(places_enum);
+      def sets = colours.Values.Map(x => CreateColourSet(x) + "\n").Filter(_ != null);
+      Define(sets);//typebuilder.DefineNestedTypeWithSource(m).Compile();
+
+      def places = places.Map(CreatePlace).Filter(_ != null);      
+      
+      
+      
+      //CreateStepMethod();
+
+      CreateEvents();
+      //CreateTranQueue();
+      //CreateToString();
+      CreateStartMethod();
+      
+
+      Define(places + ["\n"])//_ = typebuilder.DefineWithSource(m);
+    }
+    
     public PhaseTwo() : void
     {
       //CreateDummyMethod();
       CreateCons();
       CreateTransitions();
-      CreateGroupTransitions();
-      def methods = model.transitions.MapToList(CreateTran);
+      def methods = CreateGroupTransitions();
+      def methods = methods + transitions.Where(x => !x.IsPartOfFuncPlace).MapToList(CreateTran);
+      def methods = methods + places.Where(x => x.IsFuncPlace).MapToList(CreateFuncPlace);
       def vals = model.ml_decls.Map(CreateVals).Filter(_ != null);
-      Define(vals);//_ = typebuilder.DefineWithSource(m);
+      Define(vals + ["\n"]);//_ = typebuilder.DefineWithSource(m);
       def decls = model.ml_decls.Map(CreateDecl).Filter(_ != null);
       def (ext, decls) = decls.Partition(x => x.StartsWith("function"));
       def globrefs = model.glob_refs.KeyValuePairs.MapToList(CreateGlobRef);
       Define(globrefs);//_ = typebuilder.DefineWithSource(m);
       Define(methods, true);
       Define(decls);
+      when (model.IsTimed) CreateTimeMethods();
       Define(ext, true);
       System.IO.File.WriteAllText(file, main_class)
       //typebuilder.Compile()

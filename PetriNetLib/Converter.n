@@ -155,6 +155,7 @@ namespace PetriNetLib
           
           def e = e.Map(get_elem);
           <[ (..$e) ]>
+      | Not(Expr = e) => <[ ! $(GetExpr(e)) ]>
       | _ => throw InvalidOperationException()
     }
     

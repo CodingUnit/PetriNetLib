@@ -1,5 +1,6 @@
 #pragma once
 #include "event_queue32.h"
+#include "time.h"
 
 class petri_net32// : IPetriNet, IDisposable
 {
@@ -57,6 +58,8 @@ protected:
 	{
 		atomic_and_or(&places, rem_mask, add_mask | have_rem * rem_mask);
 	}*/
+
+  
 
 	void tran_ena(u32 trmask, u32 completed)
 	{

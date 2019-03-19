@@ -1,9 +1,10 @@
-class DiningPhilosophers : public petri_net
+class DiningPhilosophers : public petri_netTrue
             {
               typedef enum
          {
-           pl_Think = 0x1,
-pl_UnusedChopsticks = 0x2
+           pl_Eat = 0x1,
+pl_Think = 0x2,
+pl_UnusedChopsticks = 0x4
          } tplace;
 typedef PH int;;
                                                      typedef ph int;
@@ -11,17 +12,25 @@ typedef PH int;;
 typedef CS int;;
                                                      typedef cs int;
 
+random_array Eat;
 random_array Think;
 multi_set UnusedChopsticks;
-typedef enum 
+
+
+
+      typedef enum 
       {
         tr_TakeChopsticks = 0x1,
 tr_PutDownChopsticks = 0x2
       } ttran;
-tran_func tran_funcs[] = {TakeChopsticks,
+
+      tran_func tran_funcs[] = {TakeChopsticks,
 PutDownChopsticks
       };
+      
 static const int n = 5;
+
+
 System.Collections.Generic.IEnumerable[int-] Chopsticks(PH i)
                                                        {
                                                          return token_iter_utils.concat(token_iter_utils.repeat(cs(i), 1), token_iter_utils.repeat(cs(i == n ? 1 : i + 1), 1));
@@ -39,13 +48,15 @@ System.Collections.Generic.IEnumerable[int-] Chopsticks(PH i)
 
               DiningPhilosophers(int time_step = 15) 
       { 
-        Eat.add();
-Think.add(PH.all());
+        Think.add(PH.all());
 UnusedChopsticks.add(CS.all());
         
       }
+
+
 bool TakeChopsticks()
             {
+              bool res = false;
               if (lock(pl_Eat | pl_UnusedChopsticks | pl_Think, tr_TakeChopsticks))
               {
                  if (UnusedChopsticks.have(Chopsticks(p)))
@@ -58,17 +69,17 @@ Think.get_indexed(p_idx);
 UnusedChopsticks.get(Chopsticks(p));
 ;
 Eat.add(p);
-tran_ena(0, 0);
-return true;
+res = true;
                 }
               };
                 unlock(pl_Eat | pl_UnusedChopsticks | pl_Think);
               }
-              return false;
+              return res;
             }
           
 bool PutDownChopsticks()
             {
+              bool res = false;
               if (lock(pl_UnusedChopsticks | pl_Think | pl_Eat, tr_PutDownChopsticks))
               {
                  if (Eat.have_tokens())
@@ -79,12 +90,11 @@ Eat.get_indexed(p_idx);
 ;
 Think.add(p);
 UnusedChopsticks.add(Chopsticks(p));
-tran_ena(0, 0);
-return true;
+res = true;
                 };
                 unlock(pl_UnusedChopsticks | pl_Think | pl_Eat);
               }
-              return false;
+              return res;
             }
           
             };

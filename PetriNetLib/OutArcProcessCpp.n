@@ -20,7 +20,7 @@ namespace PetriNetLib
   {
 
     public place      : GenPlaceCpp;
-    public transition : Transition;
+    public transition : GenTranCpp;
     public arc        : Arc;
     public gen        : CppGenerator;
     
@@ -56,36 +56,46 @@ namespace PetriNetLib
       }
     }
     
+    public IsCopyVar : bool
+    {
+      [Memoize]
+      get
+      {
+        transition.IsCopyVar(place, arc)
+      }
+    }
+    
+    
     add_token_expr : string
     {
       [Memoize]
       get
       {
-        def unfold(e)
-        {
-          | <[ () ]> => <#1#>
-          | e        => e |> gen.ConvExpr(_, false)
-        }
+        //def unfold(e)
+        //{
+        //  | <[ () ]> => <#1#>
+        //  | e        => e |> gen.ConvExpr(_, false)
+        //}
         
         def add(e)
         {
           | <[ () ]>                       => <#1#>
-          | <[ $e %@+ $(time : int)]>      => match (global_time)
-                                              {
-                                                | <[ $(t : int)]> => def time = time + t;     
-                                                                     $<#add_time($(unfold(e)), $time)#>
-                                                | _               => null
-                                              } 
+          //match (global_time)
+                                              //{
+                                              //  | <[ $(t : int)]> => def time = time + t;     
+                                                                     
+                                              //  | _               => null
+                                              //} 
+          | <[ 1 ` $e ]>                   => add(e)                                    
           | <[ $(_ : int) ` $_ ]> as e     => e |> gen.ConvExpr(_, false)                                    
-          | <[ $e %@+ $time]>              => $<#add_time($(unfold(e)), $time + $global_time_str)#>
           | <[ $_ %++ $_ ]> as e           => gen.GetTokenExpr(e)
-          | <[ 1 ` $e ]>                   => add(e)
+          
           | <[ $_(..$_)]> as e
           | <[ $(_ : usesite) ]> as e
           | e                              => e |> gen.ConvExpr(_, false)
         }
         
-        add(expr)
+        add(arc.ExprWithoutTime)
       }
     }
     
@@ -128,15 +138,39 @@ namespace PetriNetLib
       {
         if (place.IsTimed)
         {
-          if (is_time_expr)
+          def time_add = if (arc.TimeExpr is <[]>) "" else arc.TimeExpr |> gen.ConvExpr(_, true);
+          def time = if (time_add.IsEmpty()) $"\n$(name)_time = time();" else $"\n$(name)_time = time() + $time_add;";
+          if (IsCopyVar) time else
+          match (place.DestContainerType)
           {
-            $<#$name.add($add_token_expr);#>
-          } else
-          {
-            $<#$name.add(add_time($add_token_expr, $global_time_str));#>
+            | ZeroSingle // имеет 0 или 1 фишку, для отсутствия используется 0 если INT
+            | MinusSingle 
+            | Var       => $"$(name) = $add_token_expr;$time"
+            | Single    => if (place.IsUnit)
+                           {
+                             $<#$(name) = $add_token_expr;$time#>
+                           } else
+                           {
+                             $<#$(name) = $add_token_expr;
+                              $(name)_flag = true;$time#>
+                           }
+            | _ => def expr = if (time_add.IsEmpty()) add_token_expr else $"\nadd_time($add_token_expr, $time_add);";
+                   $<#$name.add($expr);#>
           }
+          //if (is_time_expr)
+          //{
+          //  $<#$name.add($add_token_expr);#>
+          //} else
+          //{
+          //  $<#$name.add(add_time($add_token_expr, $global_time_str));#>
+          //}
         } else
         {
+          if (IsCopyVar) "" else
+          if (place.IsFuncPlace)
+          {
+            $<#$(name)($add_token_expr);#>
+          } else
           match (place.DestContainerType)
           {
             | ZeroSingle // имеет 0 или 1 фишку, для отсутствия используется 0 если INT

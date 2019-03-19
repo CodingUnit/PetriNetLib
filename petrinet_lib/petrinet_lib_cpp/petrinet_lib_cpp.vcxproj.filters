@@ -81,6 +81,9 @@
     <ClInclude Include="..\arm_lib\arm_lib_hal\memory.h">
       <Filter>Исходные файлы\arm_lib\arm_lib_hal</Filter>
     </ClInclude>
+    <ClInclude Include="..\timed_petrinet.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="petrinet_lib_cpp.cpp">

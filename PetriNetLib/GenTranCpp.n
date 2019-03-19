@@ -1,0 +1,185 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using CommonLib.Macros;
+
+namespace PetriNetLib
+{
+  /// <summary>
+  /// Description of GenTranCpp.
+  /// </summary>
+  [Record]
+  [Lens]
+  class GenTranCpp : Transition
+  {
+    gen : CppGenerator;
+    
+    public this(tran : Transition, gen : CppGenerator)
+    {
+      base(tran.idx, tran.id, tran.name, tran.guard, tran.time_expr, tran.code_segment, tran.priority, tran.net, tran.UnnamedIdx);
+      this.gen = gen;
+    }
+    
+    public IsCopyVar(place : GenPlaceCpp, arc : Arc) : bool
+    {
+        match (arc.ExprWithoutTime)
+        {
+          | <[ () ]>             =>
+              def check2(places)
+              {
+                match (places.Find((p, _) => place == p : object))
+                {
+                  | Some((_, Arc(ExprWithoutTime = <[ () ]>))) => true
+                  | _                                          => false
+                }
+              }
+              match (arc.from)
+              {
+                | ArcSource.PlaceEnd      => check2(OutputPlacesArcs)
+                | ArcSource.TransitionEnd => check2(InputPlacesArcs)
+              }
+          | <[ $(n : usesite) ]> => 
+              def check(places)
+              {
+                match (places.Find((p, _) => place == p : object))
+                {
+                  | Some((_, Arc(ExprWithoutTime = <[ $(n2 : usesite) ]>))) when (n == n2) => true
+                  | _                                                                      => false
+                }
+              }
+              
+            match (arc.from)
+            {
+              | ArcSource.PlaceEnd      => check(OutputPlacesArcs)
+              | ArcSource.TransitionEnd => check(InputPlacesArcs)
+            }
+          | _ => false  
+        }
+    }
+    
+    public PlacesParticipate : list[GenPlaceCpp]
+    {
+      [Memoize]
+      get
+      {
+        def to_func = OutputGenPlaces.Filter(_.IsFuncPlace);
+        if (!to_func.IsEmpty()) 
+        {
+          def outpath = to_func.SelectMany(x => x.PathThroughOrdinaryPlaces.Fold([], (x, a) => if (x is PetriNetNode.Place(p)) p :: a else a)).NToList();
+          InputGenPlaces + outpath
+        } else
+        InputGenPlaces + OutputGenPlaces
+      }
+    }
+    
+    public PlacesParticipateMask : string
+    {
+      [Memoize]
+      get
+      {
+        PlacesParticipate.Fold("", (x, a) => if (a.IsEmpty()) $"pl_$(x.Name)" else $"pl_$(x.Name) | $a");
+      }
+    }
+    
+    public Body : string
+    {
+      [Memoize]
+      get
+      {
+        def body = gen.CreateTranBody(this);
+        def places = PlacesParticipateMask;
+        def tr = if (PartOfGroup is Some(g)) $"tr_GroupTransition$g" else $"tr_$(Name)";
+        $<#bool res = false;
+              if (lock($places, $tr))
+              {
+                $body;
+                unlock($places);
+              }
+              return res;#>
+      }
+    }
+    
+    public DfsIterator : IEnumerable[PetriNetNode]
+    {
+      [Memoize]
+      get
+      {        
+        def it = DfsIter(gen);
+        it.Dfs(this |> PetriNetNode.Tran).ToArray()
+      }
+    }
+    
+    public PathThroughOrdinaryPlaces : IEnumerable[PetriNetNode]
+    {
+      [Memoize]
+      get
+      {
+        def visit(v)
+        {
+          | PetriNetNode.Place(p) when p.IsTimed => false
+          | _                                    => true
+        }
+        
+        DfsIterator.Visit(visit).ToArray()
+      }
+    }
+    
+    public InputPlacesArcs : list[GenPlaceCpp * Arc]
+    {
+      [Memoize]
+      get
+      {
+        gen.Places.MapIndex((p, i) => (p, gen.Proc.OutputMatrix[i, idx]))
+        .Filter((_, a) => a != null)
+        .SelectMany((p, a) => a.Map(x => (p, x))).NToList()
+      }
+    }
+    
+    public InputGenPlaces : list[GenPlaceCpp]
+    {
+      [Memoize]
+      get
+      {
+        gen.Places.MapIndex((p, i) => (p, gen.Proc.OutputMatrix[i, idx]))
+        .Filter((_, a) => a != null)
+        .Map((p : GenPlaceCpp, _) => p)
+      }
+    }
+    
+    public IsPartOfFuncPlace : bool
+    {
+      [Memoize]
+      get
+      {
+        InputGenPlaces.Exists(x => x.IsFuncPlace && x.FuncTran == this : object)
+      }
+    }
+    
+    public OutputPlacesArcs : list[GenPlaceCpp * Arc]
+    {
+      [Memoize]
+      get
+      {
+        gen.Places.MapIndex((p, i) => (p, gen.Proc.InputMatrix[i, idx]))
+        .Filter((_, a) => a != null)
+        .SelectMany((p, a) => a.Map(x => (p, x))).NToList()
+      }
+    }
+    
+    public OutputGenPlaces : list[GenPlaceCpp]
+    {
+      [Memoize]
+      get
+      {
+        gen.Places.MapIndex((p, i) => (p, gen.Proc.InputMatrix[i, idx]))
+        .Filter((_, a) => a != null)
+        .Map((p, _) => p)
+      }
+    }
+  }
+}

@@ -63,6 +63,10 @@ namespace PetriNetLib
       this.converter = proc.Converter;
       
       this.places = model.places.MapToArray(GenPlaceCpp(_, this, 0));
+      //mutable idx = 0;
+      this.transitions = model.transitions.MapToArray(x => GenTranCpp(x, this)).ToArray();
+      
+      //this.transitions.
     }
 
     Name : string
@@ -159,7 +163,8 @@ namespace PetriNetLib
       [Memoize]
       get
       {
-        if (model.IsTimed) "timed_petri_net" else "petri_net"
+        def s32 = places.Length <= 32 && transitions.Length <= 32;
+        if (model.IsTimed) $"timed_petri_net$s32" else $"petri_net$s32"
       }
     }
     

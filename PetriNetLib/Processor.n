@@ -67,7 +67,9 @@ namespace PetriNetLib
     }
     
     //mutable matrix_len         : array[int];
+    [Accessor]
     mutable input_matrix       : array[2, list[Arc]];
+    [Accessor]
     mutable output_matrix      : array[2, list[Arc]];
     //mutable incidence_matrix   : array[2, int];
     colours            : list[Colour] = [];
@@ -176,8 +178,9 @@ namespace PetriNetLib
     
     public Process() : void
     {
-      mutable pidx : int = 0;
-      mutable tidx : int = 0;
+      mutable pidx = 0;
+      mutable tidx = 0;
+      mutable unnamed_idx = 0;
       
       def create_place(p)
       {
@@ -235,7 +238,13 @@ namespace PetriNetLib
                         }
                         else normal_prio; 
             
-            def tran = Transition(tidx, id, n, guard, time, code, prio, this);
+            def un_idx = if (n == null || n.IsEmpty()) 
+                         {
+                           def idx = unnamed_idx;
+                           unnamed_idx++;
+                           idx
+                         } else 0;
+            def tran = Transition(tidx, id, n, guard, time, code, prio, this, un_idx);
             tidx++;
             tran
       }

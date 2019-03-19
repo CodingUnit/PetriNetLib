@@ -18,10 +18,19 @@ namespace PetriNetLib
     public place      : GenPlaceCpp;
 
     public gen : CppGenerator;
-    public transition : Transition;
+    public transition : GenTranCpp;
     public Depends     : list[InArcBindingCpp] {get;set;}
       //public NeedBinding : bool {get;set;}
 
+    public IsCopyVar : bool
+    {
+      [Memoize]
+      get
+      {
+        transition.IsCopyVar(place, arc)
+      }
+    }
+    
     public priority : int
     {
       [Memoize]
@@ -73,19 +82,6 @@ namespace PetriNetLib
       }
     }
 
-      //public before_bind_expr  : PExpr
-      //{
-      //  [Memoize]
-      //  get
-      //  {
-      //    match (expr)
-      //    {
-      //      | <[ $(_ : usesite)(..$_) ]> => <[ def $(introduced_var : name) = $expr ]>
-      //      | _                          => <[]>
-      //    }
-      //  }
-      //}
-
     public TokenType : string
     {
       [Memoize]
@@ -98,11 +94,6 @@ namespace PetriNetLib
     
     public source_token_peek(n : string) : string
     {
-        //if (place.IsTimed)
-        //{
-        //  def name = $"$(name)_tok";
-        //    <[ $(name : usesite) ]>
-        //} else
       if (place.IsIndexedContainer)
         $<#$name.peek_indexed($n)#> else
       {
@@ -143,7 +134,12 @@ namespace PetriNetLib
                                           $ty $source_token_name = $(source_token_peek(n));#>
                                       } else
                                       {
-                                          $<#$ty $source_token_name = $(source_token_peek(n));#>
+                                        match (place.DestContainerType)
+                                        {
+                                          | TDestCont.TimedSimpleMultiset => $<#$ty $source_token_name = $(source_token_peek(n));#>
+                                          | _                             => ""
+                                        }
+                                          
                                       }
             | _                     => ""
           }
@@ -165,18 +161,29 @@ namespace PetriNetLib
       [Memoize]
       get
       {
+        if (place.IsFuncPlace) "" else
         if (place.IsTimed)
         {
-          def time_expr = timed_bind_expr;
+          def time_expr = if (timed_bind_expr.IsEmpty()) "" else $"$timed_bind_expr;";
           def bind_expr = match (expr)
           {
             
             | <[ $(n : usesite) ]> => 
-              def ty = gen.TypeOfVar(n);
-              $<#$ty $expr = $source_token_name;#>
+                def ty = gen.TypeOfVar(n);
+                if (place.DestContainerType == TDestCont.TimedSimpleMultiset)
+                {
+                  $<#$ty $expr = $source_token_name;#>
+                } else 
+                {
+                  if (IsCopyVar)
+                  {
+                    ""
+                  } else
+                  $<#$ty$n = $(source_token_peek("")); #>;
+                }
             | _                    => ""
           }
-          $<#$time_expr; $bind_expr;#>
+          $<#$time_expr$bind_expr#>
         } else
         match (expr)
         {
@@ -186,43 +193,20 @@ namespace PetriNetLib
                                     {
                                       def idx = idx_name(n);
                                       $<# int $idx;
-                                          $ty $n = $(source_token_peek(idx));#>
+                                          $ty$n = $(source_token_peek(idx));#>
                                     } else
-                                        $<#$ty $n = $(source_token_peek("")); #>
+                                        $<#$ty$n = $(source_token_peek("")); #>
           | _                    => ""
         }
       }
     }
 
-      //public introduced_var : Name
-      //{
-      //  [Memoize]
-      //  get
-      //  {
-      //    match (expr)
-      //    {
-      //      | <[ $(n : usesite)(..$_) ]> => Macros.NewSymbol(n.Substring(0, 2));
-      //      | _                          => null
-      //    }
-      //  }
     unfold(e : PExpr) : string
     {
       | <[ () ]> => <#unit.instance()#>
       | e        => e |> gen.ConvExpr(_, false)
     }
         
-        //match (expr)
-        //{
-        //  | <[ () ]>                       => <[ Unit.Instance ]> 
-        //  | <[ $e %@+ $(time : int)]>      => match (global_time)
-        //                                      {
-        //                                        | <[ $(t : int)]> => def time = time + t;     
-        //                                                             <[ $(unfold(e)) %@+ $time]>
-        //                                      } 
-                                              
-        //  | <[ $e %@+ $time]>              => <[ $(unfold(e)) %@+ ($time + $global_time)]>
-      //}
-
     public IsInhibitor : bool
     {
       [Memoize]
@@ -253,17 +237,33 @@ namespace PetriNetLib
           {
             | Var 
             | ReqContainer => ""
+            | Single when place.IsUnit => $<#$(name)#>
             | Single       => $<#$(name)_flag#>
-            | ZeroSingle   => $<#$(name) == 0#>
+            | ZeroSingle   => $<#$(name)#>
+            | MinusSingle  => $<#$(name) != -1#>
+            | _            => other()
+          }
+        }
+        
+        def cont_proc_inv(other)
+        {
+          match (place.DestContainerType)
+          {
+            | Var 
+            | ReqContainer => ""
+            | Single when place.IsUnit => $<#!$(name)#>
+            | Single       => $<#!$(name)_flag#>
+            | ZeroSingle   => $<#!$(name)#>
             | MinusSingle  => $<#$(name) == -1#>
             | _            => other()
           }
         }
         
+        if (place.IsFuncPlace) "" else
         match (arc_kind)
         {
           | ArcKind.Normal    => cont_proc(_ => check_func(expr))
-          | ArcKind.Inhibitor => cont_proc(_ => $<#!$name.have_tokens()#>)
+          | ArcKind.Inhibitor => cont_proc_inv(_ => $<#!$name.have_tokens()#>)
           | _                 => ""
         }
       }
@@ -291,6 +291,7 @@ namespace PetriNetLib
           {
             | Var 
             | ReqContainer => ""
+            | Single when place.IsUnit => $<#$(name) = 0;#>
             | Single       => $<#$(name)_flag = false;#>
             | ZeroSingle   => $<#$(name) = 0;#>
             | MinusSingle  => $<#$(name) = -1;#>
@@ -298,9 +299,10 @@ namespace PetriNetLib
           }
         }
         
+        if (place.IsFuncPlace) "" else
         match (arc_kind)
         {
-         | ArcKind.Normal         => cont_proc(_ => extract(expr))
+         | ArcKind.Normal         => if (IsCopyVar) "" else cont_proc(_ => extract(expr))
          | ArcKind.Reset          => cont_proc(_ => $<#$name.get_all();#>)
          | _                      => ""
         }

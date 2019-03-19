@@ -425,7 +425,7 @@ namespace CommonLib.Macros
   public class Lens[T, Res]
   {
     public Get : T -> Res;
-    public Set : T * Res -> T;    
+    public Set : T * Res -> T;
     
     public Mapper(func : Res -> Res) : Mapper[T]
     {

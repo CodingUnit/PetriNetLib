@@ -11,8 +11,16 @@ using Nemerle.Compiler;
 using CommonLib.Macros;
 
 namespace PetriNetLib
+
 {
 
+  variant PetriNetNode
+  {
+    | Place {place : GenPlaceCpp;}
+    | Tran {tran : GenTranCpp;}
+    | Cycle {node : PetriNetNode}
+  }
+  
   enum TDestCont
   {
     | MultiSet
@@ -70,25 +78,7 @@ namespace PetriNetLib
           str.Split(',').NToList()
         } else []
       }
-    }
-
-    public IsTransparent : bool
-    {
-      [Memoize]
-      get
-      {
-        match (OutputTransitions)
-        {
-          | [(tran, _arc)] => 
-                             def inpl = tran.InputPlaces.Exclude((x, _) => x.idx  == this.idx);
-                             inpl.All((x, _) => x.Var || x.Req) &&
-                             tran.guard is <[]>
-                             //tran.OutputPlaces.All((_, a) => a.expr.ToString() == arc.expr.ToString()) &&
-                             //tran.code_segment
-          | _             => false                             
-        }
-      }
-    }
+    }    
     
     public Req : bool
     {
@@ -104,7 +94,16 @@ namespace PetriNetLib
       [Memoize]
       get
       {
-        Attributes.Exists(_ == "ZEROSINGLE") 
+        Attributes.Exists(_ == "ZERO_SINGLE") 
+      }
+    }
+    
+    public MinusSingle : bool
+    {
+      [Memoize]
+      get
+      {
+        Attributes.Exists(_ == "MINUS_SINGLE") 
       }
     }
     
@@ -279,21 +278,11 @@ namespace PetriNetLib
       }
     }
     
-    static mutable unnamed_idx : int;
+    //static mutable unnamed_idx : int;
 
-    public UnnamedIdx : int
-    {
-      [Memoize]
-      get
-      {
-        if (IsUnnamed)
-        {
-          def idx = unnamed_idx;
-          unnamed_idx++;
-          idx
-        } else 0
-      }
-    }
+    public UnnamedIdx : int;
+    
+    
     
     public IsPartOfGroupTransition : bool
     {
@@ -358,6 +347,49 @@ namespace PetriNetLib
           | <[ $(n : int) ` $_ ]>     => n
           | <[ $(_ : usesite)]>       => 1
           | _                         => -1
+        }
+      }
+    }
+    
+    public TimeExpr : PExpr
+    {
+      [Memoize]
+      get
+      {
+        match (expr)
+        {
+          | <[ $_(Delay($time)) ]>
+          | <[ $_ %@+ $time]>  => time
+          | _                   => <[]>
+        }
+      }
+    }
+    
+    public ExprWithoutTime : PExpr
+    {
+      [Memoize]
+      get
+      {
+        match (expr)
+        {
+          | <[ $e(Delay($_))]>
+          | <[ $e %@+ $_]>         => e
+          | e                      => e
+        }
+      }
+    }
+    
+    public ArcDelay : option[PExpr]
+    {
+      [Memoize]
+      get
+      {
+        match (expr)
+        {
+          | <[ $(_ : int) ` $_ %@+ $t]>
+          | <[ () %@+ $t]>
+          | <[ $_ %@+ $t]>              => t |> Some
+          | _                           => None()
         }
       }
     }
