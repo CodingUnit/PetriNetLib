@@ -11,8 +11,8 @@ using CommonLib.Macros;
 
 namespace PetriNetLib
 {
-  
-    
+
+
   /// <summary>
   /// Description of GenPlace.
   /// </summary>
@@ -20,21 +20,100 @@ namespace PetriNetLib
   class GenPlaceCpp : Place
   {
     gen : CppGenerator;
-    
+
     public this(pl : Place, gen : CppGenerator, idx : int)
     {
       base(pl.idx, pl.id, pl.name, pl.colour, pl.init_mark, pl.port, pl.tree, pl.net, 0);
       this.gen = gen;
       this.gen_idx = idx;
     }
-       
+
+
+    AddTokenExpr(expr : PExpr) : string
+    {
+
+      def add(e)
+      {
+        | <[ () ]>                       => <#1#>
+          //match (global_time)
+                                              //{
+                                              //  | <[ $(t : int)]> => def time = time + t;     
+
+                                              //  | _               => null
+                                              //} 
+        | <[ 1 ` $e ]>                   => add(e)                                    
+        | <[ $(_ : int) ` $_ ]> as e     => e |> gen.ConvExpr(_, false)                                    
+        | <[ $_ %++ $_ ]> as e           => gen.GetTokenExpr(e)
+
+        | <[ $_(..$_)]> as e
+        | <[ $(_ : usesite) ]> as e
+        | e                              => e |> gen.ConvExpr(_, false)
+      }
+
+      add(expr)
+    }
+
+    public AddPlaceExpr(expr : PExpr) : string
+    {
+      def name = Name;
+      def expr = AddTokenExpr(expr);
+      if (IsTimed)
+      {
+
+        def time = $"\n$(name)_time = time();";
+        match (DestContainerType)
+        {
+          | ZeroSingle // имеет 0 или 1 фишку, для отсутствия используется 0 если INT
+          | MinusSingle 
+          | Var       => $"$(name) = $expr;$time"
+          | Single    => if (IsUnit)
+                         {
+                           $<#$(name) = $expr;$time#>
+                         } else
+                         {
+                            $<#$(name) = $expr;
+                              $(name)_flag = true;$time#>
+                         }
+          | _ => $<#$name.add($expr);#>
+        }
+          //if (is_time_expr)
+          //{
+          //  $<#$name.add($add_token_expr);#>
+          //} else
+          //{
+          //  $<#$name.add(add_time($add_token_expr, $global_time_str));#>
+          //}
+      } else
+      {
+        if (IsFuncPlace)
+        {
+          $<#$(name)($expr);#>
+        } else
+          match (DestContainerType)
+          {
+            | ZeroSingle // имеет 0 или 1 фишку, для отсутствия используется 0 если INT
+            | MinusSingle 
+            | Var       => $"$(name) = $expr;"
+            | Single    => if (IsUnit)
+                           {
+                             $<#$(name) = $expr;#>
+                           } else
+                           {
+                            $<#$(name) = $expr;
+                              $(name)_flag = true;#>
+                           }
+            | _ => $<#$name.add($expr);#>
+          }
+
+      }
+    }
 
     public OutputGenTransitionsArcs : list[GenTranCpp * Arc]
     {
       [Memoize]
       get
       {
-          gen.Transitions.MapIndex((p, i) => (p, gen.Proc.OutputMatrix[idx, i]))
+        gen.Transitions.MapIndex((p, i) => (p, gen.Proc.OutputMatrix[idx, i]))
           .Filter((_, a) => a != null)
           .SelectMany((p, a) => a.Map(x => (p, x))).NToList()
 
@@ -51,13 +130,13 @@ namespace PetriNetLib
           .SelectMany((p, a) => a.Map(x => (p, x))).NToList()
       }
     }
-    
+
     public OutputGenTransitions : list[GenTranCpp]
     {
       [Memoize]
       get
       {
-          gen.Transitions.MapIndex((p, i) => (p, gen.Proc.OutputMatrix[idx, i]))
+        gen.Transitions.MapIndex((p, i) => (p, gen.Proc.OutputMatrix[idx, i]))
           .Filter((_, a) => a != null)
           .Map((p, _) => p)
 
@@ -79,11 +158,11 @@ namespace PetriNetLib
           | <[ $l %++ $r]>                      => <[ $(fold(l)) %++ $(fold(r)) ]>
           | e                                   => e
         }
-        
+
         fold(init_mark)
       }
     }
-    
+
     public InitTime : int
     {
       [Memoize]
@@ -99,7 +178,7 @@ namespace PetriNetLib
         }
       }
     }
-    
+
     public InputGenTransitions : list[GenTranCpp]
     {
       [Memoize]
@@ -110,7 +189,7 @@ namespace PetriNetLib
           .Map((p, _) => p)
       }
     }        
-    
+
     public DfsIterator : IEnumerable[PetriNetNode]
     {
       [Memoize]
@@ -121,7 +200,7 @@ namespace PetriNetLib
         it.Dfs(this |> PetriNetNode.Place).ToArray()
       }
     }
-    
+
     public IsUnit : bool
     {
       [Memoize]
@@ -135,7 +214,7 @@ namespace PetriNetLib
         }
       }
     }
-    
+
     public IsInteger : bool
     {
       [Memoize]
@@ -154,7 +233,7 @@ namespace PetriNetLib
         }
       }
     }
-    
+
     public Colour : GenColourCpp
     {
       [Memoize]
@@ -163,7 +242,7 @@ namespace PetriNetLib
         GenColourCpp(colour, gen)
       }
     }
-    
+
     public IsIndexedContainer : bool
     {
       [Memoize]
@@ -177,7 +256,7 @@ namespace PetriNetLib
         }
       }
     }
-    
+
     public FuncTran : GenTranCpp
     {
       [Memoize]
@@ -186,7 +265,7 @@ namespace PetriNetLib
         OutputGenTransitions.Where(x => x.IsImmediate).First()
       }
     }
-    
+
     public LockPlaces : string
     {
       [Memoize]
@@ -197,15 +276,15 @@ namespace PetriNetLib
           match (x)
           {
             | PetriNetNode.Place(p) => def pl = $"pl_$(p.Name)";
-                                       if (a.IsEmpty()) pl else $"$pl | $a"
+                                      if (a.IsEmpty()) pl else $"$pl | $a"
             | _                     => a
           }
         }
-        
+
         DfsIterator.Fold("", visit)
       }
     }
-    
+
     public PathThroughOrdinaryPlaces : IEnumerable[PetriNetNode]
     {
       [Memoize]
@@ -216,11 +295,11 @@ namespace PetriNetLib
           | PetriNetNode.Place(p) when p.IsTimed => false
           | _                                    => true
         }
-        
+
         DfsIterator.Visit(visit).ToArray()
       }
     }
-    
+
     public IsFuncPlace : bool
     {
       [Memoize]
@@ -228,15 +307,15 @@ namespace PetriNetLib
       {
         def tran = OutputGenTransitions.Where(x => x.IsImmediate);
         !InputTransitions.IsEmpty() && // есть входные переходы
-        tran.Count() == 1           && // один выходной переход
-        tran.First().guard is <[]>  && // нет сторожевого условия
+         tran.Count() == 1           && // один выходной переход
+         tran.First().guard is <[]>  && // нет сторожевого условия
         !tran.First().IsTimed       && // переход не временной
-        port.IsNone                 && // не порт
+         port.IsNone                 && // не порт
         !PathThroughOrdinaryPlaces.Exists(x => if (x is PetriNetNode.Cycle(PetriNetNode.Place(p))) p : object == this else false) && // не имеет циклов на вход
-        tran.First().InputGenPlaces.Except(this).All(x => x.Var || x.Req) // из всех позиций перехода можно вынуть фишки с гарантией
+         tran.First().InputGenPlaces.Except(this).All(x => x.Var || x.Req) // из всех позиций перехода можно вынуть фишки с гарантией
       }
     }
-    
+
     public DestContainerType : TDestCont
     {
       [Memoize]
@@ -246,34 +325,34 @@ namespace PetriNetLib
         {
           //| Colour.Sorted => TDestCont.SortedSet
           | Timed         => if (Colour.Single || Single) TDestCont.Single else 
-                             if (Colour.Var || Var) TDestCont.Var else
-                             if (Colour.Req || Req) TDestCont.ReqContainer else
-                             if (Colour.ZeroSingle || ZeroSingle) TDestCont.ZeroSingle else 
-                             if (MinusSingle) TDestCont.MinusSingle else TDestCont.TimedSimpleMultiset
-                            
+                               if (Colour.Var || Var) TDestCont.Var else
+                                 if (Colour.Req || Req) TDestCont.ReqContainer else
+                                   if (Colour.ZeroSingle || ZeroSingle) TDestCont.ZeroSingle else 
+                                     if (MinusSingle) TDestCont.MinusSingle else TDestCont.TimedSimpleMultiset
+
           //| Queue         => TDestCont.TokenQueue
           | _             => def opts = Colour.Opts;
-                             if (opts.IsEmpty() && Attributes.IsEmpty())
-                             {
-                               def tran = OutputTransitions;
-                               def one = tran.Select((_, x) => x.NumberTokensGet).All(_ == 1);
-                               if (one) TDestCont.RandomEnumerable else TDestCont.MultiSet
-                             } else
-                             {
-                               if (Colour.Queue || Queue)
-                               {
-                                 TDestCont.TokenQueue
-                               } else
-                               if (Colour.Sorted || Sorted)
-                               {
-                                 TDestCont.SortedSet
-                               } else
-                               if (Colour.Var || Var) TDestCont.Var else
-                               if (Colour.Single || Single) TDestCont.Single else
-                               if (Colour.Req || Req) TDestCont.ReqContainer else
-                               if (Colour.ZeroSingle || ZeroSingle) TDestCont.ZeroSingle else 
-                               if (MinusSingle) TDestCont.MinusSingle else TDestCont.RandomEnumerable
-                             }
+                            if (opts.IsEmpty() && Attributes.IsEmpty())
+                            {
+                              def tran = OutputTransitions;
+                              def one = tran.Select((_, x) => x.NumberTokensGet).All(_ == 1);
+                              if (one) TDestCont.RandomEnumerable else TDestCont.MultiSet
+                            } else
+                            {
+                              if (Colour.Queue || Queue)
+                              {
+                                TDestCont.TokenQueue
+                              } else
+                              if (Colour.Sorted || Sorted)
+                              {
+                                TDestCont.SortedSet
+                              } else
+                              if (Colour.Var || Var) TDestCont.Var else
+                              if (Colour.Single || Single) TDestCont.Single else
+                              if (Colour.Req || Req) TDestCont.ReqContainer else
+                              if (Colour.ZeroSingle || ZeroSingle) TDestCont.ZeroSingle else 
+                              if (MinusSingle) TDestCont.MinusSingle else TDestCont.RandomEnumerable
+                            }
 
         }
       }

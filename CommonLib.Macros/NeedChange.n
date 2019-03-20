@@ -112,7 +112,7 @@ namespace CommonLib.Macros
     {
       //  assert2(false);
       def opts = typeBuilder.GetVariantOptions();
-      def name = typeBuilder.Name;
+      //def name = typeBuilder.Name;
       match (opts)
       {
         | [] => 
@@ -120,7 +120,7 @@ namespace CommonLib.Macros
             //def ty = typeBuilder.GetSuperTypes();
         
             def fields = fields.Filter(x => !x.Attributes.HasFlag(NemerleModifiers.Mutable));
-            def (base_fields, other) = fields.Select(x => x :> FieldBuilder).PartitionLazy(x => typeBuilder.IsDerivedFrom(x.DeclaringType) && typeBuilder != x.DeclaringType : object);
+            def (base_fields, _other) = fields.Select(x => x :> FieldBuilder).PartitionLazy(x => typeBuilder.IsDerivedFrom(x.DeclaringType) && typeBuilder != x.DeclaringType : object);
         
             foreach (f in base_fields)
             {
@@ -135,7 +135,7 @@ namespace CommonLib.Macros
         
                 def fields = fields.Filter(x => !x.Attributes.HasFlag(NemerleModifiers.Mutable));
                 //def (base_fields, other) = fields.Select(x => x :> FieldBuilder).PartitionLazy(x => typeBuilder.IsDerivedFrom(x.DeclaringType) && typeBuilder != x.DeclaringType : object);
-                def (base_fields, other) = fields.Select(x => x :> FieldBuilder).PartitionLazy(x => o.IsDerivedFrom(x.DeclaringType) && o != x.DeclaringType : object);
+                def (base_fields, _other) = fields.Select(x => x :> FieldBuilder).PartitionLazy(x => o.IsDerivedFrom(x.DeclaringType) && o != x.DeclaringType : object);
         
                 foreach (f in base_fields)
                 {

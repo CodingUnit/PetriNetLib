@@ -139,13 +139,33 @@ namespace PetriNetLib
     {
       def name = place.Name;
         //def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
+      def arc = place.OutputGenTransitionsArcs.First()[1];
+      def param = if (arc.VarBind is Some(p)) p else "param";
       def tran = place.FuncTran;
       def type = place.Colour.VarSpec;
-      $<#void $name($(type)param)
+      $<#void $name($(type)$param)
       {
-        $(tran.Body)
+        $(tran.TranBody)
       }
       #>
+    }
+    
+    CreateInPortPlace(place : GenPlaceCpp) : string
+    {
+      def name = place.Name;
+      def type = place.Colour.VarSpec;
+      def expr = place.AddPlaceExpr(<[ param ]>);
+      $<#void add_$name($(type)param)
+      {
+        $expr
+      }
+      #>
+    }
+    
+    CreateOutPlace(place : GenPlaceCpp) : string
+    {
+      def name = place.Name;
+      $<#function add_$name;#>
     }
     
     CreatePlace(place : GenPlaceCpp) : string
@@ -813,12 +833,15 @@ namespace PetriNetLib
       Define(vals + ["\n"]);//_ = typebuilder.DefineWithSource(m);
       def decls = model.ml_decls.Map(CreateDecl).Filter(_ != null);
       def (ext, decls) = decls.Partition(x => x.StartsWith("function"));
+      def in_ports = places.Where(x => x.port is Some(PortType.In)).MapToList(CreateInPortPlace);
+      def out_ports = places.Where(x => x.port is Some(PortType.Out)).MapToList(CreateOutPlace);
       def globrefs = model.glob_refs.KeyValuePairs.MapToList(CreateGlobRef);
       Define(globrefs);//_ = typebuilder.DefineWithSource(m);
       Define(methods, true);
       Define(decls);
       when (model.IsTimed) CreateTimeMethods();
       Define(ext, true);
+      Define("\n" :: in_ports + out_ports, true);
       System.IO.File.WriteAllText(file, main_class)
       //typebuilder.Compile()
     }

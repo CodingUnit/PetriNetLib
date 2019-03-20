@@ -84,6 +84,9 @@
     <ClInclude Include="..\timed_petrinet.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
+    <ClInclude Include="..\include.h">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="petrinet_lib_cpp.cpp">

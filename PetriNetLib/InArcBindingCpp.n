@@ -188,6 +188,19 @@ namespace PetriNetLib
         match (expr)
         {
 //          | <[ () ]>             => <[]>
+          | <[ (..$e) ]>         => def bind_tuple_elem(x, i)
+                                    {
+                                      match (x)
+                                      {
+                                        | <[ $(n : usesite) ]> =>
+                                            def ty = gen.TypeOfVar(n);
+                                            $"$ty$x = $(name).field$i;"
+                                        | _ => throw InvalidOperationException()
+                                      }
+                                    }
+                                    
+                                    def bind = e.Select(bind_tuple_elem);
+                                    $<#..$(bind;"\n")#>
           | <[ $(n : usesite) ]> => def ty = gen.TypeOfVar(n);
                                     if (place.IsIndexedContainer) 
                                     {

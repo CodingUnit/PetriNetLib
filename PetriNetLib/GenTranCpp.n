@@ -91,7 +91,7 @@ namespace PetriNetLib
       [Memoize]
       get
       {
-        def body = gen.CreateTranBody(this);
+        def body = TranBody;
         def places = PlacesParticipateMask;
         def tr = if (PartOfGroup is Some(g)) $"tr_GroupTransition$g" else $"tr_$(Name)";
         $<#bool res = false;
@@ -101,6 +101,15 @@ namespace PetriNetLib
                 unlock($places);
               }
               return res;#>
+      }
+    }
+    
+    public TranBody : string
+    {
+      [Memoize]
+      get
+      {
+        gen.CreateTranBody(this);
       }
     }
     

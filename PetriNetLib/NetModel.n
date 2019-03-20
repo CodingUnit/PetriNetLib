@@ -394,6 +394,19 @@ namespace PetriNetLib
       }
     }
     
+    public VarBind : option[string]
+    {
+      [Memoize]
+      get
+      {
+        match (expr)
+        {
+          | <[ $(n : usesite)]> => n |> Some
+          | _                   => None()
+        }
+      }
+    }
+    
     public kind : ArcKind;
   }
 
