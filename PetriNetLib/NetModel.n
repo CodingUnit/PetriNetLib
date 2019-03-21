@@ -261,22 +261,6 @@ namespace PetriNetLib
       }
     }
 
-    public PartOfGroup : option[string]
-    {
-      [Memoize]
-      get
-      {
-        def places = InputPlaces;//
-        def place = places.Where(x => !x[0].OutputTransitions.ElementsEqual(((x, _), (y, _)) => x.priority == y.priority))
-                          .Map(x => (x[0], x[0].OutputTransitions.Where((x : Transition, _) => x.IsUnnamed)
-                          .Select(x => x[0])));
-        match (place.Find(x => x[1].Contains(this)))
-        {
-          | Some((_, g)) => g.Fold("", (x, a) => $"$(x.UnnamedIdx)$a") |> Some
-          | _            => None()
-        }
-      }
-    }
     
     //static mutable unnamed_idx : int;
 
@@ -284,14 +268,7 @@ namespace PetriNetLib
     
     
     
-    public IsPartOfGroupTransition : bool
-    {
-      [Memoize]
-      get
-      {
-        PartOfGroup.HasValue
-      }
-    }
+   
     
     public Name : string
     {

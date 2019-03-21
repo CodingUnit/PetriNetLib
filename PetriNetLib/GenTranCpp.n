@@ -62,6 +62,48 @@ namespace PetriNetLib
         }
     }
     
+    public PartOfGroup : option[string]
+    {
+      [Memoize]
+      get
+      {
+        def places = InputGenPlaces;//
+        def place = places.Where(x => !x.OutputGenTransitions.ElementsEqual((x, y) => x.priority == y.priority))
+                          .Map(x => (x, x.OutputGenTransitions.Where((x : Transition, _) => x.IsUnnamed)
+                          .Select(x => x[0])));
+        match (place.Find(x => x[1].Contains(this)))
+        {
+          | Some((_, g)) => g.Fold("", (x, a) => $"$(x.UnnamedIdx)$a") |> Some
+          | _            => None()
+        }
+      }
+    }
+    
+     public IsPartOfGroupTransition : bool
+    {
+      [Memoize]
+      get
+      {
+        PartOfGroup.HasValue
+      }
+    }
+    
+    public GroupName : option[string]
+    {
+      [Memoize]
+      get
+      {
+        if (PartOfGroup.HasValue)
+        {
+          def tran = InputGenPlaces.First().OutputTransitions.Where((x, _) => x.IsUnnamed).NToList();
+          //def sorted = tran.OrderByDescending((x, _) => x.priority);
+          def name = tran.Map((x, _) => x.UnnamedIdx);
+          def name = name.Fold("", (x, a) => $"$x$a");
+          $"GroupTransition$name" |> Some
+        } else None()
+      }
+    }
+    
     public PlacesParticipate : list[GenPlaceCpp]
     {
       [Memoize]

@@ -119,13 +119,12 @@ namespace PetriNetLib
       
       def create_group_tran(p)
       {
-        def tran = p.OutputTransitions.Where((x, _) => x.IsUnnamed).NToList();
-        def sorted = tran.OrderByDescending((x, _) => x.priority);
-        def group = sorted.Fold("return;", ((x, _), a) => $"if (!$(x.Name)()) \n$a");
-        def name = tran.Map((x, _) => x.UnnamedIdx);
-        def name = name.Fold("", (x, a) => $"$x$a");
-        def tr_comp = $"tr_GroupTransition$name";
-        $<#void GroupTransition$name()
+        def tran = p.OutputGenTransitions.Where((x, _) => x.IsUnnamed).NToList();
+        def sorted = tran.OrderByDescending(x => x.priority);
+        def group = sorted.Fold("return;", (x, a) => $"if (!$(x.Name)()) \n$a");
+        def name = tran.First().GroupName.Value;
+        def tr_comp = $"tr_$name";
+        $<#void $name()
             {
               $group
               tran_ena(0, $tr_comp);

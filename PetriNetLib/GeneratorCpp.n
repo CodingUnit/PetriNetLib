@@ -154,10 +154,15 @@ namespace PetriNetLib
     {
       def name = place.Name;
       def type = place.Colour.VarSpec;
+      def (tran, group) = place.OutputGenTransitions.Partition(x => !x.IsPartOfGroupTransition);
+      def tran = tran.Where(x => x.IsImmediate && !x.IsPartOfGroupTransition).Map(x => $"$(x.Name)();");
+      def tran = if (group.IsEmpty()) $<#..$(tran;"\n")#> else $"$(group.First().GroupName.Value)();";//Map(x => x.PartOfGroup.Value).First() |> Some;
+      //def tran = if (group is Some(g)) $"GroupTransition$g" else tran;
       def expr = place.AddPlaceExpr(<[ param ]>);
       $<#void add_$name($(type)param)
       {
         $expr
+        $tran
       }
       #>
     }

@@ -398,7 +398,7 @@ public:
 	bool UnnamedTransition1()
 	{
 		bool res = false;
-		if (lock(pl_UDP_SEND | pl_UDP_OUT | pl_COUNTER | pl_UDP_IN, tr_UnnamedTransition1))
+		if (lock(pl_UDP_SEND | pl_UDP_OUT | pl_COUNTER | pl_UDP_IN, tr_GroupTransition1021))
 		{
 			if (UDP_IN_flag)
 			{
@@ -408,7 +408,6 @@ public:
 					UDP_IN_flag = false;
 					;
 					UDP_SEND(get_control_msg(m));
-					tran_ena(0, tr_UnnamedTransition1);
 					res = true;
 				}
 			};
@@ -420,7 +419,7 @@ public:
 	bool UnnamedTransition2()
 	{
 		bool res = false;
-		if (lock(pl_CAN | pl_UDP_IN, tr_UnnamedTransition2))
+		if (lock(pl_CAN | pl_UDP_IN, tr_GroupTransition1021))
 		{
 			if (UDP_IN_flag)
 			{
@@ -428,7 +427,6 @@ public:
 				UDP_IN_flag = false;
 				;
 				CAN.add(udp2can(m));
-				tran_ena(0, tr_UnnamedTransition2);
 				UnnamedTransition16();
 				res = true;
 			};
@@ -587,7 +585,7 @@ public:
 	bool UnnamedTransition10()
 	{
 		bool res = false;
-		if (lock(pl_SEND_SENS | pl_UDP_IN, tr_UnnamedTransition10))
+		if (lock(pl_SEND_SENS | pl_UDP_IN, tr_GroupTransition1021))
 		{
 			if (UDP_IN_flag)
 			{
@@ -597,7 +595,6 @@ public:
 					UDP_IN_flag = false;
 					;
 					SEND_SENS = 1;
-					tran_ena(0, tr_UnnamedTransition10);
 					UnnamedTransition6();
 					res = true;
 				}
@@ -759,41 +756,50 @@ public:
 	function get_ssi_bytes;
 	function get_control_msg;
 	function can_process;
+
+
 	void add_DPS(bool param)
 	{
 		DPS.add(param);
+		UnnamedTransition6();
 	}
 
 	void add_SSI(const bytes8 &param)
 	{
 		SSI.add(param);
+		UnnamedTransition6();
 	}
 
 	void add_TEMP(int param)
 	{
 		TEMP.add(param);
+		UnnamedTransition9();
 	}
 
 	void add_BUTTONS(u8 param)
 	{
 		BUTTONS = param;
+		UnnamedTransition7();
 	}
 
 	void add_UDP_IN(const CAN_UDP_MESSAGE &param)
 	{
 		UDP_IN = param;
 		UDP_IN_flag = true;
+		GroupTransition1021();
 	}
 
 	void add_CAN_IN(const CAN_MESSAGE &param)
 	{
 		CAN_IN = param;
 		CAN_IN_flag = true;
+		UnnamedTransition3();
 	}
 
 	void add_ADC(int param)
 	{
 		ADC.add(param);
+		UnnamedTransition12();
 	}
 
 	function add_UDP_OUT;
