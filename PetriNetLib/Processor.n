@@ -268,7 +268,7 @@ namespace PetriNetLib
       }
       
       def (color, decls) = tree_decls.PartitionType();
-      foreach (d : CpnDecl.ColourSet in color)
+      foreach (d : CpnDecl.ColourSet in color with i)
       {
         match (d)
         {
@@ -279,7 +279,7 @@ namespace PetriNetLib
                 | "print_binding" => Flags |= PetriNetFlags.PrintBinding
                 | _               => ()
               }
-          | _                                            => colour_sets[d.name] = ColourSet(d.name, d.type);
+          | _                                            => colour_sets[d.name] = ColourSet(d.name, d.type, i)
         }
       }
       

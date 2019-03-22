@@ -25,9 +25,10 @@ namespace PetriNetLib
         //mutable typing_method : MethodBuilder;
     //compiler : CompilerHost = CompilerHost();
     mutable cons_expr : list[string] = [];
-    mutable private_fields    : list[string] = [];
-    mutable public_fields    : list[string] = [];
-    mutable protected_fields : list[string] = [];
+    mutable private_fields    : List[string] = List();
+    mutable public_fields    : List[string] = List();
+    mutable protected_fields : List[string] = List();
+    mutable external_fields : List[string] = List();
     mutable init_body : list[string] = [];
     file : string;
     mutable ctx : list[string];
@@ -37,15 +38,17 @@ namespace PetriNetLib
       [Memoize]
       get
       {
-        $<#class $Name : public $Base
+        
+        $<# ..$(external_fields;"\n")
+            class $Name : public $Base
             {
-              ..$(private_fields.Rev();"\n")
+              ..$(private_fields;"\n")
 
               protected:
-                ..$(protected_fields.Rev();"\n")
+                ..$(protected_fields;"\n")
               public:
 
-              ..$(public_fields.Rev();"\n")
+              ..$(public_fields;"\n")
             };
         #>
       }

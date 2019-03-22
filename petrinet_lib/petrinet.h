@@ -67,6 +67,12 @@ protected:
 		atomic_or(&completed_tran, completed);
 	}
 
+	void tran_ena(u32 completed)
+	{
+		//queue.enqueue(trmask);//trmask, (places & pl_mask == pl_mask) * trmask);
+		atomic_or(&completed_tran, completed);
+	}
+
 	void tran_ena_set(u32 trmask, u32 tr_ena_mask)
 	{
 		queue.set_elem(trmask, tr_ena_mask);

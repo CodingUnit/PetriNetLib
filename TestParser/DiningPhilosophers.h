@@ -1,4 +1,5 @@
-class DiningPhilosophers : public petri_net32
+ 
+            class DiningPhilosophers : public petri_net32
             {
               typedef enum
          {

@@ -48,17 +48,17 @@ namespace PetriNetLib
       def add_body = add_proc.Map(_.add_token);
       def code = (tran.code_segment |> ConvExpr(_, true)) + ";" ?? "";
       
-      def out_tran = tran.OutputGenPlaces.SelectMany(x => x.OutputGenTransitions).NToList();
-      def participate_tran = out_tran;
+      //def out_tran = tran.OutputGenPlaces.SelectMany(x => x.OutputGenTransitions).NToList();
+      //def participate_tran = out_tran;
       
-      def tr_pl_mask = participate_tran.Where(x => x.IsImmediate && !x.IsTimed && !x.IsPartOfFuncPlace);//.Map(x => $"tr_$(x.Name)");//, x.InputPlaces.Select(x => x[0]) |> mask_for_places));
+      //def tr_pl_mask = participate_tran.Where(x => x.IsImmediate && !x.IsTimed && !x.IsPartOfFuncPlace);//.Map(x => $"tr_$(x.Name)");//, x.InputPlaces.Select(x => x[0]) |> mask_for_places));
       def tr_comp_mask = if (tran.IsImmediate && !tran.IsPartOfGroupTransition && !tran.IsTimed && !tran.IsPartOfFuncPlace) $"tr_$(tran.Name)" else "0";
       //def tr_mask = tr_pl_mask.Fold("", (t, a) => if (a.IsEmpty()) t else $"$t | $a");
       //def tr_mask = if (tr_mask.IsEmpty()) "0" else tr_mask;
-      def tr_ena = if (tr_comp_mask == "0") "" else $"tran_ena(0, $tr_comp_mask);";
-      def tr_next = tr_pl_mask.Map(x => $<#$(x.Name)();#>);
+      def tr_ena = if (tr_comp_mask == "0") "" else $"tran_ena($tr_comp_mask);";
+      //def tr_next = tr_pl_mask.Map(x => $<#$(x.Name)();#>);
       def res = if (tran.IsPartOfFuncPlace) [] else ["res = true;"];
-      def body = extract + (code :: add_body) + [tr_ena] + tr_next + res;
+      def body = extract + (code :: add_body) + [tr_ena] + res;
       
       def body = body.Filter(x => !x.IsEmpty());
       def body = if (tran.guard is <[]>) body else //tran_ena($t, $p);
@@ -142,7 +142,7 @@ namespace PetriNetLib
 		    return tran_funcs[n];
 	    }
       #>;
-      protected_fields ::= func;
+      protected_fields.Add(func);
       
       
       def tran = transitions.Where(x => !x.IsPartOfFuncPlace).Select(x => ($"$(x.Name)", x.priority));
@@ -151,17 +151,17 @@ namespace PetriNetLib
       def tran = groups.Concat(tran).OrderBy((_, p) => p);
       def restran = tran.Select(((x, _), i) => $<#tr_$x = 0x$((1 << i).ToString("X"))#>);
       
-      private_fields ::= $<#
+      private_fields.Add($<#
       typedef enum 
       {
         ..$(restran;",\n")
-      } ttran;#>;
+      } ttran;#>);
       
       def tran = tran.Map((x, _) => x);
-      private_fields ::= $<#
+      private_fields.Add($<#
       tran_func tran_funcs[] = {..$(tran;",\n")
       };
-      #>;
+      #>);
     }
     
     CreateTran(tran : GenTranCpp) : string

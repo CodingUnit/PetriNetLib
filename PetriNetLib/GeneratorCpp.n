@@ -644,7 +644,7 @@ namespace PetriNetLib
     CreateCons() : void
     {
       def marking = places.MapToList(CreateInitMarking).Filter(x => x != null && !x.IsEmpty());
-      public_fields ::= if (model.IsTimed || model.IsHaveImmediateTransitions) 
+      public_fields.Add(if (model.IsTimed || model.IsHaveImmediateTransitions) 
       $<#$Name(int time_step = 15) 
       { 
         $Base(time_step);
@@ -655,7 +655,7 @@ namespace PetriNetLib
       { 
         ..$(marking;"\n")
         ..$(cons_expr;"\n")
-      }#>;//<[decl: public this() { {..$marking} {..$cons_expr} }]>;
+      }#>);//<[decl: public this() { {..$marking} {..$cons_expr} }]>;
     }
 
     CreateTimeMethods() : void
@@ -714,13 +714,13 @@ namespace PetriNetLib
                                   ..$(next;"\n");
                               #>
                        }
-      private_fields ::= $<#u32 get_next_time(u32 &res_tr)
+      private_fields.Add( $<#u32 get_next_time(u32 &res_tr)
                       {
                         u32 tr = 0;
                         $time_body;
                         res_tr = tr;
                         return min;
-                      }#>;
+                      }#>);
       
     }
 
@@ -762,28 +762,24 @@ namespace PetriNetLib
 
     
 
-    Define(decl : IEnumerable[string], pub : bool = false) : void
+    Define(decl : IEnumerable[string], pub : bool = false, ext : bool = false) : void
     {
+      if (ext)
+      {                
+         external_fields.AddRange(decl)
+      } else
       if (pub)
       {
-        foreach (d in decl) 
-        {
-          public_fields ::= d;
-          //public_fields ::= "\n"
-        }
+         public_fields.AddRange(decl);          //public_fields ::= "\n"
       } else
       {
-        foreach (d in decl)
-        {
-          private_fields ::= d;
-          //private_fields ::= "\n"
-        }
+         private_fields.AddRange(decl);
       }
     }
 
     Define(decl : string) : void
     {
-      private_fields ::= decl;
+      private_fields.Add(decl);
       //private_fields ::= "\n"
       //def ty = CTree.Type.type_lens >> CComplexType.Class.decls_lens;
       //main_class = ty.Update(main_class, x => x.Append(decl));
@@ -808,9 +804,12 @@ namespace PetriNetLib
 
       def places_enum = CreatePlaces();
       Define(places_enum);
-      def sets = colours.Values.Map(x => CreateColourSet(x) + "\n").Filter(_ != null);
+      def sets = colours.Values.OrderBy(x => x.Colour.pos).Map(x => (CreateColourSet(x) + "\n", x.Public)).Filter(x => x[0] != null);
+      def (public_col, sets) = sets.Partition((_, x) => x);
+      def sets = sets.Select(x => x[0]);
+      def pub = public_col.Select(x => x[0]);
       Define(sets);//typebuilder.DefineNestedTypeWithSource(m).Compile();
-
+      Define(pub, false, true);
       def places = places.Map(CreatePlace).Filter(_ != null);      
       
       

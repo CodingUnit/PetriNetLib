@@ -1,3 +1,40 @@
+typedef bool BOOL;
+
+typedef int INT;
+
+typedef u8 BYTE;
+
+struct CAN_MESSAGE
+{
+	CAN_MESSAGE(int field1, long long field2, const bytes &field3)
+	{
+		this->field1 = field1;
+		this->field2 = field2;
+		this->field3 = field3;
+	}
+
+	int field1;
+	long long field2;
+	bytes8 field3;
+};
+
+struct CAN_UDP_MESSAGE
+{
+	CAN_UDP_MESSAGE(int COUNT, int ID, long long timestamp, const bytes &data)
+	{
+		this->COUNT = COUNT;
+		this->ID = ID;
+		this->timestamp = timestamp;
+		this->data = data;
+	}
+	int COUNT;
+	int ID;
+	long long timestamp;
+	bytesn data;
+};
+
+
+
 class pt14 : public timed_petri_net32
 {
 	typedef enum
@@ -28,10 +65,6 @@ class pt14 : public timed_petri_net32
 	} tplace;
 	typedef char UNIT;
 
-	typedef bool BOOL;
-
-	typedef int INT;
-
 	typedef long long INTINF;
 
 	typedef int TIME;
@@ -39,8 +72,6 @@ class pt14 : public timed_petri_net32
 	typedef short SHORT;
 
 
-
-	typedef u8 BYTE;
 
 	typedef UNIT UNIT_TIMED;
 
@@ -84,36 +115,7 @@ class pt14 : public timed_petri_net32
 
 
 
-	struct CAN_MESSAGE
-	{
-		CAN_MESSAGE(int field1, long long field2, const bytes &field3)
-		{
-			this->field1 = field1;
-			this->field2 = field2;
-			this->field3 = field3;
-		}
-
-		int field1;
-		long long field2;
-		bytes8 field3;
-	};
-
 	typedef UNIT TIMED_VOID;
-
-	struct CAN_UDP_MESSAGE
-	{
-		CAN_UDP_MESSAGE(int COUNT, int ID, long long timestamp, const bytes &data)
-		{
-			this->COUNT = COUNT;
-			this->ID = ID;
-			this->timestamp = timestamp;
-			this->data = data;
-		}
-		int COUNT;
-		int ID;
-		long long timestamp;
-		bytesn data;
-	};
 
 
 
@@ -122,20 +124,6 @@ class pt14 : public timed_petri_net32
 	typedef INT VAR__INT;
 
 	typedef BYTES DEBUG_INFO;
-
-
-
-	struct CAN_RESULT
-	{
-		CAN_RESULT(const CAN_MESSAGE &field1, bool field2)
-		{
-			this->field1 = field1;
-			this->field2 = field2;
-		}
-
-		CAN_MESSAGE field1;
-		bool field2;
-	};
 
 	random_array DPS;
 	u32 SYNC;
@@ -387,7 +375,7 @@ public:
 				GPS_flag = false;
 				;
 				UDP_SEND(tuple3(256, time64(), s));
-				tran_ena(0, tr_UnnamedTransition0);
+				tran_ena(tr_UnnamedTransition0);
 				res = true;
 			};
 			unlock(pl_UDP_SEND | pl_UDP_OUT | pl_COUNTER | pl_GPS);
@@ -427,10 +415,13 @@ public:
 				UDP_IN_flag = false;
 				;
 				CAN.add(udp2can(m));
-				UnnamedTransition16();
 				res = true;
 			};
 			unlock(pl_CAN | pl_UDP_IN);
+			if (res)
+			{
+				UnnamedTransition16();
+			}
 		}
 		return res;
 	}
@@ -446,7 +437,7 @@ public:
 				CAN_IN_flag = false;
 				can_process(cm);
 				UDP_SEND(cm);
-				tran_ena(0, tr_UnnamedTransition3);
+				tran_ena(tr_UnnamedTransition3);
 				res = true;
 			};
 			unlock(pl_UDP_SEND | pl_UDP_OUT | pl_COUNTER | pl_CAN_IN);
@@ -470,10 +461,13 @@ public:
 				SYNC = n + 1;
 				UDP_SEND(tuple3(663, time64(), get_ssi_bytes(n, dir, 1, ssi)));
 				SYNC_BUF(1);
-				UnnamedTransition6();
 				res = true;
 			};
 			unlock(pl_SYNC_BUF | pl_UDP_SEND | pl_UDP_OUT | pl_COUNTER | pl_DELAY | pl_SSI | pl_SYNC | pl_DPS);
+			if (res)
+			{
+				UnnamedTransition6();
+			}
 		}
 		return res;
 	}
@@ -515,7 +509,7 @@ public:
 					SEND_SENS = 0;
 					;
 					UDP_SEND(tuple3(663, time64(), get_ssi_bytes(n, dir, 0, ssi)));
-					tran_ena(0, tr_UnnamedTransition6);
+					tran_ena(tr_UnnamedTransition6);
 					res = true;
 				}
 			};
@@ -558,10 +552,13 @@ public:
 				SYNC = 0;
 
 				SyncFreq_time = time() + 1000000 / freq;
-				UnnamedTransition6();
 				res = true;
 			};
 			unlock(pl_SyncFreq | pl_SYNC | pl_SyncFreq);
+			if (res)
+			{
+				UnnamedTransition6();
+			}
 		}
 		return res;
 	}
@@ -595,11 +592,14 @@ public:
 					UDP_IN_flag = false;
 					;
 					SEND_SENS = 1;
-					UnnamedTransition6();
 					res = true;
 				}
 			};
 			unlock(pl_SEND_SENS | pl_UDP_IN);
+			if (res)
+			{
+				UnnamedTransition6();
+			}
 		}
 		return res;
 	}
@@ -613,9 +613,12 @@ public:
 
 			DELAY_time = time();
 			SEND_SENS = 1;
-			UnnamedTransition6();
 			res = true;;
 			unlock(pl_SEND_SENS | pl_DELAY | pl_DELAY);
+			if (res)
+			{
+				UnnamedTransition6();
+			}
 		}
 		return res;
 	}
@@ -652,11 +655,14 @@ public:
 					TIMER_time = time() + 50000;
 					ADC_SUM = tuple2(sum + q, n + 1);
 					ADC_SUM_flag = true;
-					UnnamedTransition13();
 					res = true;
 				}
 			};
 			unlock(pl_ADC_SUM | pl_TIMER | pl_ADC_SUM | pl_TIMER | pl_ADC);
+			if (res)
+			{
+				UnnamedTransition13();
+			}
 		}
 		return res;
 	}
@@ -678,12 +684,15 @@ public:
 					BatLevel_flag = true;
 					ADC_SUM = tuple2(0, 0);
 					ADC_SUM_flag = true;
-					tran_ena(0, tr_UnnamedTransition13);
-					UnnamedTransition13();
+					tran_ena(tr_UnnamedTransition13);
 					res = true;
 				}
 			};
 			unlock(pl_ADC_SUM | pl_BatLevel | pl_ADC_SUM);
+			if (res)
+			{
+				UnnamedTransition13();
+			}
 		}
 		return res;
 	}
@@ -700,11 +709,14 @@ public:
 				;
 				CAN_OUT = cm;
 				CAN_OUT_flag = true;
-				tran_ena(0, tr_UnnamedTransition16);
-				UnnamedTransition17();
+				tran_ena(tr_UnnamedTransition16);
 				res = true;
 			};
 			unlock(pl_CAN_OUT | pl_CAN);
+			if (res)
+			{
+				UnnamedTransition17();
+			}
 		}
 		return res;
 	}
@@ -720,11 +732,14 @@ public:
 				CAN_OUT_flag = false;
 				;
 				CAN.add(cm);
-				tran_ena(0, tr_UnnamedTransition17);
-				UnnamedTransition16();
+				tran_ena(tr_UnnamedTransition17);
 				res = true;
 			};
 			unlock(pl_CAN | pl_CAN_OUT);
+			if (res)
+			{
+				UnnamedTransition16();
+			}
 		}
 		return res;
 	}
@@ -749,7 +764,6 @@ public:
 		;
 		UDP_SEND(cm);
 		CAN.add(cm);
-		UnnamedTransition16();
 	}
 
 	function adc2bat;

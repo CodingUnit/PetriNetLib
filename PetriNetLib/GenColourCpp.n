@@ -305,6 +305,16 @@ namespace PetriNetLib
       }
     }
 
+    public Public : bool
+    {
+      [Memoize]
+      get
+      {
+        def places_uses = gen.Places.Filter(x => x.colour == colour : object);
+        places_uses.Exists(x => x.port.HasValue)
+      }
+    }
+    
     //FinalType(str : string) : string
     //{
     //  match (str.Trim())

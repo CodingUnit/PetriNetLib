@@ -392,9 +392,14 @@ namespace PetriNetLib
   {
     public name : string;
     public type : Colour;
+    [RecordIgnore]
+    public pos  : int;
     
-    
-
+    public this(name : string, type : Colour, p : int)
+    {
+      this(name, type);
+      pos = p;
+    }
   }
 
   variant ExecError
