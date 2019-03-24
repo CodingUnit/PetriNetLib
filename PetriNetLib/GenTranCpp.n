@@ -128,6 +128,33 @@ namespace PetriNetLib
       }
     }
     
+    public IsFuncTran : bool
+    {
+      [Memoize]
+      get
+      {
+        InputGenPlaces.Exists(x => x.port is Some(PortType.InOut))
+      }
+    }
+    
+    public InArcProcess : list[InArcBindingCpp]
+    {
+      [Memoize]
+      get
+      {
+        InputPlacesArcs.Map((x, a) => InArcBindingCpp(x, gen, this, [], a))
+      }
+    }
+    
+    public OutArcProcess : list[OutArcProcessCpp]
+    {
+      [Memoize]
+      get
+      {
+        OutputPlacesArcs.Map((p, a) => OutArcProcessCpp(p, this, a, gen))
+      }
+    }
+    
     public Body : string
     {
       [Memoize]

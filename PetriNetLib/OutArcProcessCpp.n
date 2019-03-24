@@ -173,22 +173,35 @@ namespace PetriNetLib
             {
               $<#$(name)($add_token_expr);#>
             } else
-              match (place.DestContainerType)
+            {
+              match (place.port)
               {
-                | ZeroSingle // имеет 0 или 1 фишку, для отсутствия используется 0 если INT
-                | MinusSingle 
-                | Var       => $"$(name) = $add_token_expr;"
-                | Single    => if (place.IsUnit)
-                               {
-                                 $<#$(name) = $add_token_expr;#>
-                               } else
-                               {
-                            $<#$(name) = $add_token_expr;
-                              $(name)_flag = true;#>
-                               }
-                | _ => $<#$name.add($add_token_expr);#>
+                | Some(PortType.Out) => 
+                    if (place.Colour.IsComplexType) 
+                    $<#$(name).exec_ref($add_token_expr);#> else
+                    $<#$(name).exec($add_token_expr);#>
+                | Some(PortType.InOut) => 
+                    if (place.Colour.IsComplexType) 
+                    $<#bool in = $(name).exec_ref_ret($add_token_expr);#> else
+                    $<#bool in = $(name).exec_ret<bool>($add_token_expr);#>
+                | _ => match (place.DestContainerType)
+                       {
+                         | ZeroSingle // имеет 0 или 1 фишку, для отсутствия используется 0 если INT
+                         | MinusSingle 
+                         | Var       => $"$(name) = $add_token_expr;"
+                         | Single    => if (place.IsUnit)
+                                        {
+                                          $<#$(name) = $add_token_expr;#>
+                                        } else
+                                        {
+                                          $<#$(name) = $add_token_expr;
+                                          $(name)_flag = true;#>
+                                        }
+                         | _ => $<#$name.add($add_token_expr);#>
+                       }
               }
-
+              
+            }
         }
       }
     }

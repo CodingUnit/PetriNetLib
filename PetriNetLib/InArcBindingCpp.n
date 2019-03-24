@@ -161,7 +161,7 @@ namespace PetriNetLib
       [Memoize]
       get
       {
-        if (place.IsFuncPlace) "" else
+        if (place.IsFuncPlace || transition.IsFuncTran) "" else
         if (place.IsTimed)
         {
           def time_expr = if (timed_bind_expr.IsEmpty()) "" else $"$timed_bind_expr;";
@@ -272,7 +272,7 @@ namespace PetriNetLib
           }
         }
         
-        if (place.IsFuncPlace) "" else
+        if (place.IsFuncPlace || transition.IsFuncTran) "" else
         match (arc_kind)
         {
           | ArcKind.Normal    => cont_proc(_ => check_func(expr))
@@ -312,7 +312,7 @@ namespace PetriNetLib
           }
         }
         
-        if (place.IsFuncPlace) "" else
+        if (place.IsFuncPlace || transition.IsFuncTran) "" else
         match (arc_kind)
         {
          | ArcKind.Normal         => if (IsCopyVar) "" else cont_proc(_ => extract(expr))

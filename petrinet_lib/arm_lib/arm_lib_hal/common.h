@@ -186,7 +186,15 @@ namespace common {
 					f(obj, parm);
 				}
 
-        
+        template <class T>
+#pragma optimize=low
+        bool exec_ref_ret_bool(const T &parm)
+        {
+          typedef bool(*func_parm)(void *, const T &);
+          func_parm f = *(func_parm *)&func;
+          return f(obj, parm);
+        }
+
 				template <class T>
 				#pragma optimize=low
         T exec_ret()

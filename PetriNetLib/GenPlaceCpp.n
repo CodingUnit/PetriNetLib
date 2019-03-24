@@ -310,7 +310,7 @@ namespace PetriNetLib
          tran.Count() == 1           && // один выходной переход
          tran.First().guard is <[]>  && // нет сторожевого условия
         !tran.First().IsTimed       && // переход не временной
-         port.IsNone                 && // не порт
+         (port.IsNone || port is Some(PortType.InOut)) && // не порт
         !PathThroughOrdinaryPlaces.Exists(x => if (x is PetriNetNode.Cycle(PetriNetNode.Place(p))) p : object == this else false) && // не имеет циклов на вход
          tran.First().InputGenPlaces.Except(this).All(x => x.Var || x.Req) // из всех позиций перехода можно вынуть фишки с гарантией
       }

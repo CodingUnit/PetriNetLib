@@ -16,12 +16,11 @@ namespace PetriNetLib
   {
     internal CreateTranBody(tran : GenTranCpp) : string
     {
-      def input  = tran.InputPlaces;
-      def output = tran.OutputPlaces;
+      def output = tran.OutputPlacesArcs;
       def name   = tran.Name;
       //def map    = Hashtable();
 
-      def input = input.Map((x, a) => InArcBindingCpp(places[x.idx], this, tran, [], a));
+      def input = tran.InArcProcess;
 
       foreach (i in input)
       {
@@ -42,7 +41,7 @@ namespace PetriNetLib
       }
 
       def input    = input.OrderBy(_.priority); 
-      def add_proc = output.Map((p, a) => OutArcProcessCpp(places[p.idx], tran, a, this));
+      def add_proc = tran.OutArcProcess;//output.Map((p, a) => OutArcProcessCpp(places[p.idx], tran, a, this));
 
       def extract = input.Map(_.extract_expr);
       def add_body = add_proc.Map(_.add_token);
@@ -57,7 +56,9 @@ namespace PetriNetLib
       //def tr_mask = if (tr_mask.IsEmpty()) "0" else tr_mask;
       def tr_ena = if (tr_comp_mask == "0") "" else $"tran_ena($tr_comp_mask);";
       //def tr_next = tr_pl_mask.Map(x => $<#$(x.Name)();#>);
-      def res = if (tran.IsPartOfFuncPlace) [] else ["res = true;"];
+      def res = if (tran.IsPartOfFuncPlace) [] else if (output.Exists(x => x[0].port is Some(PortType.InOut)))
+                                                    ["res = in;"] else
+                                                    ["res = true;"];
       def body = extract + (code :: add_body) + [tr_ena] + res;
       
       def body = body.Filter(x => !x.IsEmpty());
@@ -168,7 +169,15 @@ namespace PetriNetLib
     {
       def name = tran.Name;
       def body = tran.Body;      
-      
+      if (tran.IsFuncTran)
+      {
+        def parms = tran.InArcProcess.Map(x => $"$(x.place.Colour.VarSpec)$(x.bind_var)");
+        $<#bool $name(..$(parms; ","))
+            {
+              $body
+            }
+          #>
+      } else
         $<#bool $name()
             {
               $body
