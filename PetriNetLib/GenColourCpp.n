@@ -227,6 +227,15 @@ namespace PetriNetLib
       }
     }
     
+    public VarSpecCopy : string
+    {
+      [Memoize]
+      get
+      {
+        if (IsComplexType) $"const $DestType *" else $"$DestType "
+      }
+    }
+    
     public DestType : string
     {
       [Memoize]

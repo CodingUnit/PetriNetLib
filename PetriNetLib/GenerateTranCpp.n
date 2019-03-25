@@ -75,6 +75,7 @@ namespace PetriNetLib
 
       def fold(x, a)
       {
+        def pre_bind = x.pre_bind_expr;
         if (a : object == null)
         {
           def expr = x.bind_expr :: body + [tran_evt];
@@ -82,24 +83,25 @@ namespace PetriNetLib
           def expr = $<#..$(expr;"\n")#>;
           if (x.check_expr.IsEmpty())
           {
-            $<#$expr#>
+            $<#$pre_bind$expr#>
           }
           else
           {
-            $<# if ($(x.check_expr))
+            $<#$pre_bind if ($(x.check_expr))
                 {
                   $expr
                 }#>
           }
         } else
         {
+          
           def expr = [x.bind_expr] + [a];
           def expr = expr.Filter(x => !x.IsEmpty());
           def expr = $<#..$(expr;"\n")#>;
           if (x.check_expr.IsEmpty())
             expr
           else
-            $<# if ($(x.check_expr))
+            $<#$pre_bind if ($(x.check_expr))
               {
                 $expr
               }#>

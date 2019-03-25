@@ -1,18 +1,21 @@
  
             class DiningPhilosophers : public petri_net32
             {
+              public:
+                typedef PH int;;
+                                                     typedef ph int;
+
+typedef CS int;;
+                                                     typedef cs int;
+
+              private:
+                  
               typedef enum
          {
            pl_Eat = 0x1,
 pl_Think = 0x2,
 pl_UnusedChopsticks = 0x4
          } tplace;
-typedef PH int;;
-                                                     typedef ph int;
-
-typedef CS int;;
-                                                     typedef cs int;
-
 random_array Eat;
 random_array Think;
 multi_set UnusedChopsticks;
@@ -30,29 +33,6 @@ PutDownChopsticks
       };
       
 static const int n = 5;
-
-
-System.Collections.Generic.IEnumerable[int-] Chopsticks(PH i)
-                                                       {
-                                                         return token_iter_utils.concat(token_iter_utils.repeat(cs(i), 1), token_iter_utils.repeat(cs(i == n ? 1 : i + 1), 1));
-                                                       }
-                                                       
-
-              protected:
-                      
-      tran_func get_transition(int n) const
-	    {
-		    return tran_funcs[n];
-	    }
-      
-              public:
-
-              DiningPhilosophers(int time_step = 15) 
-      { 
-        Think.add(PH.all());
-UnusedChopsticks.add(CS.all());
-        
-      }
 
 
 bool TakeChopsticks()
@@ -98,6 +78,29 @@ res = true;
               return res;
             }
           
+System.Collections.Generic.IEnumerable[int-] Chopsticks(PH i)
+                                                       {
+                                                         return token_iter_utils.concat(token_iter_utils.repeat(cs(i), 1), token_iter_utils.repeat(cs(i == n ? 1 : i + 1), 1));
+                                                       }
+                                                       
+
+              protected:
+                      
+      tran_func get_transition(int n) const
+	    {
+		    return tran_funcs[n];
+	    }
+      
+              public:
+
+              DiningPhilosophers(int time_step = 15) 
+      { 
+        Think.add(PH.all());
+UnusedChopsticks.add(CS.all());
+        
+      }
+
+
 
 
             };

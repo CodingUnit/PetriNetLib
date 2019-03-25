@@ -170,7 +170,7 @@ namespace PetriNetLib
     CreateOutPlace(place : GenPlaceCpp) : string
     {
       def name = place.Name;
-      $<#function add_$name;#>
+      $<#function $name;#>
     }
     
     CreatePlace(place : GenPlaceCpp) : string
@@ -770,14 +770,12 @@ namespace PetriNetLib
 
     
 
-    Define(decl : IEnumerable[string], pub : bool = false, ext : bool = false) : void
+    Define(decl : IEnumerable[string], pub : bool = false, first : bool = false) : void
     {
-      if (ext)
-      {                
-         external_fields.AddRange(decl)
-      } else
       if (pub)
       {
+        if (first)
+          first_public_fields.AddRange(decl); else
          public_fields.AddRange(decl);          //public_fields ::= "\n"
       } else
       {
@@ -812,12 +810,8 @@ namespace PetriNetLib
 
       def places_enum = CreatePlaces();
       Define(places_enum);
-      def sets = colours.Values.OrderBy(x => x.Colour.pos).Map(x => (CreateColourSet(x) + "\n", x.Public)).Filter(x => x[0] != null);
-      def (public_col, sets) = sets.Partition((_, x) => x);
-      def sets = sets.Select(x => x[0]);
-      def pub = public_col.Select(x => x[0]);
-      Define(sets);//typebuilder.DefineNestedTypeWithSource(m).Compile();
-      Define(pub, false, true);
+      def sets = colours.Values.OrderBy(x => x.Colour.pos).Map(x => CreateColourSet(x)).Filter(_ != null).Select(_ + "\n");
+      Define(sets, true, true);//typebuilder.DefineNestedTypeWithSource(m).Compile();
       def places = places.Map(CreatePlace).Filter(_ != null);      
       
       
@@ -833,13 +827,14 @@ namespace PetriNetLib
       Define(places + ["\n"])//_ = typebuilder.DefineWithSource(m);
     }
     
+    // TODO: сделать комментарии в генерируемом тексте
     public PhaseTwo() : void
     {
       //CreateDummyMethod();
       CreateCons();
       CreateTransitions();
       def methods = CreateGroupTransitions();
-      def methods = methods + transitions.Where(x => !x.IsPartOfFuncPlace).MapToList(CreateTran);
+      def private_methods = transitions.Where(x => !x.IsPartOfFuncPlace).MapToList(CreateTran);
       def methods = methods + places.Where(x => x.IsFuncPlace).MapToList(CreateFuncPlace);
       def vals = model.ml_decls.Map(CreateVals).Filter(_ != null);
       Define(vals + ["\n"]);//_ = typebuilder.DefineWithSource(m);
@@ -850,6 +845,7 @@ namespace PetriNetLib
       def globrefs = model.glob_refs.KeyValuePairs.MapToList(CreateGlobRef);
       Define(globrefs);//_ = typebuilder.DefineWithSource(m);
       Define(methods, true);
+      Define(private_methods);
       Define(decls);
       when (model.IsTimed) CreateTimeMethods();
       Define(ext, true);

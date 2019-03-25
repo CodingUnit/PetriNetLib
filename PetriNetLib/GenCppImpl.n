@@ -28,7 +28,7 @@ namespace PetriNetLib
     mutable private_fields    : List[string] = List();
     mutable public_fields    : List[string] = List();
     mutable protected_fields : List[string] = List();
-    mutable external_fields : List[string] = List();
+    mutable first_public_fields : List[string] = List();
     mutable init_body : list[string] = [];
     file : string;
     mutable ctx : list[string];
@@ -39,9 +39,13 @@ namespace PetriNetLib
       get
       {
         
-        $<# ..$(external_fields;"\n")
+        $<# 
             class $Name : public $Base
             {
+              public:
+                ..$(first_public_fields;"\n")
+              private:
+                  
               ..$(private_fields;"\n")
 
               protected:

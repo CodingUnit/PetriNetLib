@@ -156,6 +156,40 @@ namespace PetriNetLib
       $"$(name)_idx"
     }
     
+    NextFuncTran : bool
+    {
+      [Memoize]
+      get
+      {
+        transition.OutputGenPlaces.SelectMany(x => x.OutputGenTransitions).Exists(x => x.IsFuncTran)
+      }
+    }
+    
+    NextFuncTranArcProcess : option[OutArcProcessCpp]
+    {
+      [Memoize]
+      get
+      {
+        if (NextFuncTran)
+        transition.OutputGenPlaces.SelectMany(x => x.OutputGenTransitions).Where(x => x.IsFuncTran).SelectMany(x => x.OutArcProcess).First() |> Some else None() 
+      }
+    }
+    
+    public pre_bind_expr : string
+    {
+      [Memoize]
+      get
+      {
+        if (NextFuncTranArcProcess is Some(tran))
+        {
+          
+          def ty = tran.place.Colour.VarSpecCopy;
+          $<#$(ty)res;
+          #>
+        } else ""
+      }
+    }
+    
     public bind_expr  : string
     {
       [Memoize]
@@ -207,6 +241,13 @@ namespace PetriNetLib
                                       def idx = idx_name(n);
                                       $<# int $idx;
                                           $ty$n = $(source_token_peek(idx));#>
+                                    } else
+                                    if (NextFuncTranArcProcess is Some(tran))
+                                    {
+                                      def copy = if (tran.place.Colour.IsComplexType) $"res = *$n;" else $"res = $n;";
+                                      $<#$ty$n = $(source_token_peek(""));
+                                      $copy
+                                      #>
                                     } else
                                         $<#$ty$n = $(source_token_peek("")); #>
           | _                    => ""

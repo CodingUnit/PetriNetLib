@@ -15,7 +15,7 @@ namespace PetriNetLib
   /// </summary>
   [Record]
   [Lens]
-  class GenTranCpp : Transition
+  class GenTranCpp : Transition, IEquatable[GenTranCpp]
   {
     gen : CppGenerator;
     
@@ -23,6 +23,11 @@ namespace PetriNetLib
     {
       base(tran.idx, tran.id, tran.name, tran.guard, tran.time_expr, tran.code_segment, tran.priority, tran.net, tran.UnnamedIdx);
       this.gen = gen;
+    }
+    
+    public Equals(tr : GenTranCpp) : bool
+    {
+      this == tr : object
     }
     
     public IsCopyVar(place : GenPlaceCpp, arc : Arc) : bool
@@ -115,7 +120,10 @@ namespace PetriNetLib
           def outpath = to_func.SelectMany(x => x.PathThroughOrdinaryPlaces.Fold([], (x, a) => if (x is PetriNetNode.Place(p)) p :: a else a)).NToList();
           InputGenPlaces + outpath
         } else
-        InputGenPlaces + OutputGenPlaces
+        {
+          def output = OutputGenPlaces.SelectMany(x => x.OutputGenTransitions.Where(x => x.IsFuncTran).SelectMany(x => x.OutputGenPlaces)).Concat(OutputGenPlaces);
+          InputGenPlaces.Concat(output).Distinct().NToList()
+        }
       }
     }
     

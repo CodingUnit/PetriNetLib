@@ -17,7 +17,7 @@ namespace PetriNetLib
   /// Description of GenPlace.
   /// </summary>
   [Record]
-  class GenPlaceCpp : Place
+  class GenPlaceCpp : Place, IEquatable[GenPlaceCpp]
   {
     gen : CppGenerator;
 
@@ -28,7 +28,11 @@ namespace PetriNetLib
       this.gen_idx = idx;
     }
 
-
+    public Equals(obj : GenPlaceCpp) : bool
+    {
+      this == obj : object
+    }
+    
     AddTokenExpr(expr : PExpr) : string
     {
 
