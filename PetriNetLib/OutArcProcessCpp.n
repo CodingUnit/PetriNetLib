@@ -182,7 +182,7 @@ namespace PetriNetLib
                     $<#$(name).exec($add_token_expr);#>
                 | Some(PortType.InOut) => 
                     if (place.Colour.IsComplexType) 
-                    $<#bool in = $(name).exec_ref_ret($add_token_expr);#> else
+                    $<#bool in = $(name).exec_ref_ret_bool($add_token_expr);#> else
                     $<#bool in = $(name).exec_ret<bool>($add_token_expr);#>
                 | _ => match (place.DestContainerType)
                        {

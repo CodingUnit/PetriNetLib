@@ -1,6 +1,10 @@
 #pragma once
 #include "event_queue32.h"
 #include "time.h"
+#include "tuple.h"
+#include "buffer_utils.h"
+
+using namespace events;
 
 class petri_net32// : IPetriNet, IDisposable
 {
@@ -11,12 +15,6 @@ class petri_net32// : IPetriNet, IDisposable
 	u16 max_steps;
 	//tran_queue: RQueue[Action] = RQueue(32);
 
-	public this(step : int = 15)
-	{
-		completed_tran = 0;
-		time_step = step;
-		max_steps = 1;
-	}
 
 	//public static @`[T](count : int, tok : T) : IEnumerable[T]
 	//{
@@ -44,7 +42,7 @@ protected:
 				defer_queue.enqueue(tr);
 				return false;
 			}
-		} while (SC(&locked, lock, lock | pl));
+		} while (SC(&locked, lock | pl));
 		return true;
 	}
 
@@ -73,10 +71,10 @@ protected:
 		atomic_or(&completed_tran, completed);
 	}
 
-	void tran_ena_set(u32 trmask, u32 tr_ena_mask)
-	{
-		queue.set_elem(trmask, tr_ena_mask);
-	}
+//	void tran_ena_set(u32 trmask, u32 tr_ena_mask)
+//	{
+//		queue.set_elem(trmask, tr_ena_mask);
+//	}
 
 	virtual tran_func get_transition(int n) const
 	{
@@ -93,15 +91,21 @@ private:
 		while (defer_queue.deque_if_exist(val))
 		{
 			tran_func tran = get_transition(val);
-			tran(this)
+			tran(this);
 		}
 	}
 public:
 
+  
+	petri_net32(int step = 15)
+	{
+		completed_tran = 0;
+		max_steps = 1;
+	}
+
 	void step()
 	{
 		u32 val;
-		u16 step = 0;
 		u32 comp = atomic_and(&completed_tran, ~completed_tran);
 		queue.enqueue(comp);
 		for (u16 step = 0; step < max_steps; step++)
@@ -109,7 +113,7 @@ public:
 			if (queue.deque_if_exist(val))
 			{
 				tran_func tran = get_transition(val);
-				tran(this)
+				tran(this);
 			}
 			else break;
 		}

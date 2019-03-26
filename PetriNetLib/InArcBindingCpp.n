@@ -103,6 +103,8 @@ namespace PetriNetLib
           | MinusSingle
           | Var    // имеет 1 фишку, аналогично обычному полю
           | Single => $<#$name#>// имеет 0 или 1 фишку, для отсутствия использует отдельный флаг
+          | ReqContainer => def ty = place.Colour.DestType;
+                            $<#$name.exec_ret<$ty>()#>
           | _      => $<#$name.peek()#>    // значение запрашивается из внешней функции
         }
         
@@ -175,6 +177,20 @@ namespace PetriNetLib
       }
     }
     
+    NextFuncTranArcVar : string
+    {
+      [Memoize]
+      get
+      {
+        if (NextFuncTranArcProcess is Some(tran))
+        {
+          
+          def proc = tran.transition.InArcProcess.First();
+          $"res_$(proc.bind_var)"
+        } else ""
+      }
+    }
+    
     public pre_bind_expr : string
     {
       [Memoize]
@@ -184,7 +200,7 @@ namespace PetriNetLib
         {
           
           def ty = tran.place.Colour.VarSpecCopy;
-          $<#$(ty)res;
+          $<#$(ty)$NextFuncTranArcVar;
           #>
         } else ""
       }
@@ -244,7 +260,7 @@ namespace PetriNetLib
                                     } else
                                     if (NextFuncTranArcProcess is Some(tran))
                                     {
-                                      def copy = if (tran.place.Colour.IsComplexType) $"res = *$n;" else $"res = $n;";
+                                      def copy = if (tran.place.Colour.IsComplexType) $"$NextFuncTranArcVar = *$n;" else $"$NextFuncTranArcVar = $n;";
                                       $<#$ty$n = $(source_token_peek(""));
                                       $copy
                                       #>
@@ -322,6 +338,7 @@ namespace PetriNetLib
         }
       }
     }
+    
     public extract_expr   : string
     {
       [Memoize]

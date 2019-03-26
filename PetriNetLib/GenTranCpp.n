@@ -172,7 +172,18 @@ namespace PetriNetLib
         def places = PlacesParticipateMask;
         def out_tran = OutputGenPlaces.SelectMany(x => x.OutputGenTransitions);
         def tr_next = out_tran.Where(x => x.IsImmediate && !x.IsTimed && !x.IsPartOfFuncPlace);
-        def tr_next = tr_next.Map(x => $<#$(x.Name)();#>);
+        
+        def next_tran(x)
+        {
+          if (x.IsFuncTran)
+          {
+            def var = if (x.InputGenPlaces.First().Colour.IsComplexType) $"*res_$(x.InArcProcess.First().bind_var)" else $"res_$(x.InArcProcess.First().bind_var)";
+            (x, var) 
+          } else (x, "")
+        }
+          
+        def tr_next = tr_next.Map(next_tran);
+        def tr_next = tr_next.Map((x, p) => $<#$(x.Name)($p);#>);
         def tr = if (PartOfGroup is Some(g)) $"tr_GroupTransition$g" else $"tr_$(Name)";
         if (tr_next.IsEmpty())
         $<#bool res = false;

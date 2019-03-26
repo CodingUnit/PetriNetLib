@@ -150,6 +150,16 @@ namespace PetriNetLib
       #>
     }
     
+    CreateReqPlace(place : GenPlaceCpp) : string
+    {
+      def name = place.Name;
+      $<#void init_$name(const function &func)
+         {
+           $name = func;
+         }
+         #>
+    }
+    
     CreateInPortPlace(place : GenPlaceCpp) : string
     {
       def name = place.Name;
@@ -206,7 +216,7 @@ namespace PetriNetLib
                            | MinusSingle
                            | Var
                            | Single              => type
-                           | ReqContainer        => "req_tokens"
+                           | ReqContainer        => "function"
                          }
         def flag = match (dtype)
         {
@@ -475,19 +485,32 @@ namespace PetriNetLib
     {
       match (col.Colour)
       {
-        | ColourSet(n, Colour.Product(vals))   => def fnames = vals.MapI((i, t) => ($"field$(i + 1)", t));
+        | ColourSet(n, Colour.Product(vals))   => def fnames = vals.MapI((i, t) => ($"field$(i)", t));
                                                   def ctor = fnames.Map(ConvParm);
                                                   def ftypes = fnames.Map((n, t) => (n, colours[t].DestType));
                                                   def fields = ftypes.Map((n, t) => $"$t $n;");
                                                   def ctorbody = fnames.Map((f, _) => $"this->$f = $f;");
+                                                  def num = vals.Length;
+                                                  def assign = ftypes.Map((x, _) => $"$x = tup.$x;");
+                                                  def types = ftypes.Map((_, t) => t);
                                                   $<#struct $n
                                                         {
                                                           $n(..$(ctor;", ")) 
                                                           {
                                                             ..$(ctorbody;"\n")
                                                           }
-
+                                                          
+                                                          $n(const tuple$num<..$types> &tup)
+                                                          {
+                                                            ..$(assign;"\n")
+                                                          }
+                                                          
                                                           ..$(fields;"\n")
+                                                          
+                                                          void operator=(const tuple$num<..$types> &tup)
+                                                          {
+                                                            ..$(assign;"\n")
+                                                          }
                                                         };#>
 
                                                   //CTypeDecl.Decl(CTree.Decl([CSpec.Typedef()], CType.Class(n), [CDecl.Id(CName.String(new_name), None())]))
@@ -532,6 +555,15 @@ namespace PetriNetLib
                                                    };#>
         | ColourSet(n, Colour.Timed(c))   => CreateColourSet(ColourSet(n, c) |> GenColourCpp(_, this))
 
+        | ColourSet(n, Colour.List)      => def ty = match (n)
+                                            {
+                                              | "BYTES" => "bytesn"
+                                              | x       when x.StartsWith("BYTES") => 
+                                                  def num = x.Substring(5);
+                                                  $"bytes$num"
+                                              | _       => "bytesn"
+                                            }
+                                            $"typedef $ty $n;"
         | _                               => null
       }
     }    
@@ -832,10 +864,16 @@ namespace PetriNetLib
     {
       //CreateDummyMethod();
       CreateCons();
-      CreateTransitions();
+      CreateTransitions();      
+      extern_fields.Add(if (model.IsTimed) <##include "timed_petrinet.h"
+      #> else <##include "petrinet.h"
+      #>);
+      extern_fields.Add(<#using namespace petrinet_lib;
+      #>);
       def methods = CreateGroupTransitions();
       def private_methods = transitions.Where(x => !x.IsPartOfFuncPlace).MapToList(CreateTran);
       def methods = methods + places.Where(x => x.IsFuncPlace).MapToList(CreateFuncPlace);
+      def req_methods = places.Where(x => x.Req).Map(CreateReqPlace);
       def vals = model.ml_decls.Map(CreateVals).Filter(_ != null);
       Define(vals + ["\n"]);//_ = typebuilder.DefineWithSource(m);
       def decls = model.ml_decls.Map(CreateDecl).Filter(_ != null);
@@ -844,7 +882,7 @@ namespace PetriNetLib
       def out_ports = places.Where(x => x.port is Some(PortType.Out) || x.port is Some(PortType.InOut)).MapToList(CreateOutPlace);
       def globrefs = model.glob_refs.KeyValuePairs.MapToList(CreateGlobRef);
       Define(globrefs);//_ = typebuilder.DefineWithSource(m);
-      Define(methods, true);
+      Define(methods + req_methods, true);
       Define(private_methods);
       Define(decls);
       when (model.IsTimed) CreateTimeMethods();

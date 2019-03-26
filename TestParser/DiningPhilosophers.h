@@ -1,4 +1,7 @@
- 
+ #include "petrinet.h"
+      
+using namespace petrinet_lib;
+      
             class DiningPhilosophers : public petri_net32
             {
               public:
