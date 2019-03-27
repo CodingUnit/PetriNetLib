@@ -224,14 +224,14 @@ namespace PetriNetLib
           | _                   => ""
         }
         def time = if (place.IsTimed) $"\nu32 $(name)_time;" else "";
-        def deflt = match (dtype)
-        {
-          | ZeroSingle  => " = 0"
-          | MinusSingle => " = -1"
-          | _           => ""
-        }
-        def flag = if (flag.IsEmpty()) "" else $"\nbool $flag = false;";
-        $<#$dest_cont $name$deflt;$flag$time#>
+        //def deflt = match (dtype)
+        //{
+        //  | ZeroSingle  => " = 0"
+        //  | MinusSingle => " = -1"
+        //  | _           => ""
+        //}
+        def flag = if (flag.IsEmpty()) "" else $"\nbool $flag;";
+        $<#$dest_cont $name;$flag$time#>
       }
       //cpp(<#decl: $(dest_cont : type) $name;#>)
       //if (place.IsTimed)
@@ -250,6 +250,16 @@ namespace PetriNetLib
       }
     }
 
+    mutable expr_ctx : option[GenPlaceCpp] = None();
+    
+    internal ConvExprPlaceCtx(expr : PExpr, ctx : GenPlaceCpp, statement : bool = false) : string
+    {
+      expr_ctx = ctx |> Some;
+      def res = ConvExpr(expr, statement);
+      expr_ctx = None();
+      res
+    }
+    
     internal ConvExpr(expr : PExpr, statement : bool = false) : string
     {
       when (statement) ctx = [];
@@ -306,7 +316,13 @@ namespace PetriNetLib
         | <[ $(_ : ushort)]> as e
         | <[ $(_ : byte)]> as e => $<#$e#>
         | <[ $(n : string)]>    => $<#$n#>
-        | <[ (..$e) ]>          => match (e)
+        | <[ (..$e) ]>          => 
+            if (expr_ctx is Some(pl))
+            {
+              def expr = e.Map(ConvExpr(_, false));
+              $<#$(pl.Colour.DestType)(..$(expr;","))#>
+            } else
+            match (e)
             {
               | [e]                  => ConvExpr(e)
               | [e1, e2]             => $<#tuple2($(ConvExpr(e1)), $(ConvExpr(e2)))#>
@@ -859,17 +875,24 @@ namespace PetriNetLib
       Define(places + ["\n"])//_ = typebuilder.DefineWithSource(m);
     }
     
-    // TODO: сделать комментарии в генерируемом тексте
-    public PhaseTwo() : void
+    CreateMainDefs() : void
     {
-      //CreateDummyMethod();
-      CreateCons();
-      CreateTransitions();      
       extern_fields.Add(if (model.IsTimed) <##include "timed_petrinet.h"
       #> else <##include "petrinet.h"
       #>);
       extern_fields.Add(<#using namespace petrinet_lib;
       #>);
+      private_fields.Add($"typedef bool ($Name::*tran_func_type)();");
+      //
+    }
+    
+    // TODO: сделать комментарии в генерируемом тексте
+    public PhaseTwo() : void
+    {
+      //CreateDummyMethod();
+      CreateMainDefs();
+      
+      CreateTransitions();      
       def methods = CreateGroupTransitions();
       def private_methods = transitions.Where(x => !x.IsPartOfFuncPlace).MapToList(CreateTran);
       def methods = methods + places.Where(x => x.IsFuncPlace).MapToList(CreateFuncPlace);
@@ -881,6 +904,7 @@ namespace PetriNetLib
       def in_ports = places.Where(x => x.port is Some(PortType.In)).MapToList(CreateInPortPlace);
       def out_ports = places.Where(x => x.port is Some(PortType.Out) || x.port is Some(PortType.InOut)).MapToList(CreateOutPlace);
       def globrefs = model.glob_refs.KeyValuePairs.MapToList(CreateGlobRef);
+      CreateCons();
       Define(globrefs);//_ = typebuilder.DefineWithSource(m);
       Define(methods + req_methods, true);
       Define(private_methods);

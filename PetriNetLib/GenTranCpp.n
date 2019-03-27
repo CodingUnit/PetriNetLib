@@ -115,7 +115,7 @@ namespace PetriNetLib
       get
       {
         def to_func = OutputGenPlaces.Filter(_.IsFuncPlace);
-        if (!to_func.IsEmpty()) 
+        def places = if (!to_func.IsEmpty()) 
         {
           def outpath = to_func.SelectMany(x => x.PathThroughOrdinaryPlaces.Fold([], (x, a) => if (x is PetriNetNode.Place(p)) p :: a else a)).NToList();
           InputGenPlaces + outpath
@@ -124,6 +124,7 @@ namespace PetriNetLib
           def output = OutputGenPlaces.SelectMany(x => x.OutputGenTransitions.Where(x => x.IsFuncTran).SelectMany(x => x.OutputGenPlaces)).Concat(OutputGenPlaces);
           InputGenPlaces.Concat(output).Distinct().NToList()
         }
+        places.Filter(x => !x.IsFuncPlace)
       }
     }
     

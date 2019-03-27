@@ -85,14 +85,14 @@
       <Project>{9756a67b-f1a6-4c59-a9a6-45492777b4ac}</Project>
       <Private>True</Private>
     </ProjectReference>
+	<OutFiles Include="pt14.h"/>
   </ItemGroup>
   <Import Project="$(Nemerle)\Nemerle.MSBuild.targets" />
-  <!--
-		To modify your build process, add your task inside one of the targets below and uncomment it. 
-		Other similar extension points exist, see Microsoft.Common.targets.
+  
 	<Target Name="BeforeBuild">
 	</Target>
 	<Target Name="AfterBuild">
+	<Copy SourceFiles="@(OutFiles)" OverwriteReadOnlyFiles="true" ContinueOnError="true"
+            DestinationFolder="..\"/>
 	</Target>
-	-->
 </Project>

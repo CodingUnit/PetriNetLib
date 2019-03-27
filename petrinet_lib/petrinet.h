@@ -3,6 +3,7 @@
 #include "time.h"
 #include "tuple.h"
 #include "buffer_utils.h"
+#include "token_queue.h"
 
 using namespace events;
 
@@ -29,7 +30,7 @@ class petri_net32// : IPetriNet, IDisposable
 protected:
 	//u32 places;
 
-	typedef void(*tran_func)(void *);
+	typedef bool(*tran_func)(void *);
 
 	bool lock(u32 pl, u32 tr)
 	{

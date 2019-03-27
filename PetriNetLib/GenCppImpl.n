@@ -24,7 +24,7 @@ namespace PetriNetLib
   {
         //mutable typing_method : MethodBuilder;
     //compiler : CompilerHost = CompilerHost();
-    mutable cons_expr : list[string] = [];
+    mutable cons_expr : List[string] = List();
     mutable private_fields    : List[string] = List();
     mutable public_fields    : List[string] = List();
     mutable protected_fields : List[string] = List();

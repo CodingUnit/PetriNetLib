@@ -87,12 +87,12 @@ namespace PetriNetLib
                                               //  | _               => null
                                               //} 
           | <[ 1 ` $e ]>                   => add(e)                                    
-          | <[ $(_ : int) ` $_ ]> as e     => e |> gen.ConvExpr(_, false)                                    
+          | <[ $(_ : int) ` $_ ]> as e     => e |> gen.ConvExprPlaceCtx(_, place, false)                                    
           | <[ $_ %++ $_ ]> as e           => gen.GetTokenExpr(e)
 
           | <[ $_(..$_)]> as e
           | <[ $(_ : usesite) ]> as e
-          | e                              => e |> gen.ConvExpr(_, false)
+          | e                              => e |> gen.ConvExprPlaceCtx(_, place, false)                                    
         }
 
         add(arc.ExprWithoutTime)

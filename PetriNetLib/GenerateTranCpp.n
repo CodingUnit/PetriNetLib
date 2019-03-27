@@ -124,13 +124,14 @@ namespace PetriNetLib
       {
         def tran = p.OutputGenTransitions.Where((x, _) => x.IsUnnamed).NToList();
         def sorted = tran.OrderByDescending(x => x.priority);
-        def group = sorted.Fold("return;", (x, a) => $"if (!$(x.Name)()) \n$a");
+        def group = sorted.Fold("return false;", (x, a) => $"if (!$(x.Name)()) \n$a");
         def name = tran.First().GroupName.Value;
         def tr_comp = $"tr_$name";
-        $<#void $name()
+        $<#bool $name()
             {
               $group
               tran_ena(0, $tr_comp);
+              return true;
             }#>;
       }
       
@@ -142,13 +143,13 @@ namespace PetriNetLib
       def func = $<#      
       tran_func get_transition(int n) const
 	    {
-		    return tran_funcs[n];
+		    return *(tran_func *)&tran_funcs[n];
 	    }
       #>;
       protected_fields.Add(func);
       
       
-      def tran = transitions.Where(x => !x.IsPartOfFuncPlace).Select(x => ($"$(x.Name)", x.priority));
+      def tran = transitions.Where(x => !x.IsPartOfFuncPlace && !x.IsFuncTran).Select(x => ($"$(x.Name)", x.priority));
       def groups = PlacesWithGroup.Select(x => x.OutputTransitions.Where(x => x[0].IsUnnamed));
       def groups = groups.Select(x => ("GroupTransition" + x.Fold("", ((x, _), a) => $"$(x.UnnamedIdx)$a"), x.Select(x => x[0].priority).Max()));
       def tran = groups.Concat(tran).OrderBy((_, p) => p);
@@ -161,10 +162,13 @@ namespace PetriNetLib
       } ttran;#>);
       
       def tran = tran.Map((x, _) => x);
+      def size = tran.Length;
       private_fields.Add($<#
-      tran_func tran_funcs[] = {..$(tran;",\n")
-      };
+      tran_func_type tran_funcs[$size];
       #>);
+      
+      def init = tran.Select((x, i) => $<#tran_funcs[$i] = &$Name::$x;#>);//..$(tran;",\n");
+      cons_expr.AddRange(init);
     }
     
     CreateTran(tran : GenTranCpp) : string
