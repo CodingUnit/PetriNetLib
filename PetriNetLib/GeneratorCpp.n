@@ -299,7 +299,7 @@ namespace PetriNetLib
                                      def get_rec_parm(x)
                                      {
                                        | <[$_ = $v]> => v |> ConvExpr(_, false)
-                                       | _                     => throw InvalidOperationException()
+                                       | _           => throw InvalidOperationException()
                                      }
 
                                      
@@ -307,8 +307,16 @@ namespace PetriNetLib
                                      $<#$func(..$(parms; ","))#>
                                    } else
                                    {
-                                     def parms = parms.Map(ConvExpr(_, false));
-                                     $<#$func(..$(parms; ","))#>
+                                     match (func)
+                                     {
+                                       | x when x.StartsWith("get_bytes__") => def parm = parms.First();
+                                                                               $<#bytesn(&$(parm), sizeof($(parm)))#>
+                                       | _                                  => 
+                                          def parms = parms.Map(ConvExpr(_, false));
+                                          $<#$func(..$(parms; ","))#>
+                                     }
+                                     
+                                     
                                    }
         | <[ $(_ : int)]> as e
         | <[ $(_ : long)]> as e
@@ -431,6 +439,7 @@ namespace PetriNetLib
     {
       | <[ def $(n : usesite)(..$_) { ..$_ } ]> => 
 
+          if (n.StartsWith("get_bytes__")) null else
           if (n.StartsWith("FUNC_")) null else
           if (n.StartsWith("EXT_"))
           {
@@ -511,6 +520,7 @@ namespace PetriNetLib
                                                   def types = ftypes.Map((_, t) => t);
                                                   $<#struct $n
                                                         {
+                                                          $n() {}
                                                           $n(..$(ctor;", ")) 
                                                           {
                                                             ..$(ctorbody;"\n")
@@ -537,6 +547,7 @@ namespace PetriNetLib
                                                   def ctorbody = vals.Map((f, _) => $"this->$f = $f;");
                                                   $<#struct $n
                                                         {
+                                                          $n() {}
                                                           $n(..$(ctor;", ")) 
                                                           {
                                                             ..$(ctorbody;"\n")

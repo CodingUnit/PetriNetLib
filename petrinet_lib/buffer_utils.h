@@ -59,12 +59,12 @@ namespace petrinet_lib
   public:
     bytesn(const bytesn &self) { set_buf(self); }
     bytesn() {}
-    bytesn(u8 *buf, int len)
+    bytesn(void *buf, int len)
     {
       init(buf, len);
     }
 
-    void init(const u8 *data, int len)
+    void init(const void *data, int len)
     {
       memory::Mem::copy(buf, data, len);
       set_count(len);

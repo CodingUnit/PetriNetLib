@@ -25,6 +25,7 @@ public:
 
 	struct TSYNC
 	{
+		TSYNC() {}
 		TSYNC(int field0, bool field1)
 		{
 			this->field0 = field0;
@@ -53,6 +54,7 @@ public:
 
 	struct INTxINT
 	{
+		INTxINT() {}
 		INTxINT(int field0, int field1)
 		{
 			this->field0 = field0;
@@ -75,8 +77,6 @@ public:
 		}
 	};
 
-	typedef INT QUEUE__INT;
-
 	typedef INT TIMED_INT;
 
 	typedef INT USHORT;
@@ -85,8 +85,34 @@ public:
 
 	typedef bytes8 BYTES8;
 
+	struct BYTES_BOOL
+	{
+		BYTES_BOOL() {}
+		BYTES_BOOL(const bytes &field0, bool field1)
+		{
+			this->field0 = field0;
+			this->field1 = field1;
+		}
+
+		BYTES_BOOL(const tuple2<bytesn, bool> &tup)
+		{
+			field0 = tup.field0;
+			field1 = tup.field1;
+		}
+
+		bytesn field0;
+		bool field1;
+
+		void operator=(const tuple2<bytesn, bool> &tup)
+		{
+			field0 = tup.field0;
+			field1 = tup.field1;
+		}
+	};
+
 	struct CAN_MESSAGE
 	{
+		CAN_MESSAGE() {}
 		CAN_MESSAGE(int field0, long long field1, const bytes &field2)
 		{
 			this->field0 = field0;
@@ -117,6 +143,7 @@ public:
 
 	struct CAN_UDP_MESSAGE
 	{
+		CAN_UDP_MESSAGE() {}
 		CAN_UDP_MESSAGE(int COUNT, int ID, long long timestamp, const bytes &data)
 		{
 			this->COUNT = COUNT;
@@ -137,6 +164,60 @@ public:
 	typedef BYTES DEBUG_INFO;
 
 	typedef bytesn TSSI;
+
+	struct CONTROL_MSG
+	{
+		CONTROL_MSG() {}
+		CONTROL_MSG(u8 field0, u16 field1, u32 field2)
+		{
+			this->field0 = field0;
+			this->field1 = field1;
+			this->field2 = field2;
+		}
+
+		CONTROL_MSG(const tuple3<u8, u16, u32> &tup)
+		{
+			field0 = tup.field0;
+			field1 = tup.field1;
+			field2 = tup.field2;
+		}
+
+		u8 field0;
+		u16 field1;
+		u32 field2;
+
+		void operator=(const tuple3<u8, u16, u32> &tup)
+		{
+			field0 = tup.field0;
+			field1 = tup.field1;
+			field2 = tup.field2;
+		}
+	};
+
+	struct CONTROL_MSG_BOOL
+	{
+		CONTROL_MSG_BOOL() {}
+		CONTROL_MSG_BOOL(const CONTROL_MSG &field0, bool field1)
+		{
+			this->field0 = field0;
+			this->field1 = field1;
+		}
+
+		CONTROL_MSG_BOOL(const tuple2<CONTROL_MSG, bool> &tup)
+		{
+			field0 = tup.field0;
+			field1 = tup.field1;
+		}
+
+		CONTROL_MSG field0;
+		bool field1;
+
+		void operator=(const tuple2<CONTROL_MSG, bool> &tup)
+		{
+			field0 = tup.field0;
+			field1 = tup.field1;
+		}
+	};
 
 private:
 
@@ -160,10 +241,11 @@ private:
 		pl_TIMER = 0x8000,
 		pl_ADC_SUM = 0x10000,
 		pl_DEBUG_TIMER = 0x20000,
-		pl_UDP_OUT = 0x40000,
-		pl_COUNTER = 0x80000,
-		pl_CAN_OUT = 0x100000,
-		pl_CAN = 0x200000
+		pl_COUNTER = 0x40000,
+		pl_CAN_OUT = 0x80000,
+		pl_CAN = 0x100000,
+		pl_UDP_OUT = 0x200000,
+		pl_ControlCheck = 0x400000
 	} tplace;
 	bool DPS;
 	u32 SYNC;
@@ -197,6 +279,8 @@ private:
 	u32 DEBUG_TIMER_time;
 	u16 COUNTER;
 	token_queue CAN;
+	CONTROL_MSG_BOOL ControlCheck;
+	bool ControlCheck_flag;
 
 
 	typedef bool (pt14::*tran_func_type)();
@@ -218,10 +302,11 @@ private:
 		tr_UnnamedTransition13 = 0x1000,
 		tr_UnnamedTransition14 = 0x2000,
 		tr_UnnamedTransition15 = 0x4000,
-		tr_UnnamedTransition18 = 0x8000
+		tr_UnnamedTransition18 = 0x8000,
+		tr_UnnamedTransition20 = 0x10000
 	} ttran;
 
-	tran_func_type tran_funcs[16];
+	tran_func_type tran_funcs[17];
 
 	static const int P_LOW = 10000;
 	static const int P_NORMAL = 1000;
@@ -231,7 +316,7 @@ private:
 	bool UnnamedTransition0()
 	{
 		bool res = false;
-		if (lock(pl_UDP_OUT | pl_COUNTER | pl_GPS, tr_UnnamedTransition0))
+		if (lock(pl_COUNTER | pl_UDP_OUT | pl_GPS, tr_UnnamedTransition0))
 		{
 			if (GPS_flag)
 			{
@@ -242,7 +327,7 @@ private:
 				tran_ena(tr_UnnamedTransition0);
 				res = true;
 			};
-			unlock(pl_UDP_OUT | pl_COUNTER | pl_GPS);
+			unlock(pl_COUNTER | pl_UDP_OUT | pl_GPS);
 		}
 		return res;
 	}
@@ -250,7 +335,7 @@ private:
 	bool UnnamedTransition1()
 	{
 		bool res = false;
-		if (lock(pl_UDP_OUT | pl_COUNTER | pl_UDP_IN, tr_GroupTransition1121))
+		if (lock(pl_ControlCheck | pl_UDP_IN, tr_GroupTransition1121))
 		{
 			if (UDP_IN_flag)
 			{
@@ -259,11 +344,16 @@ private:
 				{
 					UDP_IN_flag = false;
 					;
-					UDP_SEND(get_control_msg(m));
+					ControlCheck = get_control_msg(m);
+					ControlCheck_flag = true;
 					res = true;
 				}
 			};
-			unlock(pl_UDP_OUT | pl_COUNTER | pl_UDP_IN);
+			unlock(pl_ControlCheck | pl_UDP_IN);
+			if (res)
+			{
+				UnnamedTransition20();
+			}
 		}
 		return res;
 	}
@@ -293,7 +383,7 @@ private:
 	bool UnnamedTransition3()
 	{
 		bool res = false;
-		if (lock(pl_UDP_OUT | pl_COUNTER | pl_CAN_IN, tr_UnnamedTransition3))
+		if (lock(pl_COUNTER | pl_UDP_OUT | pl_CAN_IN, tr_UnnamedTransition3))
 		{
 			if (CAN_IN_flag)
 			{
@@ -304,7 +394,7 @@ private:
 				tran_ena(tr_UnnamedTransition3);
 				res = true;
 			};
-			unlock(pl_UDP_OUT | pl_COUNTER | pl_CAN_IN);
+			unlock(pl_COUNTER | pl_UDP_OUT | pl_CAN_IN);
 		}
 		return res;
 	}
@@ -312,7 +402,7 @@ private:
 	bool UnnamedTransition4()
 	{
 		bool res = false;
-		if (lock(pl_UDP_OUT | pl_COUNTER | pl_DELAY | pl_SSI | pl_SYNC | pl_DPS, tr_UnnamedTransition4))
+		if (lock(pl_COUNTER | pl_UDP_OUT | pl_DELAY | pl_SSI | pl_SYNC | pl_DPS, tr_UnnamedTransition4))
 		{
 			const bytes8 &ssi = SSI.exec_ret<bytes8>();
 			int n = SYNC;
@@ -323,7 +413,7 @@ private:
 			SYNC_BUF(1);
 			tran_ena(tr_UnnamedTransition4);
 			res = true;;
-			unlock(pl_UDP_OUT | pl_COUNTER | pl_DELAY | pl_SSI | pl_SYNC | pl_DPS);
+			unlock(pl_COUNTER | pl_UDP_OUT | pl_DELAY | pl_SSI | pl_SYNC | pl_DPS);
 			if (res)
 			{
 				UnnamedTransition4();
@@ -335,7 +425,7 @@ private:
 	bool UnnamedTransition5()
 	{
 		bool res = false;
-		if (lock(pl_UDP_OUT | pl_COUNTER | pl_DEBUG_TIMER | pl_SEND_DEBUG, tr_UnnamedTransition5))
+		if (lock(pl_COUNTER | pl_UDP_OUT | pl_DEBUG_TIMER | pl_SEND_DEBUG, tr_UnnamedTransition5))
 		{
 			if (SEND_DEBUG_flag)
 			{
@@ -347,7 +437,7 @@ private:
 				DEBUG_TIMER_time = time() + 333000;
 				res = true;
 			};
-			unlock(pl_UDP_OUT | pl_COUNTER | pl_DEBUG_TIMER | pl_SEND_DEBUG);
+			unlock(pl_COUNTER | pl_UDP_OUT | pl_DEBUG_TIMER | pl_SEND_DEBUG);
 		}
 		return res;
 	}
@@ -355,7 +445,7 @@ private:
 	bool UnnamedTransition8()
 	{
 		bool res = false;
-		if (lock(pl_UDP_OUT | pl_COUNTER | pl_CAN | pl_CAN_OUT | pl_BatLevel | pl_BinTimer | pl_BUTTONS, tr_UnnamedTransition8))
+		if (lock(pl_COUNTER | pl_UDP_OUT | pl_CAN | pl_CAN_OUT | pl_BatLevel | pl_BinTimer | pl_BUTTONS, tr_UnnamedTransition8))
 		{
 			if (BatLevel_flag)
 			{
@@ -366,11 +456,11 @@ private:
 				;
 
 				BinTimer_time = time() + 1000000;
-				UDP_AND_CAN_SEND(CAN_MESSAGE(336, time64(), (_N__4331)));
-				UDP_AND_CAN_SEND(CAN_MESSAGE(721, time64(), (_N__4332)));
+				UDP_AND_CAN_SEND(CAN_MESSAGE(336, time64(), (_N__4357)));
+				UDP_AND_CAN_SEND(CAN_MESSAGE(721, time64(), (_N__4358)));
 				res = true;
 			};
-			unlock(pl_UDP_OUT | pl_COUNTER | pl_CAN | pl_CAN_OUT | pl_BatLevel | pl_BinTimer | pl_BUTTONS);
+			unlock(pl_COUNTER | pl_UDP_OUT | pl_CAN | pl_CAN_OUT | pl_BatLevel | pl_BinTimer | pl_BUTTONS);
 		}
 		return res;
 	}
@@ -400,7 +490,7 @@ private:
 	bool UnnamedTransition10()
 	{
 		bool res = false;
-		if (lock(pl_UDP_OUT | pl_COUNTER | pl_CAN | pl_CAN_OUT | pl_TempTimer | pl_TEMP, tr_UnnamedTransition10))
+		if (lock(pl_COUNTER | pl_UDP_OUT | pl_CAN | pl_CAN_OUT | pl_TempTimer | pl_TEMP, tr_UnnamedTransition10))
 		{
 			int n = TEMP.exec_ret<int>();
 			;
@@ -408,7 +498,7 @@ private:
 			TempTimer_time = time();
 			UDP_AND_CAN_SEND(CAN_MESSAGE(721, time64(), IntToList(51 + n * 256)));
 			res = true;;
-			unlock(pl_UDP_OUT | pl_COUNTER | pl_CAN | pl_CAN_OUT | pl_TempTimer | pl_TEMP);
+			unlock(pl_COUNTER | pl_UDP_OUT | pl_CAN | pl_CAN_OUT | pl_TempTimer | pl_TEMP);
 		}
 		return res;
 	}
@@ -416,7 +506,7 @@ private:
 	bool UnnamedTransition11()
 	{
 		bool res = false;
-		if (lock(pl_UDP_OUT | pl_COUNTER | pl_UDP_IN, tr_GroupTransition1121))
+		if (lock(pl_COUNTER | pl_UDP_OUT | pl_UDP_IN, tr_GroupTransition1121))
 		{
 			if (UDP_IN_flag)
 			{
@@ -429,7 +519,7 @@ private:
 					res = true;
 				}
 			};
-			unlock(pl_UDP_OUT | pl_COUNTER | pl_UDP_IN);
+			unlock(pl_COUNTER | pl_UDP_OUT | pl_UDP_IN);
 		}
 		return res;
 	}
@@ -437,14 +527,14 @@ private:
 	bool UnnamedTransition12()
 	{
 		bool res = false;
-		if (lock(pl_UDP_OUT | pl_COUNTER | pl_DELAY, tr_UnnamedTransition12))
+		if (lock(pl_COUNTER | pl_UDP_OUT | pl_DELAY, tr_UnnamedTransition12))
 		{
 			;
 
 			DELAY_time = time();
 			SEND_SENS(1);
 			res = true;;
-			unlock(pl_UDP_OUT | pl_COUNTER | pl_DELAY);
+			unlock(pl_COUNTER | pl_UDP_OUT | pl_DELAY);
 			if (res)
 			{
 				UnnamedTransition4();
@@ -456,14 +546,14 @@ private:
 	bool UnnamedTransition13()
 	{
 		bool res = false;
-		if (lock(pl_UDP_OUT | pl_COUNTER | pl_CAN | pl_CAN_OUT | pl_BUTTONS, tr_UnnamedTransition13))
+		if (lock(pl_COUNTER | pl_UDP_OUT | pl_CAN | pl_CAN_OUT | pl_BUTTONS, tr_UnnamedTransition13))
 		{
 			u8 bt = BUTTONS;
 			;
 			UDP_AND_CAN_SEND(bt2can_message(bt));
 			tran_ena(tr_UnnamedTransition13);
 			res = true;;
-			unlock(pl_UDP_OUT | pl_COUNTER | pl_CAN | pl_CAN_OUT | pl_BUTTONS);
+			unlock(pl_COUNTER | pl_UDP_OUT | pl_CAN | pl_CAN_OUT | pl_BUTTONS);
 		}
 		return res;
 	}
@@ -572,6 +662,34 @@ private:
 		return res;
 	}
 
+	bool UnnamedTransition20()
+	{
+		bool res = false;
+		if (lock(pl_COUNTER | pl_UDP_OUT | pl_ControlCheck, tr_UnnamedTransition20))
+		{
+			if (ControlCheck_flag)
+			{
+				const CONTROL_MSG &cnm = ControlCheck.field0;
+				bool ok = ControlCheck.field1;
+				if (ok)
+				{
+					ControlCheck_flag = false;
+					;
+					UDP_SEND(control2can(cnm));
+					tran_ena(tr_UnnamedTransition20);
+					res = true;
+				}
+			};
+			unlock(pl_COUNTER | pl_UDP_OUT | pl_ControlCheck);
+		}
+		return res;
+	}
+
+	CAN_MESSAGE  control2can(const CONTROL_MSG &m)
+	{
+		return CAN_MESSAGE(80, time64(), bytesn(&m, sizeof(m)));
+	}
+
 	CAN_UDP_MESSAGE  can2udp(const CAN_MESSAGE &m, int c)
 	{
 		return CAN_UDP_MESSAGE(c, m.field1, m.field2, m.field3);
@@ -584,8 +702,8 @@ private:
 
 	CAN_MESSAGE  bt2can_message(int bt)
 	{
-		u8 _N__4333[] = { (BYTE)1, bt };
-		return CAN_MESSAGE(721, time(), byte2(_N__4333));
+		u8 _N__4359[] = { (BYTE)1, bt };
+		return CAN_MESSAGE(721, time(), byte2(_N__4359));
 	}
 
 	bool is_sens(const CAN_UDP_MESSAGE &m)
@@ -713,6 +831,7 @@ public:
 		DEBUG_TIMER_time = 0;
 		COUNTER = 0;
 		CAN_OUT_flag = false;
+		ControlCheck_flag = false;
 		tran_funcs[0] = &pt14::UnnamedTransition1;
 		tran_funcs[1] = &pt14::UnnamedTransition11;
 		tran_funcs[2] = &pt14::GroupTransition1121;
@@ -729,6 +848,7 @@ public:
 		tran_funcs[13] = &pt14::UnnamedTransition14;
 		tran_funcs[14] = &pt14::UnnamedTransition15;
 		tran_funcs[15] = &pt14::UnnamedTransition18;
+		tran_funcs[16] = &pt14::UnnamedTransition20;
 	}
 
 	bool GroupTransition1121()
@@ -745,8 +865,8 @@ public:
 	{
 		int n = COUNTER;
 		;
-		UDP_OUT.exec_ref(can2udp(cm, n));
 		COUNTER = n + 1;
+		UDP_OUT.exec_ref(can2udp(cm, n));
 	}
 
 	void SYNC_BUF(char param)
@@ -840,6 +960,6 @@ public:
 		UnnamedTransition14();
 	}
 
-	function UDP_OUT;
 	function CAN_OUT;
+	function UDP_OUT;
 };
