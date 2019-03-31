@@ -52,7 +52,7 @@ namespace petrinet_lib
 			} while (!SC16(&temp_write_idx, add_idx(idx, 1)));
 
 			if (!locked) write_idx = idx;*/ // если не заблокирован записываем индекс		
-			return atomic_inc(write_idx);
+			return atomic_inc16(&write_idx);
 		}
 
 		// получаем указатель на элемент в очереди по индексу
@@ -72,9 +72,9 @@ namespace petrinet_lib
 
 		void enqueue(void *buf)
 		{
-			u8 *ptr = get_index(); // получаем указатель на элемент в очереди
+			u8 *ptr = get_pos(get_index()); // получаем указатель на элемент в очереди
 			copy(ptr, buf, elem_size); // записываем по индексу данные
-			unlock(); // разблокируем очередь
+			//unlock(); // разблокируем очередь
 		}
 
 		void *enqueue()
@@ -87,7 +87,7 @@ namespace petrinet_lib
 		{
 			for (int i = read_idx, e = write_idx; i != e; i++)
 			{
-				if (equals(&queue[i], elem, elem_size)) return true;
+				if (equals(get_pos(i), elem, elem_size)) return true;
 			}
 			return false;
 		}
@@ -121,7 +121,7 @@ namespace petrinet_lib
 				max_count = count;
 			u8 *ptr = get_pos(read_idx); // получаем позицию
 			if (count == 0) return 0;
-			size = elem_size;
+			//size = elem_size;
 			read_idx++;// = add_idx(read_idx, 1); // увеличиваем индекс чтения, очередь должна читаться из одного потока
 			return ptr;
 		}
@@ -144,10 +144,10 @@ namespace petrinet_lib
 
 		int next_free_index() const
 		{
-			return write_index % count;
+			return write_idx % count;
 		}
 
-		void *remove_abs(int index) const
+		void *remove_abs(int index)
 		{
 			void *data = deque();
 			int idx = read_idx;
@@ -177,14 +177,14 @@ namespace petrinet_lib
 		{
 			for (int i = read_idx, e = write_idx; i != e; i++)
 			{
-				if (equals(&queue[i], elem, elem_size)) return i;
+				if (equals(get_pos(i), elem, elem_size)) return i;
 			}
 			return -1;
 		}
 
 		void *element_at_abs(int index) const
 		{
-			return queue[index];
+			return get_pos(index);
 		}
 
 		void *element_at(int index) const
