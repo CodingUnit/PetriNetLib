@@ -13,7 +13,7 @@ namespace petrinet_lib
 
 		void init(int size, int max_elem_size)
 		{
-			elem_size = max_elem_size;
+			//elem_size = max_elem_size;
 			queue.init(size, max_elem_size);
 		}
 
