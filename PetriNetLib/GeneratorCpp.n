@@ -50,6 +50,16 @@ namespace PetriNetLib
     [Accessor]
     transitions : array[GenTranCpp];
 
+    internal TypingMethod : MethodBuilder
+    {
+      get
+      {
+       gen.TypingMethod 
+      }
+    }
+    
+    func_proc : Hashtable[string, GenFuncCpp];
+    
     PlacesWithGroup : list[GenPlaceCpp]
     {
       [Memoize]
@@ -293,7 +303,9 @@ namespace PetriNetLib
         //| <[ $func(..$parms) ]> when (parms.All(x => x is PExpr.Assign)) =>
 
 
-        | <[ $func(..$parms) ]> => def func = ConvFunc(func.ToString());
+        | <[ $func(..$parms) ]> => //def func_name = ConvFunc(func.ToString());
+                                   def func = func_proc[func.ToString()];
+                                   def name = func.Name;
                                    if (parms.All(x => x is PExpr.Assign)) 
                                    {
                                      def get_rec_parm(x)
@@ -307,11 +319,12 @@ namespace PetriNetLib
                                      $<#$func(..$(parms; ","))#>
                                    } else
                                    {
-                                     match (func)
+                                     match (func.PrefixType)
                                      {
-                                       | x when x.StartsWith("get_bytes__") => def parm = parms.First();
-                                                                               $<#bytesn(&$(parm), sizeof($(parm)))#>
-                                       | _                                  => 
+                                       | FuncPrefix.Ext        => $<#$(name).exec_ret<$(func.ReturnType)>(..$(parms; ","))#>
+                                       | FuncPrefix.GetBytes   => def parm = parms.First();
+                                                                  $<#bytesn(&$(parm), sizeof($(parm)))#>
+                                       | _                     => 
                                           def parms = parms.Map(ConvExpr(_, false));
                                           $<#$func(..$(parms; ","))#>
                                      }
@@ -376,134 +389,15 @@ namespace PetriNetLib
       | _ => null
     }
 
-    ProcessFun(expr : PExpr) : PExpr
+    CreateDecl(func : GenFuncCpp) : string
     {
-
-
-      def proc_parms(p, t, b)
-      {
-        def proc_parm(p, (parm, e))
-        {
-          def (p, e) = match (p)
-                        {
-                          | <[parameter: $(n : usesite) : Index.[$(type : usesite)]]> => 
-                              match (model.GetIndex(type))
-                              {
-                                | Some((t, _)) => (<[parameter: $(n : usesite) : $(t : usesite)]> :: parm, e)
-                                | _            => (parm, e)
-                              }
-                          | p => (p :: parm, e)  
-                        }
-
-          def e = if (t is Some(t))      
-                    match (e)
-                    {
-                      | [] => e
-                      | lst => def (last, e : list[PExpr]) = lst.PartitionLast();
-                  def last = match (last)
-                  {
-                    | <[ {(..$e)} ]>
-                    | <[(..$e)]> when e.All(x => x is PExpr.Assign) => <[ $t(..$e)]>
-                    | e => e
-                  }
-                  e + [last]
-                    } else e;
-
-          (p, e)
-        }
-
-        def expr = <[ {..$b} ]>;
-        def (p, expr) = p.Fold(([], expr :: []), proc_parm);
-        (p.Rev(), expr)
-      }
-
-      match (expr)
-      {
-        | <[ def $(n : usesite)(..$parms) { ..$body } ]> => 
-
-          def (parms, expr) = proc_parms(parms, None(), body);
-
-          <[ def $(n : usesite)(..$parms) { ..$expr } ]>
-
-        | <[ def $(n : usesite)(..$parms) : $t { ..$body } ]> => 
-
-          def (parms, expr) = proc_parms(parms, Some(t), body);
-
-          <[ def $(n : usesite)(..$parms) : $t { ..$expr } ]>
-
-        | _                     => throw InvalidOperationException()
-      }
-    }
-
-    CreateDecl(expr : PExpr) : string
-    {
-      | <[ def $(n : usesite)(..$_) { ..$_ } ]> => 
-
-          if (n.StartsWith("get_bytes__")) null else
-          if (n.StartsWith("FUNC_")) null else
-          if (n.StartsWith("EXT_"))
-          {
-            def n = n.Substring(4);
-            $<#function $n;#>
-          } else
-          {
-            def func = ProcessFun(expr);
-            def ty = Typer(gen.TypingMethod);
-            def te = ty.TypeExpr(func);
-          //def type = te |> ConvType;
-            match (func)
-            {
-              | <[ def $(n : usesite)(..$parms) { ..$expr } ]> =>
-                  match (te)
-                  {
-                    | TExpr.DefFunctionsIn(h :: _, _) => def ret = h.ReturnType |> ConvType;
-                                                      def expr = expr.Map(ConvExpr(_, true));
-                                                      def (last, expr) = expr.PartitionLast();
-                                                      def parms = parms.Map(ConvParm);
-                                                      $<#$ret $n(..$(parms; ","))
-                                                       {..$(expr;";\n")
-                                                         return $last;
-                                                       }
-                                                       #>
-                                                      //<[decl: $(n : usesite)(..$parms) : $(ret : typed)
-                                                      //  {
-                                                      //    ..$expr
-                                                      //  }]>
-                     | _                     => throw InvalidOperationException()                                  
-                  }
-               | _                     => throw InvalidOperationException()
-            }
-          }
-      | <[ def $(n : usesite)(..$_) : $_t { ..$_ } ]> => 
-
-          if (n.StartsWith("FUNC_")) null else
-          if (n.StartsWith("EXT_"))
-          {
-            def n = n.Substring(4);
-            $<#function $n;#>
-          } else
-          {
-            def func = ProcessFun(expr);
-            match (func)
-            {
-              | <[ def $(n : usesite)(..$parms) : $t { ..$expr } ]> =>
-                  def ret = t.ToString();//FinalType(t.ToString());
-
-                  def expr = expr.Map(ConvExpr(_, true));
-                  def expr = if (ctx.IsEmpty()) expr else $<#..$(ctx;"\n")#> :: expr;
-                  def (last, expr) = expr.PartitionLast();
-                  def parms = parms.Map(ConvParm);
-                  $<#$ret $n(..$(parms; ","))
-                    {..$(expr;";\n")
-                      return $last;
-                    }
-                    #>
-              | _                     => throw InvalidOperationException()                                       //<[decl: $(n : usesite)(..$parms) : $(ret : typed)
-                                                      //  {
-                                                      //    ..$expr
-            }                                           //  }]>
-          }
-      | _ => null
+       match (func.PrefixType)
+       {
+         | FuncPrefix.GetBytes
+         | FuncPrefix.Func     => null
+         | FuncPrefix.Ext      => $<#function $(func.Name);#>
+         | _                   => func.CppDecl
+       }
     }
 
     CreateColourSet(col : GenColourCpp) : string
@@ -910,7 +804,7 @@ namespace PetriNetLib
       def req_methods = places.Where(x => x.Req).Map(CreateReqPlace);
       def vals = model.ml_decls.Map(CreateVals).Filter(_ != null);
       Define(vals + ["\n"]);//_ = typebuilder.DefineWithSource(m);
-      def decls = model.ml_decls.Map(CreateDecl).Filter(_ != null);
+      def decls = func_proc.Map(x => CreateDecl(x.Value)).Filter(_ != null);
       def (ext, decls) = decls.Partition(x => x.StartsWith("function"));
       def in_ports = places.Where(x => x.port is Some(PortType.In)).MapToList(CreateInPortPlace);
       def out_ports = places.Where(x => x.port is Some(PortType.Out) || x.port is Some(PortType.InOut)).MapToList(CreateOutPlace);

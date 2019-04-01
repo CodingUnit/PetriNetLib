@@ -73,7 +73,8 @@ namespace PetriNetLib
       this.places = model.places.MapToArray(GenPlaceCpp(_, this, 0));
       //mutable idx = 0;
       this.transitions = model.transitions.MapToArray(x => GenTranCpp(x, this)).ToArray();
-      
+      def funcs = model.ml_decls.Where(GenFuncCpp.IsFunc).Select(x => GenFuncCpp(x, this)).Select(x => (x.NameWithPrefix, x));
+      func_proc = Hashtable(funcs);
       //this.transitions.
     }
 
@@ -144,11 +145,11 @@ namespace PetriNetLib
         }
     }
 
-    ConvFunc(func : string) : string
-    {
-      if (func.StartsWith("EXT_")) func.Substring(4) else
-      if (func.StartsWith("FUNC_")) func.Substring(5) else func
-    }
+    //ConvFunc(func : string) : string
+    //{
+    //  if (func.StartsWith("EXT_")) func.Substring(4) else
+    //  if (func.StartsWith("FUNC_")) func.Substring(5) else func
+    //}
 
     ConvParm(n : string, t : string) : string
     {

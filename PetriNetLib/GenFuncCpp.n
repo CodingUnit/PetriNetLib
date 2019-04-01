@@ -1,0 +1,222 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using CommonLib.Macros;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Nemerle.Compiler.Parsetree;
+using Nemerle.Compiler.Typedtree;
+using Nemerle.Compiler;
+
+namespace PetriNetLib
+{
+  enum FuncPrefix
+  {
+    | None
+    | GetBytes
+    | Func
+    | Ext
+  }
+
+  /// <summary>
+  /// Description of GenFuncCpp.
+  /// </summary>
+  [Record]
+  class GenFuncCpp
+  {
+    public expr : PExpr;
+    public gen  : CppGenerator;
+
+    public NameWithPrefix : string
+    {
+      [Memoize]
+      get
+      {
+        match (expr)
+        {
+          | <[ def $(n : usesite)(..$_) { ..$_ } ]> 
+          | <[ def $(n : usesite)(..$_) : $_t { ..$_ } ]> => n
+          | _                                             => throw InvalidOperationException()
+        }
+      }
+    }
+
+    public Body : list[PExpr]
+    {
+      [Memoize]
+      get
+      {
+        match (Processed)
+        {
+          | <[ def $(_ : usesite)(..$_) { ..$expr } ]> 
+          | <[ def $(_ : usesite)(..$_) : $_t { ..$expr } ]> => expr
+          | _                                                => throw InvalidOperationException()
+        }
+      }
+    }
+   
+     public Parms : list[PParameter]
+    {
+      [Memoize]
+      get
+      {
+        match (expr)
+        {
+          | <[ def $(_ : usesite)(..$parms) { ..$_ } ]> 
+          | <[ def $(_ : usesite)(..$parms) : $_t { ..$_ } ]> => parms
+          | _                                                 => throw InvalidOperationException()
+        }
+      }
+    }
+    
+    public static IsFunc(expr : PExpr) : bool
+    {
+      | <[ def $(_ : usesite)(..$_) { ..$_ } ]>
+      | <[ def $(_ : usesite)(..$_) : $_ { ..$_ } ]> => true
+      | _                                            => false
+    }
+
+    public Name : string
+    {
+      [Memoize]
+      get
+      {
+        if (Prefix.IsEmpty()) NameWithPrefix else NameWithPrefix.Substring(Prefix.Length)
+      }
+    }
+
+    public PrefixType : FuncPrefix
+    {
+      [Memoize]
+      get
+      {
+        match (Prefix)
+        {
+          | "EXT_"        => FuncPrefix.Ext
+          | "FUNC_"       => FuncPrefix.Func
+          | "get_bytes__" => FuncPrefix.GetBytes
+          | _             => FuncPrefix.None
+        }
+      }
+    }
+
+    public Prefix : string
+    {
+      [Memoize]
+      get
+      {
+        if (NameWithPrefix.StartsWith("EXT_")) "EXT_" else
+          if (NameWithPrefix.StartsWith("FUNC_")) "FUNC_" else
+            if (NameWithPrefix.StartsWith("get_bytes__")) "get_bytes__" else ""
+      }
+    }
+
+    public ReturnType : string
+    {
+      [Memoize]
+      get
+      {
+        match (expr)
+        {
+          | <[ def $(_ : usesite)(..$_) { ..$_ } ]> =>
+              def ty = Typer(gen.TypingMethod);
+              match (ty.TypeExpr(expr))
+              {
+                | TExpr.DefFunctionsIn(h :: _, _) => h.ReturnType |> gen.ConvType
+                | _                               => throw InvalidOperationException()
+              }
+
+          | <[ def $(_ : usesite)(..$_) : $t { ..$_ } ]> => t.ToString()
+          | _                                            => throw InvalidOperationException()
+        }
+
+
+      }
+    }
+
+    public CppDecl : string
+    {
+      [Memoize]
+      get
+      {
+        def ret = ReturnType;
+        def expr = Body.Map(gen.ConvExpr(_, true));
+        def (last, expr) = expr.PartitionLast();
+        def parms = Parms.Map(gen.ConvParm);
+        def n = Name;
+        $<#$ret $n(..$(parms; ","))
+          {..$(expr;";\n")
+            return $last;
+          }
+          #>
+      }
+    }
+    
+    public Processed : PExpr
+    {
+      [Memoize]
+      get
+      {
+
+
+          def proc_parms(p, t, b)
+          {
+            def proc_parm(p, (parm, e))
+            {
+              def (p, e) = match (p)
+                            {
+                              | <[parameter: $(n : usesite) : Index.[$(type : usesite)]]> => 
+                                  match (gen.Model.GetIndex(type))
+                                  {
+                                    | Some((t, _)) => (<[parameter: $(n : usesite) : $(t : usesite)]> :: parm, e)
+                                    | _            => (parm, e)
+                                  }
+                              | p => (p :: parm, e)  
+                            }
+
+              def e = if (t is Some(t))      
+                        match (e)
+                        {
+                          | [] => e
+                          | lst => def (last, e : list[PExpr]) = lst.PartitionLast();
+                            def last = match (last)
+                            {
+                              | <[ {(..$e)} ]>
+                              | <[(..$e)]> when e.All(x => x is PExpr.Assign) => <[ $t(..$e)]>
+                              | e => e
+                            }
+                            e + [last]
+                        } else e;
+
+              (p, e)
+            }
+
+            def expr = <[ {..$b} ]>;
+            def (p, expr) = p.Fold(([], expr :: []), proc_parm);
+            (p.Rev(), expr)
+          }
+        
+        match (expr)
+        {
+          | <[ def $(n : usesite)(..$parms) { ..$body } ]> => 
+
+            def (parms, expr) = proc_parms(parms, None(), body);
+
+            <[ def $(n : usesite)(..$parms) { ..$expr } ]>
+
+          | <[ def $(n : usesite)(..$parms) : $t { ..$body } ]> => 
+
+            def (parms, expr) = proc_parms(parms, Some(t), body);
+
+            <[ def $(n : usesite)(..$parms) : $t { ..$expr } ]>
+
+          | _                     => throw InvalidOperationException()
+        }
+      }
+    }
+
+  }
+}

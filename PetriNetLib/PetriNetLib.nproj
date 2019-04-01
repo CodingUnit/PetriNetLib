@@ -131,6 +131,9 @@
     <Compile Include="Generator.n">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="GenFuncCpp.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="GenImpl.n">
       <SubType>Code</SubType>
     </Compile>
