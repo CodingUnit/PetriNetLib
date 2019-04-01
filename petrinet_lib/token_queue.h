@@ -9,6 +9,7 @@ namespace petrinet_lib
 	class token_queue
 	{
 		rqueue queue;
+                //u16 elem_size;
 	public:
 
 		void init(int size, int max_elem_size)

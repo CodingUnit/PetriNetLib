@@ -88,7 +88,7 @@ namespace petrinet_lib
 			u8 *ptr = get_pos(read_idx); // получаем указатель на элемент в очереди
 			for (int i = read_idx, e = write_idx; i != e; i++)
 			{
-				if (equals(queue, elem, elem_size)) return true;
+				if (equals(ptr, elem, elem_size)) return true;
 				ptr += elem_size;
 			}
 			return false;
