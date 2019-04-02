@@ -59,6 +59,7 @@ namespace PetriNetLib
     }
     
     func_proc : Hashtable[string, GenFuncCpp];
+    funcs     : list[GenFuncCpp];
     
     PlacesWithGroup : list[GenPlaceCpp]
     {
@@ -304,32 +305,28 @@ namespace PetriNetLib
 
 
         | <[ $func(..$parms) ]> => //def func_name = ConvFunc(func.ToString());
-                                   def func = func_proc[func.ToString()];
-                                   def name = func.Name;
-                                   if (parms.All(x => x is PExpr.Assign)) 
+                                   if (func_proc.ContainsKey(func.ToString()))
                                    {
-                                     def get_rec_parm(x)
-                                     {
-                                       | <[$_ = $v]> => v |> ConvExpr(_, false)
-                                       | _           => throw InvalidOperationException()
-                                     }
-
-                                     
-                                     def parms = parms.Map(get_rec_parm);
-                                     $<#$func(..$(parms; ","))#>
+                                     def func = func_proc[func.ToString()];
+                                     func.Call(parms);
                                    } else
                                    {
-                                     match (func.PrefixType)
+                                     if (parms.All(x => x is PExpr.Assign) && parms.Length != 0) 
                                      {
-                                       | FuncPrefix.Ext        => $<#$(name).exec_ret<$(func.ReturnType)>(..$(parms; ","))#>
-                                       | FuncPrefix.GetBytes   => def parm = parms.First();
-                                                                  $<#bytesn(&$(parm), sizeof($(parm)))#>
-                                       | _                     => 
-                                          def parms = parms.Map(ConvExpr(_, false));
-                                          $<#$func(..$(parms; ","))#>
+                                       def get_rec_parm(x)
+                                       {
+                                         | <[$_ = $v]> => v |> ConvExpr(_, false)
+                                         | _           => throw InvalidOperationException()
+                                       }
+
+                                     
+                                       def parms = parms.Map(get_rec_parm);
+                                       $<#$func(..$(parms; ","))#>
+                                     } else
+                                     {
+                                       def parms = parms.Map(ConvExpr(_, false));
+                                       $<#$func(..$(parms; ","))#>
                                      }
-                                     
-                                     
                                    }
         | <[ $(_ : int)]> as e
         | <[ $(_ : long)]> as e
@@ -804,7 +801,7 @@ namespace PetriNetLib
       def req_methods = places.Where(x => x.Req).Map(CreateReqPlace);
       def vals = model.ml_decls.Map(CreateVals).Filter(_ != null);
       Define(vals + ["\n"]);//_ = typebuilder.DefineWithSource(m);
-      def decls = func_proc.Map(x => CreateDecl(x.Value)).Filter(_ != null);
+      def decls = funcs.Map(CreateDecl).Filter(_ != null);
       def (ext, decls) = decls.Partition(x => x.StartsWith("function"));
       def in_ports = places.Where(x => x.port is Some(PortType.In)).MapToList(CreateInPortPlace);
       def out_ports = places.Where(x => x.port is Some(PortType.Out) || x.port is Some(PortType.InOut)).MapToList(CreateOutPlace);

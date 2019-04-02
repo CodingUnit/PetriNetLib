@@ -155,13 +155,35 @@ namespace PetriNetLib
       }
     }
     
+    public ParmsCall : list[string]
+    {
+      get
+      {
+        []
+      }
+    }
+    
+    public Call(parms : list[PExpr]) : string
+    {
+        match (PrefixType)
+        {
+          | FuncPrefix.Ext        => if (ReturnType == "void") 
+                                      $<#$(Name).exec(..$(parms; ","))#>
+                                    else 
+                                      $<#$(Name).exec_ret<$ReturnType>(..$(parms; ","))#>
+          | FuncPrefix.GetBytes   => def parm = Parms.First();
+                                    $<#bytesn(&$(parm), sizeof($(parm)))#>
+          | _                     => 
+            def parms = parms.Map(x => gen.ConvExpr(x, false));
+            $<#$Name(..$(parms; ","))#>
+        }
+    }
+    
     public Processed : PExpr
     {
       [Memoize]
       get
       {
-
-
           def proc_parms(p, t, b)
           {
             def proc_parm(p, (parm, e))
