@@ -19,7 +19,6 @@ public:
 		next_val = seed;
 	}
 
-	
 
 	int next(int min, int max) 
 	{

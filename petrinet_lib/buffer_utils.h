@@ -53,6 +53,57 @@ namespace petrinet_lib
     }
   };
 
+  class bytes3 : public bytes
+  {
+	  u8 buf[3];
+  public:
+	  //bytes2(const bytes2 &self) { init(self.buf); }
+	  bytes3() {}
+	  bytes3(u8 buf[3]) : bytes(3)
+	  {
+		  init(buf);
+	  }
+
+	  void init(const u8 data[3])
+	  {
+		  *(u16 *)&buf[0] = *(u16 *)&data[0];
+		  *(u8 *)&buf[2] = data[2];
+		  set_count(3);
+	  }
+
+	  void *get_buf() const { return (void *)buf; }
+
+	  void operator=(const bytes &b)
+	  {
+		  set_buf(b);
+	  }
+  };
+
+  class bytes4 : public bytes
+  {
+	  u8 buf[4];
+  public:
+	  //bytes2(const bytes2 &self) { init(self.buf); }
+	  bytes4() {}
+	  bytes4(u8 buf[4]) : bytes(4)
+	  {
+		  init(buf);
+	  }
+
+	  void init(const u8 data[4])
+	  {
+		  *(u32 *)&buf[0] = *(u32 *)&data[0];
+		  set_count(4);
+	  }
+
+	  void *get_buf() const { return (void *)buf; }
+
+	  void operator=(const bytes &b)
+	  {
+		  set_buf(b);
+	  }
+  };
+
   class bytesn : public bytes
   {
     u8 buf[100];

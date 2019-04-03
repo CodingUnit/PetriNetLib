@@ -85,11 +85,9 @@ namespace petrinet_lib
 
 		bool contains(void *elem) const
 		{
-			u8 *ptr = get_pos(read_idx); // получаем указатель на элемент в очереди
 			for (int i = read_idx, e = write_idx; i != e; i++)
 			{
-				if (equals(ptr, elem, elem_size)) return true;
-				ptr += elem_size;
+				if (equals(queue, elem, elem_size)) return true;
 			}
 			return false;
 		}
@@ -177,11 +175,9 @@ namespace petrinet_lib
 
 		int index_of(void *elem) const
 		{
-			u8 *ptr = get_pos(read_idx); // получаем указатель на элемент в очереди
 			for (int i = read_idx, e = write_idx; i != e; i++)
 			{
-				if (equals(ptr, elem, elem_size)) return i;
-				ptr += elem_size;
+				if (equals(queue, elem, elem_size)) return i;
 			}
 			return -1;
 		}

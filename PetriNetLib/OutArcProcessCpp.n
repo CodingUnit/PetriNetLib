@@ -65,10 +65,51 @@ namespace PetriNetLib
       }
     }
 
+    add_token_ptr_expr : string * string
+    {
+      get
+      {
+        def var = Macros.NewSymbol();
+        
+        def add(e)
+        {
+          | <[ () ]>                       => ($<#char $var = 1;
+          #>, var.ToString());
+          //match (global_time)
+                                              //{
+                                              //  | <[ $(t : int)]> => def time = time + t;     
 
+                                              //  | _               => null
+                                              //} 
+          | <[ 1 ` $e ]>                   => add(e)
+          
+          | <[ $(n : usesite) ]>           => ("", n)
+          | <[ $_ %++ $_ ]> as e           => def e = gen.GetTokenExpr(e);
+                                              def ty = place.Colour.DestType;
+                                              ($<#$ty $var = $e;
+                                              #>, $<#$var#>)
+          | <[ $(_ : int) ` $_ ]> as e                                         
+          | <[ $_(..$_)]> as e             
+          | e                              => def e = e |> gen.ConvExprPlaceCtx(_, place, false);
+                                              def ty = place.Colour.DestType;
+                                              ($<#$ty $var = $e;
+                                              #>, $<#$var#>)
+        }
+
+        add(arc.ExprWithoutTime)
+      }
+    }
+    
+    add_ctx_expr[T](func : void -> T) : string * T
+    {
+      def res = func();
+      def expr = gen.ReadCtxVar();
+      if (expr.IsEmpty()) ("", res) else ($<#..$(expr; "\n")
+      #>, res)
+    }
+    
     add_token_expr : string
     {
-      [Memoize]
       get
       {
         //def unfold(e)
@@ -132,7 +173,6 @@ namespace PetriNetLib
       }
     }
 
-    
     public add_token : string
     {
       [Memoize]
@@ -150,14 +190,14 @@ namespace PetriNetLib
               | Var       => $"$(name) = $add_token_expr;$time"
               | Single    => if (place.IsUnit)
                              {
-                               $<#$(name) = $add_token_expr;$time#>
+                               $<#$add_ctx_expr$(name) = $add_token_expr;$time#>
                              } else
                              {
-                            $<#$(name) = $add_token_expr;
+                            $<#$add_ctx_expr$(name) = $add_token_expr;
                               $(name)_flag = true;$time#>
                              }
               | _ => def expr = if (time_add.IsEmpty()) add_token_expr else $"\nadd_time($add_token_expr, $time_add);";
-                  $<#$name.add($expr);#>
+                  $<#$add_ctx_expr$name.add($expr);#>
             }
           //if (is_time_expr)
           //{
@@ -168,36 +208,39 @@ namespace PetriNetLib
           //}
         } else
         {
+          def (ctx, add) = add_ctx_expr(_ => add_token_expr);
           if (IsCopyVar) "" else
             if (place.IsFuncPlace)
             {
-              $<#$(name)($add_token_expr);#>
+              $<#$ctx$(name)($add);#>
             } else
             {
               match (place.port)
               {
                 | Some(PortType.Out) => 
                     if (place.Colour.IsComplexType) 
-                    $<#$(name).exec_ref($add_token_expr);#> else
-                    $<#$(name).exec($add_token_expr);#>
+                    $<#$ctx$(name).exec_ref($add);#> else
+                    $<#$ctx$(name).exec($add);#>
                 | Some(PortType.InOut) => 
                     if (place.Colour.IsComplexType) 
-                    $<#bool in = $(name).exec_ref_ret_bool($add_token_expr);#> else
-                    $<#bool in = $(name).exec_ret<bool>($add_token_expr);#>
+                    $<#$(ctx)bool in = $(name).exec_ref_ret_bool($add);#> else
+                    $<#$(ctx)bool in = $(name).exec_ret<bool>($add);#>
                 | _ => match (place.DestContainerType)
                        {
                          | ZeroSingle // имеет 0 или 1 фишку, для отсутствия используется 0 если INT
                          | MinusSingle 
-                         | Var       => $"$(name) = $add_token_expr;"
+                         | Var       => $"$(name) = $add;"
                          | Single    => if (place.IsUnit)
                                         {
-                                          $<#$(name) = $add_token_expr;#>
+                                          $<#$ctx$(name) = $add;#>
                                         } else
                                         {
-                                          $<#$(name) = $add_token_expr;
+                                          $<#$ctx$(name) = $add;
                                           $(name)_flag = true;#>
                                         }
-                         | _ => $<#$name.add($add_token_expr);#>
+                                        | _ => def (ctx, (var, add)) = add_ctx_expr(_ => add_token_ptr_expr);
+                                               //def (var, add) = add_token_ptr_expr;
+                                               $<#$ctx$var$name.add(&$add);#>
                        }
               }
               

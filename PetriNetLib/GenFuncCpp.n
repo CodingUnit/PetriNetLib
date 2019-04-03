@@ -163,14 +163,38 @@ namespace PetriNetLib
       }
     }
     
+    public ParmsColour : list[GenColourCpp]
+    {
+      [Memoize]
+      get
+      {
+        Parms.Map(x => gen.Colours[x.Type.ToString()])
+      }
+    }
+    
+    public ParmsType : list[string]
+    {
+      [Memoize]
+      get
+      {
+        ParmsColour.Map(_.ParmType)
+      }
+    }
+    
     public Call(parms : list[PExpr]) : string
     {
         match (PrefixType)
         {
           | FuncPrefix.Ext        => if (ReturnType == "void") 
-                                      $<#$(Name).exec(..$(parms; ","))#>
+                                     {
+                                       def ty = if (ParmsType.Length != 0) $<#<..$(ParmsType; ",")>#> else "";
+                                      $<#$(Name).exec$ty(..$(parms; ","))#>
+                                     }
                                     else 
-                                      $<#$(Name).exec_ret<$ReturnType>(..$(parms; ","))#>
+                                    {
+                                      def ty = ReturnType :: ParmsType;
+                                      $<#$(Name).exec_ret<..$(ty; ",")>(..$(parms; ","))#>
+                                    }
           | FuncPrefix.GetBytes   => def parm = Parms.First();
                                     $<#bytesn(&$(parm), sizeof($(parm)))#>
           | _                     => 

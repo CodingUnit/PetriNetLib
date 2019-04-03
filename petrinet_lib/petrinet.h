@@ -6,124 +6,135 @@
 #include "token_queue.h"
 
 using namespace events;
-
-class petri_net32// : IPetriNet, IDisposable
+namespace petrinet_lib
 {
-	u32 locked;
-	event_queue32_conc queue;
-	event_queue32_conc defer_queue;
-	u32 completed_tran;
-	u16 max_steps;
-	//tran_queue: RQueue[Action] = RQueue(32);
 
 
-	//public static @`[T](count : int, tok : T) : IEnumerable[T]
-	//{
-	//  Enumerable.Repeat(tok, count)
-	//}
-
-	//	public static @%++[T](tok1 : IEnumerable[T], tok2 : IEnumerable[T]) : IEnumerable[T]
-	//{
-	//  tok1.Concat(tok2)
-	//}
-
-protected:
-	//u32 places;
-
-	typedef bool(*tran_func)(void *);
-
-	bool lock(u32 pl, u32 tr)
+	class petri_net32// : IPetriNet, IDisposable
 	{
-		u32 lock;
-		do
+		u32 locked;
+		event_queue32_conc queue;
+		event_queue32_conc defer_queue;
+		u32 completed_tran;
+		u16 max_steps;
+		//tran_queue: RQueue[Action] = RQueue(32);
+
+
+		//public static @`[T](count : int, tok : T) : IEnumerable[T]
+		//{
+		//  Enumerable.Repeat(tok, count)
+		//}
+
+		//	public static @%++[T](tok1 : IEnumerable[T], tok2 : IEnumerable[T]) : IEnumerable[T]
+		//{
+		//  tok1.Concat(tok2)
+		//}
+
+	protected:
+		//u32 places;
+
+		typedef bool(*tran_func)(void *);
+
+		bytes4 IntToList(u32 val, int count = 4)
 		{
-			lock = LL(&locked);
-			if (lock & pl)// если элементы заблокированы хотя бы один
-			{
-				defer_queue.enqueue(tr);
-				return false;
-			}
-		} while (SC(&locked, lock | pl));
-		return true;
-	}
-
-	void unlock(u32 pl)
-	{
-		atomic_and(&locked, ~pl);
-		check_queue();
-	}
-
-	/*void places_ena(bool have_rem, u32 rem_mask, u32 add_mask)
-	{
-		atomic_and_or(&places, rem_mask, add_mask | have_rem * rem_mask);
-	}*/
-
-  
-
-	void tran_ena(u32 trmask, u32 completed)
-	{
-		queue.enqueue(trmask);//trmask, (places & pl_mask == pl_mask) * trmask);
-		atomic_or(&completed_tran, completed);
-	}
-
-	void tran_ena(u32 completed)
-	{
-		//queue.enqueue(trmask);//trmask, (places & pl_mask == pl_mask) * trmask);
-		atomic_or(&completed_tran, completed);
-	}
-
-//	void tran_ena_set(u32 trmask, u32 tr_ena_mask)
-//	{
-//		queue.set_elem(trmask, tr_ena_mask);
-//	}
-
-	virtual tran_func get_transition(int n) const
-	{
-		return 0;
-	}
-
-private:
-
-	void check_queue()
-	{
-		u32 val;
-		/*u32 comp = atomic_and(&completed_tran, ~completed_tran);
-		queue.enqueue(comp);*/
-		while (defer_queue.deque_if_exist(val))
-		{
-			tran_func tran = get_transition(val);
-			tran(this);
+			bytes4 ret = bytes4((u8 *)&val);
+			ret.set_count(count);
+			return ret;
 		}
-	}
-public:
 
-  
-	petri_net32(int step = 15)
-	{
-		completed_tran = 0;
-		max_steps = 1;
-	}
-
-	void step()
-	{
-		u32 val;
-		u32 comp = atomic_and(&completed_tran, ~completed_tran);
-		queue.enqueue(comp);
-		for (u16 step = 0; step < max_steps; step++)
+		bool lock(u32 pl, u32 tr)
 		{
-			if (queue.deque_if_exist(val))
+			u32 lock;
+			do
+			{
+				lock = LL(&locked);
+				if (lock & pl)// если элементы заблокированы хотя бы один
+				{
+					defer_queue.enqueue(tr);
+					return false;
+				}
+			} while (SC(&locked, lock | pl));
+			return true;
+		}
+
+		void unlock(u32 pl)
+		{
+			atomic_and(&locked, ~pl);
+			check_queue();
+		}
+
+		/*void places_ena(bool have_rem, u32 rem_mask, u32 add_mask)
+		{
+			atomic_and_or(&places, rem_mask, add_mask | have_rem * rem_mask);
+		}*/
+
+
+
+		void tran_ena(u32 trmask, u32 completed)
+		{
+			queue.enqueue(trmask);//trmask, (places & pl_mask == pl_mask) * trmask);
+			atomic_or(&completed_tran, completed);
+		}
+
+		void tran_ena(u32 completed)
+		{
+			//queue.enqueue(trmask);//trmask, (places & pl_mask == pl_mask) * trmask);
+			atomic_or(&completed_tran, completed);
+		}
+
+		//	void tran_ena_set(u32 trmask, u32 tr_ena_mask)
+		//	{
+		//		queue.set_elem(trmask, tr_ena_mask);
+		//	}
+
+		virtual tran_func get_transition(int n) const
+		{
+			return 0;
+		}
+
+	private:
+
+		void check_queue()
+		{
+			u32 val;
+			/*u32 comp = atomic_and(&completed_tran, ~completed_tran);
+			queue.enqueue(comp);*/
+			while (defer_queue.deque_if_exist(val))
 			{
 				tran_func tran = get_transition(val);
 				tran(this);
 			}
-			else break;
 		}
-	}
-
-	void init(u16 steps)
-	{
-		max_steps = steps;
-	}
+	public:
 
 
-};
+		petri_net32(int step = 15)
+		{
+			completed_tran = 0;
+			max_steps = 1;
+		}
+
+		void step()
+		{
+			u32 val;
+			u32 comp = atomic_and(&completed_tran, ~completed_tran);
+			queue.enqueue(comp);
+			for (u16 step = 0; step < max_steps; step++)
+			{
+				if (queue.deque_if_exist(val))
+				{
+					tran_func tran = get_transition(val);
+					tran(this);
+				}
+				else break;
+			}
+		}
+
+		void init(u16 steps)
+		{
+			max_steps = steps;
+		}
+
+
+	};
+}

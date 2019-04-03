@@ -34,6 +34,13 @@ namespace PetriNetLib
     file : string;
     mutable ctx : list[string];
     
+    public ReadCtxVar() : list[string]
+    {
+      def res = ctx;
+      ctx = [];
+      res
+    }
+    
     main_class : string
     {
       [Memoize]

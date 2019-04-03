@@ -44,6 +44,7 @@ namespace PetriNetLib
     typer       : Typer;
     typebuilder : TypeBuilder;
     gen         : Generator;
+    [Accessor]
     colours     : Hashtable[string, GenColourCpp] = Hashtable();
     [Accessor]
     places      : array[GenPlaceCpp];
@@ -76,20 +77,65 @@ namespace PetriNetLib
       def te = ty.TypeExpr(<[ [..$expr] ]>);
       def ty = te.ty;
       def len = expr.Length;
-      def (type, n, ty) = match (ty)
+      def (type, n, len, ty) = match (ty)
                            {
                              | FixedType.Class(_, [args]) => def byte = typer.BindType(<[ byte ]>);
+                                                             def short = typer.BindType(<[ short ]>);
+                                                             def integer = typer.BindType(<[ int ]>);
                                         if (args.TryRequire(byte))
                                         {
-
                                           if (len <= 10)
                                           {
-                                            ($"byte$len", false, "u8")
+                                            ($"bytes$len", false, len, "u8")
                                           } else
                                           {
-                                            ("byten", true, "u8")
+                                            ("bytesn", true, len, "u8")
                                           }
-                                        } else (null, false, null)
+                                        } else
+                                        if (args.TryRequire(short) && !args.TypeInfo.Unsigned)
+                                        {
+                                          def len = len * 2;
+                                          if (len <= 10)
+                                          {
+                                            ($"bytes$len", false, len, "s16")
+                                          } else
+                                          {
+                                            ("bytesn", true, len, "s16")
+                                          }
+                                        } else
+                                        if (args.TryRequire(short) && args.TypeInfo.Unsigned)
+                                        {
+                                          def len = len * 2;
+                                          if (len <= 10)
+                                          {
+                                            ($"bytes$len", false, len, "u16")
+                                          } else
+                                          {
+                                            ("bytesn", true, len, "u16")
+                                          }
+                                        } else
+                                        if (args.TryRequire(integer) && !args.TypeInfo.Unsigned)
+                                        {
+                                          def len = len * 4;
+                                          if (len <= 10)
+                                          {
+                                            ($"bytes$len", false, len, "int")
+                                          } else
+                                          {
+                                            ("bytesn", true, len, "int")
+                                          }
+                                        } else
+                                        if (args.TryRequire(integer) && args.TypeInfo.Unsigned)
+                                        {
+                                          def len = len * 4;
+                                          if (len <= 10)
+                                          {
+                                            ($"bytes$len", false, len, "u32")
+                                          } else
+                                          {
+                                            ("bytesn", true, len, "u32")
+                                          }
+                                        } else (null, false, len, null)
                             | _ => throw InvalidOperationException()
                                         //if (args.TryRequire(integer))
                                         //{
@@ -113,15 +159,15 @@ namespace PetriNetLib
       //mutable lst = [];
       def expr = expr.Map(ConvExpr(_, false));
       //{..$(expr; ",")}
-      def var = Macros.NewSymbol();
+      def var = Macros.NewSymbol().ToString();
       if (n)
       {
         ctx ::= $<#$ty $var[] = {..$(expr;", ")};#>;
-        $<#$type($var, $len)#>
+        $<#$type((u8 *)$var, $len)#>
       } else
       {
         ctx ::= $<#$ty $var[] = {..$(expr;", ")};#>;
-        $<#$type($var)#>
+        $<#$type((u8 *)$var)#>
       }
     }
 
@@ -358,7 +404,7 @@ namespace PetriNetLib
         | <[ [..$e]]>           => CreateArray(e)
         | <[ $e : $t]>          => $<#($(ConvExpr(t)))$(ConvExpr(e))#>
         | _                     => throw InvalidOperationException()
-      }      
+      }
     }
 
     CreateGlobRef(name : string, val : PExpr) : string

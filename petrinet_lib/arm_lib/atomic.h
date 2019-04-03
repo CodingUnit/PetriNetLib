@@ -6,13 +6,13 @@
 // читает данные по адресу и выставляет эксклюзивный флаг
 inline u32 LL(const volatile u32 *pAddr) 
 {
-      return __LDREX((const volatile u32 *)pAddr);
+      return __LDREX((const volatile unsigned long *)pAddr);
 }
 
 // 1 - если запись произведена
 inline u8 SC(volatile u32 *pAddr, u32 New ) 
 {
-	return !__STREX(New, (volatile u32 *)pAddr);
+	return !__STREX(New, (volatile unsigned long *)pAddr);
 }
 
 inline u8 LL8(volatile u8 *pAddr)
@@ -97,4 +97,4 @@ inline u8 atomic_dec8(u8 *pAddr)
 	return FAA8(pAddr, -1);
 }
 
-u32 atomic_and_or(u32 *addr, u32 and, u32 or);
+u32 atomic_and_or(u32 *addr, u32 a, u32 o);

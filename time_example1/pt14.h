@@ -300,10 +300,11 @@ private:
 		tr_UnnamedTransition13 = 0x1000,
 		tr_UnnamedTransition14 = 0x2000,
 		tr_UnnamedTransition17 = 0x4000,
-		tr_UnnamedTransition19 = 0x8000
+		tr_UnnamedTransition19 = 0x8000,
+		tr_UnnamedTransition20 = 0x10000
 	} ttran;
 
-	tran_func_type tran_funcs[16];
+	tran_func_type tran_funcs[17];
 
 	static const int P_LOW = 10000;
 	static const int P_NORMAL = 1000;
@@ -341,7 +342,7 @@ private:
 				{
 					UDP_IN_flag = false;
 					;
-					ControlCheck = get_control_msg.exec_ret<CONTROL_MSG_BOOL >(m);
+					ControlCheck = get_control_msg.exec_ret<CONTROL_MSG_BOOL, const CAN_UDP_MESSAGE &>(m);
 					ControlCheck_flag = true;
 					res = true;
 				}
@@ -365,7 +366,8 @@ private:
 				const CAN_UDP_MESSAGE &m = UDP_IN;
 				UDP_IN_flag = false;
 				;
-				CAN.add(udp2can(m));
+				CAN_MESSAGE _N__4334 = udp2can(m);
+				CAN.add(&_N__4334);
 				res = true;
 			};
 			unlock(pl_CAN | pl_UDP_IN);
@@ -386,7 +388,7 @@ private:
 			{
 				const CAN_MESSAGE &cm = CAN_IN;
 				CAN_IN_flag = false;
-				can_process.exec(cm);
+				can_process.exec<const CAN_MESSAGE &>(cm);
 				UDP_SEND(cm);
 				tran_ena(tr_UnnamedTransition3);
 				res = true;
@@ -399,22 +401,22 @@ private:
 	bool UnnamedTransition4()
 	{
 		bool res = false;
-		if (lock(pl_COUNTER | pl_UDP_OUT | pl_SyncFreq | pl_DELAY | pl_SSI | pl_SYNC | pl_DPS, tr_UnnamedTransition4))
+		if (lock(pl_COUNTER | pl_UDP_OUT | pl_DELAY | pl_SSI | pl_SYNC | pl_DPS, tr_UnnamedTransition4))
 		{
-			if (SyncFreq)
+			const bytes8 &ssi = SSI.exec_ret<bytes8>();
+			int n = SYNC;
+			bool dir = DPS;
+			;
+			SYNC = n + 1;
+			UDP_SEND(CAN_MESSAGE(663, time64(), get_ssi_bytes.exec_ret<bytesn, int, bool, int, const bytes &>(n, dir, 1, ssi)));
+			SYNC_BUF(1);
+			tran_ena(tr_UnnamedTransition4);
+			res = true;;
+			unlock(pl_COUNTER | pl_UDP_OUT | pl_DELAY | pl_SSI | pl_SYNC | pl_DPS);
+			if (res)
 			{
-				const bytes8 &ssi = SSI.exec_ret<bytes8>();
-				int n = SYNC;
-				bool dir = DPS;
-				;
-				SYNC = n + 1;
-				UDP_SEND(CAN_MESSAGE(663, time64(), get_ssi_bytes.exec_ret<bytesn>(n, dir, 1, ssi)));
-				SYNC_BUF(1);
-
-				SyncFreq_time = time() + 1000000 / freq;
-				res = true;
-			};
-			unlock(pl_COUNTER | pl_UDP_OUT | pl_SyncFreq | pl_DELAY | pl_SSI | pl_SYNC | pl_DPS);
+				UnnamedTransition4();
+			}
 		}
 		return res;
 	}
@@ -453,8 +455,10 @@ private:
 				;
 
 				BinTimer_time = time() + 1000000;
-				UDP_AND_CAN_SEND(CAN_MESSAGE(336, time64(), (_N__4353)));
-				UDP_AND_CAN_SEND(CAN_MESSAGE(721, time64(), (_N__4354)));
+				s16 _N__4357[] = { (SHORT)bt, n };
+				UDP_AND_CAN_SEND(CAN_MESSAGE(336, time64(), bytes4((u8 *)_N__4357)));
+				u8 _N__4358[] = { (BYTE)1, inp };
+				UDP_AND_CAN_SEND(CAN_MESSAGE(721, time64(), bytes2((u8 *)_N__4358)));
 				res = true;
 			};
 			unlock(pl_COUNTER | pl_UDP_OUT | pl_CAN | pl_CAN_OUT | pl_BatLevel | pl_BinTimer | pl_BUTTONS);
@@ -471,7 +475,7 @@ private:
 			;
 
 			TempTimer_time = time();
-			UDP_AND_CAN_SEND(CAN_MESSAGE(721, time64(), IntToList(51 + n * 256)));
+			UDP_AND_CAN_SEND(CAN_MESSAGE(721, time64(), IntToList(51 + n * 256, 3)));
 			res = true;;
 			unlock(pl_COUNTER | pl_UDP_OUT | pl_CAN | pl_CAN_OUT | pl_TempTimer | pl_TEMP);
 		}
@@ -510,6 +514,10 @@ private:
 			SEND_SENS(1);
 			res = true;;
 			unlock(pl_COUNTER | pl_UDP_OUT | pl_DELAY);
+			if (res)
+			{
+				UnnamedTransition4();
+			}
 		}
 		return res;
 	}
@@ -572,7 +580,7 @@ private:
 				{
 					ADC_SUM_flag = false;
 					;
-					BatLevel = adc2bat.exec_ret<tuple2<int, int>>(sum / n);
+					BatLevel = adc2bat.exec_ret<tuple2<int, int>, int >(sum / n);
 					BatLevel_flag = true;
 					ADC_SUM = INTxINT(0, 0);
 					ADC_SUM_flag = true;
@@ -621,7 +629,7 @@ private:
 		if (lock(pl_CAN | pl_CAN_OUT, tr_UnnamedTransition18))
 		{
 			;
-			CAN.add(cm);
+			CAN.add(&cm);
 			tran_ena(tr_UnnamedTransition18);
 			res = true;;
 			unlock(pl_CAN | pl_CAN_OUT);
@@ -656,9 +664,31 @@ private:
 		return res;
 	}
 
+	bool UnnamedTransition20()
+	{
+		bool res = false;
+		if (lock(pl_SyncFreq | pl_DPS, tr_UnnamedTransition20))
+		{
+			if (SyncFreq)
+			{
+				bool dir = DPS;
+				;
+
+				SyncFreq_time = time() + 1000000 / freq;
+				res = true;
+			};
+			unlock(pl_SyncFreq | pl_DPS);
+			if (res)
+			{
+				UnnamedTransition4();
+			}
+		}
+		return res;
+	}
+
 	CAN_MESSAGE  control2can(const CONTROL_MSG &m)
 	{
-		return CAN_MESSAGE(80, time64(), bytesn(&m, sizeof(m)));
+		return CAN_MESSAGE(80, time64(), bytesn(&m : CONTROL_MSG, sizeof(m : CONTROL_MSG)));
 	}
 
 	CAN_UDP_MESSAGE  can2udp(const CAN_MESSAGE &m, int c)
@@ -673,7 +703,7 @@ private:
 
 	CAN_MESSAGE  bt2can_message(int bt)
 	{
-		return CAN_MESSAGE(721, time(), byte2(_N__4359));
+		return CAN_MESSAGE(721, time(), bytes2((u8 *)_N__4365));
 	}
 
 	bool is_sens(const CAN_UDP_MESSAGE &m)
@@ -719,12 +749,12 @@ private:
 		if (min > time)
 		{
 			min = time;
-			tr = tr_UnnamedTransition4;
+			tr = tr_UnnamedTransition20;
 		}
 		else
 			if (min == time)
 			{
-				tr |= tr_UnnamedTransition4;
+				tr |= tr_UnnamedTransition20;
 			}
 		time = TempTimer_time + 500000;
 		if (min > time)
@@ -818,6 +848,7 @@ public:
 		tran_funcs[13] = &pt14::UnnamedTransition14;
 		tran_funcs[14] = &pt14::UnnamedTransition17;
 		tran_funcs[15] = &pt14::UnnamedTransition19;
+		tran_funcs[16] = &pt14::UnnamedTransition20;
 	}
 
 	bool GroupTransition1021()
@@ -851,14 +882,14 @@ public:
 		int n = SYNC;
 		bool dir = DPS;
 		;
-		UDP_SEND(CAN_MESSAGE(663, time64(), get_ssi_bytes.exec_ret<bytesn>(n, dir, 0, ssi)));
+		UDP_SEND(CAN_MESSAGE(663, time64(), get_ssi_bytes.exec_ret<bytesn, int, bool, int, const bytes &>(n, dir, 0, ssi)));
 	}
 
 	void UDP_AND_CAN_SEND(const CAN_MESSAGE &cm)
 	{
 		;
 		UDP_SEND(cm);
-		CAN.add(cm);
+		CAN.add(&cm);
 	}
 
 	void init_SSI(const function &func)
@@ -887,6 +918,7 @@ public:
 		DPS = param;
 		UnnamedTransition4();
 		UnnamedTransition7();
+		UnnamedTransition20();
 	}
 
 	void add_SSI(const bytes8 &param)
