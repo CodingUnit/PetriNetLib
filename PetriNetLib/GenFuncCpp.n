@@ -196,7 +196,7 @@ namespace PetriNetLib
                                       $<#$(Name).exec_ret<..$(ty; ",")>(..$(parms; ","))#>
                                     }
           | FuncPrefix.GetBytes   => def parm = Parms.First();
-                                    $<#bytesn(&$(parm), sizeof($(parm)))#>
+                                    $<#bytesn((void *)&$(parm.Name), sizeof($(parm.Name)))#>
           | _                     => 
             def parms = parms.Map(x => gen.ConvExpr(x, false));
             $<#$Name(..$(parms; ","))#>

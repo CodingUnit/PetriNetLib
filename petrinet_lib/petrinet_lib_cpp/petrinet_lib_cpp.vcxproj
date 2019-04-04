@@ -149,11 +149,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\arm_lib\arm_lib_hal\bits.h" />
-    <ClInclude Include="..\arm_lib\arm_lib_hal\common.h" />
     <ClInclude Include="..\arm_lib\arm_lib_hal\common_hal.h" />
     <ClInclude Include="..\arm_lib\arm_lib_hal\lib_incl.h" />
     <ClInclude Include="..\arm_lib\arm_lib_hal\memory.h" />
     <ClInclude Include="..\arm_lib\atomic.h" />
+    <ClInclude Include="..\arm_lib\common.h" />
     <ClInclude Include="..\arm_lib\event_queue32.h" />
     <ClInclude Include="..\arm_lib\lib_incl.h" />
     <ClInclude Include="..\arm_lib\math.h" />

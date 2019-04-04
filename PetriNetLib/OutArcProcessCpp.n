@@ -61,7 +61,7 @@ namespace PetriNetLib
       [Memoize]
       get
       {
-        transition.IsCopyVar(place, arc)
+        transition.IsCopyVarOut(place, arc)
       }
     }
 
@@ -222,9 +222,10 @@ namespace PetriNetLib
                     $<#$ctx$(name).exec_ref($add);#> else
                     $<#$ctx$(name).exec($add);#>
                 | Some(PortType.InOut) => 
+                    def parm = place.Colour.ParmType;
                     if (place.Colour.IsComplexType) 
-                    $<#$(ctx)bool in = $(name).exec_ref_ret_bool($add);#> else
-                    $<#$(ctx)bool in = $(name).exec_ret<bool>($add);#>
+                    $<#$(ctx)bool in = $(name).exec_ret<bool, $parm>($add);#> else
+                    $<#$(ctx)bool in = $(name).exec_ret<bool, $parm>($add);#>
                 | _ => match (place.DestContainerType)
                        {
                          | ZeroSingle // имеет 0 или 1 фишку, для отсутствия используется 0 если INT
@@ -238,9 +239,9 @@ namespace PetriNetLib
                                           $<#$ctx$(name) = $add;
                                           $(name)_flag = true;#>
                                         }
-                                        | _ => def (ctx, (var, add)) = add_ctx_expr(_ => add_token_ptr_expr);
+                         | _ => def (ctx, (var, add)) = add_ctx_expr(_ => add_token_ptr_expr);
                                                //def (var, add) = add_token_ptr_expr;
-                                               $<#$ctx$var$name.add(&$add);#>
+                                $<#$ctx$var$name.add((void *)&$add);#>
                        }
               }
               

@@ -222,7 +222,8 @@ namespace PetriNetLib
       def name = place.Name;
       def type = place.Colour.VarSpec;
       def (tran, group) = place.OutputGenTransitions.Partition(x => !x.IsPartOfGroupTransition);
-      def tran = tran.Where(x => (x.IsImmediate && !x.IsPartOfGroupTransition) || x.Name == name).Map(x => $"$(x.Name)();");                  
+      def tran = if (tran.Find(x => x.Name == name) is Some(t)) [t] else tran.Where(x => x.IsImmediate && !x.IsPartOfGroupTransition);                  
+      def tran = tran.Map(x => $"$(x.ExecName)();");
       def tran = if (group.IsEmpty()) $<#..$(tran;"\n")#> else $"$(group.First().GroupName.Value)();";//Map(x => x.PartOfGroup.Value).First() |> Some;
       //def tran = if (group is Some(g)) $"GroupTransition$g" else tran;
       def expr = place.AddPlaceExpr(<[ param ]>);
@@ -297,16 +298,20 @@ namespace PetriNetLib
     }
 
     
-    internal TypeOfVar(name : string) : string
+    internal ColourOfVar(name : string) : GenColourCpp
     {
       match (model.vars.Find(x => x.Key == name))
       {
-        | Some(x) => def col = colours[x.Value.name];
-                     col.VarSpec
-        | _       => ""
+        | Some(x) => colours[x.Value.name];
+        | _       => null
       }
     }
 
+    internal TypeOfVar(name : string) : string
+    {
+      ColourOfVar(name)?.VarSpec
+    }
+    
     mutable expr_ctx : option[GenPlaceCpp] = None();
     
     internal ConvExprPlaceCtx(expr : PExpr, ctx : GenPlaceCpp, statement : bool = false) : string

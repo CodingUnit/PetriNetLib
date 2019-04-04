@@ -69,9 +69,6 @@
     <ClInclude Include="..\arm_lib\arm_lib_hal\bits.h">
       <Filter>Исходные файлы\arm_lib\arm_lib_hal</Filter>
     </ClInclude>
-    <ClInclude Include="..\arm_lib\arm_lib_hal\common.h">
-      <Filter>Исходные файлы\arm_lib\arm_lib_hal</Filter>
-    </ClInclude>
     <ClInclude Include="..\arm_lib\arm_lib_hal\common_hal.h">
       <Filter>Исходные файлы\arm_lib\arm_lib_hal</Filter>
     </ClInclude>
@@ -86,6 +83,9 @@
     </ClInclude>
     <ClInclude Include="..\include.h">
       <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="..\arm_lib\common.h">
+      <Filter>Исходные файлы\arm_lib</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

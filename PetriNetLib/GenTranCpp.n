@@ -30,7 +30,7 @@ namespace PetriNetLib
       this == tr : object
     }
     
-    public IsCopyVar(place : GenPlaceCpp, arc : Arc) : bool
+    public IsCopyVarInOut(place : GenPlaceCpp, arc : Arc) : bool
     {
         match (arc.ExprWithoutTime)
         {
@@ -53,8 +53,85 @@ namespace PetriNetLib
               {
                 match (places.Find((p, _) => place == p : object))
                 {
-                  | Some((_, Arc(ExprWithoutTime = <[ $(n2 : usesite) ]>))) when (n == n2) => true
-                  | _                                                                      => false
+                  | Some((_, Arc(ExprWithoutTime = <[ $(n2 : usesite) ]>))) 
+                      when (n == n2) => true
+                  | _                => false
+                }
+              }
+              
+            match (arc.from)
+            {
+              | ArcSource.PlaceEnd      => check(OutputPlacesArcs)
+              | ArcSource.TransitionEnd => check(InputPlacesArcs)
+            }
+          | _ => false  
+        }
+    }
+    
+    public IsCopyVar(place : GenPlaceCpp, arc : Arc) : bool
+    {
+        match (arc.ExprWithoutTime)
+        {
+          | <[ () ]>             =>
+              def check2(places)
+              {
+                match (places.Find((p, _) => place == p : object))
+                {
+                  | Some((_, Arc(ExprWithoutTime = <[ () ]>))) => true
+                  | _                                          => false
+                }
+              }
+              match (arc.from)
+              {
+                | ArcSource.PlaceEnd      => check2(OutputPlacesArcs)
+                | ArcSource.TransitionEnd => check2(InputPlacesArcs)
+              }
+          | <[ $(n : usesite) ]> when arc.IsSimpleTimeExprOrNotTime => 
+              def check(places)
+              {
+                match (places.Find((p, _) => place == p : object))
+                {
+                  | Some((_, Arc(ExprWithoutTime = <[ $(n2 : usesite) ]>, IsSimpleTimeExprOrNotTime = true))) 
+                      when (n == n2) => true
+                  | _                => false
+                }
+              }
+              
+            match (arc.from)
+            {
+              | ArcSource.PlaceEnd      => check(OutputPlacesArcs)
+              | ArcSource.TransitionEnd => check(InputPlacesArcs)
+            }
+          | _ => false  
+        }
+    }
+    
+    public IsCopyVarOut(place : GenPlaceCpp, arc : Arc) : bool
+    {
+        match (arc.ExprWithoutTime)
+        {
+          | <[ () ]>             =>
+              def check2(places)
+              {
+                match (places.Find((p, _) => place == p : object))
+                {
+                  | Some((_, Arc(ExprWithoutTime = <[ () ]>))) => true
+                  | _                                          => false
+                }
+              }
+              match (arc.from)
+              {
+                | ArcSource.PlaceEnd      => check2(OutputPlacesArcs)
+                | ArcSource.TransitionEnd => check2(InputPlacesArcs)
+              }
+          | <[ $(n : usesite) ]> => 
+              def check(places)
+              {
+                match (places.Find((p, _) => place == p : object))
+                {
+                  | Some((_, Arc(ExprWithoutTime = <[ $(n2 : usesite) ]>))) 
+                      when (n == n2) => true
+                  | _                => false
                 }
               }
               
@@ -90,6 +167,14 @@ namespace PetriNetLib
       get
       {
         PartOfGroup.HasValue
+      }
+    }
+    
+    public ExecName : string
+    {
+      get
+      {
+        if (IsUnnamed) Name else $"tran_$Name"
       }
     }
     
@@ -171,8 +256,9 @@ namespace PetriNetLib
       {
         def body = TranBody;
         def places = PlacesParticipateMask;
-        def out_tran = OutputGenPlaces.SelectMany(x => x.OutputGenTransitions);
-        def tr_next = out_tran.Where(x => x.IsImmediate && !x.IsTimed && !x.IsPartOfFuncPlace);
+        def out_tran = OutputGenPlaces.SelectMany(x => x.OutputGenTransitions.Select(y => (x, y)));
+        def tr_next = out_tran.Where((p, x : GenTranCpp) => (x.IsImmediate && !x.IsTimed && !x.IsPartOfFuncPlace) || p.port is Some(PortType.In) && x.Name == p.Name)
+                      .Select((_, x : GenTranCpp) => x);
         
         def next_tran(x)
         {
@@ -184,7 +270,7 @@ namespace PetriNetLib
         }
           
         def tr_next = tr_next.Map(next_tran);
-        def tr_next = tr_next.Map((x, p) => $<#$(x.Name)($p);#>);
+        def tr_next = tr_next.Map((x, p) => $<#$(x.ExecName)($p);#>);
         def tr = if (PartOfGroup is Some(g)) $"tr_GroupTransition$g" else $"tr_$(Name)";
         if (tr_next.IsEmpty())
         $<#bool res = false;

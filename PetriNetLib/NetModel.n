@@ -342,6 +342,21 @@ namespace PetriNetLib
       }
     }
     
+    public IsSimpleTimeExprOrNotTime : bool
+    {
+      [Memoize]
+      get
+      {
+        if (TimeExpr is <[]>) true else
+        match (expr)
+        {
+          | <[ $_(Delay($(_ : int))) ]>
+          | <[ $_ %@+ $(_ : int)]>  => true
+          | _                       => false
+        }
+      }
+    }
+    
     public ExprWithoutTime : PExpr
     {
       [Memoize]

@@ -31,6 +31,15 @@ namespace PetriNetLib
       }
     }
     
+    public IsCopyVarIO : bool
+    {
+      [Memoize]
+      get
+      {
+        transition.IsCopyVarInOut(place, arc)
+      }
+    }
+    
     public priority : int
     {
       [Memoize]
@@ -97,15 +106,15 @@ namespace PetriNetLib
       if (place.IsIndexedContainer)
         $<#$name.peek_indexed($n)#> else
       {
+        def ty = place.Colour.DestType;
         match (place.DestContainerType)
         {
           | ZeroSingle // имеет 0 или 1 фишку, для отсутствия используется 0 если INT
           | MinusSingle
           | Var    // имеет 1 фишку, аналогично обычному полю
-          | Single => $<#$name#>// имеет 0 или 1 фишку, для отсутствия использует отдельный флаг
-          | ReqContainer => def ty = place.Colour.DestType;
-                            $<#$name.exec_ret<$ty>()#>
-          | _      => $<#$name.peek()#>    // значение запрашивается из внешней функции
+          | Single       => $<#$name#>// имеет 0 или 1 фишку, для отсутствия использует отдельный флаг
+          | ReqContainer => $<#$name.exec_ret<$ty>()#>
+          | _            => $<#*($ty *)$name.peek()#>    // значение запрашивается из внешней функции
         }
         
       }
@@ -251,7 +260,9 @@ namespace PetriNetLib
                                     
                                     def bind = e.Select(bind_tuple_elem);
                                     $<#..$(bind;"\n")#>
-          | <[ $(n : usesite) ]> => def ty = gen.TypeOfVar(n);
+          | <[ $(n : usesite) ]> when !IsCopyVar => 
+                                    def col = gen.ColourOfVar(n);
+                                    def ty = col.VarSpec;
                                     if (place.IsIndexedContainer) 
                                     {
                                       def idx = idx_name(n);
@@ -260,7 +271,7 @@ namespace PetriNetLib
                                     } else
                                     if (NextFuncTranArcProcess is Some(tran))
                                     {
-                                      def copy = if (tran.place.Colour.IsComplexType) $"$NextFuncTranArcVar = *$n;" else $"$NextFuncTranArcVar = $n;";
+                                      def copy = if (tran.place.Colour.IsComplexType) $"$NextFuncTranArcVar = &$n;" else $"$NextFuncTranArcVar = $n;";
                                       $<#$ty$n = $(source_token_peek(""));
                                       $copy
                                       #>
@@ -366,6 +377,7 @@ namespace PetriNetLib
             | Single       => $<#$(name)_flag = false;#>
             | ZeroSingle   => $<#$(name) = 0;#>
             | MinusSingle  => $<#$(name) = -1;#>
+            | TokenQueue   => $<#$name.get();#>
             | _            => other()
           }
         }
@@ -373,7 +385,7 @@ namespace PetriNetLib
         if (place.IsFuncPlace || transition.IsFuncTran) "" else
         match (arc_kind)
         {
-         | ArcKind.Normal         => if (IsCopyVar) "" else cont_proc(_ => extract(expr))
+         | ArcKind.Normal         => if (IsCopyVarIO) "" else cont_proc(_ => extract(expr))
          | ArcKind.Reset          => cont_proc(_ => $<#$name.get_all();#>)
          | _                      => ""
         }

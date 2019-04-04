@@ -51,12 +51,12 @@ namespace PetriNetLib
       //def participate_tran = out_tran;
       
       //def tr_pl_mask = participate_tran.Where(x => x.IsImmediate && !x.IsTimed && !x.IsPartOfFuncPlace);//.Map(x => $"tr_$(x.Name)");//, x.InputPlaces.Select(x => x[0]) |> mask_for_places));
-      def tr_comp_mask = if (tran.IsImmediate && !tran.IsPartOfGroupTransition && !tran.IsTimed && !tran.IsPartOfFuncPlace) $"tr_$(tran.Name)" else "0";
+      def tr_comp_mask = if (tran.IsImmediate && !tran.IsPartOfGroupTransition && !tran.IsTimed && !tran.IsPartOfFuncPlace && !tran.IsFuncTran) $"tr_$(tran.Name)" else "0";
       //def tr_mask = tr_pl_mask.Fold("", (t, a) => if (a.IsEmpty()) t else $"$t | $a");
       //def tr_mask = if (tr_mask.IsEmpty()) "0" else tr_mask;
       def tr_ena = if (tr_comp_mask == "0") "" else $"tran_ena($tr_comp_mask);";
       //def tr_next = tr_pl_mask.Map(x => $<#$(x.Name)();#>);
-      def res = if (tran.IsPartOfFuncPlace) [] else if (output.Exists(x => x[0].port is Some(PortType.InOut)))
+      def res = if (tran.IsPartOfFuncPlace || tran.IsFuncTran) [] else if (output.Exists(x => x[0].port is Some(PortType.InOut)))
                                                     ["res = in;"] else
                                                     ["res = true;"];
       def body = extract + (code :: add_body) + [tr_ena] + res;
@@ -173,22 +173,26 @@ namespace PetriNetLib
     
     CreateTran(tran : GenTranCpp) : string
     {
-      def name = tran.Name;
-      def body = tran.Body;      
+      def name = tran.ExecName;
+      
       if (tran.IsFuncTran)
       {
+        def body = tran.TranBody;      
         def parms = tran.InArcProcess.Map(x => $"$(x.place.Colour.VarSpec)$(x.bind_var)");
-        $<#bool $name(..$(parms; ","))
+        $<#void $name(..$(parms; ","))
             {
               $body
             }
           #>
       } else
+      {
+        def body = tran.Body;      
         $<#bool $name()
             {
               $body
             }
           #>//)
+        }
     }
 
   }
