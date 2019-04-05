@@ -312,6 +312,7 @@ namespace PetriNetLib
         def tran = OutputGenTransitions.Where(x => x.IsImmediate);
         !InputTransitions.IsEmpty() && // есть входные переходы
          tran.Count() == 1           && // один выходной переход
+         (init_mark is <[]> || init_mark == null) && // нет начальной маркировки
          tran.First().guard is <[]>  && // нет сторожевого условия
         !tran.First().IsTimed       && // переход не временной
          (port.IsNone || port is Some(PortType.InOut)) && // не порт

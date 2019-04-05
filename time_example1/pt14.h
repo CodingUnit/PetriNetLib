@@ -26,25 +26,25 @@ public:
 	struct TSYNC
 	{
 		TSYNC() {}
-		TSYNC(int field0, bool field1)
+		TSYNC(int field1, bool field2)
 		{
-			this->field0 = field0;
 			this->field1 = field1;
+			this->field2 = field2;
 		}
 
 		TSYNC(const tuple2<int, bool> &tup)
 		{
-			field0 = tup.field0;
 			field1 = tup.field1;
+			field2 = tup.field2;
 		}
 
-		int field0;
-		bool field1;
+		int field1;
+		bool field2;
 
 		void operator=(const tuple2<int, bool> &tup)
 		{
-			field0 = tup.field0;
 			field1 = tup.field1;
+			field2 = tup.field2;
 		}
 	};
 
@@ -55,25 +55,25 @@ public:
 	struct INTxINT
 	{
 		INTxINT() {}
-		INTxINT(int field0, int field1)
+		INTxINT(int field1, int field2)
 		{
-			this->field0 = field0;
 			this->field1 = field1;
+			this->field2 = field2;
 		}
 
 		INTxINT(const tuple2<int, int> &tup)
 		{
-			field0 = tup.field0;
 			field1 = tup.field1;
+			field2 = tup.field2;
 		}
 
-		int field0;
 		int field1;
+		int field2;
 
 		void operator=(const tuple2<int, int> &tup)
 		{
-			field0 = tup.field0;
 			field1 = tup.field1;
+			field2 = tup.field2;
 		}
 	};
 
@@ -88,54 +88,54 @@ public:
 	struct BYTES_BOOL
 	{
 		BYTES_BOOL() {}
-		BYTES_BOOL(const bytes &field0, bool field1)
+		BYTES_BOOL(const bytes &field1, bool field2)
 		{
-			this->field0 = field0;
 			this->field1 = field1;
+			this->field2 = field2;
 		}
 
 		BYTES_BOOL(const tuple2<bytesn, bool> &tup)
 		{
-			field0 = tup.field0;
 			field1 = tup.field1;
+			field2 = tup.field2;
 		}
 
-		bytesn field0;
-		bool field1;
+		bytesn field1;
+		bool field2;
 
 		void operator=(const tuple2<bytesn, bool> &tup)
 		{
-			field0 = tup.field0;
 			field1 = tup.field1;
+			field2 = tup.field2;
 		}
 	};
 
 	struct CAN_MESSAGE
 	{
 		CAN_MESSAGE() {}
-		CAN_MESSAGE(int field0, long long field1, const bytes &field2)
+		CAN_MESSAGE(int field1, long long field2, const bytes &field3)
 		{
-			this->field0 = field0;
 			this->field1 = field1;
 			this->field2 = field2;
+			this->field3 = field3;
 		}
 
 		CAN_MESSAGE(const tuple3<int, long long, bytes8> &tup)
 		{
-			field0 = tup.field0;
 			field1 = tup.field1;
 			field2 = tup.field2;
+			field3 = tup.field3;
 		}
 
-		int field0;
-		long long field1;
-		bytes8 field2;
+		int field1;
+		long long field2;
+		bytes8 field3;
 
 		void operator=(const tuple3<int, long long, bytes8> &tup)
 		{
-			field0 = tup.field0;
 			field1 = tup.field1;
 			field2 = tup.field2;
+			field3 = tup.field3;
 		}
 	};
 
@@ -166,54 +166,54 @@ public:
 	struct CONTROL_MSG
 	{
 		CONTROL_MSG() {}
-		CONTROL_MSG(u8 field0, u16 field1, u32 field2)
+		CONTROL_MSG(u8 field1, u16 field2, u32 field3)
 		{
-			this->field0 = field0;
 			this->field1 = field1;
 			this->field2 = field2;
+			this->field3 = field3;
 		}
 
 		CONTROL_MSG(const tuple3<u8, u16, u32> &tup)
 		{
-			field0 = tup.field0;
 			field1 = tup.field1;
 			field2 = tup.field2;
+			field3 = tup.field3;
 		}
 
-		u8 field0;
-		u16 field1;
-		u32 field2;
+		u8 field1;
+		u16 field2;
+		u32 field3;
 
 		void operator=(const tuple3<u8, u16, u32> &tup)
 		{
-			field0 = tup.field0;
 			field1 = tup.field1;
 			field2 = tup.field2;
+			field3 = tup.field3;
 		}
 	};
 
 	struct CONTROL_MSG_BOOL
 	{
 		CONTROL_MSG_BOOL() {}
-		CONTROL_MSG_BOOL(const CONTROL_MSG &field0, bool field1)
+		CONTROL_MSG_BOOL(const CONTROL_MSG &field1, bool field2)
 		{
-			this->field0 = field0;
 			this->field1 = field1;
+			this->field2 = field2;
 		}
 
 		CONTROL_MSG_BOOL(const tuple2<CONTROL_MSG, bool> &tup)
 		{
-			field0 = tup.field0;
 			field1 = tup.field1;
+			field2 = tup.field2;
 		}
 
-		CONTROL_MSG field0;
-		bool field1;
+		CONTROL_MSG field1;
+		bool field2;
 
 		void operator=(const tuple2<CONTROL_MSG, bool> &tup)
 		{
-			field0 = tup.field0;
 			field1 = tup.field1;
+			field2 = tup.field2;
 		}
 	};
 
@@ -243,7 +243,8 @@ private:
 		pl_CAN_OUT = 0x80000,
 		pl_CAN = 0x100000,
 		pl_UDP_OUT = 0x200000,
-		pl_ControlCheck = 0x400000
+		pl_ControlCheck = 0x400000,
+		pl_STEP = 0x800000
 	} tplace;
 	bool DPS;
 	u32 SYNC;
@@ -279,6 +280,7 @@ private:
 	token_queue CAN;
 	CONTROL_MSG_BOOL ControlCheck;
 	bool ControlCheck_flag;
+	int STEP;
 
 
 	typedef bool (pt14::*tran_func_type)();
@@ -291,7 +293,7 @@ private:
 		tr_UnnamedTransition0 = 0x8,
 		tr_UnnamedTransition2 = 0x10,
 		tr_UnnamedTransition3 = 0x20,
-		tr_DPS = 0x40,
+		tr_tran_DPS = 0x40,
 		tr_UnnamedTransition4 = 0x80,
 		tr_UnnamedTransition7 = 0x100,
 		tr_UnnamedTransition8 = 0x200,
@@ -366,8 +368,8 @@ private:
 				const CAN_UDP_MESSAGE &m = UDP_IN;
 				UDP_IN_flag = false;
 				;
-				CAN_MESSAGE _N__4334 = udp2can(m);
-				CAN.add((void *)&_N__4334);
+				CAN_MESSAGE _N__4335 = udp2can(m);
+				CAN.add((void *)&_N__4335);
 				res = true;
 			};
 			unlock(pl_CAN | pl_UDP_IN);
@@ -401,17 +403,18 @@ private:
 	bool tran_DPS()
 	{
 		bool res = false;
-		if (lock(pl_COUNTER | pl_UDP_OUT | pl_DELAY | pl_SSI | pl_SYNC | pl_DPS, tr_DPS))
+		if (lock(pl_COUNTER | pl_UDP_OUT | pl_STEP | pl_DELAY | pl_SSI | pl_SYNC | pl_DPS, tr_tran_DPS))
 		{
+			int st = STEP;
 			const bytes8 &ssi = SSI.exec_ret<bytes8>();
 			int n = SYNC;
 			bool dir = DPS;
 			;
-			SYNC = n + 1;
+			SYNC = n + st;
 			UDP_SEND(CAN_MESSAGE(663, time64(), get_ssi_bytes.exec_ret<bytesn, int, bool, int, const bytes &>(n, dir, 1, ssi)));
 			SYNC_BUF(1);
 			res = true;;
-			unlock(pl_COUNTER | pl_UDP_OUT | pl_DELAY | pl_SSI | pl_SYNC | pl_DPS);
+			unlock(pl_COUNTER | pl_UDP_OUT | pl_STEP | pl_DELAY | pl_SSI | pl_SYNC | pl_DPS);
 		}
 		return res;
 	}
@@ -443,17 +446,17 @@ private:
 		{
 			if (BatLevel_flag)
 			{
-				u8 bt = BatLevel.field0;
-				int n = BatLevel.field1;
+				u8 bt = BatLevel.field1;
+				int n = BatLevel.field2;
 				int inp = BUTTONS;
 				BatLevel_flag = false;
 				;
 
 				BinTimer_time = time() + 1000000;
-				s16 _N__4357[] = { (SHORT)bt, n };
-				UDP_AND_CAN_SEND(CAN_MESSAGE(336, time64(), bytes4((u8 *)_N__4357)));
-				u8 _N__4358[] = { (BYTE)1, inp };
-				UDP_AND_CAN_SEND(CAN_MESSAGE(721, time64(), bytes2((u8 *)_N__4358)));
+				s16 _N__4358[] = { (SHORT)bt, n };
+				UDP_AND_CAN_SEND(CAN_MESSAGE(336, time64(), bytes4((u8 *)_N__4358)));
+				u8 _N__4359[] = { (BYTE)1, inp };
+				UDP_AND_CAN_SEND(CAN_MESSAGE(721, time64(), bytes2((u8 *)_N__4359)));
 				res = true;
 			};
 			unlock(pl_COUNTER | pl_UDP_OUT | pl_CAN | pl_CAN_OUT | pl_BatLevel | pl_BinTimer | pl_BUTTONS);
@@ -535,8 +538,8 @@ private:
 		{
 			if (ADC_SUM_flag)
 			{
-				int sum = ADC_SUM.field0;
-				int n = ADC_SUM.field1;
+				int sum = ADC_SUM.field1;
+				int n = ADC_SUM.field2;
 				int q = ADC.exec_ret<int>();
 				if (n < 10)
 				{
@@ -565,8 +568,8 @@ private:
 		{
 			if (ADC_SUM_flag)
 			{
-				int sum = ADC_SUM.field0;
-				int n = ADC_SUM.field1;
+				int sum = ADC_SUM.field1;
+				int n = ADC_SUM.field2;
 				if (n >= 10)
 				{
 					ADC_SUM_flag = false;
@@ -627,8 +630,8 @@ private:
 		{
 			if (ControlCheck_flag)
 			{
-				const CONTROL_MSG &cnm = ControlCheck.field0;
-				bool ok = ControlCheck.field1;
+				const CONTROL_MSG &cnm = ControlCheck.field1;
+				bool ok = ControlCheck.field2;
 				if (ok)
 				{
 					ControlCheck_flag = false;
@@ -651,6 +654,7 @@ private:
 			if (SyncFreq)
 			{
 				int freq = SyncFreq;
+				SyncFreq = 0;
 				;
 
 				SyncFreq_time = time() + 1000000 / freq;
@@ -682,7 +686,9 @@ private:
 
 	CAN_MESSAGE  bt2can_message(int bt)
 	{
-		return CAN_MESSAGE(721, time(), bytes2((u8 *)_N__4365));
+		u8 _N__4366[] = { (BYTE)1, bt };
+
+		return CAN_MESSAGE(721, time(), bytes2((u8 *)_N__4366));
 	}
 
 	bool is_sens(const CAN_UDP_MESSAGE &m)
@@ -780,9 +786,8 @@ protected:
 
 public:
 
-	pt14(int time_step = 15)
+	pt14(int time_step = 15) : timed_petri_net32(time_step)
 	{
-		timed_petri_net32(time_step);
 		DPS = false;
 		SYNC = 0;
 		BUTTONS = 0;
@@ -790,7 +795,6 @@ public:
 		CAN_IN_flag = false;
 		GPS_flag = false;
 		SEND_DEBUG_flag = false;
-		SYNC_BUF = 0;
 		DELAY = 1;
 		DELAY_time = 0;
 		BinTimer = 1;
@@ -798,24 +802,23 @@ public:
 		SyncFreq = 0;
 		TempTimer = 1;
 		TempTimer_time = 500000;
-		SEND_SENS = 0;
 		BatLevel_flag = false;
 		TIMER = 1;
 		TIMER_time = 0;
-		ADC_SUM = tuple2(0, 0);
+		ADC_SUM = INTxINT(0, 0);
 		ADC_SUM_flag = true;
 		DEBUG_TIMER = 1;
 		DEBUG_TIMER_time = 0;
 		COUNTER = 0;
-		CAN_OUT_flag = false;
 		ControlCheck_flag = false;
+		STEP = 1;
 		tran_funcs[0] = &pt14::UnnamedTransition1;
 		tran_funcs[1] = &pt14::UnnamedTransition9;
 		tran_funcs[2] = &pt14::GroupTransition921;
 		tran_funcs[3] = &pt14::UnnamedTransition0;
 		tran_funcs[4] = &pt14::UnnamedTransition2;
 		tran_funcs[5] = &pt14::UnnamedTransition3;
-		tran_funcs[6] = &pt14::DPS;
+		tran_funcs[6] = &pt14::tran_DPS;
 		tran_funcs[7] = &pt14::UnnamedTransition4;
 		tran_funcs[8] = &pt14::UnnamedTransition7;
 		tran_funcs[9] = &pt14::UnnamedTransition8;
@@ -896,18 +899,6 @@ public:
 		tran_DPS();
 	}
 
-	void add_SSI(const bytes8 &param)
-	{
-		SSI.add(param);
-		UnnamedTransition6();
-	}
-
-	void add_TEMP(int param)
-	{
-		TEMP.add(param);
-		UnnamedTransition8();
-	}
-
 	void add_BUTTONS(u8 param)
 	{
 		BUTTONS = param;
@@ -929,10 +920,10 @@ public:
 		UnnamedTransition3();
 	}
 
-	void add_ADC(int param)
+	void add_STEP(int param)
 	{
-		ADC.add(param);
-		UnnamedTransition12();
+		STEP = param;
+
 	}
 
 	function CAN_OUT;

@@ -342,19 +342,44 @@ namespace PetriNetLib
       }
     }
     
-    public IsSimpleTimeExprOrNotTime : bool
+    public IsUseVarComplex(n : string) : bool
     {
-      [Memoize]
-      get
+      mutable res = 0;
+      
+      def check(_, _, e)
       {
-        if (TimeExpr is <[]>) true else
-        match (expr)
+        match (e)
         {
-          | <[ $_(Delay($(_ : int))) ]>
-          | <[ $_ %@+ $(_ : int)]>  => true
-          | _                       => false
+          | <[ $(n2 : usesite)]> when n2 == n => res = 1;e
+          | e                                 => e
         }
       }
+      
+      match (expr)
+      {
+        // если простое выражение выход false это не сложное выражение
+        | <[ $(n2 : usesite)]> when n2 == n => false
+        | _                                 => _ = Macros.TraverseExpr(None(), expr, false, check);
+                                               res != 0
+      }
+    }
+    
+    public IsUseVar(n : string) : bool
+    {
+      mutable res = 0;
+      
+      def check(_, _, e)
+      {
+        match (e)
+        {
+          | <[ $(n2 : usesite)]> when n2 == n => res = 1;e
+          | e                                 => e
+        }
+      }
+      
+      // проходим по всем выражениям если находим использование переменной то устанавливаем в 1
+      _ = Macros.TraverseExpr(None(), expr, false, check);
+      res != 0
     }
     
     public ExprWithoutTime : PExpr

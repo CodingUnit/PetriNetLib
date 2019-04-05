@@ -452,7 +452,7 @@ namespace PetriNetLib
     {
       match (col.Colour)
       {
-        | ColourSet(n, Colour.Product(vals))   => def fnames = vals.MapI((i, t) => ($"field$(i)", t));
+        | ColourSet(n, Colour.Product(vals))   => def fnames = vals.MapI((i, t) => ($"field$(i + 1)", t));
                                                   def ctor = fnames.Map(ConvParm);
                                                   def ftypes = fnames.Map((n, t) => (n, colours[t].DestType));
                                                   def fields = ftypes.Map((n, t) => $"$t $n;");
@@ -581,7 +581,7 @@ namespace PetriNetLib
       if (place.init_mark == null) null else
       {
         def markexpr = fold(place.init_mark);
-        def mark = markexpr |> ConvExpr(_, false);
+        def mark = markexpr |> ConvExprPlaceCtx(_, place, false);
         def name = place.Name;
         
         
@@ -610,7 +610,10 @@ namespace PetriNetLib
           }
         } else "";
         //<[ $(name : usesite).Add($mark)]>
-        if (place.port is Some(PortType.In) && place.Req) "" else
+        if ((place.port is Some(PortType.In) && place.Req)
+            || place.port is Some(PortType.Out) 
+            || place.port is Some(PortType.InOut) 
+            || place.IsFuncPlace) "" else
         if (markexpr is <[]>)
         {
           match (place.DestContainerType)
@@ -654,9 +657,8 @@ namespace PetriNetLib
     {
       def marking = places.MapToList(CreateInitMarking).Filter(x => x != null && !x.IsEmpty());
       public_fields.Add(if (model.IsTimed || model.IsHaveImmediateTransitions) 
-      $<#$Name(int time_step = 15) 
-      { 
-        $Base(time_step);
+      $<#$Name(int time_step = 15) : $Base(time_step)
+      {
         ..$(marking;"\n")
         ..$(cons_expr;"\n")
       }#>; 
@@ -854,7 +856,7 @@ namespace PetriNetLib
       Define(vals + ["\n"]);//_ = typebuilder.DefineWithSource(m);
       def decls = funcs.Map(CreateDecl).Filter(_ != null);
       def (ext, decls) = decls.Partition(x => x.StartsWith("function"));
-      def in_ports = places.Where(x => x.port is Some(PortType.In)).MapToList(CreateInPortPlace);
+      def in_ports = places.Where(x => x.port is Some(PortType.In) && !x.Req).MapToList(CreateInPortPlace);
       def out_ports = places.Where(x => x.port is Some(PortType.Out) || x.port is Some(PortType.InOut)).MapToList(CreateOutPlace);
       def globrefs = model.glob_refs.KeyValuePairs.MapToList(CreateGlobRef);
       CreateCons();

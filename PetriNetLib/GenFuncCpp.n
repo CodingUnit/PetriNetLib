@@ -144,11 +144,14 @@ namespace PetriNetLib
       {
         def ret = ReturnType;
         def expr = Body.Map(gen.ConvExpr(_, true));
+        def ctx = gen.ReadCtxVar();
+        def ctx = if (!ctx.IsEmpty()) $<#..$(ctx; ",")
+        #> else "";
         def (last, expr) = expr.PartitionLast();
         def parms = Parms.Map(gen.ConvParm);
         def n = Name;
         $<#$ret $n(..$(parms; ","))
-          {..$(expr;";\n")
+          {$ctx..$(expr;";\n")
             return $last;
           }
           #>

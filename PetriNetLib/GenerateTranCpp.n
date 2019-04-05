@@ -149,7 +149,7 @@ namespace PetriNetLib
       protected_fields.Add(func);
       
       
-      def tran = transitions.Where(x => !x.IsPartOfFuncPlace && !x.IsFuncTran).Select(x => ($"$(x.Name)", x.priority));
+      def tran = transitions.Where(x => !x.IsPartOfFuncPlace && !x.IsFuncTran).Select(x => ($"$(x.ExecName)", x.priority));
       def groups = PlacesWithGroup.Select(x => x.OutputTransitions.Where(x => x[0].IsUnnamed));
       def groups = groups.Select(x => ("GroupTransition" + x.Fold("", ((x, _), a) => $"$(x.UnnamedIdx)$a"), x.Select(x => x[0].priority).Max()));
       def tran = groups.Concat(tran).OrderBy((_, p) => p);

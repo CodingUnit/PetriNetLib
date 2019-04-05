@@ -18,61 +18,30 @@ namespace PetriNetLib
   class GenTranCpp : Transition, IEquatable[GenTranCpp]
   {
     gen : CppGenerator;
-    
+
     public this(tran : Transition, gen : CppGenerator)
     {
       base(tran.idx, tran.id, tran.name, tran.guard, tran.time_expr, tran.code_segment, tran.priority, tran.net, tran.UnnamedIdx);
       this.gen = gen;
     }
-    
+
     public Equals(tr : GenTranCpp) : bool
     {
       this == tr : object
     }
-    
-    public IsCopyVarInOut(place : GenPlaceCpp, arc : Arc) : bool
-    {
-        match (arc.ExprWithoutTime)
-        {
-          | <[ () ]>             =>
-              def check2(places)
-              {
-                match (places.Find((p, _) => place == p : object))
-                {
-                  | Some((_, Arc(ExprWithoutTime = <[ () ]>))) => true
-                  | _                                          => false
-                }
-              }
-              match (arc.from)
-              {
-                | ArcSource.PlaceEnd      => check2(OutputPlacesArcs)
-                | ArcSource.TransitionEnd => check2(InputPlacesArcs)
-              }
-          | <[ $(n : usesite) ]> => 
-              def check(places)
-              {
-                match (places.Find((p, _) => place == p : object))
-                {
-                  | Some((_, Arc(ExprWithoutTime = <[ $(n2 : usesite) ]>))) 
-                      when (n == n2) => true
-                  | _                => false
-                }
-              }
-              
-            match (arc.from)
-            {
-              | ArcSource.PlaceEnd      => check(OutputPlacesArcs)
-              | ArcSource.TransitionEnd => check(InputPlacesArcs)
-            }
-          | _ => false  
-        }
-    }
-    
+
     public IsCopyVar(place : GenPlaceCpp, arc : Arc) : bool
     {
-        match (arc.ExprWithoutTime)
-        {
-          | <[ () ]>             =>
+      def is_use(n, a)
+      {
+        // выходные позиции с дугами исключая эту, использует это имя в разных выражениях
+        // или сложное выражение использует это имя
+        OutputPlacesArcs.Exclude(x => x[0] == place : object).Exists((_, a) => a.IsUseVar(n)) || a.IsUseVarComplex(n)
+      }
+
+      match (arc.ExprWithoutTime)
+      {
+        | <[ () ]>             =>
               def check2(places)
               {
                 match (places.Find((p, _) => place == p : object))
@@ -86,31 +55,32 @@ namespace PetriNetLib
                 | ArcSource.PlaceEnd      => check2(OutputPlacesArcs)
                 | ArcSource.TransitionEnd => check2(InputPlacesArcs)
               }
-          | <[ $(n : usesite) ]> when arc.IsSimpleTimeExprOrNotTime => 
+        | <[ $(n : usesite) ]> => 
               def check(places)
               {
-                match (places.Find((p, _) => place == p : object))
+                match (places.Find((p, _) => place : object == p))
                 {
-                  | Some((_, Arc(ExprWithoutTime = <[ $(n2 : usesite) ]>, IsSimpleTimeExprOrNotTime = true))) 
-                      when (n == n2) => true
+                  // если у места дуги с названиями без времени равны и выражение - переменная
+                  | Some((_, Arc(ExprWithoutTime = <[ $(n2 : usesite) ]>) as a)) 
+                      when (n == n2) => !is_use(n, a) // и не используется в других выходных дугах
                   | _                => false
                 }
               }
-              
+
             match (arc.from)
             {
               | ArcSource.PlaceEnd      => check(OutputPlacesArcs)
               | ArcSource.TransitionEnd => check(InputPlacesArcs)
             }
-          | _ => false  
-        }
+        | _ => false  
+      }
     }
-    
+
     public IsCopyVarOut(place : GenPlaceCpp, arc : Arc) : bool
     {
-        match (arc.ExprWithoutTime)
-        {
-          | <[ () ]>             =>
+      match (arc.ExprWithoutTime)
+      {
+        | <[ () ]>             =>
               def check2(places)
               {
                 match (places.Find((p, _) => place == p : object))
@@ -124,24 +94,25 @@ namespace PetriNetLib
                 | ArcSource.PlaceEnd      => check2(OutputPlacesArcs)
                 | ArcSource.TransitionEnd => check2(InputPlacesArcs)
               }
-          | <[ $(n : usesite) ]> => 
+        | <[ $(n : usesite) ]> => 
               def check(places)
               {
-                match (places.Find((p, _) => place == p : object))
+                match (places.Find((p, _) => place : object == p))
                 {
+                  // если у места дуги с названиями без времени равны и выражение - переменная
                   | Some((_, Arc(ExprWithoutTime = <[ $(n2 : usesite) ]>))) 
                       when (n == n2) => true
                   | _                => false
                 }
               }
-              
+
             match (arc.from)
             {
               | ArcSource.PlaceEnd      => check(OutputPlacesArcs)
               | ArcSource.TransitionEnd => check(InputPlacesArcs)
             }
-          | _ => false  
-        }
+        | _ => false  
+      }
     }
     
     public PartOfGroup : option[string]
@@ -151,7 +122,7 @@ namespace PetriNetLib
       {
         def places = InputGenPlaces;//
         def place = places.Where(x => !x.OutputGenTransitions.ElementsEqual((x, y) => x.priority == y.priority))
-                          .Map(x => (x, x.OutputGenTransitions.Where((x : Transition, _) => x.IsUnnamed)
+                       .Map(x => (x, x.OutputGenTransitions.Where((x : Transition, _) => x.IsUnnamed)
                           .Select(x => x[0])));
         match (place.Find(x => x[1].Contains(this)))
         {
@@ -160,8 +131,8 @@ namespace PetriNetLib
         }
       }
     }
-    
-     public IsPartOfGroupTransition : bool
+
+    public IsPartOfGroupTransition : bool
     {
       [Memoize]
       get
@@ -169,7 +140,7 @@ namespace PetriNetLib
         PartOfGroup.HasValue
       }
     }
-    
+
     public ExecName : string
     {
       get
@@ -177,7 +148,7 @@ namespace PetriNetLib
         if (IsUnnamed) Name else $"tran_$Name"
       }
     }
-    
+
     public GroupName : option[string]
     {
       [Memoize]
@@ -193,7 +164,7 @@ namespace PetriNetLib
         } else None()
       }
     }
-    
+
     public PlacesParticipate : list[GenPlaceCpp]
     {
       [Memoize]
@@ -201,18 +172,18 @@ namespace PetriNetLib
       {
         def to_func = OutputGenPlaces.Filter(_.IsFuncPlace);
         def places = if (!to_func.IsEmpty()) 
-        {
-          def outpath = to_func.SelectMany(x => x.PathThroughOrdinaryPlaces.Fold([], (x, a) => if (x is PetriNetNode.Place(p)) p :: a else a)).NToList();
-          InputGenPlaces + outpath
-        } else
-        {
-          def output = OutputGenPlaces.SelectMany(x => x.OutputGenTransitions.Where(x => x.IsFuncTran).SelectMany(x => x.OutputGenPlaces)).Concat(OutputGenPlaces);
-          InputGenPlaces.Concat(output).Distinct().NToList()
-        }
+                      {
+                        def outpath = to_func.SelectMany(x => x.PathThroughOrdinaryPlaces.Fold([], (x, a) => if (x is PetriNetNode.Place(p)) p :: a else a)).NToList();
+                        InputGenPlaces + outpath
+                      } else
+                      {
+                        def output = OutputGenPlaces.SelectMany(x => x.OutputGenTransitions.Where(x => x.IsFuncTran).SelectMany(x => x.OutputGenPlaces)).Concat(OutputGenPlaces);
+                        InputGenPlaces.Concat(output).Distinct().NToList()
+                      }
         places.Filter(x => !x.IsFuncPlace)
       }
     }
-    
+
     public PlacesParticipateMask : string
     {
       [Memoize]
@@ -221,7 +192,7 @@ namespace PetriNetLib
         PlacesParticipate.Fold("", (x, a) => if (a.IsEmpty()) $"pl_$(x.Name)" else $"pl_$(x.Name) | $a");
       }
     }
-    
+
     public IsFuncTran : bool
     {
       [Memoize]
@@ -230,7 +201,7 @@ namespace PetriNetLib
         InputGenPlaces.Exists(x => x.port is Some(PortType.InOut))
       }
     }
-    
+
     public InArcProcess : list[InArcBindingCpp]
     {
       [Memoize]
@@ -239,7 +210,7 @@ namespace PetriNetLib
         InputPlacesArcs.Map((x, a) => InArcBindingCpp(x, gen, this, [], a))
       }
     }
-    
+
     public OutArcProcess : list[OutArcProcessCpp]
     {
       [Memoize]
@@ -248,7 +219,7 @@ namespace PetriNetLib
         OutputPlacesArcs.Map((p, a) => OutArcProcessCpp(p, this, a, gen))
       }
     }
-    
+
     public Body : string
     {
       [Memoize]
@@ -258,8 +229,8 @@ namespace PetriNetLib
         def places = PlacesParticipateMask;
         def out_tran = OutputGenPlaces.SelectMany(x => x.OutputGenTransitions.Select(y => (x, y)));
         def tr_next = out_tran.Where((p, x : GenTranCpp) => (x.IsImmediate && !x.IsTimed && !x.IsPartOfFuncPlace) || p.port is Some(PortType.In) && x.Name == p.Name)
-                      .Select((_, x : GenTranCpp) => x);
-        
+                         .Select((_, x : GenTranCpp) => x);
+
         def next_tran(x)
         {
           if (x.IsFuncTran)
@@ -268,10 +239,10 @@ namespace PetriNetLib
             (x, var) 
           } else (x, "")
         }
-          
+
         def tr_next = tr_next.Map(next_tran);
         def tr_next = tr_next.Map((x, p) => $<#$(x.ExecName)($p);#>);
-        def tr = if (PartOfGroup is Some(g)) $"tr_GroupTransition$g" else $"tr_$(Name)";
+        def tr = if (PartOfGroup is Some(g)) $"tr_GroupTransition$g" else $"tr_$(ExecName)";
         if (tr_next.IsEmpty())
         $<#bool res = false;
               if (lock($places, $tr))
@@ -293,7 +264,7 @@ namespace PetriNetLib
               return res;#>
       }
     }
-    
+
     public TranBody : string
     {
       [Memoize]
@@ -302,7 +273,7 @@ namespace PetriNetLib
         gen.CreateTranBody(this);
       }
     }
-    
+
     public DfsIterator : IEnumerable[PetriNetNode]
     {
       [Memoize]
@@ -312,7 +283,7 @@ namespace PetriNetLib
         it.Dfs(this |> PetriNetNode.Tran).ToArray()
       }
     }
-    
+
     public PathThroughOrdinaryPlaces : IEnumerable[PetriNetNode]
     {
       [Memoize]
@@ -323,33 +294,33 @@ namespace PetriNetLib
           | PetriNetNode.Place(p) when p.IsTimed => false
           | _                                    => true
         }
-        
+
         DfsIterator.Visit(visit).ToArray()
       }
     }
-    
+
     public InputPlacesArcs : list[GenPlaceCpp * Arc]
     {
       [Memoize]
       get
       {
         gen.Places.MapIndex((p, i) => (p, gen.Proc.OutputMatrix[i, idx]))
-        .Filter((_, a) => a != null)
-        .SelectMany((p, a) => a.Map(x => (p, x))).NToList()
+          .Filter((_, a) => a != null)
+          .SelectMany((p, a) => a.Map(x => (p, x))).NToList()
       }
     }
-    
+
     public InputGenPlaces : list[GenPlaceCpp]
     {
       [Memoize]
       get
       {
         gen.Places.MapIndex((p, i) => (p, gen.Proc.OutputMatrix[i, idx]))
-        .Filter((_, a) => a != null)
-        .Map((p : GenPlaceCpp, _) => p)
+          .Filter((_, a) => a != null)
+          .Map((p : GenPlaceCpp, _) => p)
       }
     }
-    
+
     public IsPartOfFuncPlace : bool
     {
       [Memoize]
@@ -358,26 +329,26 @@ namespace PetriNetLib
         InputGenPlaces.Exists(x => x.IsFuncPlace && x.FuncTran == this : object)
       }
     }
-    
+
     public OutputPlacesArcs : list[GenPlaceCpp * Arc]
     {
       [Memoize]
       get
       {
         gen.Places.MapIndex((p, i) => (p, gen.Proc.InputMatrix[i, idx]))
-        .Filter((_, a) => a != null)
-        .SelectMany((p, a) => a.Map(x => (p, x))).NToList()
+          .Filter((_, a) => a != null)
+          .SelectMany((p, a) => a.Map(x => (p, x))).NToList()
       }
     }
-    
+
     public OutputGenPlaces : list[GenPlaceCpp]
     {
       [Memoize]
       get
       {
         gen.Places.MapIndex((p, i) => (p, gen.Proc.InputMatrix[i, idx]))
-        .Filter((_, a) => a != null)
-        .Map((p, _) => p)
+          .Filter((_, a) => a != null)
+          .Map((p, _) => p)
       }
     }
   }

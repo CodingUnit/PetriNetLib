@@ -51,6 +51,10 @@ namespace petrinet_lib
 			}
 		}
 	public:
+    timed_petri_net32(int step) : petri_net32(step)
+    {
+      
+    }
 
 		void time_step()
 		{

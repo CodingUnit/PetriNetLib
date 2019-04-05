@@ -31,14 +31,14 @@ namespace PetriNetLib
       }
     }
     
-    public IsCopyVarIO : bool
-    {
-      [Memoize]
-      get
-      {
-        transition.IsCopyVarInOut(place, arc)
-      }
-    }
+    //public IsCopyVarIO : bool
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    transition.IsCopyVarInOut(place, arc)
+    //  }
+    //}
     
     public priority : int
     {
@@ -253,7 +253,7 @@ namespace PetriNetLib
                                       {
                                         | <[ $(n : usesite) ]> =>
                                             def ty = gen.TypeOfVar(n);
-                                            $"$ty$x = $(name).field$i;"
+                                            $"$ty$x = $(name).field$(i + 1);"
                                         | _ => throw InvalidOperationException()
                                       }
                                     }
@@ -385,7 +385,7 @@ namespace PetriNetLib
         if (place.IsFuncPlace || transition.IsFuncTran) "" else
         match (arc_kind)
         {
-         | ArcKind.Normal         => if (IsCopyVarIO) "" else cont_proc(_ => extract(expr))
+         | ArcKind.Normal         => if (IsCopyVar) "" else cont_proc(_ => extract(expr))
          | ArcKind.Reset          => cont_proc(_ => $<#$name.get_all();#>)
          | _                      => ""
         }
