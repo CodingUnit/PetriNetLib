@@ -144,15 +144,15 @@ public:
 	struct CAN_UDP_MESSAGE
 	{
 		CAN_UDP_MESSAGE() {}
-		CAN_UDP_MESSAGE(int COUNT, int ID, long long timestamp, const bytes &data)
+		CAN_UDP_MESSAGE(u16 COUNT, u16 ID, long long timestamp, const bytes &data)
 		{
 			this->COUNT = COUNT;
 			this->ID = ID;
 			this->timestamp = timestamp;
 			this->data = data;
 		}
-		int COUNT;
-		int ID;
+		u16 COUNT;
+		u16 ID;
 		long long timestamp;
 		bytesn data;
 	};
@@ -244,7 +244,8 @@ private:
 		pl_CAN = 0x100000,
 		pl_UDP_OUT = 0x200000,
 		pl_ControlCheck = 0x400000,
-		pl_STEP = 0x800000
+		pl_STEP = 0x800000,
+		pl_Init = 0x1000000
 	} tplace;
 	bool DPS;
 	u32 SYNC;
@@ -281,6 +282,7 @@ private:
 	CONTROL_MSG_BOOL ControlCheck;
 	bool ControlCheck_flag;
 	int STEP;
+	char Init;
 
 
 	typedef bool (pt14::*tran_func_type)();
@@ -303,10 +305,11 @@ private:
 		tr_UnnamedTransition13 = 0x2000,
 		tr_UnnamedTransition16 = 0x4000,
 		tr_UnnamedTransition18 = 0x8000,
-		tr_UnnamedTransition19 = 0x10000
+		tr_UnnamedTransition19 = 0x10000,
+		tr_UnnamedTransition20 = 0x20000
 	} ttran;
 
-	tran_func_type tran_funcs[17];
+	tran_func_type tran_funcs[18];
 
 	static const int P_LOW = 10000;
 	static const int P_NORMAL = 1000;
@@ -368,8 +371,8 @@ private:
 				const CAN_UDP_MESSAGE &m = UDP_IN;
 				UDP_IN_flag = false;
 				;
-				CAN_MESSAGE _N__4335 = udp2can(m);
-				CAN.add((void *)&_N__4335);
+				CAN_MESSAGE _N__4338 = udp2can(m);
+				CAN.add((void *)&_N__4338);
 				res = true;
 			};
 			unlock(pl_CAN | pl_UDP_IN);
@@ -453,10 +456,10 @@ private:
 				;
 
 				BinTimer_time = time() + 1000000;
-				s16 _N__4358[] = { (SHORT)bt, n };
-				UDP_AND_CAN_SEND(CAN_MESSAGE(336, time64(), bytes4((u8 *)_N__4358)));
-				u8 _N__4359[] = { (BYTE)1, inp };
-				UDP_AND_CAN_SEND(CAN_MESSAGE(721, time64(), bytes2((u8 *)_N__4359)));
+				s16 _N__4361[] = { (SHORT)bt, n };
+				UDP_AND_CAN_SEND(CAN_MESSAGE(336, time64(), bytes4((u8 *)_N__4361)));
+				u8 _N__4362[] = { (BYTE)1, inp };
+				UDP_AND_CAN_SEND(CAN_MESSAGE(721, time64(), bytes2((u8 *)_N__4362)));
 				res = true;
 			};
 			unlock(pl_COUNTER | pl_UDP_OUT | pl_CAN | pl_CAN_OUT | pl_BatLevel | pl_BinTimer | pl_BUTTONS);
@@ -669,6 +672,27 @@ private:
 		return res;
 	}
 
+	bool UnnamedTransition20()
+	{
+		bool res = false;
+		if (lock(pl_COUNTER | pl_UDP_OUT | pl_Init, tr_UnnamedTransition20))
+		{
+			if (Init)
+			{
+				Init = 0;
+				;
+				int _N__4368[] = { (USHORT)2, 256 };
+				UDP_SEND(CAN_MESSAGE(48, time64(), bytes8((u8 *)_N__4368)));
+				int _N__4369[] = { (USHORT)0, 0 };
+				UDP_SEND(CAN_MESSAGE(48, time64(), bytes8((u8 *)_N__4369)));
+				tran_ena(tr_UnnamedTransition20);
+				res = true;
+			};
+			unlock(pl_COUNTER | pl_UDP_OUT | pl_Init);
+		}
+		return res;
+	}
+
 	CAN_MESSAGE  control2can(const CONTROL_MSG &m)
 	{
 		return CAN_MESSAGE(80, time64(), bytesn((void *)&m, sizeof(m)));
@@ -686,9 +710,9 @@ private:
 
 	CAN_MESSAGE  bt2can_message(int bt)
 	{
-		u8 _N__4366[] = { (BYTE)1, bt };
+		u8 _N__4371[] = { (BYTE)1, bt };
 
-		return CAN_MESSAGE(721, time(), bytes2((u8 *)_N__4366));
+		return CAN_MESSAGE(721, time(), bytes2((u8 *)_N__4371));
 	}
 
 	bool is_sens(const CAN_UDP_MESSAGE &m)
@@ -812,6 +836,7 @@ public:
 		COUNTER = 0;
 		ControlCheck_flag = false;
 		STEP = 1;
+		Init = 1;
 		tran_funcs[0] = &pt14::UnnamedTransition1;
 		tran_funcs[1] = &pt14::UnnamedTransition9;
 		tran_funcs[2] = &pt14::GroupTransition921;
@@ -829,6 +854,7 @@ public:
 		tran_funcs[14] = &pt14::UnnamedTransition16;
 		tran_funcs[15] = &pt14::UnnamedTransition18;
 		tran_funcs[16] = &pt14::UnnamedTransition19;
+		tran_funcs[17] = &pt14::UnnamedTransition20;
 	}
 
 	bool GroupTransition921()
@@ -918,6 +944,13 @@ public:
 		CAN_IN = param;
 		CAN_IN_flag = true;
 		UnnamedTransition3();
+	}
+
+	void add_SEND_DEBUG(const bytesn &param)
+	{
+		SEND_DEBUG = param;
+		SEND_DEBUG_flag = true;
+		UnnamedTransition4();
 	}
 
 	void add_STEP(int param)

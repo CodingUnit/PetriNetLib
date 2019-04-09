@@ -630,7 +630,8 @@ namespace PetriNetLib
         match (place.DestContainerType)
         {
           
-          | TDestCont.Single      => $<#$name = $mark;
+          | TDestCont.Single when place.IsUnit => $<#$name = $mark;#>
+          | TDestCont.Single                   => $<#$name = $mark;
                                        $(name)_flag = true;$time#>;
           | TDestCont.Var
           | TDestCont.ZeroSingle
