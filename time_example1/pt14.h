@@ -245,7 +245,11 @@ private:
 		pl_UDP_OUT = 0x200000,
 		pl_ControlCheck = 0x400000,
 		pl_STEP = 0x800000,
-		pl_Init = 0x1000000
+		pl_Init = 0x1000000,
+		pl_GPSLEDCntr = 0x2000000,
+		pl_GPSLED = 0x4000000,
+		pl_SYNCLEDCntr = 0x8000000,
+		pl_SYNCLED = 0x10000000
 	} tplace;
 	bool DPS;
 	u32 SYNC;
@@ -283,6 +287,10 @@ private:
 	bool ControlCheck_flag;
 	int STEP;
 	char Init;
+	u8 GPSLEDCntr;
+	char GPSLED;
+	u8 SYNCLEDCntr;
+	char SYNCLED;
 
 
 	typedef bool (pt14::*tran_func_type)();
@@ -306,16 +314,22 @@ private:
 		tr_UnnamedTransition16 = 0x4000,
 		tr_UnnamedTransition18 = 0x8000,
 		tr_UnnamedTransition19 = 0x10000,
-		tr_UnnamedTransition20 = 0x20000
+		tr_UnnamedTransition20 = 0x20000,
+		tr_UnnamedTransition21 = 0x40000,
+		tr_UnnamedTransition22 = 0x80000,
+		tr_UnnamedTransition23 = 0x100000,
+		tr_UnnamedTransition24 = 0x200000
 	} ttran;
 
-	tran_func_type tran_funcs[18];
+	tran_func_type tran_funcs[22];
 
 	static const int P_LOW = 10000;
 	static const int P_NORMAL = 1000;
 	static const int P_HIGH = 100;
 
 
+	function CAN_OUT;
+	function UDP_OUT;
 	bool UnnamedTransition0()
 	{
 		bool res = false;
@@ -327,10 +341,16 @@ private:
 				GPS_flag = false;
 				;
 				UDP_SEND(CAN_MESSAGE(256, time64(), s));
+				GPSLED = 1;
 				tran_ena(tr_UnnamedTransition0);
 				res = true;
 			};
 			unlock(pl_COUNTER | pl_UDP_OUT | pl_GPS);
+			if (res)
+			{
+				UnnamedTransition21();
+				UnnamedTransition22();
+			}
 		}
 		return res;
 	}
@@ -371,8 +391,8 @@ private:
 				const CAN_UDP_MESSAGE &m = UDP_IN;
 				UDP_IN_flag = false;
 				;
-				CAN_MESSAGE _N__4338 = udp2can(m);
-				CAN.add((void *)&_N__4338);
+				CAN_MESSAGE _N__4360 = udp2can(m);
+				CAN.add((void *)&_N__4360);
 				res = true;
 			};
 			unlock(pl_CAN | pl_UDP_IN);
@@ -456,10 +476,10 @@ private:
 				;
 
 				BinTimer_time = time() + 1000000;
-				s16 _N__4361[] = { (SHORT)bt, n };
-				UDP_AND_CAN_SEND(CAN_MESSAGE(336, time64(), bytes4((u8 *)_N__4361)));
-				u8 _N__4362[] = { (BYTE)1, inp };
-				UDP_AND_CAN_SEND(CAN_MESSAGE(721, time64(), bytes2((u8 *)_N__4362)));
+				s16 _N__4383[] = { (SHORT)bt, n };
+				UDP_AND_CAN_SEND(CAN_MESSAGE(336, time64(), bytes4((u8 *)_N__4383)));
+				u8 _N__4384[] = { (BYTE)1, inp };
+				UDP_AND_CAN_SEND(CAN_MESSAGE(721, time64(), bytes2((u8 *)_N__4384)));
 				res = true;
 			};
 			unlock(pl_COUNTER | pl_UDP_OUT | pl_CAN | pl_CAN_OUT | pl_BatLevel | pl_BinTimer | pl_BUTTONS);
@@ -681,14 +701,122 @@ private:
 			{
 				Init = 0;
 				;
-				int _N__4368[] = { (USHORT)2, 256 };
-				UDP_SEND(CAN_MESSAGE(48, time64(), bytes8((u8 *)_N__4368)));
-				int _N__4369[] = { (USHORT)0, 0 };
-				UDP_SEND(CAN_MESSAGE(48, time64(), bytes8((u8 *)_N__4369)));
+				int _N__4390[] = { (USHORT)2, 256 };
+				UDP_SEND(CAN_MESSAGE(48, time64(), bytes8((u8 *)_N__4390)));
+				int _N__4391[] = { (USHORT)0, 0 };
+				UDP_SEND(CAN_MESSAGE(48, time64(), bytes8((u8 *)_N__4391)));
 				tran_ena(tr_UnnamedTransition20);
 				res = true;
 			};
 			unlock(pl_COUNTER | pl_UDP_OUT | pl_Init);
+		}
+		return res;
+	}
+
+	bool UnnamedTransition21()
+	{
+		bool res = false;
+		if (lock(pl_GPSLED | pl_GPSLEDCntr, tr_UnnamedTransition21))
+		{
+			if (GPSLED)
+			{
+				int n = GPSLEDCntr;
+				if (n == 10)
+				{
+					GPSLED = 0;
+					GPS_LED_Toggle.exec();
+					GPSLEDCntr = 0;
+					tran_ena(tr_UnnamedTransition21);
+					res = true;
+				}
+			};
+			unlock(pl_GPSLED | pl_GPSLEDCntr);
+			if (res)
+			{
+				UnnamedTransition21();
+				UnnamedTransition22();
+			}
+		}
+		return res;
+	}
+
+	bool UnnamedTransition22()
+	{
+		bool res = false;
+		if (lock(pl_GPSLED | pl_GPSLEDCntr, tr_UnnamedTransition22))
+		{
+			if (GPSLED)
+			{
+				int n = GPSLEDCntr;
+				if (n < 10)
+				{
+					GPSLED = 0;
+					;
+					GPSLEDCntr = n + 1;
+					tran_ena(tr_UnnamedTransition22);
+					res = true;
+				}
+			};
+			unlock(pl_GPSLED | pl_GPSLEDCntr);
+			if (res)
+			{
+				UnnamedTransition21();
+				UnnamedTransition22();
+			}
+		}
+		return res;
+	}
+
+	bool UnnamedTransition23()
+	{
+		bool res = false;
+		if (lock(pl_SYNCLED | pl_SYNCLEDCntr, tr_UnnamedTransition23))
+		{
+			if (SYNCLED)
+			{
+				int n = SYNCLEDCntr;
+				if (n == 30)
+				{
+					SYNCLED = 0;
+					LED_Toggle.exec();
+					SYNCLEDCntr = 0;
+					tran_ena(tr_UnnamedTransition23);
+					res = true;
+				}
+			};
+			unlock(pl_SYNCLED | pl_SYNCLEDCntr);
+			if (res)
+			{
+				UnnamedTransition23();
+				UnnamedTransition24();
+			}
+		}
+		return res;
+	}
+
+	bool UnnamedTransition24()
+	{
+		bool res = false;
+		if (lock(pl_SYNCLED | pl_SYNCLEDCntr, tr_UnnamedTransition24))
+		{
+			if (SYNCLED)
+			{
+				int n = SYNCLEDCntr;
+				if (n < 30)
+				{
+					SYNCLED = 0;
+					;
+					SYNCLEDCntr = n + 1;
+					tran_ena(tr_UnnamedTransition24);
+					res = true;
+				}
+			};
+			unlock(pl_SYNCLED | pl_SYNCLEDCntr);
+			if (res)
+			{
+				UnnamedTransition23();
+				UnnamedTransition24();
+			}
 		}
 		return res;
 	}
@@ -710,9 +838,9 @@ private:
 
 	CAN_MESSAGE  bt2can_message(int bt)
 	{
-		u8 _N__4371[] = { (BYTE)1, bt };
+		u8 _N__4399[] = { (BYTE)1, bt };
 
-		return CAN_MESSAGE(721, time(), bytes2((u8 *)_N__4371));
+		return CAN_MESSAGE(721, time(), bytes2((u8 *)_N__4399));
 	}
 
 	bool is_sens(const CAN_UDP_MESSAGE &m)
@@ -810,6 +938,72 @@ protected:
 
 public:
 
+	void init_adc2bat(void(*func)(int))
+	{
+		adc2bat = function(func);
+	}
+
+	template <class T>
+	void init_adc2bat(T *obj, void(T::*func)(T *obj, int))
+	{
+		adc2bat = function(obj, func);
+	}
+
+	void init_get_ssi_bytes(void(*func)(int, bool, int, const bytes &))
+	{
+		get_ssi_bytes = function(func);
+	}
+
+	template <class T>
+	void init_get_ssi_bytes(T *obj, void(T::*func)(T *obj, int, bool, int, const bytes &))
+	{
+		get_ssi_bytes = function(obj, func);
+	}
+
+	void init_get_control_msg(void(*func)(const CAN_UDP_MESSAGE &))
+	{
+		get_control_msg = function(func);
+	}
+
+	template <class T>
+	void init_get_control_msg(T *obj, void(T::*func)(T *obj, const CAN_UDP_MESSAGE &))
+	{
+		get_control_msg = function(obj, func);
+	}
+
+	void init_GPS_LED_Toggle(void(*func)())
+	{
+		GPS_LED_Toggle = function(func);
+	}
+
+	template <class T>
+	void init_GPS_LED_Toggle(T *obj, void(T::*func)(T *obj))
+	{
+		GPS_LED_Toggle = function(obj, func);
+	}
+
+	void init_LED_Toggle(void(*func)())
+	{
+		LED_Toggle = function(func);
+	}
+
+	template <class T>
+	void init_LED_Toggle(T *obj, void(T::*func)(T *obj))
+	{
+		LED_Toggle = function(obj, func);
+	}
+
+	void init_can_process(void(*func)(const CAN_MESSAGE &))
+	{
+		can_process = function(func);
+	}
+
+	template <class T>
+	void init_can_process(T *obj, void(T::*func)(T *obj, const CAN_MESSAGE &))
+	{
+		can_process = function(obj, func);
+	}
+
 	pt14(int time_step = 15) : timed_petri_net32(time_step)
 	{
 		DPS = false;
@@ -837,16 +1031,20 @@ public:
 		ControlCheck_flag = false;
 		STEP = 1;
 		Init = 1;
-		tran_funcs[0] = &pt14::UnnamedTransition1;
-		tran_funcs[1] = &pt14::UnnamedTransition9;
-		tran_funcs[2] = &pt14::GroupTransition921;
-		tran_funcs[3] = &pt14::UnnamedTransition0;
-		tran_funcs[4] = &pt14::UnnamedTransition2;
-		tran_funcs[5] = &pt14::UnnamedTransition3;
-		tran_funcs[6] = &pt14::tran_DPS;
-		tran_funcs[7] = &pt14::UnnamedTransition4;
-		tran_funcs[8] = &pt14::UnnamedTransition7;
-		tran_funcs[9] = &pt14::UnnamedTransition8;
+		GPSLEDCntr = 0;
+		GPSLED = 0;
+		SYNCLEDCntr = 0;
+		SYNCLED = 0;
+		tran_funcs[0] = &pt14::GroupTransition921;
+		tran_funcs[1] = &pt14::UnnamedTransition0;
+		tran_funcs[2] = &pt14::UnnamedTransition1;
+		tran_funcs[3] = &pt14::UnnamedTransition2;
+		tran_funcs[4] = &pt14::UnnamedTransition3;
+		tran_funcs[5] = &pt14::tran_DPS;
+		tran_funcs[6] = &pt14::UnnamedTransition4;
+		tran_funcs[7] = &pt14::UnnamedTransition7;
+		tran_funcs[8] = &pt14::UnnamedTransition8;
+		tran_funcs[9] = &pt14::UnnamedTransition9;
 		tran_funcs[10] = &pt14::UnnamedTransition10;
 		tran_funcs[11] = &pt14::UnnamedTransition11;
 		tran_funcs[12] = &pt14::UnnamedTransition12;
@@ -855,6 +1053,11 @@ public:
 		tran_funcs[15] = &pt14::UnnamedTransition18;
 		tran_funcs[16] = &pt14::UnnamedTransition19;
 		tran_funcs[17] = &pt14::UnnamedTransition20;
+		tran_funcs[18] = &pt14::UnnamedTransition21;
+		tran_funcs[19] = &pt14::UnnamedTransition22;
+		tran_funcs[20] = &pt14::UnnamedTransition23;
+		tran_funcs[21] = &pt14::UnnamedTransition24;
+		tran_ena(tr_UnnamedTransition20 | tr_UnnamedTransition13);
 	}
 
 	bool GroupTransition921()
@@ -880,6 +1083,7 @@ public:
 		;
 		DELAY = 1;
 		DELAY_time = time();
+		SYNCLED = 1;
 	}
 
 	void SEND_SENS(char param)
@@ -898,24 +1102,44 @@ public:
 		CAN.add((void *)&cm);
 	}
 
-	void init_SSI(const function &func)
+	void init_SSI(bytes8(*func)())
 	{
-		SSI = func;
+		SSI = function(func);
 	}
 
-	void init_TEMP(const function &func)
+	template <class T>
+	void init_SSI(T *obj, bytes8(T::*func)(T *obj))
 	{
-		TEMP = func;
+		SSI = function(obj, func);
 	}
 
-	void init_ADC(const function &func)
+	void init_TEMP(int(*func)())
 	{
-		ADC = func;
+		TEMP = function(func);
+	}
+
+	template <class T>
+	void init_TEMP(T *obj, int(T::*func)(T *obj))
+	{
+		TEMP = function(obj, func);
+	}
+
+	void init_ADC(int(*func)())
+	{
+		ADC = function(func);
+	}
+
+	template <class T>
+	void init_ADC(T *obj, int(T::*func)(T *obj))
+	{
+		ADC = function(obj, func);
 	}
 
 	function adc2bat;
 	function get_ssi_bytes;
 	function get_control_msg;
+	function GPS_LED_Toggle;
+	function LED_Toggle;
 	function can_process;
 
 
@@ -925,11 +1149,21 @@ public:
 		tran_DPS();
 	}
 
+	bool  get_DPS() const
+	{
+		return DPS;
+	}
+
 	void add_BUTTONS(u8 param)
 	{
 		BUTTONS = param;
 		UnnamedTransition7();
 		UnnamedTransition11();
+	}
+
+	u8  get_BUTTONS() const
+	{
+		return BUTTONS;
 	}
 
 	void add_UDP_IN(const CAN_UDP_MESSAGE &param)
@@ -939,11 +1173,33 @@ public:
 		GroupTransition921();
 	}
 
+	const CAN_UDP_MESSAGE & get_UDP_IN() const
+	{
+		return UDP_IN;
+	}
+
 	void add_CAN_IN(const CAN_MESSAGE &param)
 	{
 		CAN_IN = param;
 		CAN_IN_flag = true;
 		UnnamedTransition3();
+	}
+
+	const CAN_MESSAGE & get_CAN_IN() const
+	{
+		return CAN_IN;
+	}
+
+	void add_GPS(const bytesn &param)
+	{
+		GPS = param;
+		GPS_flag = true;
+		UnnamedTransition0();
+	}
+
+	const bytesn & get_GPS() const
+	{
+		return GPS;
 	}
 
 	void add_SEND_DEBUG(const bytesn &param)
@@ -953,12 +1209,54 @@ public:
 		UnnamedTransition4();
 	}
 
+	const bytesn & get_SEND_DEBUG() const
+	{
+		return SEND_DEBUG;
+	}
+
+	void add_SyncFreq(int param)
+	{
+		SyncFreq = param;
+		SyncFreq_time = time();
+		UnnamedTransition19();
+	}
+
+	int  get_SyncFreq() const
+	{
+		return SyncFreq;
+	}
+
 	void add_STEP(int param)
 	{
 		STEP = param;
 
 	}
 
-	function CAN_OUT;
-	function UDP_OUT;
+	int  get_STEP() const
+	{
+		return STEP;
+	}
+
+	void init_CAN_OUT(bool(*func)(const CAN_MESSAGE &))
+	{
+		CAN_OUT = function(func);
+	}
+
+	template <class T>
+	void init_CAN_OUT(T *obj, bool(T::*func)(T *obj, const CAN_MESSAGE &))
+	{
+		CAN_OUT = function(obj, func);
+	}
+
+	void init_UDP_OUT(void(*func)(const CAN_UDP_MESSAGE &))
+	{
+		UDP_OUT = function(func);
+	}
+
+	template <class T>
+	void init_UDP_OUT(T *obj, void(T::*func)(T *obj, const CAN_UDP_MESSAGE &))
+	{
+		UDP_OUT = function(obj, func);
+	}
+
 };

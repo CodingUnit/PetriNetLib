@@ -65,6 +65,15 @@ namespace PetriNetLib
       }
     }
 
+    public IsHaveInitMarking : bool
+    {
+      [Memoize]
+      get
+      {
+        !(init_mark is <[]> || init_mark == null)
+      }
+    }
+    
     public Attributes : list[string]
     {
       [Memoize]

@@ -210,11 +210,12 @@ namespace PetriNetLib
     CreateReqPlace(place : GenPlaceCpp) : string
     {
       def name = place.Name;
-      $<#void init_$name(const function &func)
-         {
-           $name = func;
-         }
-         #>
+      GenFuncCpp.FuncInitDecl(name, [], place.Colour.DestType |> Some)
+      //$<#void init_$name(const function &func)
+      //   {
+      //     $name = func;
+      //   }
+      //   #>
     }
     
     CreateInPortPlace(place : GenPlaceCpp) : string
@@ -232,13 +233,19 @@ namespace PetriNetLib
         $expr
         $tran
       }
+      
+      $(type) get_$name() const
+      {
+        return $name;
+      }
       #>
     }
     
     CreateOutPlace(place : GenPlaceCpp) : string
     {
       def name = place.Name;
-      $<#function $name;#>
+      private_fields.Add($<#function $name;#>);
+      GenFuncCpp.FuncInitDecl(name, [place.Colour], if (place.port is Some(PortType.InOut)) "bool" |> Some else None())
     }
     
     CreatePlace(place : GenPlaceCpp) : string
@@ -443,7 +450,9 @@ namespace PetriNetLib
        {
          | FuncPrefix.GetBytes
          | FuncPrefix.Func     => null
-         | FuncPrefix.Ext      => $<#function $(func.Name);#>
+         | FuncPrefix.Ext      => //private_fields.Add();
+                                  public_fields.Add(func.FuncSetDecl);
+                                  $<#function $(func.Name);#>
          | _                   => func.CppDecl
        }
     }
@@ -657,13 +666,14 @@ namespace PetriNetLib
     CreateCons() : void
     {
       def marking = places.MapToList(CreateInitMarking).Filter(x => x != null && !x.IsEmpty());
+      
       public_fields.Add(if (model.IsTimed || model.IsHaveImmediateTransitions) 
       $<#$Name(int time_step = 15) : $Base(time_step)
       {
         ..$(marking;"\n")
         ..$(cons_expr;"\n")
-      }#>; 
-                        else $<#$Name(int time_step = 15) 
+      }#>; else 
+      $<#$Name(int time_step = 15) 
       { 
         ..$(marking;"\n")
         ..$(cons_expr;"\n")

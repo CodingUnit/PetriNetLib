@@ -103,6 +103,35 @@ namespace PetriNetLib
       }
     }
 
+    public static FuncInitDecl(name : string, parms : list[GenColourCpp], ret : option[string]) : string
+    {
+      def parms = parms.Map(x => x.ParmType);
+      def ret = if (ret is Some(r)) r else "void";
+        def func = $<#$ret(*func)(..$(parms; ","))#>;          //void( function_hal::*self_func_type )( );
+        def parms = if (parms.IsEmpty()) "" else $<#, ..$(parms; ",")#>;
+        def funct = $<#$ret(T::*func)(T *obj$parms)#>;
+        $<#void init_$name($func)
+          {
+            $name = function(func);
+          }
+          
+          template <class T>
+          void init_$name(T *obj, $funct)
+          {
+            $name = function(obj, func);
+          }
+          #>
+    }
+    
+    public FuncSetDecl : string
+    {
+      [Memoize]
+      get
+      {
+        FuncInitDecl(Name, ParmsColour, None())
+      }
+    }
+    
     public Prefix : string
     {
       [Memoize]

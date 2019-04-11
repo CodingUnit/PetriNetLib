@@ -176,12 +176,18 @@ namespace PetriNetLib
       $<#$expr$deflt#>;
     }
 
+    TranMask(tr : IEnumerable[GenTranCpp]) : string
+    {
+      def tran = tr.Map(x => $"tr_$(x.ExecName)");
+      tran.Fold("", (t, a) => if (a.IsEmpty()) t else $"$t | $a");
+    }
+    
     Base : string
     {
       [Memoize]
       get
       {
-        def s32 = if (places.Length <= 32 && transitions.Length <= 32) "32" else "";
+        def s32 = if (places.Filter(x => !x.IsFuncPlace).Length <= 32 && EnumTransitions.Length <= 32) "32" else "";
         if (model.IsTimed) $"timed_petri_net$s32" else $"petri_net$s32"
       }
     }

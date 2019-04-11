@@ -55,7 +55,7 @@ namespace petrinet_lib
     {
       
     }
-
+    
 		void time_step()
 		{
 			if (time_waiting())

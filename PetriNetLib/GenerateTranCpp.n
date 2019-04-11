@@ -138,6 +138,18 @@ namespace PetriNetLib
       "" :: PlacesWithGroup.Map(create_group_tran) + [""]
     }
     
+    EnumTransitions : list[string * int]
+    {
+      [Memoize]
+      get
+      {
+        def tran = transitions.Where(x => !x.IsPartOfFuncPlace && !x.IsFuncTran).Select(x => ($"$(x.ExecName)", x.priority));
+        def groups = PlacesWithGroup.Select(x => x.OutputTransitions.Where(x => x[0].IsUnnamed));
+        def groups = groups.Select(x => ("GroupTransition" + x.Fold("", ((x, _), a) => $"$(x.UnnamedIdx)$a"), x.Select(x => x[0].priority).Max()));
+        groups.Concat(tran).NToList()
+      }
+    }
+    
     CreateTransitions() : void
     {
       def func = $<#      
@@ -147,13 +159,10 @@ namespace PetriNetLib
 	    }
       #>;
       protected_fields.Add(func);
+      def tran = EnumTransitions;
+      def restran = tran.OrderBy((_, p) => p).Select(((x, _), i) => $<#tr_$x = 0x$((1 << i).ToString("X"))#>);
       
       
-      def tran = transitions.Where(x => !x.IsPartOfFuncPlace && !x.IsFuncTran).Select(x => ($"$(x.ExecName)", x.priority));
-      def groups = PlacesWithGroup.Select(x => x.OutputTransitions.Where(x => x[0].IsUnnamed));
-      def groups = groups.Select(x => ("GroupTransition" + x.Fold("", ((x, _), a) => $"$(x.UnnamedIdx)$a"), x.Select(x => x[0].priority).Max()));
-      def tran = groups.Concat(tran).OrderBy((_, p) => p);
-      def restran = tran.Select(((x, _), i) => $<#tr_$x = 0x$((1 << i).ToString("X"))#>);
       
       private_fields.Add($<#
       typedef enum 
@@ -163,12 +172,19 @@ namespace PetriNetLib
       
       def tran = tran.Map((x, _) => x);
       def size = tran.Length;
+      
       private_fields.Add($<#
       tran_func_type tran_funcs[$size];
       #>);
       
       def init = tran.Select((x, i) => $<#tran_funcs[$i] = &$Name::$x;#>);//..$(tran;",\n");
       cons_expr.AddRange(init);
+      
+      // все переходы у которых во входных позициях есть фишки
+      def tran = transitions.Where(x => x.IsUnnamed && !x.IsTimed && x.InputGenPlaces.All(x => x.IsHaveInitMarking && x.port.IsNone));
+      def tran = tran |> TranMask;
+      def tran = $<#tran_ena($tran);#>;
+      cons_expr.Add(tran);
     }
     
     CreateTran(tran : GenTranCpp) : string
