@@ -128,7 +128,7 @@ namespace PetriNetLib
       [Memoize]
       get
       {
-        FuncInitDecl(Name, ParmsColour, None())
+        FuncInitDecl(Name, ParmsColour, if (IsVoid) None() else Some(ReturnType))
       }
     }
     
@@ -143,6 +143,15 @@ namespace PetriNetLib
       }
     }
 
+    public IsVoid : bool
+    {
+      [Memoize]
+      get
+      {
+        ReturnType == "void"
+      }
+    }
+    
     public ReturnType : string
     {
       [Memoize]

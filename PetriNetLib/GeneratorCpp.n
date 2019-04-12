@@ -74,14 +74,32 @@ namespace PetriNetLib
     internal CreateArray(expr : list[PExpr]) : string
     {
       def ty = Typer(gen.TypingMethod);
-      def te = ty.TypeExpr(<[ [..$expr] ]>);
+      
+      def add_type(i, e)
+      {
+        if (i == 0) e else
+        {
+          def f = expr.Head;
+          match (f)
+          {
+            | <[ $_ : $t]> => <[ $(e) : $t ]>
+            | _            => throw InvalidOperationException()
+          }
+          
+        }
+      }
+      
+      def nexpr = if (expr.Length > 1) expr.MapI(add_type) else expr;
+      def te = ty.TypeExpr(<[ [..$nexpr] ]>);
       def ty = te.ty;
       def len = expr.Length;
       def (type, n, len, ty) = match (ty)
                            {
                              | FixedType.Class(_, [args]) => def byte = typer.BindType(<[ byte ]>);
                                                              def short = typer.BindType(<[ short ]>);
+                                                             def ushort = typer.BindType(<[ ushort ]>);
                                                              def integer = typer.BindType(<[ int ]>);
+                                                             def uinteger = typer.BindType(<[ uint ]>);
                                         if (args.TryRequire(byte))
                                         {
                                           if (len <= 10)
@@ -103,7 +121,7 @@ namespace PetriNetLib
                                             ("bytesn", true, len, "s16")
                                           }
                                         } else
-                                        if (args.TryRequire(short) && args.TypeInfo.Unsigned)
+                                        if (args.TryRequire(ushort) && args.TypeInfo.Unsigned)
                                         {
                                           def len = len * 2;
                                           if (len <= 10)
@@ -125,7 +143,7 @@ namespace PetriNetLib
                                             ("bytesn", true, len, "int")
                                           }
                                         } else
-                                        if (args.TryRequire(integer) && args.TypeInfo.Unsigned)
+                                        if (args.TryRequire(uinteger) && args.TypeInfo.Unsigned)
                                         {
                                           def len = len * 4;
                                           if (len <= 10)
@@ -354,14 +372,16 @@ namespace PetriNetLib
         | <[ $a != $b]>         => $<#$(ConvExpr(a)) != $(ConvExpr(b))#>
         | <[ $a == $b]>         => $<#$(ConvExpr(a)) == $(ConvExpr(b))#>
         | <[ $a + $b]>          => $<#$(ConvExpr(a)) + $(ConvExpr(b))#>
+        | <[ $a && $b]>         => $<#$(ConvExpr(a)) && $(ConvExpr(b))#>
+        | <[ $a || $b]>         => $<#$(ConvExpr(a)) || $(ConvExpr(b))#>
         | <[ $a / $b]>          => $<#$(ConvExpr(a)) / $(ConvExpr(b))#>
         | <[ $a * $b]>          => $<#$(ConvExpr(a)) * $(ConvExpr(b))#>
         | <[ $(n : usesite)]>   => $<#$n#>
         | <[ Enumerable.Repeat($tok, $n) ]> => $<#token_iter_utils.repeat($(ConvExpr(tok)), $(ConvExpr(n)))#>
         | <[ $(e1).Concat($e2) ]> => $<#token_iter_utils.concat($(ConvExpr(e1)), $(ConvExpr(e2))#>
         //| <[ $func(..$parms) ]> when (parms.All(x => x is PExpr.Assign)) =>
-
-
+        | <[ AsHex($(s : string))]> => s
+        | <[ hd($e)]>           => $<#$(ConvExpr(e)).at(0)#>
         | <[ $func(..$parms) ]> => //def func_name = ConvFunc(func.ToString());
                                    if (func_proc.ContainsKey(func.ToString()))
                                    {
@@ -400,7 +420,7 @@ namespace PetriNetLib
             } else
             match (e)
             {
-              | [e]                  => ConvExpr(e)
+              | [e]                  => $<#($(ConvExpr(e)))#>
               | [e1, e2]             => $<#tuple2($(ConvExpr(e1)), $(ConvExpr(e2)))#>
               | [e1, e2, e3]         => $<#tuple3($(ConvExpr(e1)), $(ConvExpr(e2)), $(ConvExpr(e3)))#>
               | [e1, e2, e3, e4]     => $<#tuple4($(ConvExpr(e1)), $(ConvExpr(e2)), $(ConvExpr(e3)), $(ConvExpr(e4)))#>

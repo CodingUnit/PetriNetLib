@@ -212,6 +212,8 @@ namespace PetriNetLib
       {
         match (Colour.Colour)
         {
+          | ColourSet(_, Colour.Timed(Colour.Unit))
+          | ColourSet(_, Colour.Timed(Colour.Alias("UNIT")))
           | ColourSet(_, Colour.Unit)
           | ColourSet("UNIT", _)  => true
           | _                     => false

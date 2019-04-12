@@ -249,7 +249,8 @@ private:
 		pl_GPSLEDCntr = 0x2000000,
 		pl_GPSLED = 0x4000000,
 		pl_SYNCLEDCntr = 0x8000000,
-		pl_SYNCLED = 0x10000000
+		pl_SYNCLED = 0x10000000,
+		pl_ResetTime = 0x20000000
 	} tplace;
 	bool DPS;
 	u32 SYNC;
@@ -291,6 +292,9 @@ private:
 	char GPSLED;
 	u8 SYNCLEDCntr;
 	char SYNCLED;
+	char ResetTime;
+	bool ResetTime_flag;
+	u32 ResetTime_time;
 
 
 	typedef bool (pt14::*tran_func_type)();
@@ -318,10 +322,12 @@ private:
 		tr_UnnamedTransition21 = 0x40000,
 		tr_UnnamedTransition22 = 0x80000,
 		tr_UnnamedTransition23 = 0x100000,
-		tr_UnnamedTransition24 = 0x200000
+		tr_UnnamedTransition24 = 0x200000,
+		tr_UnnamedTransition25 = 0x400000,
+		tr_UnnamedTransition26 = 0x800000
 	} ttran;
 
-	tran_func_type tran_funcs[22];
+	tran_func_type tran_funcs[24];
 
 	static const int P_LOW = 10000;
 	static const int P_NORMAL = 1000;
@@ -340,7 +346,7 @@ private:
 				const bytesn &s = GPS;
 				GPS_flag = false;
 				;
-				UDP_SEND(CAN_MESSAGE(256, time64(), s));
+				UDP_SEND(CAN_MESSAGE(0x100, time64(), s));
 				GPSLED = 1;
 				tran_ena(tr_UnnamedTransition0);
 				res = true;
@@ -391,8 +397,8 @@ private:
 				const CAN_UDP_MESSAGE &m = UDP_IN;
 				UDP_IN_flag = false;
 				;
-				CAN_MESSAGE _N__4360 = udp2can(m);
-				CAN.add((void *)&_N__4360);
+				CAN_MESSAGE _N__4366 = udp2can(m);
+				CAN.add((void *)&_N__4366);
 				res = true;
 			};
 			unlock(pl_CAN | pl_UDP_IN);
@@ -412,11 +418,17 @@ private:
 			if (CAN_IN_flag)
 			{
 				const CAN_MESSAGE &cm = CAN_IN;
-				CAN_IN_flag = false;
-				can_process.exec<const CAN_MESSAGE &>(cm);
-				UDP_SEND(cm);
-				tran_ena(tr_UnnamedTransition3);
-				res = true;
+				if ((cm.field1 == 0 || cm.field1 == 10) && cm.field3.at(0) == 0xB)
+				{
+					CAN_IN_flag = false;
+					;
+					u16 _N__4378[] = { (USHORT)1, 0 };
+					UDP_SEND(CAN_MESSAGE(0x30, time64(), bytes4((u8 *)_N__4378)));
+					ResetTime = 1;
+					ResetTime_time = time() + 10000;
+					tran_ena(tr_UnnamedTransition3);
+					res = true;
+				}
 			};
 			unlock(pl_COUNTER | pl_UDP_OUT | pl_CAN_IN);
 		}
@@ -434,7 +446,7 @@ private:
 			bool dir = DPS;
 			;
 			SYNC = n + st;
-			UDP_SEND(CAN_MESSAGE(663, time64(), get_ssi_bytes.exec_ret<bytesn, int, bool, int, const bytes &>(n, dir, 1, ssi)));
+			UDP_SEND(CAN_MESSAGE(0x297, time64(), get_ssi_bytes.exec_ret<bytesn, int, bool, int, const bytes &>(n, dir, 1, ssi)));
 			SYNC_BUF(1);
 			res = true;;
 			unlock(pl_COUNTER | pl_UDP_OUT | pl_STEP | pl_DELAY | pl_SSI | pl_SYNC | pl_DPS);
@@ -476,10 +488,10 @@ private:
 				;
 
 				BinTimer_time = time() + 1000000;
-				s16 _N__4383[] = { (SHORT)bt, n };
-				UDP_AND_CAN_SEND(CAN_MESSAGE(336, time64(), bytes4((u8 *)_N__4383)));
-				u8 _N__4384[] = { (BYTE)1, inp };
-				UDP_AND_CAN_SEND(CAN_MESSAGE(721, time64(), bytes2((u8 *)_N__4384)));
+				s16 _N__4386[] = { (SHORT)bt, n };
+				UDP_AND_CAN_SEND(CAN_MESSAGE(0x150, time64(), bytes4((u8 *)_N__4386)));
+				u8 _N__4387[] = { (BYTE)1, inp };
+				UDP_AND_CAN_SEND(CAN_MESSAGE(0x2D1, time64(), bytes2((u8 *)_N__4387)));
 				res = true;
 			};
 			unlock(pl_COUNTER | pl_UDP_OUT | pl_CAN | pl_CAN_OUT | pl_BatLevel | pl_BinTimer | pl_BUTTONS);
@@ -496,7 +508,7 @@ private:
 			;
 
 			TempTimer_time = time();
-			UDP_AND_CAN_SEND(CAN_MESSAGE(721, time64(), IntToList(51 + n * 256, 3)));
+			UDP_AND_CAN_SEND(CAN_MESSAGE(0x2D1, time64(), IntToList(0x33 + n * 256, 3)));
 			res = true;;
 			unlock(pl_COUNTER | pl_UDP_OUT | pl_CAN | pl_CAN_OUT | pl_TempTimer | pl_TEMP);
 		}
@@ -680,7 +692,7 @@ private:
 				SyncFreq = 0;
 				;
 
-				SyncFreq_time = time() + 1000000 / freq;
+				SyncFreq_time = time() + (1000000 / freq);
 				res = true;
 			};
 			unlock(pl_SyncFreq | pl_DPS);
@@ -701,10 +713,10 @@ private:
 			{
 				Init = 0;
 				;
-				int _N__4390[] = { (USHORT)2, 256 };
-				UDP_SEND(CAN_MESSAGE(48, time64(), bytes8((u8 *)_N__4390)));
-				int _N__4391[] = { (USHORT)0, 0 };
-				UDP_SEND(CAN_MESSAGE(48, time64(), bytes8((u8 *)_N__4391)));
+				u16 _N__4393[] = { (USHORT)2, 0x100 };
+				UDP_SEND(CAN_MESSAGE(0x30, time64(), bytes4((u8 *)_N__4393)));
+				u16 _N__4394[] = { (USHORT)0, 0 };
+				UDP_SEND(CAN_MESSAGE(0x30, time64(), bytes4((u8 *)_N__4394)));
 				tran_ena(tr_UnnamedTransition20);
 				res = true;
 			};
@@ -821,9 +833,47 @@ private:
 		return res;
 	}
 
+	bool UnnamedTransition25()
+	{
+		bool res = false;
+		if (lock(pl_COUNTER | pl_UDP_OUT | pl_CAN_IN, tr_UnnamedTransition25))
+		{
+			if (CAN_IN_flag)
+			{
+				const CAN_MESSAGE &cm = CAN_IN;
+				if (cm.field1 == 0x208)
+				{
+					CAN_IN_flag = false;
+					;
+					SEND_SENS(1);
+					tran_ena(tr_UnnamedTransition25);
+					res = true;
+				}
+			};
+			unlock(pl_COUNTER | pl_UDP_OUT | pl_CAN_IN);
+		}
+		return res;
+	}
+
+	bool UnnamedTransition26()
+	{
+		bool res = false;
+		if (lock(pl_ResetTime, tr_UnnamedTransition26))
+		{
+			if (ResetTime)
+			{
+				ResetTime = 0;
+				do_reset.exec();
+				res = true;
+			};
+			unlock(pl_ResetTime);
+		}
+		return res;
+	}
+
 	CAN_MESSAGE  control2can(const CONTROL_MSG &m)
 	{
-		return CAN_MESSAGE(80, time64(), bytesn((void *)&m, sizeof(m)));
+		return CAN_MESSAGE(0x50, time64(), bytesn((void *)&m, sizeof(m)));
 	}
 
 	CAN_UDP_MESSAGE  can2udp(const CAN_MESSAGE &m, int c)
@@ -838,19 +888,19 @@ private:
 
 	CAN_MESSAGE  bt2can_message(int bt)
 	{
-		u8 _N__4399[] = { (BYTE)1, bt };
+		u8 _N__4405[] = { (BYTE)1, bt };
 
-		return CAN_MESSAGE(721, time(), bytes2((u8 *)_N__4399));
+		return CAN_MESSAGE(0x2D1, time(), bytes2((u8 *)_N__4405));
 	}
 
 	bool is_sens(const CAN_UDP_MESSAGE &m)
 	{
-		return m.ID == 663;
+		return m.ID == 0x297;
 	}
 
 	bool is_control(const CAN_UDP_MESSAGE &m)
 	{
-		return m.ID == 80;
+		return m.ID == 0x50;
 	}
 
 	u32 get_next_time(u32 &res_tr)
@@ -923,6 +973,17 @@ private:
 			if (min == time)
 			{
 				tr |= tr_UnnamedTransition4;
+			}
+		time = ResetTime_time;
+		if (min > time)
+		{
+			min = time;
+			tr = tr_UnnamedTransition26;
+		}
+		else
+			if (min == time)
+			{
+				tr |= tr_UnnamedTransition26;
 			};
 		;
 		res_tr = tr;
@@ -938,35 +999,35 @@ protected:
 
 public:
 
-	void init_adc2bat(void(*func)(int))
+	void init_adc2bat(tuple2<int, int>(*func)(int))
 	{
 		adc2bat = function(func);
 	}
 
 	template <class T>
-	void init_adc2bat(T *obj, void(T::*func)(T *obj, int))
+	void init_adc2bat(T *obj, tuple2<int, int>(T::*func)(T *obj, int))
 	{
 		adc2bat = function(obj, func);
 	}
 
-	void init_get_ssi_bytes(void(*func)(int, bool, int, const bytes &))
+	void init_get_ssi_bytes(bytesn(*func)(int, bool, int, const bytes &))
 	{
 		get_ssi_bytes = function(func);
 	}
 
 	template <class T>
-	void init_get_ssi_bytes(T *obj, void(T::*func)(T *obj, int, bool, int, const bytes &))
+	void init_get_ssi_bytes(T *obj, bytesn(T::*func)(T *obj, int, bool, int, const bytes &))
 	{
 		get_ssi_bytes = function(obj, func);
 	}
 
-	void init_get_control_msg(void(*func)(const CAN_UDP_MESSAGE &))
+	void init_get_control_msg(CONTROL_MSG_BOOL(*func)(const CAN_UDP_MESSAGE &))
 	{
 		get_control_msg = function(func);
 	}
 
 	template <class T>
-	void init_get_control_msg(T *obj, void(T::*func)(T *obj, const CAN_UDP_MESSAGE &))
+	void init_get_control_msg(T *obj, CONTROL_MSG_BOOL(T::*func)(T *obj, const CAN_UDP_MESSAGE &))
 	{
 		get_control_msg = function(obj, func);
 	}
@@ -993,15 +1054,15 @@ public:
 		LED_Toggle = function(obj, func);
 	}
 
-	void init_can_process(void(*func)(const CAN_MESSAGE &))
+	void init_do_reset(void(*func)())
 	{
-		can_process = function(func);
+		do_reset = function(func);
 	}
 
 	template <class T>
-	void init_can_process(T *obj, void(T::*func)(T *obj, const CAN_MESSAGE &))
+	void init_do_reset(T *obj, void(T::*func)(T *obj))
 	{
-		can_process = function(obj, func);
+		do_reset = function(obj, func);
 	}
 
 	pt14(int time_step = 15) : timed_petri_net32(time_step)
@@ -1035,6 +1096,7 @@ public:
 		GPSLED = 0;
 		SYNCLEDCntr = 0;
 		SYNCLED = 0;
+		ResetTime = 0;
 		tran_funcs[0] = &pt14::GroupTransition921;
 		tran_funcs[1] = &pt14::UnnamedTransition0;
 		tran_funcs[2] = &pt14::UnnamedTransition1;
@@ -1057,6 +1119,8 @@ public:
 		tran_funcs[19] = &pt14::UnnamedTransition22;
 		tran_funcs[20] = &pt14::UnnamedTransition23;
 		tran_funcs[21] = &pt14::UnnamedTransition24;
+		tran_funcs[22] = &pt14::UnnamedTransition25;
+		tran_funcs[23] = &pt14::UnnamedTransition26;
 		tran_ena(tr_UnnamedTransition20 | tr_UnnamedTransition13);
 	}
 
@@ -1092,7 +1156,7 @@ public:
 		int n = SYNC;
 		bool dir = DPS;
 		;
-		UDP_SEND(CAN_MESSAGE(663, time64(), get_ssi_bytes.exec_ret<bytesn, int, bool, int, const bytes &>(n, dir, 0, ssi)));
+		UDP_SEND(CAN_MESSAGE(0x297, time64(), get_ssi_bytes.exec_ret<bytesn, int, bool, int, const bytes &>(n, dir, 0, ssi)));
 	}
 
 	void UDP_AND_CAN_SEND(const CAN_MESSAGE &cm)
@@ -1140,7 +1204,7 @@ public:
 	function get_control_msg;
 	function GPS_LED_Toggle;
 	function LED_Toggle;
-	function can_process;
+	function do_reset;
 
 
 	void add_DPS(bool param)
@@ -1183,6 +1247,7 @@ public:
 		CAN_IN = param;
 		CAN_IN_flag = true;
 		UnnamedTransition3();
+		UnnamedTransition25();
 	}
 
 	const CAN_MESSAGE & get_CAN_IN() const

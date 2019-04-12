@@ -344,6 +344,7 @@ namespace PetriNetLib
       {
         match (expr)
         {
+          | <[Delay($time)]>
           | <[ $_(Delay($time)) ]>
           | <[ $_ %@+ $time]>  => time
           | _                   => <[]>
@@ -398,6 +399,7 @@ namespace PetriNetLib
       {
         match (expr)
         {
+          | <[ Delay($_)]>         => <[ () ]>
           | <[ $e(Delay($_))]>
           | <[ $e %@+ $_]>         => e
           | e                      => e

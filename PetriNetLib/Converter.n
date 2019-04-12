@@ -34,11 +34,17 @@ namespace PetriNetLib
     {
       def val = n.ValData;
       def min = n.MinusData;
-      def val = if (val.StartsWith("0x")) 
-                int.Parse(val.Substring(2), System.Globalization.NumberStyles.AllowHexSpecifier | System.Globalization.NumberStyles.HexNumber);
-                else int.Parse(val);
-      def val = if (min) -val else val;
-      <[ $(val : int) ]>
+      if (val.StartsWith("0x")) 
+      {
+        //int.Parse(val.Substring(2), System.Globalization.NumberStyles.AllowHexSpecifier | System.Globalization.NumberStyles.HexNumber);
+        if (min) <[ AsHex(- $(val : string)) ]> else <[ AsHex($(val : string)) ]>
+      }
+      else 
+      {
+        def val = int.Parse(val);
+        def val = if (min) -val else val;
+        <[ $(val : int) ]>
+      }
   }
   
     GetLiteral(l : Literal) : PExpr
@@ -119,7 +125,7 @@ namespace PetriNetLib
       | Multiply(Expr1 = left, Expr2 = right)    => <[ $(GetExpr(left)) * $(GetExpr(right))]>
       | BraceExpr(ExprsData = ([], _))                => <[ () ]>
       | BraceExpr(ExprsData = (e, _))                 => def e = e.Map(GetExpr);
-                                                    <[ (..$e)]>
+                                                         <[ (..$e)]>
       | AtTime(Expr1 = left, Expr2 = right)      => <[ $(GetExpr(left)) %@ $(GetExpr(right)) ]>
       | Delay(Delay = MainParseTree.Delay.AddTime(Expr = e))
       | Delay(Delay = MainParseTree.Delay.AddTimeAlt(Expr = e))     => <[ @Delay($(GetExpr(e)))]>
@@ -130,6 +136,7 @@ namespace PetriNetLib
       | RefContents(Identifier = i)          => def i = i.GetText();
                                                 <[ $(i : usesite) ]>
       | AndAlso(Expr1 = e, Expr2 = e2) => <[ $(GetExpr(e)) && $(GetExpr(e2))]>
+      | OrElse(Expr1 = e, Expr2 = e2)  => <[ $(GetExpr(e)) || $(GetExpr(e2))]>
       | IntDiv(Expr1 = e, Expr2 = e2)  => <[ $(GetExpr(e)) / $(GetExpr(e2))]>
       | SharpOper(SharpIndex = i, Expr = e) => match (i)
                                                {

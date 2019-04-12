@@ -186,9 +186,15 @@ namespace PetriNetLib
     CreateColourSet(col : ColourSet) : ClassMember.TypeDeclaration
     {
       | ColourSet(n, Colour.Alias(new_name))  => //if (model.colour_sets[new_name].type.IsComplex)
+                                                 match (n)
                                                  {
-                                                   TypeDecl(new_name, n)
-                                                 }// else null
+                                                   | "BYTE"   => TypeDecl("byte", "BYTE")
+                                                   | "SHORT"  => TypeDecl("short", "SHORT")
+                                                   | "INT"    => TypeDecl("int", "INT")
+                                                   | "UINT"   => TypeDecl("uint", "UINT")
+                                                   | "USHORT" => TypeDecl("ushort", "USHORT")
+                                                   | _        => TypeDecl(new_name, n)
+                                                 }
       | ColourSet(n, Colour.Record(vals))     => def fields = vals.Map((n, t) => (n, colours[t].DestType));
                                                  def fields = fields.Map((n, t) => <[decl: public $(n : usesite) : $t]>);
                                                  <[decl: [Record] class $(n : usesite)

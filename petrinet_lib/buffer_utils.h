@@ -9,6 +9,7 @@ namespace petrinet_lib
     int len;
   public:
     bytes() : len(0) {}
+	bytes(void *buf, int l) { set_buf(buf, l); }
     bytes(const bytes &n) { set_buf(n); }
     bytes(int l) : len(l) {}
 
@@ -17,6 +18,22 @@ namespace petrinet_lib
       memory::Mem::copy(get_buf(), b.get_buf(), b.get_count());
       len = b.len;
     }
+
+
+    u8 at(int idx) const
+    {
+      return ((u8 *)get_buf())[idx];
+    }
+    
+    void copy_to(void *buf) const
+    {
+      copy(buf, get_buf(), get_count());
+    }
+	void set_buf(const void *b, int l)
+	{
+		memory::Mem::copy(get_buf(), b, l);
+		len = l;
+	}
 
     virtual void *get_buf() const { return 0; };
     int get_count() const { return len; };
@@ -144,6 +161,9 @@ namespace petrinet_lib
       init(buf);
     }
 
+	bytes8(void *buf, int len) : bytes(buf, len)
+	{
+	}
     /*void init(const bytes &data)
     {
       memory::Mem::copy(&buf[0], data.get_buf(), data.get_count());
