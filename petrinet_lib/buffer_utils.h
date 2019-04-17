@@ -199,11 +199,12 @@ namespace petrinet_lib
     //bytes8(const bytes &buf) {init(buf);}
     bytes8(u8 buf[8])
     {
-      init(buf);
+      init(buf, 8);
     }
 
-	bytes8(void *buf, int len) : bytes(buf, len)
+	bytes8(void *buf, int len)
 	{
+    init((u8 *)buf, len);
 	}
     /*void init(const bytes &data)
     {
@@ -211,11 +212,11 @@ namespace petrinet_lib
       set_count(data.get_count());
     }*/
     
-    void init(u8 data[8])
+    void init(u8 data[8], int len)
     {
       *(u32 *)&buf[0] = *(u32 *)&data[0];
       *(u32 *)&buf[4] = *(u32 *)&data[4];
-      set_count(8);
+      set_count(len);
     }
 
     void *get_buf() const { return (void *)buf; }
