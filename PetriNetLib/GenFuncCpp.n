@@ -17,6 +17,7 @@ namespace PetriNetLib
   {
     | None
     | GetBytes
+    | GetStruct
     | Func
     | Ext
   }
@@ -97,6 +98,7 @@ namespace PetriNetLib
         {
           | "EXT_"        => FuncPrefix.Ext
           | "FUNC_"       => FuncPrefix.Func
+          | "get_struct__" => FuncPrefix.GetStruct
           | "get_bytes__" => FuncPrefix.GetBytes
           | _             => FuncPrefix.None
         }
@@ -108,21 +110,52 @@ namespace PetriNetLib
       def parms = parms.Map(x => x.ParmType);
       def ret = if (ret is Some(r)) r else "void";
         def func = $<#$ret(*func)(..$(parms; ","))#>;          //void( function_hal::*self_func_type )( );
-        def parms = if (parms.IsEmpty()) "" else $<#, ..$(parms; ",")#>;
-        def funct = $<#$ret(T::*func)(T *obj$parms)#>;
+        //def parms = if (parms.IsEmpty()) "" else $<#, ..$(parms; ",")#>;
+        //def funct = $<#$ret(T::*func)(T *obj$parms)#>;
         $<#void init_$name($func)
           {
-            $name = function(func);
+            $name = func;
           }
-          
-          template <class T>
+         
+          #>
+          /*
+           template <class T>
           void init_$name(T *obj, $funct)
           {
             $name = function(obj, func);
           }
-          #>
+          */
     }
     
+    public static FuncTypedefDecl(name : string, parms : list[GenColourCpp], ret : string) : string
+    {
+        def parms = parms.Map(x => x.ParmType);
+        //def parms = if (parms.IsEmpty()) "" else $<#..$(parms; ",")#>;
+        $<#$ret (*$name)(..$(parms; ","))#>
+    }
+    
+    public FuncTypedef : string
+    {
+      [Memoize]
+      get
+      {
+        def ret = if (IsVoid) "void" else ReturnType;
+        def parms = ParmsColour.Map(x => x.ParmType);
+        //def parms = if (parms.IsEmpty()) "" else $<#..$(parms; ",")#>;
+        $<#$ret (*$Name)(..$(parms; ","))#>
+      }
+    }
+    
+    //public static FuncTypedef() : string
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    def ret = if (IsVoid) "void" else ReturnType;
+    //    def parms = if (Parms.IsEmpty()) "" else $<#, ..$(parms; ",")#>;
+    //    $<#$ret (*Name)(..$(parms; ","))#>
+    //  }
+    //}
     public FuncSetDecl : string
     {
       [Memoize]
@@ -139,7 +172,8 @@ namespace PetriNetLib
       {
         if (NameWithPrefix.StartsWith("EXT_")) "EXT_" else
           if (NameWithPrefix.StartsWith("FUNC_")) "FUNC_" else
-            if (NameWithPrefix.StartsWith("get_bytes__")) "get_bytes__" else ""
+            if (NameWithPrefix.StartsWith("get_bytes__")) "get_bytes__" else
+            if (NameWithPrefix.StartsWith("get_struct__")) "get_struct__" else ""
       }
     }
 
@@ -228,16 +262,32 @@ namespace PetriNetLib
         {
           | FuncPrefix.Ext        => if (ReturnType == "void") 
                                      {
-                                       def ty = if (ParmsType.Length != 0) $<#<..$(ParmsType; ",")>#> else "";
-                                      $<#$(Name).exec$ty(..$(parms; ","))#>
+                                       //def ty = if (ParmsType.Length != 0) $<#<..$(ParmsType; ",")>#> else "";
+                                      $<#$(Name)(..$(parms; ","))#>
                                      }
                                     else 
                                     {
-                                      def ty = ReturnType :: ParmsType;
-                                      $<#$(Name).exec_ret<..$(ty; ",")>(..$(parms; ","))#>
+                                      //def ty = ReturnType :: ParmsType;
+                                      $<#$(Name)(..$(parms; ","))#>
                                     }
-          | FuncPrefix.GetBytes   => def parm = Parms.First();
-                                    $<#bytesn((void *)&$(parm.Name), sizeof($(parm.Name)))#>
+          | FuncPrefix.GetBytes   => //
+                                     def parm = parms.First();// |> gen.ConvExpr(_, false);
+                                     def parmtype = Parms.First().Type.ToString();
+                                     def type = gen.Colours[parmtype];
+                                     if (type.IsComplexType)
+                                     {
+                                       match (parm)
+                                       {
+                                         | <[ $(n : usesite) ]> => $<#$(n).get_bytes()#>
+                                         | e                    => def var = Macros.NewSymbol();
+                                                                   def expr = e |> gen.ConvExprPlaceCtx(_, type, false);
+                                                                   gen.AddCtxVar($<#$parmtype $var = $expr;#>);
+                                                                   $<#$var.get_bytes()#>
+                                       }
+                                    } else
+                                     $<#bytesn((void *)&$(parm), sizeof($(parmtype)))#>
+          | FuncPrefix.GetStruct  => def parm = parms.First();
+                                     $<#(*($ReturnType *)$(parm).get_buf())#>
           | _                     => 
             def parms = parms.Map(x => gen.ConvExpr(x, false));
             $<#$Name(..$(parms; ","))#>

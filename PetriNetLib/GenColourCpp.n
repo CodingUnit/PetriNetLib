@@ -250,7 +250,7 @@ namespace PetriNetLib
                 | "BYTE"   => "u8"
                 | "SHORT"  => "short"
                 | "INT"    => "int"
-                | "INTINF" => "long long"//cpp("type: int")
+                | "INTINF" => "unsigned long long"//cpp("type: int")
                 | "UINT"   => "u32"
                 | "USHORT" => "u16"
                 | _        => "int"
@@ -262,7 +262,7 @@ namespace PetriNetLib
                 | "SBYTE"  => "s8"
                 | "BYTE"   => "u8"
                 | "SHORT"  => "short"
-                | "INTINF" => "long long"//cpp("type: int")
+                | "INTINF" => "unsigned long long"//cpp("type: int")
                 | "INT"    => "int"
                 | "UINT"   => "u32"
                 | "USHORT" => "u16"
@@ -294,13 +294,15 @@ namespace PetriNetLib
       //                  $<#type: tuple2<..$vals>#>//cpp(<#type: tuple2<..$vals>#>)
           | List(t, r)    => match (t)
               {
-                | "INT"
-                | "SHORT"
-                | "USHORT"
-                | "BYTE"   => if (r is Some((mn, mx))) 
+                | "INT" with mul = 4
+                | "SHORT" with mul = 2
+                | "USHORT" with mul = 2
+                | "BYTE"  with mul = 1 => if (r is Some((mn, mx))) 
                               {
                                 def diff = mx - mn + 1;
-                                $"bytes$diff" 
+                                def size = diff * mul;
+                                if (size > 8) "bytesn" else
+                                $"bytes$size" 
                               } else "bytesn"
                 | _ => null               
               }

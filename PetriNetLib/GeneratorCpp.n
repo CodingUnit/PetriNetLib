@@ -17,6 +17,8 @@ using System.Threading.Tasks;
 
 namespace PetriNetLib
 {
+  using SCG = System.Collections.Generic;
+  
   using CommonLib.Macros.LensUtils;
 
   /*
@@ -220,7 +222,7 @@ namespace PetriNetLib
       def type = place.Colour.VarSpec;
       $<#void $name($(type)$param)
       {
-        $(tran.TranBody)
+        $(tran.Body)
       }
       #>
     }
@@ -299,7 +301,7 @@ namespace PetriNetLib
                            | MinusSingle
                            | Var
                            | Single              => type
-                           | ReqContainer        => "function"
+                           | ReqContainer        => GenFuncCpp.FuncTypedefDecl(place.Name, [], type)
                          }
         def flag = match (dtype)
         {
@@ -314,6 +316,8 @@ namespace PetriNetLib
         //  | _           => ""
         //}
         def flag = if (flag.IsEmpty()) "" else $"\nbool $flag;";
+        if (dtype == TDestCont.ReqContainer)
+        $<#$dest_cont;#> else
         $<#$dest_cont $name;$flag$time#>
       }
       //cpp(<#decl: $(dest_cont : type) $name;#>)
@@ -337,13 +341,13 @@ namespace PetriNetLib
       ColourOfVar(name)?.VarSpec
     }
     
-    mutable expr_ctx : option[GenPlaceCpp] = None();
+    mutable expr_ctx : SCG.Stack[GenColourCpp] = SCG.Stack();
     
-    internal ConvExprPlaceCtx(expr : PExpr, ctx : GenPlaceCpp, statement : bool = false) : string
+    internal ConvExprPlaceCtx(expr : PExpr, ctx : GenColourCpp, statement : bool = false) : string
     {
-      expr_ctx = ctx |> Some;
+      expr_ctx.Push(ctx);
       def res = ConvExpr(expr, statement);
-      expr_ctx = None();
+      _ = expr_ctx.Pop();
       res
     }
     
@@ -413,10 +417,11 @@ namespace PetriNetLib
         | <[ $(_ : byte)]> as e => $<#$e#>
         | <[ $(n : string)]>    => $<#$n#>
         | <[ (..$e) ]>          => 
-            if (expr_ctx is Some(pl))
+            if (!expr_ctx.IsEmpty())
             {
+              def col = expr_ctx.Peek();
               def expr = e.Map(ConvExpr(_, false));
-              $<#$(pl.Colour.DestType)(..$(expr;","))#>
+              $<#$(col.DestType)(..$(expr;","))#>
             } else
             match (e)
             {
@@ -468,11 +473,13 @@ namespace PetriNetLib
     {
        match (func.PrefixType)
        {
+         | FuncPrefix.GetStruct
          | FuncPrefix.GetBytes
          | FuncPrefix.Func     => null
          | FuncPrefix.Ext      => //private_fields.Add();
                                   public_fields.Add(func.FuncSetDecl);
-                                  $<#function $(func.Name);#>
+                                  $"$(func.FuncTypedef);"
+                                  //$<#function $(func.Name);#>
          | _                   => func.CppDecl
        }
     }
@@ -504,10 +511,15 @@ namespace PetriNetLib
                                                           
                                                           ..$(fields;"\n")
                                                           
-                                                          void operator=(const tuple$num<..$types> &tup)
+                                                          bytes get_bytes() const
+                                                          {
+                                                            return bytes_ptr(&field1, sizeof($n));
+                                                          }
+                                                          
+                                                          /*void operator=(const tuple$num<..$types> &tup)
                                                           {
                                                             ..$(assign;"\n")
-                                                          }
+                                                          }*/
                                                         };#>
 
                                                   //CTypeDecl.Decl(CTree.Decl([CSpec.Typedef()], CType.Class(n), [CDecl.Id(CName.String(new_name), None())]))
@@ -522,6 +534,11 @@ namespace PetriNetLib
                                                           $n(..$(ctor;", ")) 
                                                           {
                                                             ..$(ctorbody;"\n")
+                                                          }
+                                                          
+                                                          bytes get_bytes() const
+                                                          {
+                                                            return bytes_ptr(this, sizeof($n));
                                                           }
                                                           ..$(fields;"\n")
                                                         };#>
@@ -542,7 +559,18 @@ namespace PetriNetLib
         | ColourSet(n, Colour.Simple)
         | ColourSet(n, Colour.Integer) => def t = col.DestType;
                                           $<#typedef $t $n;#>   
-        | ColourSet(n, Colour.Alias(t))
+        | ColourSet(n, Colour.Alias(t))   =>  def t = match (n)
+                                              {
+                                                | "SBYTE"  => "s8"
+                                                | "BYTE"   => "u8"
+                                                | "SHORT"  => "short"
+                                                | "INTINF" => "unsigned long long"//cpp("type: int")
+                                                | "INT"    => "int"
+                                                | "UINT"   => "u32"
+                                                | "USHORT" => "u16"
+                                                | _        => t
+                                              }
+                                              $<#typedef $t $n;#>
         | ColourSet(n, Colour.Unit) with t = "char"                                                       
                                           => $<#typedef $t $n;#> 
         
@@ -610,7 +638,7 @@ namespace PetriNetLib
       if (place.init_mark == null) null else
       {
         def markexpr = fold(place.init_mark);
-        def mark = markexpr |> ConvExprPlaceCtx(_, place, false);
+        def mark = markexpr |> ConvExprPlaceCtx(_, place.Colour, false);
         def name = place.Name;
         
         

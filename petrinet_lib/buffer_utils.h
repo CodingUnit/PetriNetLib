@@ -4,13 +4,12 @@
 
 namespace petrinet_lib
 {
+
   class bytes
   {
     int len;
   public:
     bytes() : len(0) {}
-	bytes(void *buf, int l) { set_buf(buf, l); }
-    bytes(const bytes &n) { set_buf(n); }
     bytes(int l) : len(l) {}
 
     void set_buf(const bytes &b)
@@ -29,6 +28,7 @@ namespace petrinet_lib
     {
       copy(buf, get_buf(), get_count());
     }
+
 	void set_buf(const void *b, int l)
 	{
 		memory::Mem::copy(get_buf(), b, l);
@@ -43,6 +43,47 @@ namespace petrinet_lib
     {
       set_buf(b);
     }
+  };
+
+  class bytes_ptr : public bytes
+  {
+	  void *ptr;
+  public:
+	  bytes_ptr() {}
+	  bytes_ptr(const void *buf, int l) { set_buf((void *)buf, l); }
+	  bytes_ptr(const bytes &n) { set_buf(n); }
+	  bytes_ptr(int l) : bytes(l) {}
+
+	  void set_buf(const bytes &b)
+	  {
+		  ptr = b.get_buf();
+		  set_count(b.get_count());
+	  }
+
+
+	  u8 at(int idx) const
+	  {
+		  return ((u8 *)get_buf())[idx];
+	  }
+
+	  void copy_to(void *buf) const
+	  {
+		  copy(buf, ptr, get_count());
+	  }
+
+	  void set_buf(void *b, int l)
+	  {
+		  ptr = b;
+		  //memory::Mem::copy(get_buf(), b, l);
+		  set_count(l);
+	  }
+
+	  virtual void *get_buf() const { return ptr; };
+
+	  void operator=(const bytes &b)
+	  {
+		  set_buf(b);
+	  }
   };
 
   class bytes2 : public bytes

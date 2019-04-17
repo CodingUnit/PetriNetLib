@@ -92,7 +92,14 @@ namespace petrinet_lib
 			return 0;
 		}
 
+		virtual bool transition(u32 tr)
+		{
+			return false;
+		}
+
 	private:
+
+		
 
 		void check_queue()
 		{
@@ -101,8 +108,7 @@ namespace petrinet_lib
 			queue.enqueue(comp);*/
 			while (defer_queue.deque_if_exist(val))
 			{
-				tran_func tran = get_transition(val);
-				tran(this);
+				transition(val);
 			}
 		}
 	public:
@@ -111,7 +117,7 @@ namespace petrinet_lib
 		petri_net32(int step = 15)
 		{
 			completed_tran = 0;
-			max_steps = 1;
+			max_steps = step;
 		}
 
 		void step()
@@ -123,8 +129,7 @@ namespace petrinet_lib
 			{
 				if (queue.deque_if_exist(val))
 				{
-					tran_func tran = get_transition(val);
-					tran(this);
+					transition(val);
 				}
 				else break;
 			}

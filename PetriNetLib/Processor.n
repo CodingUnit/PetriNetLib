@@ -198,30 +198,56 @@ namespace PetriNetLib
         
             def get_func(c)
             {
-              match (c.IndexOf("action"))
-              {
-                | -1 => <[]>
-                | n  => 
+              //match (c.IndexOf("action"))
+              //{
+              //  | -1 => <[]>
+              //  | n  => 
                 
-                def firstbrace_str = c.Substring(n + 6);
-                def firstbrace = firstbrace_str.IndexOf('(') + 1;
-                def lastbrace = firstbrace_str.LastIndexOf(')');
-                def len = lastbrace - firstbrace;
-                match (converter.ParseML(firstbrace_str.Substring(firstbrace, len)))
-                {
-                  | Some(<[]>)               => <[]>
-                  | Some(<[ {..$_} ]> as e)
-                  | Some(e)                  => e
-                  | _                        => throw InvalidOperationException("parsing error")
-                }
+              //  def firstbrace_str = c.Substring(n + 6);
+              //  def firstbrace = firstbrace_str.IndexOf('(') + 1;
+              //  def lastbrace = firstbrace_str.LastIndexOf(')');
+              //  def len = lastbrace - firstbrace;
+              //  match (converter.ParseML(firstbrace_str.Substring(firstbrace, len)))
+              //  {
+              //    | Some(<[]>)               => <[]>
+              //    | Some(<[ {..$_} ]> as e)
+              //    | Some(e)                  => e
+              //    | _                        => throw InvalidOperationException("parsing error")
+              //  }
+              //}
+              match (converter.ParseML(c))
+              {
+                | Some(<[]>) => (<[]>, <[]>, <[]>)
+                | Some(<[ {..$e} ]>) => def act = match (e.Find(x => x is <[ action($_) ]>))
+                                        {
+                                          | Some(<[ action($x)]>) => x
+                                          | _                     => <[]>
+                                        }
+                                        def inp = match (e.Find(x => x is <[ input($_) ]>))
+                                        {
+                                          | Some(<[ input($x)]>) => x
+                                          | _       => <[]>
+                                        }
+                                        def outp = match (e.Find(x => x is <[ output($_) ]>))
+                                        {
+                                          | Some(<[ output($x)]>) => x
+                                          | _       => <[]>
+                                        }
+                                        (act, inp, outp)
+                | Some(e)            => def act = match (e)
+                                        {
+                                          | <[ action($x)]> => x
+                                          | _               => <[]>
+                                        }
+                                        (act, <[]>, <[]>)
+                | _                  => throw InvalidOperationException("parsing error")
               }
-          
             
             }
         
             def guard = g.MapDefault(x => converter.ParseML(x.Trim('[', ']')).Value, <[]>);
             def time  = t.MapDefault(converter.ParseML, Some(<[]>)).Value;
-            def code  = c.MapDefault(get_func, <[]>);
+            def (act, inp, outp) = c.MapDefault(get_func, (<[]>, <[]>, <[]>));
             mutable prio_int;
             def prio = if (p is Some(p)) 
                        {
@@ -244,7 +270,7 @@ namespace PetriNetLib
                            unnamed_idx++;
                            idx
                          } else 0;
-            def tran = Transition(tidx, id, n, guard, time, code, prio, this, un_idx);
+            def tran = Transition(tidx, id, n, guard, time, act, inp, outp, prio, this, un_idx);
             tidx++;
             tran
       }

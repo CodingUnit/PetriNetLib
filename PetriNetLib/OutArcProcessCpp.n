@@ -90,7 +90,7 @@ namespace PetriNetLib
                                               #>, $<#$var#>)
           | <[ $(_ : int) ` $_ ]> as e                                         
           | <[ $_(..$_)]> as e             
-          | e                              => def e = e |> gen.ConvExprPlaceCtx(_, place, false);
+          | e                              => def e = e |> gen.ConvExprPlaceCtx(_, place.Colour, false);
                                               def ty = place.Colour.DestType;
                                               ($<#$ty $var = $e;
                                               #>, $<#$var#>)
@@ -128,12 +128,12 @@ namespace PetriNetLib
                                               //  | _               => null
                                               //} 
           | <[ 1 ` $e ]>                   => add(e)                                    
-          | <[ $(_ : int) ` $_ ]> as e     => e |> gen.ConvExprPlaceCtx(_, place, false)                                    
+          | <[ $(_ : int) ` $_ ]> as e     => e |> gen.ConvExprPlaceCtx(_, place.Colour, false)                                    
           | <[ $_ %++ $_ ]> as e           => gen.GetTokenExpr(e)
 
           | <[ $_(..$_)]> as e
           | <[ $(_ : usesite) ]> as e
-          | e                              => e |> gen.ConvExprPlaceCtx(_, place, false)                                    
+          | e                              => e |> gen.ConvExprPlaceCtx(_, place.Colour, false)                                    
         }
 
         add(arc.ExprWithoutTime)
@@ -220,13 +220,13 @@ namespace PetriNetLib
               {
                 | Some(PortType.Out) => 
                     if (place.Colour.IsComplexType) 
-                    $<#$ctx$(name).exec_ref($add);#> else
-                    $<#$ctx$(name).exec($add);#>
-                | Some(PortType.InOut) => 
-                    def parm = place.Colour.ParmType;
-                    if (place.Colour.IsComplexType) 
-                    $<#$(ctx)bool in = $(name).exec_ret<bool, $parm>($add);#> else
-                    $<#$(ctx)bool in = $(name).exec_ret<bool, $parm>($add);#>
+                    $<#$ctx$(name)($add);#> else
+                    $<#$ctx$(name)($add);#>
+                //| Some(PortType.InOut) => 
+                //    def parm = place.Colour.ParmType;
+                //    if (place.Colour.IsComplexType) 
+                //    $<#$(ctx)bool in = $(name).exec_ret<bool, $parm>($add);#> else
+                //    $<#$(ctx)bool in = $(name).exec_ret<bool, $parm>($add);#>
                 | _ => match (place.DestContainerType)
                        {
                          | ZeroSingle // имеет 0 или 1 фишку, для отсутствия используется 0 если INT

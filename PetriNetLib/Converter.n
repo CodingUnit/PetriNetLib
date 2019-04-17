@@ -70,7 +70,7 @@ namespace PetriNetLib
       | BraceFunc(BraceFunc = MainParseTree.BraceFunc(NameData = (n, _), ParmsData = (p, _))) => 
            def parms = match (p)
            {
-             | [BraceExpr(ExprsData = (e, _))] => e
+             //| [BraceExpr(ExprsData = (e, _))] => e
              | lst                             => lst
            }
            def parms = parms.Map(GetExpr);

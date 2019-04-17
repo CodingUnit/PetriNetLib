@@ -34,6 +34,11 @@ namespace PetriNetLib
     file : string;
     mutable ctx : list[string];
     
+    public AddCtxVar(var : string) : void
+    {
+      ctx ::= var
+    }
+    
     public ReadCtxVar() : list[string]
     {
       def res = ctx;
@@ -83,7 +88,10 @@ namespace PetriNetLib
       funcs = model.ml_decls.Where(GenFuncCpp.IsFunc).Map(x => GenFuncCpp(x, this));
       def funcs_wpre = funcs.Select(x => (x.NameWithPrefix, x));
       def funcs_pre = funcs.Where(x => x.PrefixType != FuncPrefix.None).Select(x => (x.Name, x));
-      func_proc = Hashtable(funcs_wpre.Concat(funcs_pre));
+      def conc = funcs_wpre.Concat(funcs_pre);
+      def dups = conc.GroupBy((n, _) => n);
+      def all = dups.SelectMany(x => if (x.Count() == 1) x else x.MapIndex(((x, y), i) => (x + i.ToString(), y)));
+      func_proc = Hashtable(all);
       //this.transitions.
     }
 

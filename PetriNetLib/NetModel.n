@@ -221,9 +221,13 @@ namespace PetriNetLib
 
     public time_expr : PExpr;
     public code_segment : PExpr;
+    public input : PExpr;
+    public output : PExpr;
     public priority : int;
     public net : PetriNetProcessor;
 
+    
+    
     public IsTimed : bool
     {
       [Memoize]
