@@ -144,7 +144,8 @@ namespace PetriNetLib
         def (dup_bind, _other) = bind.DuplicatesPartition(EnumComp());
         def dup_bind = dup_bind.SelectMany(x => x).Distinct();
         
-        def dup_bind = if (dup_bind.IsEmpty()) "" else dup_bind + "\n";
+        def dup_bind = if (dup_bind.IsEmpty()) "" else $<#..$(dup_bind; "\n")
+        #>;
         
         def create_body(x, a)
         {
