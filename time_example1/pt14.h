@@ -368,35 +368,25 @@ private:
 
 	typedef enum
 	{
-		tr_UnnamedTransition1 = 0x1,
-		tr_UnnamedTransition8 = 0x2,
-		tr_GroupTransition821 = 0x4,
-		tr_UnnamedTransition0 = 0x8,
-		tr_UnnamedTransition2 = 0x10,
-		tr_tran_DPS = 0x20,
-		tr_UnnamedTransition3 = 0x40,
-		tr_UnnamedTransition6 = 0x80,
-		tr_UnnamedTransition7 = 0x100,
-		tr_UnnamedTransition9 = 0x200,
-		tr_UnnamedTransition10 = 0x400,
-		tr_UnnamedTransition11 = 0x800,
-		tr_UnnamedTransition12 = 0x1000,
-		tr_UnnamedTransition15 = 0x2000,
-		tr_UnnamedTransition16 = 0x4000,
-		tr_UnnamedTransition17 = 0x8000,
-		tr_UnnamedTransition18 = 0x10000,
-		tr_UnnamedTransition19 = 0x20000,
-		tr_UnnamedTransition20 = 0x40000,
-		tr_UnnamedTransition21 = 0x80000,
-		tr_UnnamedTransition22 = 0x100000,
-		tr_UnnamedTransition23 = 0x200000,
-		tr_UnnamedTransition24 = 0x400000,
-		tr_UnnamedTransition25 = 0x800000,
-		tr_UnnamedTransition26 = 0x1000000,
-		tr_UnnamedTransition28 = 0x2000000,
-		tr_UnnamedTransition29 = 0x4000000,
-		tr_UnnamedTransition30 = 0x8000000,
-		tr_UnnamedTransition31 = 0x10000000
+		tr_GroupTransition821 = 0x1,
+		tr_GroupTransition2623 = 0x2,
+		tr_GroupTransition3116 = 0x4,
+		tr_GroupTransition30292825 = 0x8,
+		tr_GroupTransition2019 = 0x10,
+		tr_GroupTransition2221 = 0x20,
+		tr_UnnamedTransition0 = 0x40,
+		tr_tran_DPS = 0x80,
+		tr_UnnamedTransition3 = 0x100,
+		tr_UnnamedTransition6 = 0x200,
+		tr_UnnamedTransition7 = 0x400,
+		tr_UnnamedTransition9 = 0x800,
+		tr_UnnamedTransition10 = 0x1000,
+		tr_UnnamedTransition11 = 0x2000,
+		tr_UnnamedTransition12 = 0x4000,
+		tr_UnnamedTransition15 = 0x8000,
+		tr_UnnamedTransition17 = 0x10000,
+		tr_UnnamedTransition18 = 0x20000,
+		tr_UnnamedTransition24 = 0x40000
 	} ttran;
 	const tran_func_type *tran_funcs;
 
@@ -410,7 +400,7 @@ private:
 
 	const ttran *next_tran;
 
-	static const u32 tran_can_repeat = 532640780;
+	static const u32 tran_can_repeat = 184447;
 
 	static const int P_LOW = 10000;
 	static const int P_NORMAL = 1000;
@@ -418,6 +408,309 @@ private:
 
 
 	function UDP_OUT;
+
+	bool GroupTransition821()
+	{
+		const CAN_UDP_MESSAGE &m = UDP_IN;
+		if (m.ID == 0x297)
+		{
+			if (UDP_IN_flag)
+			{
+				const CAN_UDP_MESSAGE &m = UDP_IN;
+				if (m.ID == 0x297)
+				{
+					UDP_IN_flag = false;
+					SEND_SENS(1);
+					return true;
+				}
+			}
+			return false;;
+
+		}
+		const CAN_UDP_MESSAGE &m = UDP_IN;
+		if (m.ID == 0x50)
+		{
+			if (UDP_IN_flag)
+			{
+				const CAN_UDP_MESSAGE &m = UDP_IN;
+				if (m.ID == 0x50)
+				{
+					UDP_IN_flag = false;
+					ControlCheck = (*(CONTROL_MSG  *)m.data.get_buf());
+					ControlCheck_flag = true;
+					return true;
+				}
+			}
+			return false;;
+
+		}
+		else
+			const CAN_UDP_MESSAGE &m = UDP_IN;
+		if (UDP_IN_flag)
+		{
+			const CAN_UDP_MESSAGE &m = UDP_IN;
+			UDP_IN_flag = false;
+			CAN_MESSAGE _N__4348 = udp2can(m);
+			CAN.add((void *)&_N__4348);
+			return true;
+		}
+		return false;;
+		return false;
+		return true;
+
+	}
+
+	bool GroupTransition2623()
+	{
+		const CAN_MESSAGE &cm = CAN_IN;
+		if ((cm.field1 == 0 || cm.field1 == 10) && cm.field3.at(0) == 0xB)
+		{
+			if (CAN_IN_flag)
+			{
+				const CAN_MESSAGE &cm = CAN_IN;
+				if ((cm.field1 == 0 || cm.field1 == 10) && cm.field3.at(0) == 0xB)
+				{
+					CAN_IN_flag = false;
+					RESET(1);
+					return true;
+				}
+			}
+			return false;;
+
+		}
+		const CAN_MESSAGE &cm = CAN_IN;
+		if (cm.field1 == 0x208)
+		{
+			if (CAN_IN_flag)
+			{
+				const CAN_MESSAGE &cm = CAN_IN;
+				if (cm.field1 == 0x208)
+				{
+					CAN_IN_flag = false;
+					SEND_SENS(1);
+					return true;
+				}
+			}
+			return false;;
+
+		}
+		else
+			return false;
+		return true;
+
+	}
+
+	bool GroupTransition3116()
+	{
+		bool res = CAN_OUT.field1;
+		const CAN_MESSAGE &cm = CAN_OUT.field2;
+		if (res)
+		{
+			if (CAN_OUT_flag)
+			{
+				bool res = CAN_OUT.field1;
+				const CAN_MESSAGE &cm = CAN_OUT.field2;
+				if (res)
+				{
+					CAN_OUT_flag = false;
+					return true;
+				}
+			}
+			return false;;
+
+		}
+		bool res = CAN_OUT.field1;
+		const CAN_MESSAGE &cm = CAN_OUT.field2;
+		if (!res)
+		{
+			if (CAN_OUT_flag)
+			{
+				bool res = CAN_OUT.field1;
+				const CAN_MESSAGE &cm = CAN_OUT.field2;
+				if (!res)
+				{
+					CAN_OUT_flag = false;
+					CAN.add((void *)&cm);
+					return true;
+				}
+			}
+			return false;;
+
+		}
+		else
+			return false;
+		return true;
+
+	}
+
+	bool GroupTransition30292825()
+	{
+		const CONTROL_MSG &cnm = ControlCheck;
+		if (cnm.field1 == 3)
+		{
+			if (ControlCheck_flag)
+			{
+				const CONTROL_MSG &cnm = ControlCheck;
+				if (cnm.field1 == 3)
+				{
+					ControlCheck_flag = false;
+					flash_reset();
+					CONTROL_MSG _N__4353 = CONTROL_MSG(3, 0, 0);
+					UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4353.get_bytes()));
+					return true;
+				}
+			}
+			return false;;
+
+		}
+		const CONTROL_MSG &cnm = ControlCheck;
+		if (cnm.field1 == 2)
+		{
+			if (ControlCheck_flag)
+			{
+				const CONTROL_MSG &cnm = ControlCheck;
+				if (cnm.field1 == 2)
+				{
+					ControlCheck_flag = false;
+					int  n = read_param(cnm.field2);
+					CONTROL_MSG _N__4352 = CONTROL_MSG(1, cnm.field2, n);
+					UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4352.get_bytes()));
+					return true;
+				}
+			}
+			return false;;
+
+		}
+		else
+			const CONTROL_MSG &cnm = ControlCheck;
+		if (cnm.field1 == 1)
+		{
+			if (ControlCheck_flag)
+			{
+				const CONTROL_MSG &cnm = ControlCheck;
+				if (cnm.field1 == 1)
+				{
+					ControlCheck_flag = false;
+					int  n = set_param(cnm.field2, cnm.field3);
+					CONTROL_MSG _N__4351 = CONTROL_MSG(1, cnm.field2, n);
+					UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4351.get_bytes()));
+					return true;
+				}
+			}
+			return false;;
+
+		}
+		else
+			const CONTROL_MSG &cnm = ControlCheck;
+		if (cnm.field1 == 0)
+		{
+			if (ControlCheck_flag)
+			{
+				const CONTROL_MSG &cnm = ControlCheck;
+				if (cnm.field1 == 0)
+				{
+					ControlCheck_flag = false;
+					CONTROL_MSG _N__4350 = CONTROL_MSG(0, 0, 0);
+					UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4350.get_bytes()));
+					RESET(1);
+					return true;
+				}
+			}
+			return false;;
+
+		}
+		else
+			return false;
+		return true;
+
+	}
+
+	bool GroupTransition2019()
+	{
+		int n = GPSLEDCntr;
+
+		if (n < 10)
+		{
+			if (GPSLED)
+			{
+				int n = GPSLEDCntr;
+				if (n < 10)
+				{
+					GPSLED = 0;
+					GPSLEDCntr = n + 1;
+					return true;
+				}
+			}
+			return false;;
+
+		}
+		int n = GPSLEDCntr;
+
+		if (n == 10)
+		{
+			if (GPSLED)
+			{
+				int n = GPSLEDCntr;
+				if (n == 10)
+				{
+					GPSLED = 0;
+					GPS_LED_Toggle();
+					GPSLEDCntr = 0;
+					return true;
+				}
+			}
+			return false;;
+
+		}
+		else
+			return false;
+		return true;
+
+	}
+
+	bool GroupTransition2221()
+	{
+		int n = SYNCLEDCntr;
+
+		if (n < 30)
+		{
+			if (SYNCLED)
+			{
+				int n = SYNCLEDCntr;
+				if (n < 30)
+				{
+					SYNCLED = 0;
+					SYNCLEDCntr = n + 1;
+					return true;
+				}
+			}
+			return false;;
+
+		}
+		int n = SYNCLEDCntr;
+
+		if (n == 30)
+		{
+			if (SYNCLED)
+			{
+				int n = SYNCLEDCntr;
+				if (n == 30)
+				{
+					SYNCLED = 0;
+					LED_Toggle();
+					SYNCLEDCntr = 0;
+					return true;
+				}
+			}
+			return false;;
+
+		}
+		else
+			return false;
+		return true;
+
+	}
+
 	bool UnnamedTransition0()
 	{
 		if (GPS_flag)
@@ -426,37 +719,6 @@ private:
 			GPS_flag = false;
 			UDP_SEND(CAN_MESSAGE(0x100, time64(), s));
 			GPSLED = 1;
-			return true;
-		}
-		return false;;
-
-	}
-
-	bool UnnamedTransition1()
-	{
-		if (UDP_IN_flag)
-		{
-			const CAN_UDP_MESSAGE &m = UDP_IN;
-			if (is_control(m))
-			{
-				UDP_IN_flag = false;
-				ControlCheck = (*(CONTROL_MSG  *)m.data.get_buf());
-				ControlCheck_flag = true;
-				return true;
-			}
-		}
-		return false;;
-
-	}
-
-	bool UnnamedTransition2()
-	{
-		if (UDP_IN_flag)
-		{
-			const CAN_UDP_MESSAGE &m = UDP_IN;
-			UDP_IN_flag = false;
-			CAN_MESSAGE _N__4388 = udp2can(m);
-			CAN.add((void *)&_N__4388);
 			return true;
 		}
 		return false;;
@@ -501,10 +763,10 @@ private:
 			BatLevel_flag = false;
 
 			BinTimer_time = time() + 1000000;
-			s16 _N__4407[] = { (SHORT)bt, n };
-			UDP_AND_CAN_SEND(CAN_MESSAGE(0x150, time64(), bytes4((u8 *)_N__4407)));
-			u8 _N__4408[] = { (BYTE)1, inp };
-			UDP_AND_CAN_SEND(CAN_MESSAGE(0x2D1, time64(), bytes2((u8 *)_N__4408)));
+			s16 _N__4381[] = { (SHORT)bt, n };
+			UDP_AND_CAN_SEND(CAN_MESSAGE(0x150, time64(), bytes4((u8 *)_N__4381)));
+			u8 _N__4382[] = { (BYTE)1, inp };
+			UDP_AND_CAN_SEND(CAN_MESSAGE(0x2D1, time64(), bytes2((u8 *)_N__4382)));
 			return true;
 		}
 		return false;;
@@ -518,22 +780,6 @@ private:
 		TempTimer_time = time();
 		UDP_AND_CAN_SEND(CAN_MESSAGE(0x2D1, time64(), IntToList(0x33 + n * 256, 3)));
 		return true;;
-
-	}
-
-	bool UnnamedTransition8()
-	{
-		if (UDP_IN_flag)
-		{
-			const CAN_UDP_MESSAGE &m = UDP_IN;
-			if (is_sens(m))
-			{
-				UDP_IN_flag = false;
-				SEND_SENS(1);
-				return true;
-			}
-		}
-		return false;;
 
 	}
 
@@ -609,23 +855,6 @@ private:
 
 	}
 
-	bool UnnamedTransition16()
-	{
-		if (CAN_OUT_flag)
-		{
-			bool res = CAN_OUT.field1;
-			const CAN_MESSAGE &cm = CAN_OUT.field2;
-			if (!res)
-			{
-				CAN_OUT_flag = false;
-				CAN.add((void *)&cm);
-				return true;
-			}
-		}
-		return false;;
-
-	}
-
 	bool UnnamedTransition17()
 	{
 		if (SyncFreq)
@@ -645,93 +874,11 @@ private:
 		if (Init)
 		{
 			Init = 0;
-			u16 _N__4418[] = { (USHORT)2, 0x100 };
-			UDP_SEND(CAN_MESSAGE(0x30, time64(), bytes4((u8 *)_N__4418)));
-			u16 _N__4419[] = { (USHORT)0, 0 };
-			UDP_SEND(CAN_MESSAGE(0x30, time64(), bytes4((u8 *)_N__4419)));
+			u16 _N__4391[] = { (USHORT)2, 0x100 };
+			UDP_SEND(CAN_MESSAGE(0x30, time64(), bytes4((u8 *)_N__4391)));
+			u16 _N__4392[] = { (USHORT)0, 0 };
+			UDP_SEND(CAN_MESSAGE(0x30, time64(), bytes4((u8 *)_N__4392)));
 			return true;
-		}
-		return false;;
-
-	}
-
-	bool UnnamedTransition19()
-	{
-		if (GPSLED)
-		{
-			int n = GPSLEDCntr;
-			if (n == 10)
-			{
-				GPSLED = 0;
-				GPS_LED_Toggle();
-				GPSLEDCntr = 0;
-				return true;
-			}
-		}
-		return false;;
-
-	}
-
-	bool UnnamedTransition20()
-	{
-		if (GPSLED)
-		{
-			int n = GPSLEDCntr;
-			if (n < 10)
-			{
-				GPSLED = 0;
-				GPSLEDCntr = n + 1;
-				return true;
-			}
-		}
-		return false;;
-
-	}
-
-	bool UnnamedTransition21()
-	{
-		if (SYNCLED)
-		{
-			int n = SYNCLEDCntr;
-			if (n == 30)
-			{
-				SYNCLED = 0;
-				LED_Toggle();
-				SYNCLEDCntr = 0;
-				return true;
-			}
-		}
-		return false;;
-
-	}
-
-	bool UnnamedTransition22()
-	{
-		if (SYNCLED)
-		{
-			int n = SYNCLEDCntr;
-			if (n < 30)
-			{
-				SYNCLED = 0;
-				SYNCLEDCntr = n + 1;
-				return true;
-			}
-		}
-		return false;;
-
-	}
-
-	bool UnnamedTransition23()
-	{
-		if (CAN_IN_flag)
-		{
-			const CAN_MESSAGE &cm = CAN_IN;
-			if (cm.field1 == 0x208)
-			{
-				CAN_IN_flag = false;
-				SEND_SENS(1);
-				return true;
-			}
 		}
 		return false;;
 
@@ -748,111 +895,6 @@ private:
 		return false;;
 
 	}
-
-	bool UnnamedTransition25()
-	{
-		if (ControlCheck_flag)
-		{
-			const CONTROL_MSG &cnm = ControlCheck;
-			if (cnm.field1 == 0)
-			{
-				ControlCheck_flag = false;
-				CONTROL_MSG _N__4429 = CONTROL_MSG(0, 0, 0);
-				UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4429.get_bytes()));
-				RESET(1);
-				return true;
-			}
-		}
-		return false;;
-
-	}
-
-	bool UnnamedTransition26()
-	{
-		if (CAN_IN_flag)
-		{
-			const CAN_MESSAGE &cm = CAN_IN;
-			if ((cm.field1 == 0 || cm.field1 == 10) && cm.field3.at(0) == 0xB)
-			{
-				CAN_IN_flag = false;
-				RESET(1);
-				return true;
-			}
-		}
-		return false;;
-
-	}
-
-	bool UnnamedTransition28()
-	{
-		if (ControlCheck_flag)
-		{
-			const CONTROL_MSG &cnm = ControlCheck;
-			if (cnm.field1 == 1)
-			{
-				ControlCheck_flag = false;
-				int  n = set_param(cnm.field2, cnm.field3);
-				CONTROL_MSG _N__4430 = CONTROL_MSG(1, cnm.field2, n);
-				UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4430.get_bytes()));
-				return true;
-			}
-		}
-		return false;;
-
-	}
-
-	bool UnnamedTransition29()
-	{
-		if (ControlCheck_flag)
-		{
-			const CONTROL_MSG &cnm = ControlCheck;
-			if (cnm.field1 == 2)
-			{
-				ControlCheck_flag = false;
-				int  n = read_param(cnm.field2);
-				CONTROL_MSG _N__4431 = CONTROL_MSG(1, cnm.field2, n);
-				UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4431.get_bytes()));
-				return true;
-			}
-		}
-		return false;;
-
-	}
-
-	bool UnnamedTransition30()
-	{
-		if (ControlCheck_flag)
-		{
-			const CONTROL_MSG &cnm = ControlCheck;
-			if (cnm.field1 == 3)
-			{
-				ControlCheck_flag = false;
-				flash_reset();
-				CONTROL_MSG _N__4432 = CONTROL_MSG(3, 0, 0);
-				UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4432.get_bytes()));
-				return true;
-			}
-		}
-		return false;;
-
-	}
-
-	bool UnnamedTransition31()
-	{
-		if (CAN_OUT_flag)
-		{
-			bool res = CAN_OUT.field1;
-			const CAN_MESSAGE &cm = CAN_OUT.field2;
-			if (res)
-			{
-				CAN_OUT_flag = false;
-				return true;
-			}
-		}
-		return false;;
-
-	}
-
 	CAN_MESSAGE  control2can(const CONTROL_MSG &m)
 	{
 		return CAN_MESSAGE(0x50, time64(), m.get_bytes());
@@ -870,25 +912,14 @@ private:
 
 	CAN_MESSAGE  bt2can_message(int bt)
 	{
-		u8 _N__4438[] = { (BYTE)1, bt };
+		u8 _N__4398[] = { (BYTE)1, bt };
 
-		return CAN_MESSAGE(0x2D1, time(), bytes2((u8 *)_N__4438));
-	}
-
-	bool is_sens(const CAN_UDP_MESSAGE &m)
-	{
-		return m.ID == 0x297;
-	}
-
-	bool is_control(const CAN_UDP_MESSAGE &m)
-	{
-		return m.ID == 0x50;
+		return CAN_MESSAGE(0x2D1, time(), bytes2((u8 *)_N__4398));
 	}
 
 	tuple2<int, int>(*adc2bat)(int);
 	bytesn(*get_ssi_bytes)(int, bool, int, const bytes &);
 	void(*GPS_LED_Toggle)();
-	void(*LED_Toggle)();
 	void(*LED_Toggle)();
 	void(*do_reset)();
 	UINT(*read_param)(u16);
@@ -1094,42 +1125,34 @@ public:
 		SYNCLEDCntr = 0;
 		SYNCLED = 0;
 		ResetTime = 0;
-		static const tran_func_type tr_funcs[] = { &pt14::UnnamedTransition1,
-&pt14::UnnamedTransition8,
-&pt14::GroupTransition821,
-&pt14::UnnamedTransition0,
-&pt14::UnnamedTransition2,
-&pt14::tran_DPS,
-&pt14::UnnamedTransition3,
-&pt14::UnnamedTransition6,
-&pt14::UnnamedTransition7,
-&pt14::UnnamedTransition9,
-&pt14::UnnamedTransition10,
-&pt14::UnnamedTransition11,
-&pt14::UnnamedTransition12,
-&pt14::UnnamedTransition15,
-&pt14::UnnamedTransition16,
-&pt14::UnnamedTransition17,
-&pt14::UnnamedTransition18,
-&pt14::UnnamedTransition19,
-&pt14::UnnamedTransition20,
-&pt14::UnnamedTransition21,
-&pt14::UnnamedTransition22,
-&pt14::UnnamedTransition23,
-&pt14::UnnamedTransition24,
-&pt14::UnnamedTransition25,
-&pt14::UnnamedTransition26,
-&pt14::UnnamedTransition28,
-&pt14::UnnamedTransition29,
-&pt14::UnnamedTransition30,
-&pt14::UnnamedTransition31 };
+		static const tran_func_type tr_funcs[] = { &pt14::PetriNetLib.GroupTranCpp,
+&pt14::PetriNetLib.GroupTranCpp,
+&pt14::PetriNetLib.GroupTranCpp,
+&pt14::PetriNetLib.GroupTranCpp,
+&pt14::PetriNetLib.GroupTranCpp,
+&pt14::PetriNetLib.GroupTranCpp,
+&pt14::PetriNetLib.GenTranCpp,
+&pt14::PetriNetLib.GenTranCpp,
+&pt14::PetriNetLib.GenTranCpp,
+&pt14::PetriNetLib.GenTranCpp,
+&pt14::PetriNetLib.GenTranCpp,
+&pt14::PetriNetLib.GenTranCpp,
+&pt14::PetriNetLib.GenTranCpp,
+&pt14::PetriNetLib.GenTranCpp,
+&pt14::PetriNetLib.GenTranCpp,
+&pt14::PetriNetLib.GenTranCpp,
+&pt14::PetriNetLib.GenTranCpp,
+&pt14::PetriNetLib.GenTranCpp,
+&pt14::PetriNetLib.GenTranCpp };
 		tran_funcs = tr_funcs;
 
-		static const tplace tr_lock[] = { (tplace)(pl_ControlCheck | pl_UDP_IN),
-		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_UDP_IN),
-		(tplace)0,
+		static const tplace tr_lock[] = { (tplace)(pl_COUNTER | pl_UDP_OUT | pl_GPS),
 		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_GPS),
-		(tplace)(pl_CAN | pl_UDP_IN),
+		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_GPS),
+		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_GPS),
+		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_GPS),
+		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_GPS),
+		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_GPS),
 		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_STEP | pl_DELAY | pl_SSI | pl_SYNC | pl_DPS),
 		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_DEBUG_TIMER | pl_SEND_DEBUG),
 		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_CAN | pl_CAN_OUT | pl_BatLevel | pl_BinTimer | pl_BUTTONS),
@@ -1139,28 +1162,18 @@ public:
 		(tplace)(pl_ADC_SUM | pl_TIMER | pl_ADC),
 		(tplace)(pl_BatLevel | pl_ADC_SUM),
 		(tplace)(pl_CAN_OUT | pl_CAN),
-		(tplace)(pl_CAN | pl_CAN_OUT),
 		(tplace)(pl_SyncFreq | pl_DPS),
 		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_Init),
-		(tplace)(pl_GPSLED | pl_GPSLEDCntr),
-		(tplace)(pl_GPSLED | pl_GPSLEDCntr),
-		(tplace)(pl_SYNCLED | pl_SYNCLEDCntr),
-		(tplace)(pl_SYNCLED | pl_SYNCLEDCntr),
-		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_CAN_IN),
-		(tplace)(pl_ResetTime),
-		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_COUNTER | pl_UDP_OUT | pl_ControlCheck),
-		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_CAN_IN),
-		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_ControlCheck),
-		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_ControlCheck),
-		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_ControlCheck),
-		(tplace)(pl_CAN_OUT) };
+		(tplace)(pl_ResetTime) };
 		tran_lock = tr_lock;
 
-		static const ttran next_tr[] = { (ttran)(tr_UnnamedTransition30 | tr_UnnamedTransition29 | tr_UnnamedTransition28 | tr_UnnamedTransition25),
-		(ttran)0,
-		(ttran)0,
+		static const ttran next_tr[] = { (ttran)(tr_UnnamedTransition20 | tr_UnnamedTransition19),
 		(ttran)(tr_UnnamedTransition20 | tr_UnnamedTransition19),
-		(ttran)(tr_UnnamedTransition15),
+		(ttran)(tr_UnnamedTransition20 | tr_UnnamedTransition19),
+		(ttran)(tr_UnnamedTransition20 | tr_UnnamedTransition19),
+		(ttran)(tr_UnnamedTransition20 | tr_UnnamedTransition19),
+		(ttran)(tr_UnnamedTransition20 | tr_UnnamedTransition19),
+		(ttran)(tr_UnnamedTransition20 | tr_UnnamedTransition19),
 		(ttran)0,
 		(ttran)0,
 		(ttran)0,
@@ -1170,35 +1183,13 @@ public:
 		(ttran)(tr_UnnamedTransition12),
 		(ttran)(tr_UnnamedTransition12),
 		(ttran)(tr_UnnamedTransition31 | tr_UnnamedTransition16),
-		(ttran)(tr_UnnamedTransition15),
 		(ttran)(tr_tran_DPS),
-		(ttran)0,
-		(ttran)(tr_UnnamedTransition20 | tr_UnnamedTransition19),
-		(ttran)(tr_UnnamedTransition20 | tr_UnnamedTransition19),
-		(ttran)(tr_UnnamedTransition22 | tr_UnnamedTransition21),
-		(ttran)(tr_UnnamedTransition22 | tr_UnnamedTransition21),
-		(ttran)0,
-		(ttran)0,
-		(ttran)0,
-		(ttran)0,
-		(ttran)0,
-		(ttran)0,
 		(ttran)0,
 		(ttran)0 };
 		next_tran = next_tr;
 
 		tran_ena(tr_UnnamedTransition18 | tr_UnnamedTransition12);
 	}
-
-	bool GroupTransition821()
-	{
-		if (!UnnamedTransition8())
-			if (!UnnamedTransition1())
-				if (!UnnamedTransition2())
-					return false;
-		return true;
-	}
-
 	void UDP_SEND(const CAN_MESSAGE &cm)
 	{
 		int n = COUNTER;
@@ -1233,8 +1224,8 @@ public:
 
 	void RESET(char param)
 	{
-		u16 _N__4437[] = { (USHORT)1, 0 };
-		UDP_SEND(CAN_MESSAGE(0x30, time64(), bytes4((u8 *)_N__4437)));
+		u16 _N__4397[] = { (USHORT)1, 0 };
+		UDP_SEND(CAN_MESSAGE(0x30, time64(), bytes4((u8 *)_N__4397)));
 		ResetTime = 1;
 		ResetTime_time = time();;
 
@@ -1263,7 +1254,7 @@ public:
 	void add_DPS(bool param)
 	{
 		DPS = param;
-		tran_DPS();
+		System.Linq.Enumerable + WhereSelectEnumerableIterator`2[PetriNetLib.GenTranCpp, System.String]
 	}
 
 	bool  get_DPS() const
@@ -1274,8 +1265,7 @@ public:
 	void add_BUTTONS(u8 param)
 	{
 		BUTTONS = param;
-		UnnamedTransition6();
-		UnnamedTransition10();
+		System.Linq.Enumerable + WhereSelectEnumerableIterator`2[PetriNetLib.GenTranCpp, System.String]
 	}
 
 	u8  get_BUTTONS() const
@@ -1287,7 +1277,7 @@ public:
 	{
 		UDP_IN = param;
 		UDP_IN_flag = true;
-		GroupTransition821();
+		System.Linq.Enumerable + WhereSelectEnumerableIterator`2[PetriNetLib.GenTranCpp, System.String]
 	}
 
 	const CAN_UDP_MESSAGE & get_UDP_IN() const
@@ -1299,8 +1289,7 @@ public:
 	{
 		CAN_IN = param;
 		CAN_IN_flag = true;
-		UnnamedTransition23();
-		UnnamedTransition26();
+		System.Linq.Enumerable + WhereSelectEnumerableIterator`2[PetriNetLib.GenTranCpp, System.String]
 	}
 
 	const CAN_MESSAGE & get_CAN_IN() const
@@ -1312,7 +1301,7 @@ public:
 	{
 		GPS = param;
 		GPS_flag = true;
-		UnnamedTransition0();
+		System.Linq.Enumerable + WhereSelectEnumerableIterator`2[PetriNetLib.GenTranCpp, System.String]
 	}
 
 	const bytesn & get_GPS() const
@@ -1324,7 +1313,7 @@ public:
 	{
 		SEND_DEBUG = param;
 		SEND_DEBUG_flag = true;
-		UnnamedTransition3();
+		System.Linq.Enumerable + WhereSelectEnumerableIterator`2[PetriNetLib.GenTranCpp, System.String]
 	}
 
 	const bytesn & get_SEND_DEBUG() const
@@ -1336,7 +1325,7 @@ public:
 	{
 		SyncFreq = param;
 		SyncFreq_time = time();
-		UnnamedTransition17();
+		System.Linq.Enumerable + WhereSelectEnumerableIterator`2[PetriNetLib.GenTranCpp, System.String]
 	}
 
 	int  get_SyncFreq() const
@@ -1347,7 +1336,7 @@ public:
 	void add_STEP(int param)
 	{
 		STEP = param;
-
+		System.Linq.Enumerable + WhereSelectEnumerableIterator`2[PetriNetLib.GenTranCpp, System.String]
 	}
 
 	int  get_STEP() const

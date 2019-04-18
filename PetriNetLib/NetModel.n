@@ -227,8 +227,8 @@ namespace PetriNetLib
     public net : PetriNetProcessor;
 
     
-    
-    public IsTimed : bool
+    public this() {}
+    public virtual IsTimed : bool
     {
       [Memoize]
       get
@@ -283,7 +283,7 @@ namespace PetriNetLib
     
    
     
-    public Name : string
+    public virtual Name : string
     {
       [Memoize]
       get

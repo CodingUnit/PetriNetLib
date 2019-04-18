@@ -734,6 +734,31 @@ namespace CommonLib.Macros
       (res, acc)
     }
 
+    public DuplicatesPartition[T, TKey](this lst : IEnumerable[T], comparer : IEqualityComparer[T] = null) : IEnumerable[T] * IEnumerable[T]
+    {
+      def acc = List();
+      def res = List();
+      def comparer = comparer ?? EqualityComparer.Default;
+
+      def en = lst.GetEnumerator();
+
+      def loop(elem1)
+      {
+        if (en.MoveNext()) 
+        {
+          def elem = en.Current;
+          if (comparer.Equals(elem1, elem)) 
+          {
+            res.Add(elem1);
+          } else acc.Add(elem1);
+          loop(elem);
+        } else if (res.IsEmpty()) acc.Add(elem1) else ();
+      }
+
+      when (en.MoveNext()) loop(en.Current);
+      (res, acc)
+    }
+    
     public FindDelimited[T](this lst : list[T], pred : T -> bool) : list[list[T]]
     {
       def loop(lst, res, subres)

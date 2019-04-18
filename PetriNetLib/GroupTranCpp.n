@@ -1,0 +1,81 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace PetriNetLib
+{
+  /// <summary>
+  /// Description of GroupTranCpp.
+  /// </summary>
+  class GroupTranCpp : GenTranCpp
+  {
+    public grouped : list[GenTranCpp];
+    public gen : CppGenerator;
+    
+    public this(grouped : list[GenTranCpp], generator : CppGenerator)
+    {
+      base(null, generator);
+      this.gen = generator;
+      this.grouped = grouped;
+    }
+    
+    public override Priority : int
+    {
+      [Memoize]
+      get
+      {
+        grouped.Max(_.priority)
+      }
+    }
+    
+    public override IsTimed : bool
+    {
+      get
+      {
+        false
+      }
+    }
+    
+    public override CompleteTran : bool
+    {
+      [Memoize]
+      get
+      {
+        true
+      }
+    }
+    
+    public override ExecName : string
+    {
+      get
+      {
+        Name
+      }
+    }
+ 
+    public override PartOfGroup : option[GroupTranCpp]
+    {
+      get
+      {
+        None()
+      }
+    }
+    
+    public override Name : string
+    {
+      [Memoize]
+      get
+      {
+        //def sorted = tran.OrderByDescending((x, _) => x.priority);
+        def name = grouped.Map(_.UnnamedIdx);
+        def name = name.Fold("", (x, a) => $"$x$a");
+        $"GroupTransition$name"
+      }
+    }
+  }
+}

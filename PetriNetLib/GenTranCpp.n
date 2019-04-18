@@ -21,7 +21,9 @@ namespace PetriNetLib
 
     public this(tran : Transition, gen : CppGenerator)
     {
-      base(tran.idx, tran.id, tran.name, tran.guard, tran.time_expr, tran.code_segment, tran.input, tran.output, tran.priority, tran.net, tran.UnnamedIdx);
+      if (tran != null)
+      base(tran.idx, tran.id, tran.name, tran.guard, tran.time_expr, tran.code_segment, tran.input, tran.output, tran.priority, tran.net, tran.UnnamedIdx); else
+      base();
       this.gen = gen;
     }
 
@@ -30,6 +32,14 @@ namespace PetriNetLib
       this == tr : object
     }
 
+    public virtual Priority : int
+    {
+      get
+      {
+        priority
+      }
+    }
+    
     public Code : string
     {
       [Memoize]
@@ -137,53 +147,29 @@ namespace PetriNetLib
       }
     }
     
-    public PartOfGroup : option[string]
+    public virtual PartOfGroup : option[GroupTranCpp]
     {
       [Memoize]
       get
       {
-        def places = InputGenPlaces;//
-        def place = places.Where(x => !x.OutputGenTransitions.ElementsEqual((x, y) => x.priority == y.priority))
-                       .Map(x => (x, x.OutputGenTransitions.Where((x : Transition, _) => x.IsUnnamed)
-                          .Select(x => x[0])));
-        match (place.Find(x => x[1].Contains(this)))
-        {
-          | Some((_, g)) => g.Fold("", (x, a) => $"$(x.UnnamedIdx)$a") |> Some
-          | _            => None()
-        }
+        gen.GroupTransitions.Find(x => x.grouped.Contains(this))
+        //def places = InputGenPlaces;//
+        //def place = places.Where(x => !x.OutputGenTransitions.ElementsEqual((x, y) => x.priority == y.priority))
+        //               .Map(x => (x, x.OutputGenTransitions.Where((x : Transition, _) => x.IsUnnamed)
+        //                  .Select(x => x[0])));
+        //match (place.Find(x => x[1].Contains(this)))
+        //{
+        //  | Some((_, g)) => g.Fold("", (x, a) => $"$(x.UnnamedIdx)$a") |> Some
+        //  | _            => None()
+        //}
       }
     }
 
-    public IsPartOfGroupTransition : bool
-    {
-      [Memoize]
-      get
-      {
-        PartOfGroup.HasValue
-      }
-    }
-
-    public ExecName : string
+    public virtual ExecName : string
     {
       get
       {
         if (IsUnnamed) Name else $"tran_$Name"
-      }
-    }
-
-    public GroupName : option[string]
-    {
-      [Memoize]
-      get
-      {
-        if (PartOfGroup.HasValue)
-        {
-          def tran = InputGenPlaces.First().OutputTransitions.Where((x, _) => x.IsUnnamed).NToList();
-          //def sorted = tran.OrderByDescending((x, _) => x.priority);
-          def name = tran.Map((x, _) => x.UnnamedIdx);
-          def name = name.Fold("", (x, a) => $"$x$a");
-          $"GroupTransition$name" |> Some
-        } else None()
       }
     }
 
@@ -256,12 +242,12 @@ namespace PetriNetLib
       }
     }
     
-    public CompleteTran : bool
+    public virtual CompleteTran : bool
     {
       [Memoize]
       get
       {
-        IsImmediate && !IsPartOfGroupTransition && !IsTimed && !IsPartOfFuncPlace && !IsFuncTran
+        IsImmediate && !IsTimed && !IsPartOfFuncPlace && !IsFuncTran
       }
     }
     
@@ -293,9 +279,13 @@ namespace PetriNetLib
 
         //def tr_next = tr_next.Map(next_tran);
         //def tr_next = tr_next.Map((x, p) => $<#$(x.ExecName)($p);#>);
-        def body = gen.CreateTranBody(this);
-        $<#$body;
-         #>
+        match (this)
+        {
+          | GroupTranCpp as g => gen.CreateGroupTranBody(g)
+          | _                 => def body = gen.CreateTranBody(this);
+                                $<#$body;
+                                 #>
+        }
       }
     }
 

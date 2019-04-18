@@ -6,6 +6,7 @@ using Nemerle.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using CommonLib.Macros;
 
 namespace PetriNetLib
 {
@@ -117,37 +118,78 @@ namespace PetriNetLib
     }    
 
     
+    class EnumComp : IEqualityComparer[IEnumerable[string]]
+    {
+      public Equals(x : IEnumerable[string], y : IEnumerable[string]) : bool
+      {
+        x.OrderBy(x => x).ZipLazy(y.OrderBy(x => x)).All((x, y) => x == y)
+      }
+      
+		  public GetHashCode(obj : IEnumerable[string]) : int
+		  {
+		    obj.Fold(0, (x, a) => x.GetHashCode() + a * 12345)
+		  }
+		
+    }
     
-    CreateGroupTransitions() : list[string]
+    public CreateGroupTranBody(g : GroupTranCpp) : string
     {
       //def places = places.Where(x => !CommonLib.Macros.ListUtils.ElementsEqual(x.OutputTransitions.Where((x, _) => x.IsUnnamed).Map((x, _) => x.priority), _ == _));
       
-      def create_group_tran(p)
-      {
-        def tran = p.OutputGenTransitions.Where((x, _) => x.IsUnnamed).NToList();
-        def sorted = tran.OrderByDescending(x => x.priority);
-        def group = sorted.Fold("return false;", (x, a) => $"if (!$(x.Name)()) \n$a");
-        def name = tran.First().GroupName.Value;
+        //def tran = p.OutputGenTransitions.Where((x, _) => x.IsUnnamed).NToList();
+            //$<#$body$else#>
+        def sorted = g.grouped.OrderByDescending(x => x.priority).NToList();//
+        def bind = sorted.Map(x => x.InArcProcess.Map(x => x.bind_expr));
+        //x.InArcProcess.OrderBy(x => x.place.idx).Select(x => x.bind_expr)
+        def (dup_bind, _other) = bind.DuplicatesPartition(EnumComp());
+        def dup_bind = dup_bind.SelectMany(x => x).Distinct();
+        
+        def dup_bind = if (dup_bind.IsEmpty()) "" else dup_bind + "\n";
+        
+        def create_body(x, a)
+        {
+          def last = sorted.Last() == x : object;
+          def cond = match (x.guard)
+          {
+            | null
+            | <[]> => null
+            | e    => e |> ConvExpr(_, true)
+          }
+          def els = if (last) "" else " else";
+          def body = x.Body;
+          
+          def res = if (cond == null) 
+          {
+            $<#$dup_bind$body#>
+          } else
+          
+          $<#$(dup_bind)if ($cond)
+          {
+            $body
+          }$els
+          #>;
+          $"$res$a"
+          //$"if (!$(x.Name)()) \n$a"
+        }
+        
+        def group = sorted.Fold("return false;", create_body);
         //def tr_comp = $"tr_$name";
-        $<#bool $name()
-            {
-              $group
-              return true;
-            }#>;
-      }
+        $<#$group
+           return true;
+          #>;
       
-      "" :: PlacesWithGroup.Map(create_group_tran) + [""]
+      //"" :: PlacesWithGroup.Map(create_group_tran) + [""]
     }
     
-    EnumTransitions : list[string * int * GenTranCpp]
+    EnumTransitions : list[GenTranCpp]
     {
       [Memoize]
       get
       {
-        def tran = transitions.Where(x => !x.IsPartOfFuncPlace && !x.IsFuncTran).Select(x => ($"$(x.ExecName)", x.priority, x));
-        def groups = PlacesWithGroup.Select(x => x.OutputTransitions.Where(x => x[0].IsUnnamed));
-        def groups = groups.Select(x => ("GroupTransition" + x.Fold("", ((x, _), a) => $"$(x.UnnamedIdx)$a"), x.Select(x => x[0].priority).Max(), null));
-        groups.Concat(tran).NToList()
+        def tran = transitions.Filter(x => !x.IsPartOfFuncPlace && !x.IsFuncTran && !x.PartOfGroup.HasValue);
+        //def groups = PlacesWithGroup.Select(x => x.OutputTransitions.Where(x => x[0].IsUnnamed));
+        //def groups = GroupTransitions.Select(x => (x.Name, ));//groups.Select(x => ("GroupTransition" + x.Fold("", ((x, _), a) => $"$(x.UnnamedIdx)$a"), x.Select(x => x[0].priority).Max(), null));
+        GroupTransitions.Map(_ : GenTranCpp) + tran
       }
     }
     
@@ -169,8 +211,8 @@ namespace PetriNetLib
 	    }
       #>;
       protected_fields.Add(func);
-      def tran = EnumTransitions.OrderBy((_, p, _) => p);
-      def restran = tran.Select(((x, _, _), i) => $<#tr_$x = 0x$((1 << i).ToString("X"))#>);
+      def tran = EnumTransitions.OrderBy(x => x.Priority);
+      def restran = tran.Select((x, i) => $<#tr_$(x.ExecName) = 0x$((1 << i).ToString("X"))#>);
       
       
       
@@ -180,11 +222,10 @@ namespace PetriNetLib
         ..$(restran;",\n")
       } ttran;#>);
       
-      def lock_places = tran.Select((_, _, x) => if (x == null) "(tplace)0" else x.PlacesParticipateMask);
-      def next = tran.Select((_, _, x) => if (x == null) "(ttran)0" else x.NextTran |> TranToMask);
-      def can_rep = tran.Select(((_, _, x), i) => if (x == null) 1 << i else if (x.CompleteTran) 1 << i else 0);
+      def lock_places = tran.Select(x => if (x == null) "(tplace)0" else x.PlacesParticipateMask);
+      def next = tran.Select(x => if (x == null) "(ttran)0" else x.NextTran |> TranToMask);
+      def can_rep = tran.Select((x, i) => if (x == null) 1 << i else if (x.CompleteTran) 1 << i else 0);
       def can_rep = can_rep.Fold(0, _ | _);
-      def tran = tran.Map((x, _, _) => x);
       //def size = tran.Length;
       
       private_fields.Add($<#const tran_func_type *tran_funcs;
@@ -249,19 +290,19 @@ namespace PetriNetLib
       {
         def body = tran.Body;      
         def parms = tran.InArcProcess.Map(x => $"$(x.place.Colour.VarSpec)$(x.bind_var)");
-        $<#bool $name(..$(parms; ","))
+        $<#
+        bool $name(..$(parms; ","))
             {
               $body
-            }
-          #>
+            }#>
       } else
       {
-        def body = tran.Body;      
-        $<#bool $name()
+        def body = tran.Body;
+        $<#
+        bool $name()
             {
               $body
-            }
-          #>//)
+            }#>//)
         }
     }
 

@@ -282,12 +282,6 @@
         <ml id="ID1418622610">fun EXT_adc2bat(q : INT) = (0, q);
           <layout>fun EXT_adc2bat(q : INT) = (0, q);</layout>
         </ml>
-        <ml id="ID1417888936">fun is_control(m : CAN_UDP_MESSAGE) = #ID m = 0x50;
-          <layout>fun is_control(m : CAN_UDP_MESSAGE) = #ID m = 0x50;</layout>
-        </ml>
-        <ml id="ID1417932792">fun is_sens(m : CAN_UDP_MESSAGE) = #ID m = 0x297;
-          <layout>fun is_sens(m : CAN_UDP_MESSAGE) = #ID m = 0x297;</layout>
-        </ml>
         <ml id="ID1418367818">fun bt2can_message(bt : INT) : CAN_MESSAGE = (0x2D1, time(), [1 : BYTE,  bt]);
           <layout>fun bt2can_message(bt : INT) : CAN_MESSAGE = (0x2D1, time(), [1 : BYTE,  bt]);</layout>
         </ml>
@@ -4928,8 +4922,8 @@
         </initmark>
       </place>
       <place id="ID1419144310">
-        <posattr x="230.000000"
-                 y="-702.000000"/>
+        <posattr x="325.000000"
+                 y="-493.000000"/>
         <fillattr colour="White"
                   pattern=""
                   filled="false"/>
@@ -4951,8 +4945,8 @@
                 anchor.vertical="2"/>
         </marking>
         <type id="ID1419144311">
-          <posattr x="322.500000"
-                   y="-725.000000"/>
+          <posattr x="417.500000"
+                   y="-516.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -4965,8 +4959,8 @@
                 version="4.0.1">UNIT_TIMED</text>
         </type>
         <initmark id="ID1419144312">
-          <posattr x="307.000000"
-                   y="-678.000000"/>
+          <posattr x="402.000000"
+                   y="-469.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -5836,7 +5830,7 @@
           <textattr colour="Black"
                     bold="false"/>
           <text tool="CPN Tools"
-                version="4.0.1">[is_control(m)]</text>
+                version="4.0.1">[#ID m = 0x50]</text>
         </cond>
         <time id="ID1417256605">
           <posattr x="-921.500000"
@@ -6417,7 +6411,7 @@
         <binding x="7.200000"
                  y="-3.000000"/>
         <cond id="ID1417958424">
-          <posattr x="-708.500000"
+          <posattr x="-721.500000"
                    y="-73.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
@@ -6428,7 +6422,7 @@
           <textattr colour="Black"
                     bold="false"/>
           <text tool="CPN Tools"
-                version="4.0.1">[is_sens(m)]</text>
+                version="4.0.1">[#ID m = 0x297]</text>
         </cond>
         <time id="ID1417958425">
           <posattr x="-606.500000"
@@ -8985,7 +8979,7 @@ action
         <transend idref="ID1417256603"/>
         <placeend idref="ID1417186466"/>
         <annot id="ID1417907594">
-          <posattr x="-825.000000"
+          <posattr x="-800.000000"
                    y="-446.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
@@ -9683,23 +9677,10 @@ action
                    currentcyckle="2"/>
         <transend idref="ID1417340963"/>
         <placeend idref="ID1419144310"/>
-        <bendpoint id="ID1421053871"
-                   serial="1">
-          <posattr x="210.000000"
-                   y="-493.605558"/>
-          <fillattr colour="White"
-                    pattern="Solid"
-                    filled="false"/>
-          <lineattr colour="Black"
-                    thick="0"
-                    type="Solid"/>
-          <textattr colour="Black"
-                    bold="false"/>
-        </bendpoint>
         <bendpoint id="ID1421007576"
-                   serial="2">
-          <posattr x="230.000000"
-                   y="-504.000000"/>
+                   serial="1">
+          <posattr x="237.000000"
+                   y="-493.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -9710,8 +9691,8 @@ action
                     bold="false"/>
         </bendpoint>
         <annot id="ID1419161505">
-          <posattr x="180.000000"
-                   y="-529.000000"/>
+          <posattr x="202.000000"
+                   y="-504.000000"/>
           <fillattr colour="White"
                     pattern="Solid"
                     filled="false"/>
@@ -12454,8 +12435,8 @@ action
             </zorder>
           </cpnsheet>
           <cpnsheet id="ID1417185260"
-                    panx="-124.388242"
-                    pany="-865.619816"
+                    panx="72.611758"
+                    pany="-277.619816"
                     zoom="1.007080"
                     instance="ID1417185244">
             <zorder>
@@ -12562,8 +12543,6 @@ action
           <IndexNode expanded="true"/>
           <IndexNode expanded="true"/>
           <IndexNode expanded="false"/>
-          <IndexNode expanded="true"/>
-          <IndexNode expanded="true"/>
           <IndexNode expanded="true"/>
           <IndexNode expanded="true"/>
           <IndexNode expanded="true"/>

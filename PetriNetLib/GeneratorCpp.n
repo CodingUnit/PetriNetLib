@@ -64,12 +64,23 @@ namespace PetriNetLib
     func_proc : Hashtable[string, GenFuncCpp];
     funcs     : list[GenFuncCpp];
     
+    public GroupTransitions : list[GroupTranCpp]
+    {
+      [Memoize]
+      get
+      {
+        PlacesWithGroup.Map(x => GroupTranCpp(x.OutputGenTransitions.Filter(x => x.IsUnnamed && !x.IsTimed), this))
+      }
+    }
+    
     PlacesWithGroup : list[GenPlaceCpp]
     {
       [Memoize]
       get
       {
-        places.Filter(x => !CommonLib.Macros.ListUtils.ElementsEqual(x.OutputTransitions.Where((x, _) => x.IsUnnamed).Map((x, _) => x.priority), _ == _))
+        places.Filter(x => x.OutputTransitions.Where((x, _) => x.IsUnnamed && !x.IsTimed).Count() > 1 && 
+                             (!x.InputTransitions.IsEmpty() || x.port.HasValue) && 
+                             (!x.Var || x.port.HasValue))
       }
     }
     
@@ -242,10 +253,10 @@ namespace PetriNetLib
     {
       def name = place.Name;
       def type = place.Colour.VarSpec;
-      def (tran, group) = place.OutputGenTransitions.Partition(x => !x.IsPartOfGroupTransition);
-      def tran = if (tran.Find(x => x.Name == name) is Some(t)) [t] else tran.Where(x => x.IsImmediate && !x.IsPartOfGroupTransition);                  
-      def tran = tran.Map(x => $"$(x.ExecName)();");
-      def tran = if (group.IsEmpty()) $<#..$(tran;"\n")#> else $"$(group.First().GroupName.Value)();";//Map(x => x.PartOfGroup.Value).First() |> Some;
+      def tran = place.OutputGenTransitions.Select(x => x.ExecName);
+      //def tran = if (tran.Find(x => x.Name == name) is Some(t)) [t] else tran.Where(x => x.IsImmediate && !x.IsPartOfGroupTransition);                  
+      //def tran = tran.Map(x => $"$(x.ExecName)();");
+      //def tran = if (group.IsEmpty()) $<#..$(tran;"\n")#> else $"$(group.First().GroupName.Value)();";//Map(x => x.PartOfGroup.Value).First() |> Some;
       //def tran = if (group is Some(g)) $"GroupTransition$g" else tran;
       def expr = place.AddPlaceExpr(<[ param ]>);
       $<#void add_$name($(type)param)
@@ -907,9 +918,9 @@ namespace PetriNetLib
       CreateMainDefs();
       
       CreateTransitions();      
-      def methods = CreateGroupTransitions();
-      def private_methods = transitions.Where(x => !x.IsPartOfFuncPlace).MapToList(CreateTran);
-      def methods = methods + places.Where(x => x.IsFuncPlace).MapToList(CreateFuncPlace);
+      //def methods = CreateGroupTransitions();
+      def private_methods = EnumTransitions.Where(x => !x.IsPartOfFuncPlace && !x.PartOfGroup.HasValue).MapToList(CreateTran);
+      def methods = places.Where(x => x.IsFuncPlace).MapToList(CreateFuncPlace);
       def req_methods = places.Where(x => x.Req).Map(CreateReqPlace);
       def vals = model.ml_decls.Map(CreateVals).Filter(_ != null);
       Define(vals + ["\n"]);//_ = typebuilder.DefineWithSource(m);
