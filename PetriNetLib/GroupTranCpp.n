@@ -6,6 +6,7 @@ using Nemerle.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using CommonLib.Macros;
 
 namespace PetriNetLib
 {
@@ -58,6 +59,35 @@ namespace PetriNetLib
       }
     }
  
+    public override GroupBindMode : bool
+    {
+      [Memoize]
+      get
+      {
+        def sorted = grouped.OrderByDescending(x => x.priority).NToList();
+        def in_arc_bind = sorted.Map(x => x.InArcProcess);
+        
+        def expr_eq(x, y)
+        {
+          def e1 = x.OrderBy(x => x.place.idx);
+          def e2 = y.OrderBy(x => x.place.idx);
+          
+          def equal(x, y)
+          {
+            | (<[ $(n : usesite)]>, <[ $(n2 : usesite)]>) => n == n2
+            | _                                           => false
+          }
+          
+          if (x.Length != y.Length) false else
+          e1.ElementsEqual(e2, (x, y) => equal(x.expr, y.expr))
+        }
+        
+        
+        //x.InArcProcess.OrderBy(x => x.place.idx).Select(x => x.bind_expr)
+        in_arc_bind.ElementsEqual(expr_eq);
+      }
+    }
+    
     public override PartOfGroup : option[GroupTranCpp]
     {
       get

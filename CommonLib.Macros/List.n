@@ -734,11 +734,10 @@ namespace CommonLib.Macros
       (res, acc)
     }
 
-    public DuplicatesPartition[T, TKey](this lst : IEnumerable[T], comparer : IEqualityComparer[T] = null) : IEnumerable[T] * IEnumerable[T]
+    public DuplicatesPartition[T, TKey](this lst : IEnumerable[T], equal : T * T -> bool) : IEnumerable[T] * IEnumerable[T]
     {
       def acc = List();
       def res = List();
-      def comparer = comparer ?? EqualityComparer.Default;
 
       def en = lst.GetEnumerator();
 
@@ -747,7 +746,7 @@ namespace CommonLib.Macros
         if (en.MoveNext()) 
         {
           def elem = en.Current;
-          if (comparer.Equals(elem1, elem)) 
+          if (equal(elem1, elem)) 
           {
             res.Add(elem1);
           } else acc.Add(elem1);

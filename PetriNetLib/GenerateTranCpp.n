@@ -116,21 +116,6 @@ namespace PetriNetLib
 
       input.Fold(null, fold)
     }    
-
-    
-    class EnumComp : IEqualityComparer[IEnumerable[string]]
-    {
-      public Equals(x : IEnumerable[string], y : IEnumerable[string]) : bool
-      {
-        x.OrderBy(x => x).ZipLazy(y.OrderBy(x => x)).All((x, y) => x == y)
-      }
-      
-		  public GetHashCode(obj : IEnumerable[string]) : int
-		  {
-		    obj.Fold(0, (x, a) => x.GetHashCode() + a * 12345)
-		  }
-		
-    }
     
     public CreateGroupTranBody(g : GroupTranCpp) : string
     {
@@ -138,47 +123,123 @@ namespace PetriNetLib
       
         //def tran = p.OutputGenTransitions.Where((x, _) => x.IsUnnamed).NToList();
             //$<#$body$else#>
-        def sorted = g.grouped.OrderByDescending(x => x.priority).NToList();//
-        def bind = sorted.Map(x => x.InArcProcess.Map(x => x.bind_expr));
-        //x.InArcProcess.OrderBy(x => x.place.idx).Select(x => x.bind_expr)
-        def (dup_bind, _other) = bind.DuplicatesPartition(EnumComp());
-        def dup_bind = dup_bind.SelectMany(x => x).Distinct();
+        def sorted = g.grouped.OrderBy(x => x.priority).NToList();
+        def binding = sorted.Map(x => x.InArcProcess);
+        def dup = g.GroupBindMode;
+        //if (other.IsEmpty())
+        //def dup_bind = dup_bind.SelectMany(x => x).Distinct();
         
-        def dup_bind = if (dup_bind.IsEmpty()) "" else $<#..$(dup_bind; "\n")
-        #>;
+        //def dup_bind = if (dup_bind.IsEmpty()) "" else $<#..$(dup_bind; "\n")
+        //#>;
         
         def create_body(x, a)
         {
           def last = sorted.Last() == x : object;
-          def cond = match (x.guard)
-          {
-            | null
-            | <[]> => null
-            | e    => e |> ConvExpr(_, true)
-          }
+          //def cond = match (x.guard)
+          //{
+          //  | null
+          //  | <[]> => null
+          //  | e    => e |> ConvExpr(_, true)
+          //}
           def els = if (last) "" else " else";
-          def body = x.Body;
+          def res = x.Body;
           
-          def res = if (cond == null) 
-          {
-            $<#$dup_bind$body#>
-          } else
-          
-          $<#$(dup_bind)if ($cond)
-          {
-            $body
-          }$els
-          #>;
-          $"$res$a"
+          $"$res$els$a"
           //$"if (!$(x.Name)()) \n$a"
         }
-        
-        def group = sorted.Fold("return false;", create_body);
         //def tr_comp = $"tr_$name";
-        $<#$group
-           return true;
-          #>;
+        if (dup)
+        {
+          //def group = sorted.Fold("return false;", create_body);
+          
+          def fold_body(x : InArcBindingCpp, a)
+          {
+            def tran = x.transition;
+            def add_proc = tran.OutArcProcess;//output.Map((p, a) => OutArcProcessCpp(places[p.idx], tran, a, this));
+            def add_body = add_proc.Map(_.add_token);
       
+            def code = tran.Code;
+            def res = "return true;";
+            def body = (code :: add_body) + [res];
+      
+            def body = body.Filter(x => !x.IsEmpty());
+            def body = if (tran.guard is <[]>) body else //tran_ena($t, $p);
+                  {
+                    def guard = tran.guard |> ConvExpr(_, false);
+                    $<#if ($guard) 
+                    {
+                      ..$(body;"\n")
+                    }#> :: [];
+                  }
+
+            def expr = if (a : object == null) body else body + [a];
+            def expr = expr.Filter(x => !x.IsEmpty());
+            $<#..$(expr;"\n")#>;
+          }
+          
+          def body = binding.Map(x => x.Fold(null, fold_body));
+          def body = $<#..$(body; "\n")#>;
+          def binding = binding.First();
+          def extract = binding.Map(_.extract_expr);
+          
+          
+          def body = extract + [body];
+      
+          def body = body.Filter(x => !x.IsEmpty());
+          //def body = if (tran.guard is <[]>) body else //tran_ena($t, $p);
+          //            {
+          //              def guard = tran.guard |> ConvExpr(_, false);
+          //              $<#if ($guard) 
+          //              {
+          //                ..$(body;"\n")
+          //              }#> :: [];
+          //            }
+                  
+          def fold(x, a)
+          {
+            //def pre_bind = x.pre_bind_expr;
+            if (a : object == null)
+            {
+              def expr = x.bind_expr :: body;
+              def expr = expr.Filter(x => !x.IsEmpty());
+              def expr = $<#..$(expr;"\n")#>;
+              if (x.check_expr.IsEmpty())
+              {
+                $<#$expr#>
+              }
+              else
+              {
+                $<#if ($(x.check_expr))
+                    {
+                      $expr
+                    }
+                    return false;#>
+              }
+            } else
+            {
+              def expr = [x.bind_expr] + [a];
+              def expr = expr.Filter(x => !x.IsEmpty());
+              def expr = $<#..$(expr;"\n")#>;
+              if (x.check_expr.IsEmpty())
+                expr
+              else
+                $<#if ($(x.check_expr))
+                  {
+                    $expr
+                  }
+                  return false;#>
+            }
+          }
+          
+          def check = binding.Fold(null, fold);
+          check
+        } else
+        {
+          def group = sorted.Fold("return false;", create_body);
+          $<#$group
+             return true;
+            #>;
+        }
       //"" :: PlacesWithGroup.Map(create_group_tran) + [""]
     }
     

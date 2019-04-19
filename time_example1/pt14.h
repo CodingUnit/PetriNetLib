@@ -411,302 +411,172 @@ private:
 
 	bool GroupTransition821()
 	{
-		const CAN_UDP_MESSAGE &m = UDP_IN;
-		if (m.ID == 0x297)
-		{
-			if (UDP_IN_flag)
-			{
-				const CAN_UDP_MESSAGE &m = UDP_IN;
-				if (m.ID == 0x297)
-				{
-					UDP_IN_flag = false;
-					SEND_SENS(1);
-					return true;
-				}
-			}
-			return false;;
-
-		}
-		const CAN_UDP_MESSAGE &m = UDP_IN;
-		if (m.ID == 0x50)
-		{
-			if (UDP_IN_flag)
-			{
-				const CAN_UDP_MESSAGE &m = UDP_IN;
-				if (m.ID == 0x50)
-				{
-					UDP_IN_flag = false;
-					ControlCheck = (*(CONTROL_MSG  *)m.data.get_buf());
-					ControlCheck_flag = true;
-					return true;
-				}
-			}
-			return false;;
-
-		}
-		else
-			const CAN_UDP_MESSAGE &m = UDP_IN;
 		if (UDP_IN_flag)
 		{
 			const CAN_UDP_MESSAGE &m = UDP_IN;
 			UDP_IN_flag = false;
+			if (m.ID == 0x50)
+			{
+				ControlCheck = (*(CONTROL_MSG  *)m.data.get_buf());
+				ControlCheck_flag = true;
+				return true;
+			}
+			if (m.ID == 0x297)
+			{
+				SEND_SENS(1);
+				return true;
+			}
 			CAN_MESSAGE _N__4348 = udp2can(m);
 			CAN.add((void *)&_N__4348);
 			return true;
 		}
-		return false;;
 		return false;
-		return true;
-
 	}
 
 	bool GroupTransition2623()
 	{
-		const CAN_MESSAGE &cm = CAN_IN;
-		if ((cm.field1 == 0 || cm.field1 == 10) && cm.field3.at(0) == 0xB)
+		if (CAN_IN_flag)
 		{
-			if (CAN_IN_flag)
+			const CAN_MESSAGE &cm = CAN_IN;
+			CAN_IN_flag = false;
+			if (cm.field1 == 0x208)
 			{
-				const CAN_MESSAGE &cm = CAN_IN;
-				if ((cm.field1 == 0 || cm.field1 == 10) && cm.field3.at(0) == 0xB)
-				{
-					CAN_IN_flag = false;
-					RESET(1);
-					return true;
-				}
+				SEND_SENS(1);
+				return true;
 			}
-			return false;;
-
-		}
-		const CAN_MESSAGE &cm = CAN_IN;
-		if (cm.field1 == 0x208)
-		{
-			if (CAN_IN_flag)
+			if ((cm.field1 == 0 || cm.field1 == 10) && cm.field3.at(0) == 0xB)
 			{
-				const CAN_MESSAGE &cm = CAN_IN;
-				if (cm.field1 == 0x208)
-				{
-					CAN_IN_flag = false;
-					SEND_SENS(1);
-					return true;
-				}
+				RESET(1);
+				return true;
 			}
-			return false;;
-
 		}
-		else
-			return false;
-		return true;
-
+		return false;
 	}
 
 	bool GroupTransition3116()
 	{
-		bool res = CAN_OUT.field1;
-		const CAN_MESSAGE &cm = CAN_OUT.field2;
-		if (res)
+		if (CAN_OUT_flag)
 		{
-			if (CAN_OUT_flag)
+			bool res = CAN_OUT.field1;
+			const CAN_MESSAGE &cm = CAN_OUT.field2;
+			if (res)
 			{
-				bool res = CAN_OUT.field1;
-				const CAN_MESSAGE &cm = CAN_OUT.field2;
-				if (res)
-				{
-					CAN_OUT_flag = false;
-					return true;
-				}
+				CAN_OUT_flag = false;
+				return true;
 			}
-			return false;;
-
 		}
-		bool res = CAN_OUT.field1;
-		const CAN_MESSAGE &cm = CAN_OUT.field2;
-		if (!res)
+		return false;;
+		if (CAN_OUT_flag)
 		{
-			if (CAN_OUT_flag)
+			bool res = CAN_OUT.field1;
+			const CAN_MESSAGE &cm = CAN_OUT.field2;
+			if (!res)
 			{
-				bool res = CAN_OUT.field1;
-				const CAN_MESSAGE &cm = CAN_OUT.field2;
-				if (!res)
-				{
-					CAN_OUT_flag = false;
-					CAN.add((void *)&cm);
-					return true;
-				}
+				CAN_OUT_flag = false;
+				CAN.add((void *)&cm);
+				return true;
 			}
-			return false;;
-
 		}
-		else
-			return false;
+		return false;;
+		elsereturn false;
 		return true;
 
 	}
 
 	bool GroupTransition30292825()
 	{
-		const CONTROL_MSG &cnm = ControlCheck;
-		if (cnm.field1 == 3)
+		if (ControlCheck_flag)
 		{
-			if (ControlCheck_flag)
-			{
-				const CONTROL_MSG &cnm = ControlCheck;
-				if (cnm.field1 == 3)
-				{
-					ControlCheck_flag = false;
-					flash_reset();
-					CONTROL_MSG _N__4353 = CONTROL_MSG(3, 0, 0);
-					UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4353.get_bytes()));
-					return true;
-				}
-			}
-			return false;;
-
-		}
-		const CONTROL_MSG &cnm = ControlCheck;
-		if (cnm.field1 == 2)
-		{
-			if (ControlCheck_flag)
-			{
-				const CONTROL_MSG &cnm = ControlCheck;
-				if (cnm.field1 == 2)
-				{
-					ControlCheck_flag = false;
-					int  n = read_param(cnm.field2);
-					CONTROL_MSG _N__4352 = CONTROL_MSG(1, cnm.field2, n);
-					UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4352.get_bytes()));
-					return true;
-				}
-			}
-			return false;;
-
-		}
-		else
 			const CONTROL_MSG &cnm = ControlCheck;
-		if (cnm.field1 == 1)
-		{
-			if (ControlCheck_flag)
+			ControlCheck_flag = false;
+			if (cnm.field1 == 0)
 			{
-				const CONTROL_MSG &cnm = ControlCheck;
-				if (cnm.field1 == 1)
-				{
-					ControlCheck_flag = false;
-					int  n = set_param(cnm.field2, cnm.field3);
-					CONTROL_MSG _N__4351 = CONTROL_MSG(1, cnm.field2, n);
-					UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4351.get_bytes()));
-					return true;
-				}
+				CONTROL_MSG _N__4350 = CONTROL_MSG(0, 0, 0);
+				UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4350.get_bytes()));
+				RESET(1);
+				return true;
 			}
-			return false;;
-
-		}
-		else
-			const CONTROL_MSG &cnm = ControlCheck;
-		if (cnm.field1 == 0)
-		{
-			if (ControlCheck_flag)
+			if (cnm.field1 == 1)
 			{
-				const CONTROL_MSG &cnm = ControlCheck;
-				if (cnm.field1 == 0)
-				{
-					ControlCheck_flag = false;
-					CONTROL_MSG _N__4350 = CONTROL_MSG(0, 0, 0);
-					UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4350.get_bytes()));
-					RESET(1);
-					return true;
-				}
+				int  n = set_param(cnm.field2, cnm.field3);
+				CONTROL_MSG _N__4351 = CONTROL_MSG(1, cnm.field2, n);
+				UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4351.get_bytes()));
+				return true;
 			}
-			return false;;
-
+			if (cnm.field1 == 2)
+			{
+				int  n = read_param(cnm.field2);
+				CONTROL_MSG _N__4352 = CONTROL_MSG(1, cnm.field2, n);
+				UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4352.get_bytes()));
+				return true;
+			}
+			if (cnm.field1 == 3)
+			{
+				flash_reset();
+				CONTROL_MSG _N__4353 = CONTROL_MSG(3, 0, 0);
+				UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4353.get_bytes()));
+				return true;
+			}
 		}
-		else
-			return false;
-		return true;
-
+		return false;
 	}
 
 	bool GroupTransition2019()
 	{
-		int n = GPSLEDCntr;
-
-		if (n < 10)
+		if (GPSLED)
 		{
-			if (GPSLED)
+			int n = GPSLEDCntr;
+			if (n < 10)
 			{
-				int n = GPSLEDCntr;
-				if (n < 10)
-				{
-					GPSLED = 0;
-					GPSLEDCntr = n + 1;
-					return true;
-				}
+				GPSLED = 0;
+				GPSLEDCntr = n + 1;
+				return true;
 			}
-			return false;;
-
 		}
-		int n = GPSLEDCntr;
-
-		if (n == 10)
+		return false;;
+		if (GPSLED)
 		{
-			if (GPSLED)
+			int n = GPSLEDCntr;
+			if (n == 10)
 			{
-				int n = GPSLEDCntr;
-				if (n == 10)
-				{
-					GPSLED = 0;
-					GPS_LED_Toggle();
-					GPSLEDCntr = 0;
-					return true;
-				}
+				GPSLED = 0;
+				GPS_LED_Toggle();
+				GPSLEDCntr = 0;
+				return true;
 			}
-			return false;;
-
 		}
-		else
-			return false;
+		return false;;
+		elsereturn false;
 		return true;
 
 	}
 
 	bool GroupTransition2221()
 	{
-		int n = SYNCLEDCntr;
-
-		if (n < 30)
+		if (SYNCLED)
 		{
-			if (SYNCLED)
+			int n = SYNCLEDCntr;
+			if (n < 30)
 			{
-				int n = SYNCLEDCntr;
-				if (n < 30)
-				{
-					SYNCLED = 0;
-					SYNCLEDCntr = n + 1;
-					return true;
-				}
+				SYNCLED = 0;
+				SYNCLEDCntr = n + 1;
+				return true;
 			}
-			return false;;
-
 		}
-		int n = SYNCLEDCntr;
-
-		if (n == 30)
+		return false;;
+		if (SYNCLED)
 		{
-			if (SYNCLED)
+			int n = SYNCLEDCntr;
+			if (n == 30)
 			{
-				int n = SYNCLEDCntr;
-				if (n == 30)
-				{
-					SYNCLED = 0;
-					LED_Toggle();
-					SYNCLEDCntr = 0;
-					return true;
-				}
+				SYNCLED = 0;
+				LED_Toggle();
+				SYNCLEDCntr = 0;
+				return true;
 			}
-			return false;;
-
 		}
-		else
-			return false;
+		return false;;
+		elsereturn false;
 		return true;
 
 	}

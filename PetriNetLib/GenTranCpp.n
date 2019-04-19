@@ -260,6 +260,14 @@ namespace PetriNetLib
       }
     }
     
+    public virtual GroupBindMode : bool
+    {
+      get
+      {
+        false
+      }
+    }
+    
     public Body : string
     {
       [Memoize]
