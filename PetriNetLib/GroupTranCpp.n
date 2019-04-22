@@ -74,7 +74,14 @@ namespace PetriNetLib
           
           def equal(x, y)
           {
+            | (null, null)
+            | (<[1 ` ()]>, <[ ()]>)
+            | (<[()]>, <[ 1 ` ()]>)
+            | (<[1 ` ()]>, <[ 1 ` ()]>)
+            | (<[]>, <[]>)
+            | (<[ () ]>, <[ () ]>)                        => true
             | (<[ $(n : usesite)]>, <[ $(n2 : usesite)]>) => n == n2
+            | (<[ (..$t1)]>, <[ (..$t2)]>)                => t1.ElementsEqual(t2, equal)
             | _                                           => false
           }
           

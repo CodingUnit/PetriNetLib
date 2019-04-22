@@ -124,7 +124,7 @@ namespace PetriNetLib
         //def tran = p.OutputGenTransitions.Where((x, _) => x.IsUnnamed).NToList();
             //$<#$body$else#>
         def sorted = g.grouped.OrderBy(x => x.priority).NToList();
-        def binding = sorted.Map(x => x.InArcProcess);
+        def binding = sorted.Map(x => x.InArcProcess.Where(x => x.MainGroup).First());
         def dup = g.GroupBindMode;
         //if (other.IsEmpty())
         //def dup_bind = dup_bind.SelectMany(x => x).Distinct();
@@ -172,20 +172,19 @@ namespace PetriNetLib
                     }#> :: [];
                   }
 
-            def expr = if (a : object == null) body else body + [a];
+            def expr = if (a : object == null) body else a :: body;
             def expr = expr.Filter(x => !x.IsEmpty());
             $<#..$(expr;"\n")#>;
           }
           
-          def body = binding.Map(x => x.Fold(null, fold_body));
-          def body = $<#..$(body; "\n")#>;
-          def binding = binding.First();
+          def body = binding.Fold(null, fold_body);
+          def binding = binding.RemoveDuplicatesSort((x, y) => x.place.idx.CompareTo(y.place.idx));
           def extract = binding.Map(_.extract_expr);
           
           
           def body = extract + [body];
       
-          def body = body.Filter(x => !x.IsEmpty());
+          //def body = body.Filter(x => !x.IsEmpty());
           //def body = if (tran.guard is <[]>) body else //tran_ena($t, $p);
           //            {
           //              def guard = tran.guard |> ConvExpr(_, false);
@@ -205,7 +204,8 @@ namespace PetriNetLib
               def expr = $<#..$(expr;"\n")#>;
               if (x.check_expr.IsEmpty())
               {
-                $<#$expr#>
+                expr
+                //$"$expr;"
               }
               else
               {

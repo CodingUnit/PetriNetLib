@@ -147,6 +147,15 @@ namespace PetriNetLib
       }
     }
 
+    public PartOfGroupTransition : bool
+    {
+      [Memoize]
+      get
+      {
+        gen.PlacesWithGroup.Exists(x => x : object == this)
+      }
+    }
+    
     public InitMarkWithoutTime : PExpr
     {
       [Memoize]

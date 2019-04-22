@@ -215,6 +215,14 @@ namespace PetriNetLib
       }
     }
     
+    public MainGroup : bool
+    {
+      get
+      {
+        place.PartOfGroupTransition
+      }
+    }
+    
     public bind_expr  : string
     {
       [Memoize]

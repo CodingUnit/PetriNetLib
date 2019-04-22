@@ -459,28 +459,18 @@ private:
 		{
 			bool res = CAN_OUT.field1;
 			const CAN_MESSAGE &cm = CAN_OUT.field2;
-			if (res)
-			{
-				CAN_OUT_flag = false;
-				return true;
-			}
-		}
-		return false;;
-		if (CAN_OUT_flag)
-		{
-			bool res = CAN_OUT.field1;
-			const CAN_MESSAGE &cm = CAN_OUT.field2;
+			CAN_OUT_flag = false;
 			if (!res)
 			{
-				CAN_OUT_flag = false;
 				CAN.add((void *)&cm);
 				return true;
 			}
+			if (res)
+			{
+				return true;
+			}
 		}
-		return false;;
-		elsereturn false;
-		return true;
-
+		return false;
 	}
 
 	bool GroupTransition30292825()
@@ -525,60 +515,40 @@ private:
 	{
 		if (GPSLED)
 		{
-			int n = GPSLEDCntr;
-			if (n < 10)
-			{
-				GPSLED = 0;
-				GPSLEDCntr = n + 1;
-				return true;
-			}
-		}
-		return false;;
-		if (GPSLED)
-		{
-			int n = GPSLEDCntr;
+			GPSLED = 0;
 			if (n == 10)
 			{
-				GPSLED = 0;
 				GPS_LED_Toggle();
 				GPSLEDCntr = 0;
 				return true;
 			}
+			if (n < 10)
+			{
+				GPSLEDCntr = n + 1;
+				return true;
+			}
 		}
-		return false;;
-		elsereturn false;
-		return true;
-
+		return false;
 	}
 
 	bool GroupTransition2221()
 	{
 		if (SYNCLED)
 		{
-			int n = SYNCLEDCntr;
-			if (n < 30)
-			{
-				SYNCLED = 0;
-				SYNCLEDCntr = n + 1;
-				return true;
-			}
-		}
-		return false;;
-		if (SYNCLED)
-		{
-			int n = SYNCLEDCntr;
+			SYNCLED = 0;
 			if (n == 30)
 			{
-				SYNCLED = 0;
 				LED_Toggle();
 				SYNCLEDCntr = 0;
 				return true;
 			}
+			if (n < 30)
+			{
+				SYNCLEDCntr = n + 1;
+				return true;
+			}
 		}
-		return false;;
-		elsereturn false;
-		return true;
-
+		return false;
 	}
 
 	bool UnnamedTransition0()
