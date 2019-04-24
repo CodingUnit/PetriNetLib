@@ -235,7 +235,7 @@ namespace PetriNetLib
       get
       {
         def out_tran = OutputGenPlaces.SelectMany(x => x.OutputGenTransitions.Select(y => (x, y)));
-        def tr_next = out_tran.Where((p, x : GenTranCpp) => (x.IsImmediate && !x.IsTimed && !x.IsPartOfFuncPlace) || p.port is Some(PortType.In) && x.Name == p.Name)
+        def tr_next = out_tran.Where((p, x : GenTranCpp) => (x.IsImmediate && !x.IsTimed && !x.IsPartOfFuncPlace && !x.PartOfGroup.HasValue) || (p.port is Some(PortType.In) && x.Name == p.Name))
                          .Select((_, x : GenTranCpp) => x);
         
         tr_next.NToList()

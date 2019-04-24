@@ -253,16 +253,19 @@ namespace PetriNetLib
     {
       def name = place.Name;
       def type = place.Colour.VarSpec;
-      def tran = place.OutputGenTransitions.Select(x => x.ExecName);
+      def tran = place.OutputGenTransitions.Where(x => !x.IsPartOfFuncPlace && !x.IsFuncTran && !x.PartOfGroup.HasValue);
+      def group = place.OutputGenTransitions.Where(x => x.PartOfGroup.HasValue).Select(x => x.PartOfGroup.Value);
+      def tran = tran.Concat(group).RemoveDuplicatesSort(x => x.ExecName) |> TranMask;
       //def tran = if (tran.Find(x => x.Name == name) is Some(t)) [t] else tran.Where(x => x.IsImmediate && !x.IsPartOfGroupTransition);                  
       //def tran = tran.Map(x => $"$(x.ExecName)();");
       //def tran = if (group.IsEmpty()) $<#..$(tran;"\n")#> else $"$(group.First().GroupName.Value)();";//Map(x => x.PartOfGroup.Value).First() |> Some;
       //def tran = if (group is Some(g)) $"GroupTransition$g" else tran;
+      def run = if (tran.IsEmpty()) "" else $<#run_transitions($tran);#>;
       def expr = place.AddPlaceExpr(<[ param ]>);
       $<#void add_$name($(type)param)
       {
         $expr
-        $tran
+        $run
       }
       
       $(type) get_$name() const
@@ -275,7 +278,7 @@ namespace PetriNetLib
     CreateOutPlace(place : GenPlaceCpp) : string
     {
       def name = place.Name;
-      private_fields.Add($<#function $name;#>);
+      private_fields.Add(GenFuncCpp.FuncTypedefDecl(name, [place.Colour], "void") + ";");
       GenFuncCpp.FuncInitDecl(name, [place.Colour], if (place.port is Some(PortType.InOut)) "bool" |> Some else None())
     }
     
@@ -907,7 +910,7 @@ namespace PetriNetLib
       #>);
       extern_fields.Add(<#using namespace petrinet_lib;
       #>);
-      private_fields.Add($"typedef bool ($Name::*tran_func_type)();");
+      private_fields.Add($"typedef u32 ($Name::*tran_func_type)();");
       //
     }
     

@@ -17,9 +17,7 @@ namespace PetriNetLib
   {
     internal CreateTranBody(tran : GenTranCpp) : string
     {
-      //def output = tran.OutputPlacesArcs;
       def name   = tran.Name;
-      //def map    = Hashtable();
 
       def input = tran.InArcProcess;
 
@@ -51,6 +49,8 @@ namespace PetriNetLib
       //def out_tran = tran.OutputGenPlaces.SelectMany(x => x.OutputGenTransitions).NToList();
       //def participate_tran = out_tran;
       
+      def next = tran.NextTran |> TranMask;
+      def next = if (next.IsEmpty()) "0" else next;
       //def tr_pl_mask = participate_tran.Where(x => x.IsImmediate && !x.IsTimed && !x.IsPartOfFuncPlace);//.Map(x => $"tr_$(x.Name)");//, x.InputPlaces.Select(x => x[0]) |> mask_for_places));
       //def tr_comp_mask = if (tran.IsImmediate && !tran.IsPartOfGroupTransition && !tran.IsTimed && !tran.IsPartOfFuncPlace && !tran.IsFuncTran) $"tr_$(tran.Name)" else "0";
       //def tr_mask = tr_pl_mask.Fold("", (t, a) => if (a.IsEmpty()) t else $"$t | $a");
@@ -59,7 +59,7 @@ namespace PetriNetLib
       //def tr_next = tr_pl_mask.Map(x => $<#$(x.Name)();#>);
       def res = if (tran.IsPartOfFuncPlace || tran.IsFuncTran) [] else //if (output.Exists(x => x[0].port is Some(PortType.InOut)))
                                                     //["res = in;"] else
-                                                    ["return true;"];
+                                                    [$"return $next;"];
       def body = extract + (code :: add_body) + res;
       
       def body = body.Filter(x => !x.IsEmpty());
@@ -92,7 +92,7 @@ namespace PetriNetLib
                 {
                   $expr
                 }
-                return false;#>
+                return 0;#>
           }
         } else
         {
@@ -107,7 +107,7 @@ namespace PetriNetLib
               {
                 $expr
               }
-              return false;#>
+              return 0;#>
         }
       }
 
@@ -119,47 +119,31 @@ namespace PetriNetLib
     
     public CreateGroupTranBody(g : GroupTranCpp) : string
     {
-      //def places = places.Where(x => !CommonLib.Macros.ListUtils.ElementsEqual(x.OutputTransitions.Where((x, _) => x.IsUnnamed).Map((x, _) => x.priority), _ == _));
-      
-        //def tran = p.OutputGenTransitions.Where((x, _) => x.IsUnnamed).NToList();
-            //$<#$body$else#>
         def sorted = g.grouped.OrderBy(x => x.priority).NToList();
-        def binding = sorted.Map(x => x.InArcProcess.Where(x => x.MainGroup).First());
+        def binding = sorted.SelectMany(x => x.InArcProcess).NToList();
         def dup = g.GroupBindMode;
-        //if (other.IsEmpty())
-        //def dup_bind = dup_bind.SelectMany(x => x).Distinct();
-        
-        //def dup_bind = if (dup_bind.IsEmpty()) "" else $<#..$(dup_bind; "\n")
-        //#>;
         
         def create_body(x, a)
         {
           def last = sorted.Last() == x : object;
-          //def cond = match (x.guard)
-          //{
-          //  | null
-          //  | <[]> => null
-          //  | e    => e |> ConvExpr(_, true)
-          //}
           def els = if (last) "" else " else";
           def res = x.Body;
           
           $"$res$els$a"
-          //$"if (!$(x.Name)()) \n$a"
         }
-        //def tr_comp = $"tr_$name";
         if (dup)
         {
-          //def group = sorted.Fold("return false;", create_body);
           
           def fold_body(x : InArcBindingCpp, a)
           {
             def tran = x.transition;
-            def add_proc = tran.OutArcProcess;//output.Map((p, a) => OutArcProcessCpp(places[p.idx], tran, a, this));
+            def add_proc = tran.OutArcProcess;
             def add_body = add_proc.Map(_.add_token);
       
+            def next = tran.NextTran |> TranMask;
+            def next = if (next.IsEmpty()) "0" else next;
             def code = tran.Code;
-            def res = "return true;";
+            def res = $"return $next;";
             def body = (code :: add_body) + [res];
       
             def body = body.Filter(x => !x.IsEmpty());
@@ -177,26 +161,15 @@ namespace PetriNetLib
             $<#..$(expr;"\n")#>;
           }
           
-          def body = binding.Fold(null, fold_body);
+          def body = binding.Where(x => x.MainGroup).Fold(null, fold_body);
           def binding = binding.RemoveDuplicatesSort((x, y) => x.place.idx.CompareTo(y.place.idx));
           def extract = binding.Map(_.extract_expr);
           
           
           def body = extract + [body];
       
-          //def body = body.Filter(x => !x.IsEmpty());
-          //def body = if (tran.guard is <[]>) body else //tran_ena($t, $p);
-          //            {
-          //              def guard = tran.guard |> ConvExpr(_, false);
-          //              $<#if ($guard) 
-          //              {
-          //                ..$(body;"\n")
-          //              }#> :: [];
-          //            }
-                  
           def fold(x, a)
           {
-            //def pre_bind = x.pre_bind_expr;
             if (a : object == null)
             {
               def expr = x.bind_expr :: body;
@@ -205,7 +178,6 @@ namespace PetriNetLib
               if (x.check_expr.IsEmpty())
               {
                 expr
-                //$"$expr;"
               }
               else
               {
@@ -213,7 +185,7 @@ namespace PetriNetLib
                     {
                       $expr
                     }
-                    return false;#>
+                    return 0;#>
               }
             } else
             {
@@ -227,7 +199,7 @@ namespace PetriNetLib
                   {
                     $expr
                   }
-                  return false;#>
+                  return 0;#>
             }
           }
           
@@ -235,12 +207,10 @@ namespace PetriNetLib
           check
         } else
         {
-          def group = sorted.Fold("return false;", create_body);
+          def group = sorted.Fold("return (ttran)0;", create_body);
           $<#$group
-             return true;
             #>;
         }
-      //"" :: PlacesWithGroup.Map(create_group_tran) + [""]
     }
     
     EnumTransitions : list[GenTranCpp]
@@ -252,15 +222,6 @@ namespace PetriNetLib
         //def groups = PlacesWithGroup.Select(x => x.OutputTransitions.Where(x => x[0].IsUnnamed));
         //def groups = GroupTransitions.Select(x => (x.Name, ));//groups.Select(x => ("GroupTransition" + x.Fold("", ((x, _), a) => $"$(x.UnnamedIdx)$a"), x.Select(x => x[0].priority).Max(), null));
         GroupTransitions.Map(_ : GenTranCpp) + tran
-      }
-    }
-    
-    TranToMask(tr : IEnumerable[GenTranCpp]) : string
-    {
-      if (tr.IsEmpty()) "(ttran)0" else
-      {
-        def str = tr.Fold("", (t, a) => if (a.IsEmpty()) $<#tr_$(t.ExecName)#> else $<#tr_$(t.ExecName) | $a#>);
-        $<#(ttran)($str)#>
       }
     }
     
@@ -285,7 +246,7 @@ namespace PetriNetLib
       } ttran;#>);
       
       def lock_places = tran.Select(x => if (x == null) "(tplace)0" else x.PlacesParticipateMask);
-      def next = tran.Select(x => if (x == null) "(ttran)0" else x.NextTran |> TranToMask);
+      //def next = tran.Select(x => if (x == null) "(ttran)0" else x.NextTran |> TranToMask);
       def can_rep = tran.Select((x, i) => if (x == null) 1 << i else if (x.CompleteTran) 1 << i else 0);
       def can_rep = can_rep.Fold(0, _ | _);
       //def size = tran.Length;
@@ -293,7 +254,7 @@ namespace PetriNetLib
       private_fields.Add($<#const tran_func_type *tran_funcs;
       #>);
       
-      def init = tran.Select(x => $<#&$Name::$x#>);//..$(tran;",\n");
+      def init = tran.Select(x => $<#&$Name::$(x.ExecName)#>);//..$(tran;",\n");
       def init = $<#static const tran_func_type tr_funcs[] = {..$(init; ",\n")};
                    tran_funcs = tr_funcs; 
                   #>;
@@ -302,10 +263,10 @@ namespace PetriNetLib
                          tran_lock = tr_lock;
                        #>;
                        
-      def next_tr = $<#static const ttran next_tr[] = {..$(next; ",\n")};
-                       next_tran = next_tr;
-                      #>;
-      cons_expr.AddRange(init :: lock_init :: next_tr :: []);
+      //def next_tr = $<#static const ttran next_tr[] = {..$(next; ",\n")};
+      //                 next_tran = next_tr;
+      //                #>;
+      cons_expr.AddRange(init :: lock_init :: []);
       
       private_fields.Add($<#u32 can_repeat(u32 tr) const
       {
@@ -316,26 +277,22 @@ namespace PetriNetLib
       
       private_fields.Add($<#const tplace *tran_lock;
       #>);
-      private_fields.Add($<#const ttran *next_tran;
-      #>);
+      //private_fields.Add($<#const ttran *next_tran;
+      //#>);
       
       private_fields.Add($<#static const u32 tran_can_repeat = $(can_rep);
       #>);
-      protected_fields.Add(<#bool transition(u32 tr)
+      protected_fields.Add(<#void transition(u32 tr_mask)
 		{
-			bool res = false;
+			u32 tr = LSB(tr_mask);
 			tran_func_type tran = tran_funcs[tr];
 			u32 lock_places = tran_lock[tr];
-			if (lock(lock_places, tr))
+			if (lock(lock_places, tr_mask))
 			{
-				if ((this->*tran)())
-				{
-				  tran_ena(next_tran[tr], can_repeat(tr));
-				  res = true;
-				}
+			  u32 next = (this->*tran)();
+				tran_ena(next, can_repeat(tr_mask));
 				unlock(lock_places);
 			}
-			return res;
 		}#>);
       // все переходы у которых во входных позициях есть фишки
       def tran = transitions.Where(x => x.IsUnnamed && !x.IsTimed && x.InputGenPlaces.All(x => x.IsHaveInitMarking && x.port.IsNone));
@@ -353,7 +310,7 @@ namespace PetriNetLib
         def body = tran.Body;      
         def parms = tran.InArcProcess.Map(x => $"$(x.place.Colour.VarSpec)$(x.bind_var)");
         $<#
-        bool $name(..$(parms; ","))
+        u32 $name(..$(parms; ","))
             {
               $body
             }#>
@@ -361,7 +318,7 @@ namespace PetriNetLib
       {
         def body = tran.Body;
         $<#
-        bool $name()
+        u32 $name()
             {
               $body
             }#>//)

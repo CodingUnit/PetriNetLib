@@ -4,6 +4,7 @@
 #include "tuple.h"
 #include "buffer_utils.h"
 #include "token_queue.h"
+#include "bits.h"
 
 using namespace events;
 namespace petrinet_lib
@@ -53,7 +54,7 @@ namespace petrinet_lib
 					defer_queue.enqueue(tr);
 					return false;
 				}
-			} while (SC(&locked, lock | pl));
+			} while (!SC(&locked, lock | pl));
 			return true;
 		}
 
@@ -92,9 +93,17 @@ namespace petrinet_lib
 			return 0;
 		}
 
-		virtual bool transition(u32 tr)
+		void run_transitions(u32 tr)
 		{
-			return false;
+			while (tr)
+			{
+				u32 cur = tr & -tr; // берем нижний бит
+				tr -= cur;
+			}
+		}
+
+		virtual void transition(u32 tr)
+		{
 		}
 
 	private:
@@ -116,7 +125,7 @@ namespace petrinet_lib
 
 		petri_net32(int step = 15)
 		{
-			completed_tran = 0;
+			completed_tran = locked = 0;
 			max_steps = step;
 		}
 
