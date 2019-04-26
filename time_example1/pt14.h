@@ -41,9 +41,10 @@ public:
 		int field1;
 		bool field2;
 
-		bytes get_bytes() const
+		bytesn get_bytes() const
 		{
-			return bytes_ptr(&field1, sizeof(TSYNC));
+			return bytesn((void *)&field1, sizeof(field2) + sizeof(field1));;
+			//return bytes_ptr(&field1, sizeof(TSYNC));
 		}
 
 		/*void operator=(const tuple2<int, bool> &tup)
@@ -75,9 +76,10 @@ field2 = tup.field2;
 		int field1;
 		int field2;
 
-		bytes get_bytes() const
+		bytesn get_bytes() const
 		{
-			return bytes_ptr(&field1, sizeof(INTxINT));
+			return bytesn((void *)&field1, sizeof(field2) + sizeof(field1));;
+			//return bytes_ptr(&field1, sizeof(INTxINT));
 		}
 
 		/*void operator=(const tuple2<int, int> &tup)
@@ -94,6 +96,8 @@ field2 = tup.field2;
 	typedef bytesn BYTES;
 
 	typedef bytes8 BYTES8;
+
+	typedef bytes3 BYTES3;
 
 	struct BYTES_BOOL
 	{
@@ -113,9 +117,13 @@ field2 = tup.field2;
 		bytesn field1;
 		bool field2;
 
-		bytes get_bytes() const
+		bytesn get_bytes() const
 		{
-			return bytes_ptr(&field1, sizeof(BYTES_BOOL));
+			bytesn res;
+			res += field1;
+			res += bytesn((void *)&field2, sizeof(field2));
+			return res;
+			//return bytes_ptr(&field1, sizeof(BYTES_BOOL));
 		}
 
 		/*void operator=(const tuple2<bytesn, bool> &tup)
@@ -146,9 +154,13 @@ field2 = tup.field2;
 		long long field2;
 		bytes8 field3;
 
-		bytes get_bytes() const
+		bytesn get_bytes() const
 		{
-			return bytes_ptr(&field1, sizeof(CAN_MESSAGE));
+			bytesn res;
+			res += bytesn((void *)&field1, sizeof(field2) + sizeof(field1));
+			res += field3;
+			return res;
+			//return bytes_ptr(&field1, sizeof(CAN_MESSAGE));
 		}
 
 		/*void operator=(const tuple3<int, long long, bytes8> &tup)
@@ -177,9 +189,13 @@ field3 = tup.field3;
 		bool field1;
 		CAN_MESSAGE field2;
 
-		bytes get_bytes() const
+		bytesn get_bytes() const
 		{
-			return bytes_ptr(&field1, sizeof(CAN_MESSAGE_BOOL));
+			bytesn res;
+			res += bytesn((void *)&field1, sizeof(field1));
+			res += field2.get_bytes();
+			return res;
+			//return bytes_ptr(&field1, sizeof(CAN_MESSAGE_BOOL));
 		}
 
 		/*void operator=(const tuple2<bool, CAN_MESSAGE> &tup)
@@ -194,21 +210,29 @@ field2 = tup.field2;
 	struct CAN_UDP_MESSAGE
 	{
 		CAN_UDP_MESSAGE() {}
-		CAN_UDP_MESSAGE(u16 COUNT, u16 ID, long long timestamp, const bytes &data)
+		CAN_UDP_MESSAGE(const bytes &head, u16 COUNT, u16 ID, long long timestamp, int len, const bytes &data)
 		{
+			this->head = head;
 			this->COUNT = COUNT;
 			this->ID = ID;
 			this->timestamp = timestamp;
+			this->len = len;
 			this->data = data;
 		}
 
-		bytes get_bytes() const
+		bytesn get_bytes() const
 		{
-			return bytes_ptr(this, sizeof(CAN_UDP_MESSAGE));
+			bytesn res;
+			res += head;
+			res += bytesn((void *)&COUNT, sizeof(len) + sizeof(timestamp) + sizeof(ID) + sizeof(COUNT));
+			res += data;
+			return res;
 		}
+		bytes3 head;
 		u16 COUNT;
 		u16 ID;
 		long long timestamp;
+		int len;
 		bytesn data;
 	};
 
@@ -239,9 +263,10 @@ field2 = tup.field2;
 		u16 field2;
 		u32 field3;
 
-		bytes get_bytes() const
+		bytesn get_bytes() const
 		{
-			return bytes_ptr(&field1, sizeof(CONTROL_MSG));
+			return bytesn((void *)&field1, sizeof(field3) + sizeof(field2) + sizeof(field1));;
+			//return bytes_ptr(&field1, sizeof(CONTROL_MSG));
 		}
 
 		/*void operator=(const tuple3<u8, u16, u32> &tup)
@@ -270,9 +295,13 @@ field3 = tup.field3;
 		CONTROL_MSG field1;
 		bool field2;
 
-		bytes get_bytes() const
+		bytesn get_bytes() const
 		{
-			return bytes_ptr(&field1, sizeof(CONTROL_MSG_BOOL));
+			bytesn res;
+			res += field1.get_bytes();
+			res += bytesn((void *)&field2, sizeof(field2));
+			return res;
+			//return bytes_ptr(&field1, sizeof(CONTROL_MSG_BOOL));
 		}
 
 		/*void operator=(const tuple2<CONTROL_MSG, bool> &tup)
@@ -344,7 +373,6 @@ private:
 	char TIMER;
 	u32 TIMER_time;
 	INTxINT ADC_SUM;
-	bool ADC_SUM_flag;
 	char DEBUG_TIMER;
 	u32 DEBUG_TIMER_time;
 	u16 COUNTER;
@@ -368,25 +396,26 @@ private:
 
 	typedef enum
 	{
-		tr_GroupTransition721 = 0x1,
-		tr_GroupTransition2522 = 0x2,
-		tr_GroupTransition3015 = 0x4,
-		tr_GroupTransition29282724 = 0x8,
-		tr_GroupTransition1918 = 0x10,
-		tr_GroupTransition2120 = 0x20,
-		tr_UnnamedTransition0 = 0x40,
-		tr_tran_DPS = 0x80,
-		tr_UnnamedTransition3 = 0x100,
-		tr_UnnamedTransition5 = 0x200,
-		tr_UnnamedTransition6 = 0x400,
-		tr_UnnamedTransition8 = 0x800,
-		tr_UnnamedTransition9 = 0x1000,
-		tr_UnnamedTransition10 = 0x2000,
-		tr_UnnamedTransition11 = 0x4000,
-		tr_UnnamedTransition14 = 0x8000,
-		tr_UnnamedTransition16 = 0x10000,
-		tr_UnnamedTransition17 = 0x20000,
-		tr_UnnamedTransition23 = 0x40000
+		res_ok = 1,
+		tr_GroupTransition721 = 0x2,
+		tr_GroupTransition2421 = 0x4,
+		tr_GroupTransition2914 = 0x8,
+		tr_GroupTransition28272623 = 0x10,
+		tr_GroupTransition1817 = 0x20,
+		tr_GroupTransition2019 = 0x40,
+		tr_UnnamedTransition0 = 0x80,
+		tr_tran_DPS = 0x100,
+		tr_UnnamedTransition3 = 0x200,
+		tr_UnnamedTransition5 = 0x400,
+		tr_UnnamedTransition6 = 0x800,
+		tr_UnnamedTransition8 = 0x1000,
+		tr_UnnamedTransition9 = 0x2000,
+		tr_UnnamedTransition10 = 0x4000,
+		tr_UnnamedTransition13 = 0x8000,
+		tr_UnnamedTransition15 = 0x10000,
+		tr_UnnamedTransition16 = 0x20000,
+		tr_UnnamedTransition22 = 0x40000,
+		tr_UnnamedTransition30 = 0x80000
 	} ttran;
 	const tran_func_type *tran_funcs;
 
@@ -398,7 +427,7 @@ private:
 
 	const tplace *tran_lock;
 
-	static const u32 tran_can_repeat = 184447;
+	static const u32 tran_can_repeat = 86143;
 
 	static const int P_LOW = 10000;
 	static const int P_NORMAL = 1000;
@@ -424,14 +453,14 @@ private:
 				SEND_SENS(1);
 				return 0;
 			}
-			CAN_MESSAGE _N__4345 = udp2can(m);
-			CAN.add((void *)&_N__4345);
-			return tr_UnnamedTransition14;
+			CAN_MESSAGE _N__4347 = udp2can(m);
+			CAN.add((void *)&_N__4347);
+			return tr_UnnamedTransition13;
 		}
 		return 0;
 	}
 
-	u32 GroupTransition2522()
+	u32 GroupTransition2421()
 	{
 		if (CAN_IN_flag)
 		{
@@ -451,7 +480,7 @@ private:
 		return 0;
 	}
 
-	u32 GroupTransition3015()
+	u32 GroupTransition2914()
 	{
 		if (CAN_OUT_flag)
 		{
@@ -461,7 +490,7 @@ private:
 			if (!res)
 			{
 				CAN.add((void *)&cm);
-				return tr_UnnamedTransition14;
+				return tr_UnnamedTransition13;
 			}
 			if (res)
 			{
@@ -471,7 +500,7 @@ private:
 		return 0;
 	}
 
-	u32 GroupTransition29282724()
+	u32 GroupTransition28272623()
 	{
 		if (ControlCheck_flag)
 		{
@@ -479,37 +508,37 @@ private:
 			ControlCheck_flag = false;
 			if (cnm.field1 == 0)
 			{
-				CONTROL_MSG _N__4347 = CONTROL_MSG(0, 0, 0);
-				UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4347.get_bytes()));
+				CONTROL_MSG _N__4349 = CONTROL_MSG(0, 0, 0);
+				UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4349.get_bytes()));
 				RESET(1);
 				return 0;
 			}
 			if (cnm.field1 == 1)
 			{
 				int  n = set_param(cnm.field2, cnm.field3);
-				CONTROL_MSG _N__4348 = CONTROL_MSG(1, cnm.field2, n);
-				UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4348.get_bytes()));
+				CONTROL_MSG _N__4350 = CONTROL_MSG(1, cnm.field2, n);
+				UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4350.get_bytes()));
 				return 0;
 			}
 			if (cnm.field1 == 2)
 			{
 				int  n = read_param(cnm.field2);
-				CONTROL_MSG _N__4349 = CONTROL_MSG(1, cnm.field2, n);
-				UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4349.get_bytes()));
+				CONTROL_MSG _N__4351 = CONTROL_MSG(1, cnm.field2, n);
+				UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4351.get_bytes()));
 				return 0;
 			}
 			if (cnm.field1 == 3)
 			{
 				flash_reset();
-				CONTROL_MSG _N__4350 = CONTROL_MSG(3, 0, 0);
-				UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4350.get_bytes()));
+				CONTROL_MSG _N__4352 = CONTROL_MSG(3, 0, 0);
+				UDP_SEND(CAN_MESSAGE(0x50, time64(), _N__4352.get_bytes()));
 				return 0;
 			}
 		}
 		return 0;
 	}
 
-	u32 GroupTransition1918()
+	u32 GroupTransition1817()
 	{
 		if (GPSLED)
 		{
@@ -530,7 +559,7 @@ private:
 		return 0;
 	}
 
-	u32 GroupTransition2120()
+	u32 GroupTransition2019()
 	{
 		if (SYNCLED)
 		{
@@ -559,9 +588,10 @@ private:
 			GPS_flag = false;
 			UDP_SEND(CAN_MESSAGE(0x100, time64(), s));
 			GPSLED = 1;
-			return 0;
+			return 1;
 		}
-		return 0;;
+		return 0;
+		;
 
 	}
 
@@ -576,7 +606,7 @@ private:
 		DELAY = 1;
 		DELAY_time = time();
 		SYNCLED = 1;
-		return 0;;
+		return 1;;
 
 	}
 
@@ -589,9 +619,10 @@ private:
 			UDP_SEND(CAN_MESSAGE(0, time64(), d));
 
 			DEBUG_TIMER_time = time() + 333000;
-			return 0;
+			return 1;
 		}
-		return 0;;
+		return 0;
+		;
 
 	}
 
@@ -605,13 +636,14 @@ private:
 			BatLevel_flag = false;
 
 			BinTimer_time = time() + 1000000;
-			s16 _N__4378[] = { (SHORT)bt, n };
-			UDP_AND_CAN_SEND(CAN_MESSAGE(0x150, time64(), bytes4((u8 *)_N__4378)));
-			u8 _N__4379[] = { (BYTE)1, inp };
-			UDP_AND_CAN_SEND(CAN_MESSAGE(0x2D1, time64(), bytes2((u8 *)_N__4379)));
-			return 0;
+			s16 _N__4380[] = { (SHORT)bt, n };
+			UDP_AND_CAN_SEND(CAN_MESSAGE(0x150, time64(), bytes4((u8 *)_N__4380)));
+			u8 _N__4381[] = { (BYTE)1, inp };
+			UDP_AND_CAN_SEND(CAN_MESSAGE(0x2D1, time64(), bytes2((u8 *)_N__4381)));
+			return 1;
 		}
-		return 0;;
+		return 0;
+		;
 
 	}
 
@@ -621,7 +653,7 @@ private:
 
 		TempTimer_time = time();
 		UDP_AND_CAN_SEND(CAN_MESSAGE(0x2D1, time64(), IntToList(0x33 + n * 256, 3)));
-		return 0;;
+		return 1;;
 
 	}
 
@@ -630,7 +662,7 @@ private:
 
 		DELAY_time = time();
 		SEND_SENS(1);
-		return 0;;
+		return 1;;
 
 	}
 
@@ -638,52 +670,28 @@ private:
 	{
 		u8 bt = BUTTONS;
 		UDP_AND_CAN_SEND(bt2can_message(bt));
-		return 0;;
+		return 1;;
 
 	}
 
 	u32 UnnamedTransition10()
 	{
-		if (ADC_SUM_flag)
+		int sum = ADC_SUM.field1;
+		int n = ADC_SUM.field2;
+		int q = ADC();
+		if (n < 10)
 		{
-			int sum = ADC_SUM.field1;
-			int n = ADC_SUM.field2;
-			int q = ADC();
-			if (n < 10)
-			{
-				ADC_SUM_flag = false;
 
-				TIMER_time = time() + 50000;
-				ADC_SUM = INTxINT(sum + q, n + 1);
-				ADC_SUM_flag = true;
-				return tr_UnnamedTransition11;
-			}
+			TIMER_time = time() + 50000;
+			ADC_SUM = INTxINT(sum + q, n + 1);
+			return 1;
 		}
-		return 0;;
+		return 0;
+		;
 
 	}
 
-	u32 UnnamedTransition11()
-	{
-		if (ADC_SUM_flag)
-		{
-			int sum = ADC_SUM.field1;
-			int n = ADC_SUM.field2;
-			if (n >= 10)
-			{
-				ADC_SUM_flag = false;
-				BatLevel = adc2bat(sum / n);
-				BatLevel_flag = true;
-				ADC_SUM = INTxINT(0, 0);
-				ADC_SUM_flag = true;
-				return tr_UnnamedTransition11;
-			}
-		}
-		return 0;;
-
-	}
-
-	u32 UnnamedTransition14()
+	u32 UnnamedTransition13()
 	{
 		if (CAN.have_tokens())
 		{
@@ -691,13 +699,14 @@ private:
 			CAN.get();
 			CAN_OUT = CAN_MESSAGE_BOOL(can_send(cm), cm);
 			CAN_OUT_flag = true;
-			return 0;
+			return 1;
 		}
-		return 0;;
+		return 0;
+		;
 
 	}
 
-	u32 UnnamedTransition16()
+	u32 UnnamedTransition15()
 	{
 		if (SyncFreq)
 		{
@@ -707,34 +716,56 @@ private:
 			SyncFreq_time = time() + (1000000 / freq);
 			return tr_tran_DPS;
 		}
-		return 0;;
+		return 0;
+		;
 
 	}
 
-	u32 UnnamedTransition17()
+	u32 UnnamedTransition16()
 	{
 		if (Init)
 		{
 			Init = 0;
-			u16 _N__4388[] = { (USHORT)2, 0x100 };
-			UDP_SEND(CAN_MESSAGE(0x30, time64(), bytes4((u8 *)_N__4388)));
-			u16 _N__4389[] = { (USHORT)0, 0 };
-			UDP_SEND(CAN_MESSAGE(0x30, time64(), bytes4((u8 *)_N__4389)));
-			return 0;
+			u16 _N__4386[] = { (USHORT)2, 0x100 };
+			UDP_SEND(CAN_MESSAGE(0x30, time64(), bytes4((u8 *)_N__4386)));
+			u16 _N__4387[] = { (USHORT)0, 0 };
+			UDP_SEND(CAN_MESSAGE(0x30, time64(), bytes4((u8 *)_N__4387)));
+			return 1;
 		}
-		return 0;;
+		return 0;
+		;
 
 	}
 
-	u32 UnnamedTransition23()
+	u32 UnnamedTransition22()
 	{
 		if (ResetTime)
 		{
 			ResetTime = 0;
 			do_reset();
-			return 0;
+			return 1;
 		}
-		return 0;;
+		return 0;
+		;
+
+	}
+
+	u32 UnnamedTransition30()
+	{
+		int sum = ADC_SUM.field1;
+		int n = ADC_SUM.field2;
+		int q = ADC();
+		if (n >= 10)
+		{
+			BatLevel = adc2bat((sum + q) / n);
+			BatLevel_flag = true;
+
+			TIMER_time = time() + 50000;
+			ADC_SUM = INTxINT(0, 0);
+			return 1;
+		}
+		return 0;
+		;
 
 	}
 	CAN_MESSAGE  control2can(const CONTROL_MSG &m)
@@ -744,7 +775,9 @@ private:
 
 	CAN_UDP_MESSAGE  can2udp(const CAN_MESSAGE &m, int c)
 	{
-		return CAN_UDP_MESSAGE(c, m.field1, m.field2, m.field3);
+		u8 _N__4397[] = { (BYTE)0x55, 0x55, 3 };
+
+		return CAN_UDP_MESSAGE(bytes3((u8 *)_N__4397), c, m.field1, m.field2, m.field3.get_count(), m.field3);
 	}
 
 	CAN_MESSAGE  udp2can(const CAN_UDP_MESSAGE &m)
@@ -754,9 +787,9 @@ private:
 
 	CAN_MESSAGE  bt2can_message(int bt)
 	{
-		u8 _N__4395[] = { (BYTE)1, bt };
+		u8 _N__4398[] = { (BYTE)1, bt };
 
-		return CAN_MESSAGE(0x2D1, time(), bytes2((u8 *)_N__4395));
+		return CAN_MESSAGE(0x2D1, time(), bytes2((u8 *)_N__4398));
 	}
 
 	tuple2<int, int>(*adc2bat)(int);
@@ -768,6 +801,8 @@ private:
 	bool(*can_send)(const CAN_MESSAGE &);
 	void(*flash_reset)();
 	UINT(*set_param)(u16, u32);
+
+	u32 times[32];
 	u32 get_next_time(u32 &res_tr)
 	{
 		u32 tr = 0;
@@ -799,12 +834,12 @@ private:
 		if (min > time)
 		{
 			min = time;
-			tr = tr_UnnamedTransition16;
+			tr = tr_UnnamedTransition15;
 		}
 		else
 			if (min == time)
 			{
-				tr |= tr_UnnamedTransition16;
+				tr |= tr_UnnamedTransition15;
 			}
 		time = TempTimer_time + 500000;
 		if (min > time)
@@ -821,12 +856,12 @@ private:
 		if (min > time)
 		{
 			min = time;
-			tr = tr_UnnamedTransition10;
+			tr = tr_UnnamedTransition10 | tr_UnnamedTransition30;
 		}
 		else
 			if (min == time)
 			{
-				tr |= tr_UnnamedTransition10;
+				tr |= tr_UnnamedTransition10 | tr_UnnamedTransition30;
 			}
 		time = DEBUG_TIMER_time;
 		if (min > time)
@@ -843,12 +878,12 @@ private:
 		if (min > time)
 		{
 			min = time;
-			tr = tr_UnnamedTransition23;
+			tr = tr_UnnamedTransition22;
 		}
 		else
 			if (min == time)
 			{
-				tr |= tr_UnnamedTransition23;
+				tr |= tr_UnnamedTransition22;
 			};
 		;
 		res_tr = tr;
@@ -864,13 +899,14 @@ protected:
 
 	void transition(u32 tr_mask)
 	{
-		u32 tr = LSB(tr_mask);
+		u32 tr = LSB(tr_mask) - 1;
 		tran_func_type tran = tran_funcs[tr];
 		u32 lock_places = tran_lock[tr];
 		if (lock(lock_places, tr_mask))
 		{
 			u32 next = (this->*tran)();
-			tran_ena(next, can_repeat(tr_mask));
+			if (next)
+				tran_ena(next, can_repeat(tr_mask));
 			unlock(lock_places);
 		}
 	}
@@ -950,7 +986,6 @@ public:
 		TIMER = 1;
 		TIMER_time = 0;
 		ADC_SUM = INTxINT(0, 0);
-		ADC_SUM_flag = true;
 		DEBUG_TIMER = 1;
 		DEBUG_TIMER_time = 0;
 		COUNTER = 0;
@@ -964,11 +999,11 @@ public:
 		SYNCLED = 0;
 		ResetTime = 0;
 		static const tran_func_type tr_funcs[] = { &pt14::GroupTransition721,
-&pt14::GroupTransition2522,
-&pt14::GroupTransition3015,
-&pt14::GroupTransition29282724,
-&pt14::GroupTransition1918,
-&pt14::GroupTransition2120,
+&pt14::GroupTransition2421,
+&pt14::GroupTransition2914,
+&pt14::GroupTransition28272623,
+&pt14::GroupTransition1817,
+&pt14::GroupTransition2019,
 &pt14::UnnamedTransition0,
 &pt14::tran_DPS,
 &pt14::UnnamedTransition3,
@@ -977,11 +1012,11 @@ public:
 &pt14::UnnamedTransition8,
 &pt14::UnnamedTransition9,
 &pt14::UnnamedTransition10,
-&pt14::UnnamedTransition11,
-&pt14::UnnamedTransition14,
+&pt14::UnnamedTransition13,
+&pt14::UnnamedTransition15,
 &pt14::UnnamedTransition16,
-&pt14::UnnamedTransition17,
-&pt14::UnnamedTransition23 };
+&pt14::UnnamedTransition22,
+&pt14::UnnamedTransition30 };
 		tran_funcs = tr_funcs;
 
 		static const tplace tr_lock[] = { (tplace)(pl_COUNTER | pl_UDP_OUT | pl_GPS),
@@ -998,14 +1033,14 @@ public:
 		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_DELAY),
 		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_CAN | pl_CAN_OUT | pl_BUTTONS),
 		(tplace)(pl_ADC_SUM | pl_TIMER | pl_ADC),
-		(tplace)(pl_BatLevel | pl_ADC_SUM),
 		(tplace)(pl_CAN_OUT | pl_CAN),
 		(tplace)(pl_SyncFreq | pl_DPS),
 		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_Init),
-		(tplace)(pl_ResetTime) };
+		(tplace)(pl_ResetTime),
+		(tplace)(pl_BatLevel | pl_ADC_SUM | pl_TIMER | pl_ADC) };
 		tran_lock = tr_lock;
 
-		tran_ena(tr_UnnamedTransition17 | tr_UnnamedTransition11);
+		tran_ena(tr_UnnamedTransition16);
 	}
 	void UDP_SEND(const CAN_MESSAGE &cm)
 	{
@@ -1033,8 +1068,8 @@ public:
 
 	void RESET(char param)
 	{
-		u16 _N__4394[] = { (USHORT)1, 0 };
-		UDP_SEND(CAN_MESSAGE(0x30, time64(), bytes4((u8 *)_N__4394)));
+		u16 _N__4396[] = { (USHORT)1, 0 };
+		UDP_SEND(CAN_MESSAGE(0x30, time64(), bytes4((u8 *)_N__4396)));
 		ResetTime = 1;
 		ResetTime_time = time();;
 
@@ -1063,7 +1098,7 @@ public:
 	void add_DPS(bool param)
 	{
 		DPS = param;
-		run_transitions(tr_UnnamedTransition16 | tr_tran_DPS);
+		run_transitions(tr_UnnamedTransition15 | tr_tran_DPS);
 	}
 
 	bool  get_DPS() const
@@ -1098,7 +1133,7 @@ public:
 	{
 		CAN_IN = param;
 		CAN_IN_flag = true;
-		run_transitions(tr_GroupTransition2522);
+		run_transitions(tr_GroupTransition2421);
 	}
 
 	const CAN_MESSAGE & get_CAN_IN() const
@@ -1134,7 +1169,7 @@ public:
 	{
 		SyncFreq = param;
 		SyncFreq_time = time();
-		run_transitions(tr_UnnamedTransition16);
+		run_transitions(tr_UnnamedTransition15);
 	}
 
 	int  get_SyncFreq() const

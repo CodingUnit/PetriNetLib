@@ -326,6 +326,15 @@ namespace PetriNetLib
       }
     }
     
+    public IsBytes : bool
+    {
+      [Memoize]
+      get
+      {
+        Colour.type is Colour.List || Colour.name.StartsWith("BYTES")
+      }
+    }
+    
     //FinalType(str : string) : string
     //{
     //  match (str.Trim())

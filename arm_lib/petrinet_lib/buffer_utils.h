@@ -39,6 +39,13 @@ namespace petrinet_lib
     int get_count() const { return len; };
     void set_count(int l) { len = l; }
 
+	bytesn operator+(const bytes &b) const
+	{
+		bytesn res = bytesn(get_buf(), len);
+		res += b;
+		return res;
+	}
+
     void operator=(const bytes &b)
     {
       set_buf(b);
@@ -167,6 +174,7 @@ namespace petrinet_lib
     u8 buf[100];
   public:
     bytesn(const bytesn &self) { set_buf(self); }
+    bytesn(const bytes &self) { set_buf(self); }
     bytesn() {}
     bytesn(void *buf, int len)
     {
@@ -180,6 +188,12 @@ namespace petrinet_lib
     }
 
     void *get_buf() const { return (void *)buf; }
+
+	void operator+=(const bytes &b)
+	{
+		memory::Mem::copy((void *)&buf[get_count()], b.get_buf(), b.get_count());
+		set_count(b.get_count() + get_count());		
+	}
 
     void operator=(const bytes &b)
     {

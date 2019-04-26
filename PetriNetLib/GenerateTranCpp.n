@@ -50,7 +50,7 @@ namespace PetriNetLib
       //def participate_tran = out_tran;
       
       def next = tran.NextTran |> TranMask;
-      def next = if (next.IsEmpty()) "0" else next;
+      def next = if (next.IsEmpty() || next == "0") "1" else next;
       //def tr_pl_mask = participate_tran.Where(x => x.IsImmediate && !x.IsTimed && !x.IsPartOfFuncPlace);//.Map(x => $"tr_$(x.Name)");//, x.InputPlaces.Select(x => x[0]) |> mask_for_places));
       //def tr_comp_mask = if (tran.IsImmediate && !tran.IsPartOfGroupTransition && !tran.IsTimed && !tran.IsPartOfFuncPlace && !tran.IsFuncTran) $"tr_$(tran.Name)" else "0";
       //def tr_mask = tr_pl_mask.Fold("", (t, a) => if (a.IsEmpty()) t else $"$t | $a");
@@ -63,9 +63,11 @@ namespace PetriNetLib
       def body = extract + (code :: add_body) + res;
       
       def body = body.Filter(x => !x.IsEmpty());
-      def body = if (tran.guard is <[]>) body else //tran_ena($t, $p);
+      mutable check = false;
+      def body = if (tran.guard is <[]> || tran.guard == null) body else //tran_ena($t, $p);
                   {
                     def guard = tran.guard |> ConvExpr(_, false);
+                    check = true;
                     $<#if ($guard) 
                     {
                       ..$(body;"\n")
@@ -88,11 +90,11 @@ namespace PetriNetLib
           }
           else
           {
+            check = true;
             $<#$pre_bind if ($(x.check_expr))
                 {
                   $expr
-                }
-                return 0;#>
+                }#>
           }
         } else
         {
@@ -103,18 +105,26 @@ namespace PetriNetLib
           if (x.check_expr.IsEmpty())
             expr
           else
+          {
+            check = true;
             $<#$pre_bind if ($(x.check_expr))
               {
                 $expr
-              }
-              return 0;#>
+              }#>
+          } 
         }
       }
 
 
       //def input = eval(input, []);
 
-      input.Fold(null, fold)
+     def body = input.Fold(null, fold);
+     if (check)
+     {
+       $<#$body
+       return 0;
+       #>
+     } else body
     }    
     
     public CreateGroupTranBody(g : GroupTranCpp) : string
@@ -131,6 +141,7 @@ namespace PetriNetLib
           
           $"$res$els$a"
         }
+        
         if (dup)
         {
           
@@ -235,13 +246,14 @@ namespace PetriNetLib
       #>;
       protected_fields.Add(func);
       def tran = EnumTransitions.OrderBy(x => x.Priority);
-      def restran = tran.Select((x, i) => $<#tr_$(x.ExecName) = 0x$((1 << i).ToString("X"))#>);
+      def restran = tran.Select((x, i) => $<#tr_$(x.ExecName) = 0x$((1 << (i + 1)).ToString("X"))#>);
       
       
       
       private_fields.Add($<#
       typedef enum 
       {
+        res_ok = 1,
         ..$(restran;",\n")
       } ttran;#>);
       
@@ -284,13 +296,14 @@ namespace PetriNetLib
       #>);
       protected_fields.Add(<#void transition(u32 tr_mask)
 		{
-			u32 tr = LSB(tr_mask);
+			u32 tr = LSB(tr_mask) - 1;
 			tran_func_type tran = tran_funcs[tr];
 			u32 lock_places = tran_lock[tr];
 			if (lock(lock_places, tr_mask))
 			{
 			  u32 next = (this->*tran)();
-				tran_ena(next, can_repeat(tr_mask));
+			  if (next)
+				  tran_ena(next, can_repeat(tr_mask));
 				unlock(lock_places);
 			}
 		}#>);
