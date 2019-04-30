@@ -73,6 +73,7 @@ namespace petrinet_lib
 
 		void tran_ena(u32 trmask, u32 completed)
 		{
+      trmask &= ~1;
 			queue.enqueue(trmask);//trmask, (places & pl_mask == pl_mask) * trmask);
 			atomic_or(&completed_tran, completed);
 		}

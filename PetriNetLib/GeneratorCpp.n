@@ -803,14 +803,14 @@ namespace PetriNetLib
       //def body = transitions.Where(_.IsTimed).Map(x => <[ $(x.Name : usesite)() ]>);
       def time_delay(p)
       {
-        def time = match (p.DestContainerType)
+        def (check, time) = match (p.DestContainerType)
                     {
-                      | TDestCont.MinusSingle
-                      | TDestCont.ZeroSingle
-                      | TDestCont.Single
+                      | TDestCont.MinusSingle => ($"$(p.Name) != -1", $"$(p.Name)_time")
+                      | TDestCont.ZeroSingle => ($"$(p.Name) != 0", $"$(p.Name)_time")
+                      | TDestCont.Single => ($"$(p.Name)_flag", $"$(p.Name)_time")
                       | TDestCont.Var    => 
-                          $"$(p.Name)_time"
-                      | _                => $"$(p.Name).next_token_delay()"
+                          ("", $"$(p.Name)_time")
+                      | _                => ($"$(p.Name).is_have_tokens()", $"$(p.Name).next_token_delay()")
                     }
         def arc_dl = p.OutputTransitions.Where((_, a : Arc) => a.ArcDelay.HasValue);
         def min_delay = if (arc_dl.Count() == 0) "" else
@@ -826,18 +826,19 @@ namespace PetriNetLib
                           #>                                          
                             };
         def arc_delay = if (!min_delay.IsEmpty()) " + " + min_delay else "";
-        (p, $"$time$arc_delay", !arc_delay.IsEmpty())
+        (p, check, $"$time$arc_delay", !arc_delay.IsEmpty())
       }
 
       def next = places.Where(_.IsTimed).Map(time_delay);
 
       def tran = places.Where(_.IsTimed).Map(x => x.OutputGenTransitions.Where(x => x.IsUnnamed).Map(x => $"tr_$(x.Name)"));
       
-      def create_time_body((_, x, _), t)
+      def create_time_body((_, c, x, _), t)
       {
         def t = t.Fold("", (x, a) => if (a.IsEmpty()) x else $"$a | $x");
-        $<# time = $x;
-              if (min > time) 
+        
+        def body = $<# time = $x;
+              if (time < min) 
               {
                 min = time;
                 tr = $t;
@@ -845,13 +846,24 @@ namespace PetriNetLib
               if (min == time)
               {
                 tr |= $t;
-              }#>
+              }#>;
+        if (c.IsEmpty())
+        {
+          body
+        } else
+        {
+          $<#if ($c)
+          {
+            $body
+          }
+          #>
+        }
       }
       
       def time_body = match (next)
                        {
                          | []    => ""
-                         | [(_, one, _)] => one
+                         | [(_, _, one, _)] => one
                          | lst   => def next = lst.ZipLazy(tran).Map(create_time_body);
                           $<#
                                   u32 min = 0xFFFFFFFF, time;
