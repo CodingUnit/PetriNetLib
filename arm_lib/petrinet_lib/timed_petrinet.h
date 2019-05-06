@@ -46,8 +46,9 @@ namespace petrinet_lib
 			queue.enqueue(comp);*/
 			while (time_queue.deque_if_exist(val))
 			{
-				tran_func tran = get_transition(val);
-				tran(this);
+				//tran_func tran = get_transition(val);
+        transition(val);
+				//tran(this);
 			}
 		}
 	public:

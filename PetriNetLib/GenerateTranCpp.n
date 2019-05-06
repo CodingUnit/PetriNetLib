@@ -259,7 +259,7 @@ namespace PetriNetLib
       
       def lock_places = tran.Select(x => if (x == null) "(tplace)0" else x.PlacesParticipateMask);
       //def next = tran.Select(x => if (x == null) "(ttran)0" else x.NextTran |> TranToMask);
-      def can_rep = tran.Select((x, i) => if (x == null) 1 << i else if (x.CompleteTran) 1 << i else 0);
+      def can_rep = tran.Select((x, i) => if (x == null) 1 << (i + 1) else if (x.CompleteTran) 1 << (i + 1) else 0);
       def can_rep = can_rep.Fold(0, _ | _);
       //def size = tran.Length;
       
