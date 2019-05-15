@@ -253,14 +253,14 @@ namespace PetriNetLib
     {
       def name = place.Name;
       def type = place.Colour.VarSpec;
-      def tran = place.OutputGenTransitions.Where(x => !x.IsPartOfFuncPlace && !x.IsFuncTran && !x.PartOfGroup.HasValue);
+      def tran = place.OutputGenTransitions.Where(x => !x.IsPartOfFuncPlace && !x.IsFuncTran && !x.PartOfGroup.HasValue && !x.IsTimed && x.IsInputPort(place));
       def group = place.OutputGenTransitions.Where(x => x.PartOfGroup.HasValue).Select(x => x.PartOfGroup.Value);
-      def tran = tran.Concat(group).RemoveDuplicatesSort(x => x.ExecName) |> TranMask;
+      def tran_mask = tran.Concat(group).RemoveDuplicatesSort(x => x.ExecName) |> TranMask;
       //def tran = if (tran.Find(x => x.Name == name) is Some(t)) [t] else tran.Where(x => x.IsImmediate && !x.IsPartOfGroupTransition);                  
       //def tran = tran.Map(x => $"$(x.ExecName)();");
       //def tran = if (group.IsEmpty()) $<#..$(tran;"\n")#> else $"$(group.First().GroupName.Value)();";//Map(x => x.PartOfGroup.Value).First() |> Some;
       //def tran = if (group is Some(g)) $"GroupTransition$g" else tran;
-      def run = if (tran.IsEmpty()) "" else $<#run_transitions($tran);#>;
+      def run = if (tran.IsEmpty()) "" else $<#run_transitions($tran_mask);#>;
       def expr = place.AddPlaceExpr(<[ param ]>);
       $<#void add_$name($(type)param)
       {
@@ -837,16 +837,17 @@ namespace PetriNetLib
       {
         def t = t.Fold("", (x, a) => if (a.IsEmpty()) x else $"$a | $x");
         
-        def body = $<# time = $x;
-              if (time < min) 
-              {
-                min = time;
-                tr = $t;
-              } else
-              if (min == time)
-              {
-                tr |= $t;
-              }#>;
+        def body = $<#min = calc_min_time($x, min, $t, tr);#>;
+        //$<# time = ;
+        //      if (time < min) 
+        //      {
+        //        min = time;
+        //        tr = $t;
+        //      } else
+        //      if (min == time)
+        //      {
+        //        tr |= $t;
+        //      }#>;
         if (c.IsEmpty())
         {
           body
@@ -866,7 +867,7 @@ namespace PetriNetLib
                          | [(_, _, one, _)] => one
                          | lst   => def next = lst.ZipLazy(tran).Map(create_time_body);
                           $<#
-                                  u32 min = 0xFFFFFFFF, time;
+                                  u32 min = 0xFFFFFFFF;
                                   ..$(next;"\n");
                               #>
                        }

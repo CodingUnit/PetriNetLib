@@ -798,90 +798,20 @@ private:
 	{
 		u32 tr = 0;
 
-		u32 min = 0xFFFFFFFF, time;
-		time = DELAY_time + 200000;
-		if (time < min)
-		{
-			min = time;
-			tr = tr_UnnamedTransition8;
-		}
-		else
-			if (min == time)
-			{
-				tr |= tr_UnnamedTransition8;
-			}
-		time = BinTimer_time;
-		if (time < min)
-		{
-			min = time;
-			tr = tr_UnnamedTransition5;
-		}
-		else
-			if (min == time)
-			{
-				tr |= tr_UnnamedTransition5;
-			}
+		u32 min = 0xFFFFFFFF;
+		min = calc_min_time(DELAY_time + 200000, min, tr_UnnamedTransition8, tr);
+		min = calc_min_time(BinTimer_time, min, tr_UnnamedTransition5, tr);
 		if (SyncFreq != 0)
 		{
-			time = SyncFreq_time;
-			if (time < min)
-			{
-				min = time;
-				tr = tr_UnnamedTransition15;
-			}
-			else
-				if (min == time)
-				{
-					tr |= tr_UnnamedTransition15;
-				}
+			min = calc_min_time(SyncFreq_time, min, tr_UnnamedTransition15, tr);
 		}
 
-		time = TempTimer_time + 500000;
-		if (time < min)
-		{
-			min = time;
-			tr = tr_UnnamedTransition6;
-		}
-		else
-			if (min == time)
-			{
-				tr |= tr_UnnamedTransition6;
-			}
-		time = TIMER_time;
-		if (time < min)
-		{
-			min = time;
-			tr = tr_UnnamedTransition10 | tr_UnnamedTransition30;
-		}
-		else
-			if (min == time)
-			{
-				tr |= tr_UnnamedTransition10 | tr_UnnamedTransition30;
-			}
-		time = DEBUG_TIMER_time;
-		if (time < min)
-		{
-			min = time;
-			tr = tr_UnnamedTransition3;
-		}
-		else
-			if (min == time)
-			{
-				tr |= tr_UnnamedTransition3;
-			}
+		min = calc_min_time(TempTimer_time + 500000, min, tr_UnnamedTransition6, tr);
+		min = calc_min_time(TIMER_time, min, tr_UnnamedTransition10 | tr_UnnamedTransition30, tr);
+		min = calc_min_time(DEBUG_TIMER_time, min, tr_UnnamedTransition3, tr);
 		if (ResetTime_flag)
 		{
-			time = ResetTime_time + 10000;
-			if (time < min)
-			{
-				min = time;
-				tr = tr_UnnamedTransition22;
-			}
-			else
-				if (min == time)
-				{
-					tr |= tr_UnnamedTransition22;
-				}
+			min = calc_min_time(ResetTime_time + 10000, min, tr_UnnamedTransition22, tr);
 		}
 		;
 		;
@@ -1102,7 +1032,7 @@ public:
 	void add_DPS(bool param)
 	{
 		DPS = param;
-		run_transitions(tr_UnnamedTransition15 | tr_tran_DPS);
+		run_transitions(tr_tran_DPS);
 	}
 
 	bool  get_DPS() const
@@ -1113,7 +1043,7 @@ public:
 	void add_BUTTONS(u8 param)
 	{
 		BUTTONS = param;
-		run_transitions(tr_UnnamedTransition9 | tr_UnnamedTransition5);
+		run_transitions(tr_UnnamedTransition9);
 	}
 
 	u8  get_BUTTONS() const
@@ -1125,7 +1055,7 @@ public:
 	{
 		UDP_IN = param;
 		UDP_IN_flag = true;
-		run_transitions(tr_GroupTransition721);
+
 	}
 
 	const CAN_UDP_MESSAGE & get_UDP_IN() const
@@ -1137,7 +1067,7 @@ public:
 	{
 		CAN_IN = param;
 		CAN_IN_flag = true;
-		run_transitions(tr_GroupTransition2421);
+
 	}
 
 	const CAN_MESSAGE & get_CAN_IN() const
@@ -1161,7 +1091,7 @@ public:
 	{
 		SyncFreq = param;
 		SyncFreq_time = time();
-		run_transitions(tr_UnnamedTransition15);
+
 	}
 
 	int  get_SyncFreq() const
@@ -1172,7 +1102,7 @@ public:
 	void add_STEP(int param)
 	{
 		STEP = param;
-		run_transitions(tr_tran_DPS);
+
 	}
 
 	int  get_STEP() const

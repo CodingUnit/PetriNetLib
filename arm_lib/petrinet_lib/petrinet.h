@@ -99,6 +99,7 @@ namespace petrinet_lib
 			while (tr)
 			{
 				u32 cur = tr & -tr; // берем нижний бит
+				transition(cur);
 				tr -= cur;
 			}
 		}

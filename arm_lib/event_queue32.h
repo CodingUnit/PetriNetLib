@@ -38,10 +38,10 @@ namespace events
 
 		u32 deque()
 		{
-      //using namespace atomic;
-      u32 e = evt;
-      u32 lowest = e & -e;
-      evt = e - lowest;
+			//using namespace atomic;
+			u32 e = evt;
+			u32 lowest = e & -e;
+			evt = e - lowest;
 			return lowest;
 		}
 	};
@@ -105,7 +105,7 @@ namespace events
 		{
 			//evt -= e;
 			u32 cevt;
-			do 
+			do
 			{
 				cevt = evt;
 			} while (!CAS(&evt, cevt, cevt - e));
@@ -129,12 +129,12 @@ namespace events
 		{
 			u32 e;
 			u32 lowest;
-			do 
+			do
 			{
 				e = evt;
 				lowest = e & -e;
-			//} while (!CAS( &evt, e, e - lowest ));
-      } while (!CAS(&evt, e, e - lowest));
+				//} while (!CAS( &evt, e, e - lowest ));
+			} while (!CAS(&evt, e, e - lowest));
 			return lowest;
 		}
 
@@ -144,15 +144,15 @@ namespace events
 			u32 e = peek();
 			evt -= e;
 			return e;
-      //using namespace atomic;
-			//u32 e;
-			//u32 lowest;
-			//do 
-			//{
-			//	e = evt;
-			//	lowest = e & -e;
-			//} while (!CAS( &evt, e, e - lowest ));
-			//return lowest;
+			//using namespace atomic;
+				  //u32 e;
+				  //u32 lowest;
+				  //do 
+				  //{
+				  //	e = evt;
+				  //	lowest = e & -e;
+				  //} while (!CAS( &evt, e, e - lowest ));
+				  //return lowest;
 		}
 	};
 }

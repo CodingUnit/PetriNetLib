@@ -1,18 +1,25 @@
 #pragma once
 #include "lib_incl.h"
-#include "intrinsics.h"
+//#include "include.h"
+#include "stm32f1xx.h"
+#include "core_cm3.h"
+//#include "intrinsics.h"
 //#include "cmsis_iar.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // читает данные по адресу и выставляет эксклюзивный флаг
 inline u32 LL(const volatile u32 *pAddr) 
 {
-      return __LDREX((const volatile unsigned long *)pAddr);
+      return __LDREXW((volatile u32 *)pAddr);
 }
 
 // 1 - если запись произведена
 inline u8 SC(volatile u32 *pAddr, u32 New ) 
 {
-	return !__STREX(New, (volatile unsigned long *)pAddr);
+	return !__STREXW(New, pAddr);
 }
 
 inline u8 LL8(volatile u8 *pAddr)
@@ -28,7 +35,7 @@ inline u8 SC8(volatile u8 *pAddr, u8 New)
 
 inline u16 LL16(const volatile u16 *pAddr) 
 {
-      return __LDREXH(pAddr);
+      return __LDREXH((volatile u16 *)pAddr);
 }
 
 // 1 - если запись произведена
@@ -98,3 +105,7 @@ inline u8 atomic_dec8(u8 *pAddr)
 }
 
 u32 atomic_and_or(u32 *addr, u32 a, u32 o);
+
+#ifdef __cplusplus
+}
+#endif

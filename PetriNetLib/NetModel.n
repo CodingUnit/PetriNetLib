@@ -52,6 +52,21 @@ namespace PetriNetLib
     public net       : PetriNetProcessor;
     
     public gen_idx : int {get;set;}
+    
+    public InputPort : bool
+    {
+      [Memoize]
+      get
+      {
+        match (port)
+        {
+          | Some(PortType.In)
+          | Some(PortType.InOut) => true
+          | _                    => false
+        }
+      }
+    }
+    
     public Name : string
     {
       [Memoize]

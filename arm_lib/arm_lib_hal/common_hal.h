@@ -78,6 +78,7 @@ namespace common {
 
 				void set(voidfunc f )
 				{
+          obj = 0;
 					func.vfunc = f;//micro::utils::conv_iar_member_to_func<Func, func_ptr > 
 				}
 

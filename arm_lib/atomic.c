@@ -1,5 +1,9 @@
 #include "atomic.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 u8 CAS(volatile u32 * pAddr, u32 nExpected, u32 nNew)
 {
 	if (LL(pAddr) == nExpected)
@@ -79,3 +83,7 @@ u32 atomic_and_or(u32 *addr, u32 clr, u32 set)
 	} while (!CAS(addr, cur, cur & ~clr | set));
 	return cur;
 }
+
+#ifdef __cplusplus
+}
+#endif

@@ -242,6 +242,12 @@ namespace PetriNetLib
       }
     }
     
+    public IsInputPort(pl : GenPlaceCpp) : bool
+    {
+      def other = InputGenPlaces.Except(pl).Where(_.InputPort);
+      pl.Name == Name || other.IsEmpty()
+    }
+    
     public virtual CompleteTran : bool
     {
       [Memoize]
