@@ -186,9 +186,9 @@ namespace PetriNetLib
                       } else
                       {
                         def output = OutputGenPlaces.SelectMany(x => x.OutputGenTransitions.Where(x => x.IsFuncTran).SelectMany(x => x.OutputGenPlaces)).Concat(OutputGenPlaces);
-                        InputGenPlaces.Concat(output).Distinct().NToList()
+                        InputGenPlaces.Concat(output)
                       }
-        places.Filter(x => !x.IsFuncPlace)
+        places.Distinct().Filter(x => !x.IsFuncPlace)
       }
     }
 
@@ -339,7 +339,7 @@ namespace PetriNetLib
       }
     }
 
-    public InputGenPlaces : list[GenPlaceCpp]
+    public virtual InputGenPlaces : list[GenPlaceCpp]
     {
       [Memoize]
       get
@@ -370,7 +370,7 @@ namespace PetriNetLib
       }
     }
 
-    public OutputGenPlaces : list[GenPlaceCpp]
+    public virtual OutputGenPlaces : list[GenPlaceCpp]
     {
       [Memoize]
       get

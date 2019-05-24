@@ -103,6 +103,23 @@ namespace PetriNetLib
       }
     }
     
+    public override InputGenPlaces : list[GenPlaceCpp]
+    {
+      [Memoize]
+      get
+      {
+        grouped.SelectMany(x => x.InputGenPlaces).Distinct().NToList()
+      }
+    }
+    
+    public override OutputGenPlaces : list[GenPlaceCpp]
+    {
+      [Memoize]
+      get
+      {
+        grouped.SelectMany(x => x.OutputGenPlaces).Distinct().NToList()
+      }
+    }
     public override Name : string
     {
       [Memoize]

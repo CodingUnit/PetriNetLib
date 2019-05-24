@@ -68,9 +68,9 @@ namespace PetriNetLib
         {
           when (en.MoveNext())
           {
+            yield en.Current;
             if (func(en.Current)) 
             {
-              yield en.Current;
               loop()
             } else ()
           }

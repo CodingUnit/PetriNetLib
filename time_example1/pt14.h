@@ -210,7 +210,7 @@ field2 = tup.field2;
 	struct CAN_UDP_MESSAGE
 	{
 		CAN_UDP_MESSAGE() {}
-		CAN_UDP_MESSAGE(const bytes &head, u16 COUNT, u16 ID, long long timestamp, int len, const bytes &data)
+		CAN_UDP_MESSAGE(const bytes &head, u16 COUNT, u16 ID, long long timestamp, u8 len, const bytes &data)
 		{
 			this->head = head;
 			this->COUNT = COUNT;
@@ -232,7 +232,7 @@ field2 = tup.field2;
 		u16 COUNT;
 		u16 ID;
 		long long timestamp;
-		int len;
+		u8 len;
 		bytesn data;
 	};
 
@@ -645,7 +645,7 @@ private:
 		int n = TEMP();
 
 		TempTimer_time = time();
-		UDP_AND_CAN_SEND(CAN_MESSAGE(0x2D1, time64(), IntToList(0x33 + n * 256, 3)));
+		UDP_AND_CAN_SEND(CAN_MESSAGE(0x2D1, time64(), IntToList(33 + n * 256, 3)));
 		return 1;;
 
 	}
@@ -947,12 +947,12 @@ public:
 &pt14::UnnamedTransition30 };
 		tran_funcs = tr_funcs;
 
-		static const tplace tr_lock[] = { (tplace)(pl_COUNTER | pl_UDP_OUT | pl_GPS),
-		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_GPS),
-		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_GPS),
-		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_GPS),
-		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_GPS),
-		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_GPS),
+		static const tplace tr_lock[] = { (tplace)(pl_COUNTER | pl_UDP_OUT | pl_UDP_IN),
+		(tplace)(pl_ResetTime | pl_COUNTER | pl_UDP_OUT | pl_CAN_IN),
+		(tplace)(pl_CAN | pl_CAN_OUT),
+		(tplace)(pl_ResetTime | pl_COUNTER | pl_UDP_OUT | pl_ControlCheck),
+		(tplace)(pl_GPSLED | pl_GPSLEDCntr),
+		(tplace)(pl_SYNCLED | pl_SYNCLEDCntr),
 		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_GPS),
 		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_STEP | pl_DELAY | pl_SSI | pl_SYNC | pl_DPS),
 		(tplace)(pl_COUNTER | pl_UDP_OUT | pl_DEBUG_TIMER | pl_SEND_DEBUG),
@@ -1055,7 +1055,7 @@ public:
 	{
 		UDP_IN = param;
 		UDP_IN_flag = true;
-
+		run_transitions(tr_GroupTransition721);
 	}
 
 	const CAN_UDP_MESSAGE & get_UDP_IN() const
@@ -1067,7 +1067,7 @@ public:
 	{
 		CAN_IN = param;
 		CAN_IN_flag = true;
-
+		run_transitions(tr_GroupTransition2421);
 	}
 
 	const CAN_MESSAGE & get_CAN_IN() const
