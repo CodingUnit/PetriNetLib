@@ -89,6 +89,49 @@ namespace PetriNetLib
       }
     }
     
+    public PreferedLen : option[int]
+    {
+      [Memoize]
+      get
+      
+      {
+        Properties.Find((p, _) => p == "LEN").Map((_, v) => int.Parse(v))
+      }
+    }
+    
+    public Len : int
+    {
+      [Memoize]
+      get
+      {
+        match (PreferedLen)
+        {
+          | Some(l) => l
+          | _       => 32
+        }
+      }
+    }
+    
+    public Properties : list[string * string]
+    {
+      [Memoize]
+      get
+      {
+        def prop = Attributes.Where(x => x.Contains('='));
+        
+        def conv_prop(x)
+        {
+          def eq = x.IndexOf("=");
+          def val = eq + 1;
+          def prop = x.Substring(0, eq).TrimEnd();
+          def val = x.Substring(val, x.Length - val).TrimStart();
+          (prop, val)
+        }
+        
+        prop.Map(conv_prop)
+      }
+    }
+    
     public Attributes : list[string]
     {
       [Memoize]
@@ -113,6 +156,15 @@ namespace PetriNetLib
       }
     }
 
+    public Func : bool
+    {
+      [Memoize]
+      get
+      {
+        Attributes.Exists(_ == "FUNC")
+      }
+    }
+    
     public ZeroSingle : bool
     {
       [Memoize]

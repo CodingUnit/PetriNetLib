@@ -202,6 +202,15 @@ namespace PetriNetLib
       }
     }
 
+    public IsInline : bool
+    {
+      [Memoize]
+      get
+      {
+        InputGenPlaces.Count() == 1 && InputGenPlaces.First().IsFuncPlace
+      }
+    }
+    
     public IsFuncTran : bool
     {
       [Memoize]
