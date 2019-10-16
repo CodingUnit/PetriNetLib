@@ -382,7 +382,6 @@ namespace PetriNetLib
         def tran = OutputGenTransitions.Where(x => x.IsImmediate);
         //def path_except = PathThroughOrdinaryPlaces.Filter(x => if (x is PetriNetNode.Place(p)) p : object != this else true);
         //def cycle_cont = path_except.Exists(x => if (x is PetriNetNode.Place(p)) p.IsContainer && !p.IsFuncPlace else false);
-        def path_err = IsCycle && IsContainer;//(cycle_cont && cycle) || (cycle && !IsContainer) || !cycle;
         Func ||
         (
          !InputTransitions.IsEmpty() && // есть входные переходы
@@ -391,7 +390,8 @@ namespace PetriNetLib
          tran.First().guard is <[]>  && // нет сторожевого условия
         !tran.First().IsTimed       && // переход не временной
          (port.IsNone || port is Some(PortType.InOut)) && // не порт
-         !path_err &&
+         IsContainer && // если контейнер
+         !ForceCont && // если нет флага принудительного контейнера
         //!PathThroughOrdinaryPlaces.Exists(x => if (x is PetriNetNode.Cycle(PetriNetNode.Place(p))) p : object == this else false) && // не имеет циклов на вход
          tran.First().InputGenPlaces.Except(this).All(x => x.Var || x.Req) // из всех позиций перехода можно вынуть фишки с гарантией
          )

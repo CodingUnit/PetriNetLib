@@ -254,17 +254,17 @@ namespace PetriNetLib
       def tran = place.OutputGenTransitions.Where(x => !x.IsPartOfFuncPlace && !x.IsFuncTran && !x.PartOfGroup.HasValue && !x.IsTimed && x.IsInputPort(place));
       def group = place.OutputGenTransitions.Where(x => x.PartOfGroup.HasValue).Select(x => x.PartOfGroup.Value);
       def tran = tran.Concat(group).RemoveDuplicatesSort(x => x.ExecName);
-      def tran_mask = tran |> TranMask;
+      def tran = tran.Select(x => $"$(x.ExecName)()");
       //def tran = if (tran.Find(x => x.Name == name) is Some(t)) [t] else tran.Where(x => x.IsImmediate && !x.IsPartOfGroupTransition);                  
       //def tran = tran.Map(x => $"$(x.ExecName)();");
       //def tran = if (group.IsEmpty()) $<#..$(tran;"\n")#> else $"$(group.First().GroupName.Value)();";//Map(x => x.PartOfGroup.Value).First() |> Some;
       //def tran = if (group is Some(g)) $"GroupTransition$g" else tran;
-      def run = if (tran.IsEmpty()) "" else $<#run_transitions($tran_mask);#>;
+      //def run = if (tran.IsEmpty()) "" else $<#run_transitions($tran_mask);#>;
       def expr = place.AddPlaceExpr(<[ param ]>);
       $<#void add_$name($(type)param)
       {
         $expr
-        $run
+        ..$(tran; "\n")
       }
 
       $(type) get_$name() const
@@ -784,7 +784,7 @@ namespace PetriNetLib
     {
       def marking = places.MapToList(CreateInitMarking).Filter(x => x != null && !x.IsEmpty());
 
-      def cont = places.Where(x => x.IsContainer);
+      def cont = places.Where(x => x.IsContainer && !x.IsFuncPlace);
       
       def init_cont(x)
       {

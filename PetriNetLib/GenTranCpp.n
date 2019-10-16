@@ -283,7 +283,28 @@ namespace PetriNetLib
       }
     }
     
-    public Body : string
+    public NextTransitions : list[string]
+    {
+      [Memoize]
+      get
+      {
+        def out_tran = NextTran;
+         
+        def next_tran(x)
+        {
+          if (x.IsFuncTran)
+          {
+            def var = if (x.InputGenPlaces.First().Colour.IsComplexType) $"*res_$(x.InArcProcess.First().bind_var)" else $"res_$(x.InArcProcess.First().bind_var)";
+            (x, var) 
+          } else (x, "")
+        }
+           
+        def tr_next = out_tran.Map(next_tran);
+        tr_next.Map((x, p) => $<#$(x.ExecName)($p);#>)
+      }
+    }
+    
+    public virtual Body : string
     {
       [Memoize]
       get
@@ -302,13 +323,32 @@ namespace PetriNetLib
 
         //def tr_next = tr_next.Map(next_tran);
         //def tr_next = tr_next.Map((x, p) => $<#$(x.ExecName)($p);#>);
-        match (this)
-        {
-          | GroupTranCpp as g => gen.CreateGroupTranBody(g)
-          | _                 => def body = gen.CreateTranBody(this);
-                                $<#$body;
-                                 #>
-        }
+          def body = gen.CreateTranBody(this);
+          
+          //def body = TranBody;
+            def places = PlacesParticipateMask;
+            def tr_next = NextTransitions;
+            def tr = if (PartOfGroup is Some(g)) $"tr_GroupTransition$g" else $"tr_$(ExecName)";
+            if (tr_next.IsEmpty())
+            $<#bool res = false;
+                  if (lock($places, $tr))
+                  {
+                    $body;
+                    unlock($places);
+                  }
+                  return res;#> else 
+            $<#bool res = false;
+                  if (lock($places, $tr))
+                  {
+                    $body;
+                    unlock($places);
+                    if (res)
+                    {
+                      ..$(tr_next; "\n")
+                    }
+                  }
+                  return res;#>
+                                
       }
     }
 

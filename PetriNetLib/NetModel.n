@@ -147,6 +147,15 @@ namespace PetriNetLib
       }
     }    
     
+    public ForceCont : bool
+    {
+      [Memoize]
+      get
+      {
+        Attributes.Exists(_ == "FORCECONT")
+      }
+    }
+    
     public Req : bool
     {
       [Memoize]
