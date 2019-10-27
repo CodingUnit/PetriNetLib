@@ -1,6 +1,6 @@
 #pragma once
-#include "arm_lib/lib_incl.h"
-#include "arm_lib/memory.h"
+#include "lib_incl.h"
+#include "memory.h"
 
 namespace petrinet_lib
 {
@@ -14,7 +14,7 @@ namespace petrinet_lib
 
     void set_buf(const bytes &b)
     {
-      memory::Mem::copy(get_buf(), b.get_buf(), b.get_count());
+      copy(get_buf(), b.get_buf(), b.get_count());
       len = b.len;
     }
 
@@ -31,13 +31,20 @@ namespace petrinet_lib
 
 	void set_buf(const void *b, int l)
 	{
-		memory::Mem::copy(get_buf(), b, l);
+		copy(get_buf(), b, l);
 		len = l;
 	}
 
     virtual void *get_buf() const { return 0; };
     int get_count() const { return len; };
     void set_count(int l) { len = l; }
+
+//	bytesn operator+(const bytes &b) const
+//	{
+//		bytesn res = bytesn(get_buf(), len);
+//		res += b;
+//		return res;
+//	}
 
     void operator=(const bytes &b)
     {
@@ -167,6 +174,7 @@ namespace petrinet_lib
     u8 buf[100];
   public:
     bytesn(const bytesn &self) { set_buf(self); }
+    bytesn(const bytes &self) { set_buf(self); }
     bytesn() {}
     bytesn(void *buf, int len)
     {
@@ -175,11 +183,17 @@ namespace petrinet_lib
 
     void init(const void *data, int len)
     {
-      memory::Mem::copy(buf, data, len);
+      copy(buf, data, len);
       set_count(len);
     }
 
     void *get_buf() const { return (void *)buf; }
+
+	void operator+=(const bytes &b)
+	{
+		copy((void *)&buf[get_count()], b.get_buf(), b.get_count());
+		set_count(b.get_count() + get_count());		
+	}
 
     void operator=(const bytes &b)
     {

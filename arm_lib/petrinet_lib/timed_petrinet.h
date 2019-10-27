@@ -8,6 +8,20 @@ namespace petrinet_lib
 		event_queue32_conc time_queue;
 		u32 min_time;
 	protected:
+		u32 calc_min_time(u32 time, u32 min, u32 ctr, u32 &tr)
+		{
+			if (time < min)
+			{
+				min = time;
+				tr = ctr;
+			}
+			else
+				if (min == time)
+				{
+					tr |= ctr;
+				}
+		}
+
 		bool check_time() const
 		{
 			return time() >= min_time;
@@ -46,8 +60,9 @@ namespace petrinet_lib
 			queue.enqueue(comp);*/
 			while (time_queue.deque_if_exist(val))
 			{
-				tran_func tran = get_transition(val);
-				tran(this);
+				//tran_func tran = get_transition(val);
+        transition(val);
+				//tran(this);
 			}
 		}
 	public:

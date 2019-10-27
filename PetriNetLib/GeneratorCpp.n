@@ -18,7 +18,7 @@ using System.Threading.Tasks;
 namespace PetriNetLib
 {
   using SCG = System.Collections.Generic;
-  
+
   using CommonLib.Macros.LensUtils;
 
   /*
@@ -57,13 +57,13 @@ namespace PetriNetLib
     {
       get
       {
-       gen.TypingMethod 
+        gen.TypingMethod 
       }
     }
-    
+
     func_proc : Hashtable[string, GenFuncCpp];
     funcs     : list[GenFuncCpp];
-    
+
     public GroupTransitions : list[GroupTranCpp]
     {
       [Memoize]
@@ -72,22 +72,20 @@ namespace PetriNetLib
         PlacesWithGroup.Map(x => GroupTranCpp(x.OutputGenTransitions.Filter(x => x.IsUnnamed && !x.IsTimed), this))
       }
     }
-    
-    PlacesWithGroup : list[GenPlaceCpp]
+
+    public PlacesWithGroup : list[GenPlaceCpp]
     {
       [Memoize]
       get
       {
-        places.Filter(x => x.OutputTransitions.Where((x, _) => x.IsUnnamed && !x.IsTimed).Count() > 1 && 
-                             (!x.InputTransitions.IsEmpty() || x.port.HasValue) && 
-                             (!x.Var || x.port.HasValue))
+        places.Filter(x => x.IsGroup)
       }
     }
-    
+
     internal CreateArray(expr : list[PExpr]) : string
     {
       def ty = Typer(gen.TypingMethod);
-      
+
       def add_type(i, e)
       {
         if (i == 0) e else
@@ -98,21 +96,21 @@ namespace PetriNetLib
             | <[ $_ : $t]> => <[ $(e) : $t ]>
             | _            => throw InvalidOperationException()
           }
-          
+
         }
       }
-      
+
       def nexpr = if (expr.Length > 1) expr.MapI(add_type) else expr;
       def te = ty.TypeExpr(<[ [..$nexpr] ]>);
       def ty = te.ty;
       def len = expr.Length;
       def (type, n, len, ty) = match (ty)
-                           {
-                             | FixedType.Class(_, [args]) => def byte = typer.BindType(<[ byte ]>);
-                                                             def short = typer.BindType(<[ short ]>);
-                                                             def ushort = typer.BindType(<[ ushort ]>);
-                                                             def integer = typer.BindType(<[ int ]>);
-                                                             def uinteger = typer.BindType(<[ uint ]>);
+                                {
+                                  | FixedType.Class(_, [args]) => def byte = typer.BindType(<[ byte ]>);
+                                                            def short = typer.BindType(<[ short ]>);
+                                                            def ushort = typer.BindType(<[ ushort ]>);
+                                                            def integer = typer.BindType(<[ int ]>);
+                                                            def uinteger = typer.BindType(<[ uint ]>);
                                         if (args.TryRequire(byte))
                                         {
                                           if (len <= 10)
@@ -167,7 +165,7 @@ namespace PetriNetLib
                                             ("bytesn", true, len, "u32")
                                           }
                                         } else (null, false, len, null)
-                            | _ => throw InvalidOperationException()
+                                  | _ => throw InvalidOperationException()
                                         //if (args.TryRequire(integer))
                                         //{
                                         //} else
@@ -186,7 +184,7 @@ namespace PetriNetLib
                                         //if (args.TryRequire(ushortint))
                                         //{
                                         //}
-                           }
+                                }
       //mutable lst = [];
       def expr = expr.Map(ConvExpr(_, false));
       //{..$(expr; ",")}
@@ -203,7 +201,7 @@ namespace PetriNetLib
     }
 
 
-    
+
     CreatePlaces() : string
     {
       mutable gen_idx = 0;
@@ -215,14 +213,14 @@ namespace PetriNetLib
           gen_idx++;    
         }
       }
-        
+
       def enums = places.Where(x => !x.IsFuncPlace).Map(x => $<#pl_$(x.Name) = 0x$((1 << x.gen_idx).ToString("X"))#>);
       $<#typedef enum
          {
            ..$(enums;",\n")
          } tplace;#>
     }
-    
+
     CreateFuncPlace(place : GenPlaceCpp) : string
     {
       def name = place.Name;
@@ -237,7 +235,7 @@ namespace PetriNetLib
       }
       #>
     }
-    
+
     CreateReqPlace(place : GenPlaceCpp) : string
     {
       def name = place.Name;
@@ -248,58 +246,62 @@ namespace PetriNetLib
       //   }
       //   #>
     }
-    
+
     CreateInPortPlace(place : GenPlaceCpp) : string
     {
       def name = place.Name;
       def type = place.Colour.VarSpec;
-      def tran = place.OutputGenTransitions.Select(x => x.ExecName);
+      def tran = place.OutputGenTransitions.Where(x => !x.IsPartOfFuncPlace && !x.IsFuncTran && !x.PartOfGroup.HasValue && !x.IsTimed && x.IsInputPort(place));
+      def group = place.OutputGenTransitions.Where(x => x.PartOfGroup.HasValue).Select(x => x.PartOfGroup.Value);
+      def tran = tran.Concat(group).RemoveDuplicatesSort(x => x.ExecName);
+      def tran = tran.Select(x => $"$(x.ExecName)()");
       //def tran = if (tran.Find(x => x.Name == name) is Some(t)) [t] else tran.Where(x => x.IsImmediate && !x.IsPartOfGroupTransition);                  
       //def tran = tran.Map(x => $"$(x.ExecName)();");
       //def tran = if (group.IsEmpty()) $<#..$(tran;"\n")#> else $"$(group.First().GroupName.Value)();";//Map(x => x.PartOfGroup.Value).First() |> Some;
       //def tran = if (group is Some(g)) $"GroupTransition$g" else tran;
+      //def run = if (tran.IsEmpty()) "" else $<#run_transitions($tran_mask);#>;
       def expr = place.AddPlaceExpr(<[ param ]>);
       $<#void add_$name($(type)param)
       {
         $expr
-        $tran
+        ..$(tran; "\n")
       }
-      
+
       $(type) get_$name() const
       {
         return $name;
       }
       #>
     }
-    
+
     CreateOutPlace(place : GenPlaceCpp) : string
     {
       def name = place.Name;
-      private_fields.Add($<#function $name;#>);
+      private_fields.Add(GenFuncCpp.FuncTypedefDecl(name, [place.Colour], "void") + ";");
       GenFuncCpp.FuncInitDecl(name, [place.Colour], if (place.port is Some(PortType.InOut)) "bool" |> Some else None())
     }
-    
+
     CreatePlace(place : GenPlaceCpp) : string
     {
-      
+
       // TODO: transparent place
       def name = place.Name;
         //def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
       def type = place.Colour.DestType;
       def port = match (place.port)
-      {
-        | Some(PortType.InOut)
-        | Some(PortType.Out) => true
-        | _                  => false
-      }
-      
+                  {
+                    | Some(PortType.InOut)
+                    | Some(PortType.Out) => true
+                    | _                  => false
+                  }
+
       if (place.IsFuncPlace || port) 
       {
         null
       } else
       {
-        
-        
+
+
         def dtype = place.DestContainerType;
         def dest_cont = match (dtype)
                          {
@@ -315,10 +317,10 @@ namespace PetriNetLib
                            | ReqContainer        => GenFuncCpp.FuncTypedefDecl(place.Name, [], type)
                          }
         def flag = match (dtype)
-        {
-          | Single              => if (place.Colour.IsUnit) "" else $"$(name)_flag"
-          | _                   => ""
-        }
+                    {
+                      | Single              => if (place.Colour.IsUnit) "" else $"$(name)_flag"
+                      | _                   => ""
+                    }
         def time = if (place.IsTimed) $"\nu32 $(name)_time;" else "";
         //def deflt = match (dtype)
         //{
@@ -328,8 +330,8 @@ namespace PetriNetLib
         //}
         def flag = if (flag.IsEmpty()) "" else $"\nbool $flag;";
         if (dtype == TDestCont.ReqContainer)
-        $<#$dest_cont;#> else
-        $<#$dest_cont $name;$flag$time#>
+          $<#$dest_cont;#> else
+          $<#$dest_cont $name;$flag$time#>
       }
       //cpp(<#decl: $(dest_cont : type) $name;#>)
       //if (place.IsTimed)
@@ -337,7 +339,7 @@ namespace PetriNetLib
       //<[decl: $(name : usesite) : PetriNetModel.Place.[$type] = PetriNetModel.Place($(name : string), $dest_cont)]>
     }
 
-    
+
     internal ColourOfVar(name : string) : GenColourCpp
     {
       match (model.vars.Find(x => x.Key == name))
@@ -351,9 +353,9 @@ namespace PetriNetLib
     {
       ColourOfVar(name)?.VarSpec
     }
-    
+
     mutable expr_ctx : SCG.Stack[GenColourCpp] = SCG.Stack();
-    
+
     internal ConvExprPlaceCtx(expr : PExpr, ctx : GenColourCpp, statement : bool = false) : string
     {
       expr_ctx.Push(ctx);
@@ -361,7 +363,7 @@ namespace PetriNetLib
       _ = expr_ctx.Pop();
       res
     }
-    
+
     internal ConvExpr(expr : PExpr, statement : bool = false) : string
     {
       when (statement) ctx = [];
@@ -397,30 +399,31 @@ namespace PetriNetLib
         //| <[ $func(..$parms) ]> when (parms.All(x => x is PExpr.Assign)) =>
         | <[ AsHex($(s : string))]> => s
         | <[ hd($e)]>           => $<#$(ConvExpr(e)).at(0)#>
+        | <[ length($e) ]>      => $<#$(ConvExpr(e)).get_count()#>
         | <[ $func(..$parms) ]> => //def func_name = ConvFunc(func.ToString());
-                                   if (func_proc.ContainsKey(func.ToString()))
-                                   {
-                                     def func = func_proc[func.ToString()];
-                                     func.Call(parms);
-                                   } else
-                                   {
-                                     if (parms.All(x => x is PExpr.Assign) && parms.Length != 0) 
-                                     {
-                                       def get_rec_parm(x)
-                                       {
-                                         | <[$_ = $v]> => v |> ConvExpr(_, false)
-                                         | _           => throw InvalidOperationException()
-                                       }
+            if (func_proc.ContainsKey(func.ToString()))
+            {
+              def func = func_proc[func.ToString()];
+              func.Call(parms);
+            } else
+            {
+              if (parms.All(x => x is PExpr.Assign) && parms.Length != 0) 
+              {
+                def get_rec_parm(x)
+                {
+                  | <[$_ = $v]> => v |> ConvExpr(_, false)
+                  | _           => throw InvalidOperationException()
+                }
 
-                                     
-                                       def parms = parms.Map(get_rec_parm);
-                                       $<#$func(..$(parms; ","))#>
-                                     } else
-                                     {
-                                       def parms = parms.Map(ConvExpr(_, false));
-                                       $<#$func(..$(parms; ","))#>
-                                     }
-                                   }
+
+                def parms = parms.Map(get_rec_parm);
+                $<#$func(..$(parms; ","))#>
+              } else
+              {
+                def parms = parms.Map(ConvExpr(_, false));
+                $<#$func(..$(parms; ","))#>
+              }
+            }
         | <[ $(_ : int)]> as e
         | <[ $(_ : long)]> as e
         | <[ $(_ : short)]> as e
@@ -434,15 +437,15 @@ namespace PetriNetLib
               def expr = e.Map(ConvExpr(_, false));
               $<#$(col.DestType)(..$(expr;","))#>
             } else
-            match (e)
-            {
-              | [e]                  => $<#($(ConvExpr(e)))#>
-              | [e1, e2]             => $<#tuple2($(ConvExpr(e1)), $(ConvExpr(e2)))#>
-              | [e1, e2, e3]         => $<#tuple3($(ConvExpr(e1)), $(ConvExpr(e2)), $(ConvExpr(e3)))#>
-              | [e1, e2, e3, e4]     => $<#tuple4($(ConvExpr(e1)), $(ConvExpr(e2)), $(ConvExpr(e3)), $(ConvExpr(e4)))#>
-              | [e1, e2, e3, e4, e5] => $<#tuple5($(ConvExpr(e1)), $(ConvExpr(e2)), $(ConvExpr(e3)), $(ConvExpr(e4)), $(ConvExpr(e5)))#>
-              | _                     => throw InvalidOperationException()
-            }
+              match (e)
+              {
+                | [e]                  => $<#($(ConvExpr(e)))#>
+                | [e1, e2]             => $<#tuple2($(ConvExpr(e1)), $(ConvExpr(e2)))#>
+                | [e1, e2, e3]         => $<#tuple3($(ConvExpr(e1)), $(ConvExpr(e2)), $(ConvExpr(e3)))#>
+                | [e1, e2, e3, e4]     => $<#tuple4($(ConvExpr(e1)), $(ConvExpr(e2)), $(ConvExpr(e3)), $(ConvExpr(e4)))#>
+                | [e1, e2, e3, e4, e5] => $<#tuple5($(ConvExpr(e1)), $(ConvExpr(e2)), $(ConvExpr(e3)), $(ConvExpr(e4)), $(ConvExpr(e5)))#>
+                | _                     => throw InvalidOperationException()
+              }
 
         | <[()]>                 => <#1#>
         | <[$o.$m]>              => $<#$(ConvExpr(o)).$m#>
@@ -482,21 +485,72 @@ namespace PetriNetLib
 
     CreateDecl(func : GenFuncCpp) : string
     {
-       match (func.PrefixType)
-       {
-         | FuncPrefix.GetStruct
-         | FuncPrefix.GetBytes
-         | FuncPrefix.Func     => null
-         | FuncPrefix.Ext      => //private_fields.Add();
+      match (func.PrefixType)
+      {
+        | FuncPrefix.GetStruct
+        | FuncPrefix.GetBytes
+        | FuncPrefix.Func     => null
+        | FuncPrefix.Ext      => //private_fields.Add();
                                   public_fields.Add(func.FuncSetDecl);
                                   $"$(func.FuncTypedef);"
                                   //$<#function $(func.Name);#>
-         | _                   => func.CppDecl
-       }
+        | _                   => func.CppDecl
+      }
     }
 
     CreateColourSet(col : GenColourCpp) : string
     {
+      def get_bytes_func(fnames)
+      {
+        def fgroup = List();
+                                                  
+        def write_group()
+        {
+          if (fgroup.IsEmpty()) [] else
+          {
+            def size = fgroup.Map(n => $<#sizeof($n)#>);
+            def size = size.Fold("", (x, a) => if (a.IsEmpty()) x else $"$x + $a");
+            def first = fgroup.First();
+            fgroup.Clear();
+            $<#bytesn((void *)&$first, $size);#> :: []
+          }
+        }
+                                                  
+        def get_bytes_fields(n, t)
+        {
+          def col = colours[t];
+          //def a = if (a.IsEmpty()) "" else $"$a\n";
+          if (col.IsBytes) 
+          {
+            def group = write_group();
+            group + [$<#$n;#>]
+          } else
+          if (col.IsComplexType) 
+          {
+            def group = write_group();
+            group + [$<#$n.get_bytes();#>]
+          } else//$group
+            //$(a)res += 
+          {
+            fgroup.Add(n);
+            []
+          }
+        }
+                                                  
+        def bytes = fnames.SelectMany(get_bytes_fields).NToList();
+        def bytes = if (fgroup.IsEmpty()) bytes else bytes + write_group();
+        if (bytes.IsEmpty()) "" else
+        if (bytes.IsSingle()) $"return $(bytes.First());" else
+        {
+          def bytes = bytes.Map(x => $"res += $x");
+          def bytes = bytes.Fold("", (x, a) => if (a.IsEmpty()) x else $<#$(a)
+          $x#>);
+          $<#bytesn res;
+          $bytes
+          return res;#>
+        }
+      }
+      
       match (col.Colour)
       {
         | ColourSet(n, Colour.Product(vals))   => def fnames = vals.MapI((i, t) => ($"field$(i + 1)", t));
@@ -507,6 +561,8 @@ namespace PetriNetLib
                                                   def num = vals.Length;
                                                   def assign = ftypes.Map((x, _) => $"$x = tup.$x;");
                                                   def types = ftypes.Map((_, t) => t);
+                                                  //def add_buf_fields = fnames.Map((n, t) => (n, colours[t].DestType));
+                                                  def bytes = get_bytes_func(fnames);
                                                   $<#struct $n
                                                         {
                                                           $n() {}
@@ -514,19 +570,20 @@ namespace PetriNetLib
                                                           {
                                                             ..$(ctorbody;"\n")
                                                           }
-                                                          
+
                                                           $n(const tuple$num<..$types> &tup)
                                                           {
                                                             ..$(assign;"\n")
                                                           }
-                                                          
+
                                                           ..$(fields;"\n")
-                                                          
-                                                          bytes get_bytes() const
+
+                                                          bytesn get_bytes() const
                                                           {
-                                                            return bytes_ptr(&field1, sizeof($n));
+                                                            $bytes
+                                                            //return bytes_ptr(&field1, sizeof($n));
                                                           }
-                                                          
+
                                                           /*void operator=(const tuple$num<..$types> &tup)
                                                           {
                                                             ..$(assign;"\n")
@@ -539,6 +596,7 @@ namespace PetriNetLib
                                                   def ftypes = vals.Map((n, t) => (n, colours[t].DestType));
                                                   def fields = ftypes.Map((n, t) => $"$t $n;");
                                                   def ctorbody = vals.Map((f, _) => $"this->$f = $f;");
+                                                  def bytes = get_bytes_func(vals);
                                                   $<#struct $n
                                                         {
                                                           $n() {}
@@ -546,10 +604,10 @@ namespace PetriNetLib
                                                           {
                                                             ..$(ctorbody;"\n")
                                                           }
-                                                          
-                                                          bytes get_bytes() const
+
+                                                          bytesn get_bytes() const
                                                           {
-                                                            return bytes_ptr(this, sizeof($n));
+                                                            $bytes
                                                           }
                                                           ..$(fields;"\n")
                                                         };#>
@@ -584,7 +642,7 @@ namespace PetriNetLib
                                               $<#typedef $t $n;#>
         | ColourSet(n, Colour.Unit) with t = "char"                                                       
                                           => $<#typedef $t $n;#> 
-        
+
         | ColourSet(n, Colour.Enum(vals)) => //def vals = vals.Map(x => $"$x");
                                             $<#    enum $n
                                                    {
@@ -651,63 +709,63 @@ namespace PetriNetLib
         def markexpr = fold(place.init_mark);
         def mark = markexpr |> ConvExprPlaceCtx(_, place.Colour, false);
         def name = place.Name;
-        
-        
+
+
         def mark = if (place.IsTimed) 
-        {
-          match (place.DestContainerType)
-          {
-            | TDestCont.MinusSingle
-            | TDestCont.Single     
-            | TDestCont.ZeroSingle
-            | TDestCont.Var         => place.InitMarkWithoutTime |> ConvExpr(_, false)
-            | _                     => $"add_time($mark, 0);"
-          }
-          
-        } else mark;
-        
+                    {
+                      match (place.DestContainerType)
+                      {
+                        | TDestCont.MinusSingle
+                        | TDestCont.Single     
+                        | TDestCont.ZeroSingle
+                        | TDestCont.Var         => place.InitMarkWithoutTime |> ConvExpr(_, false)
+                        | _                     => $"add_time($mark, 0);"
+                      }
+
+                    } else mark;
+
         def time = if (place.IsTimed) 
-        {
-          match (place.DestContainerType)
-          {
-            | TDestCont.MinusSingle
-            | TDestCont.Single     
-            | TDestCont.ZeroSingle
-            | TDestCont.Var         => $"\n$(name)_time = $(place.InitTime);"
-            | _                     => ""
-          }
-        } else "";
+                    {
+                      match (place.DestContainerType)
+                      {
+                        | TDestCont.MinusSingle
+                        | TDestCont.Single     
+                        | TDestCont.ZeroSingle
+                        | TDestCont.Var         => $"\n$(name)_time = $(place.InitTime);"
+                        | _                     => ""
+                      }
+                    } else "";
         //<[ $(name : usesite).Add($mark)]>
         if ((place.port is Some(PortType.In) && place.Req)
-            || place.port is Some(PortType.Out) 
-            || place.port is Some(PortType.InOut) 
-            || place.IsFuncPlace) "" else
-        if (markexpr is <[]>)
-        {
-          match (place.DestContainerType)
+             || place.port is Some(PortType.Out) 
+             || place.port is Some(PortType.InOut) 
+          || place.IsFuncPlace) "" else
+          if (markexpr is <[]>)
           {
-            | TDestCont.MinusSingle => $"$(name) = -1;"
-            | TDestCont.Single      => if (place.IsUnit)
-                                       {
-                                         $"$(name) = 0;"
-                                       } else $"$(name)_flag = false;"
-            | TDestCont.ZeroSingle  => $"$(name) = 0;"
-            | _                     => mark
-          }
-        } else 
-        match (place.DestContainerType)
-        {
-          
-          | TDestCont.Single when place.IsUnit => $<#$name = $mark;#>
-          | TDestCont.Single                   => $<#$name = $mark;
+            match (place.DestContainerType)
+            {
+              | TDestCont.MinusSingle => $"$(name) = -1;"
+              | TDestCont.Single      => if (place.IsUnit)
+                                         {
+                                           $"$(name) = 0;"
+                                         } else $"$(name)_flag = false;"
+              | TDestCont.ZeroSingle  => $"$(name) = 0;"
+              | _                     => mark
+            }
+          } else 
+            match (place.DestContainerType)
+            {
+
+              | TDestCont.Single when place.IsUnit => $<#$name = $mark;#>
+              | TDestCont.Single                   => $<#$name = $mark;
                                        $(name)_flag = true;$time#>;
-          | TDestCont.Var
-          | TDestCont.ZeroSingle
-          | TDestCont.MinusSingle
+              | TDestCont.Var
+              | TDestCont.ZeroSingle
+              | TDestCont.MinusSingle
                                   => $"$name = $mark;$time"
-          | _                     => $"$name.add($mark);"
-        }
-        
+              | _                     => $"$name.add($mark);"
+            }
+
       }
     }
 
@@ -725,15 +783,29 @@ namespace PetriNetLib
     CreateCons() : void
     {
       def marking = places.MapToList(CreateInitMarking).Filter(x => x != null && !x.IsEmpty());
+
+      def cont = places.Where(x => x.IsContainer && !x.IsFuncPlace);
       
+      def init_cont(x)
+      {
+        def name = x.Name;
+        def len = x.Len;
+        def type = x.Colour.DestType;
+        def elem_size = $"sizeof($type)";
+        $"$name.init($len, $elem_size);"
+      }
+      
+      def init = cont.Map(init_cont);
       public_fields.Add(if (model.IsTimed || model.IsHaveImmediateTransitions) 
       $<#$Name(int time_step = 15) : $Base(time_step)
       {
+        ..$(init; "\n")
         ..$(marking;"\n")
         ..$(cons_expr;"\n")
       }#>; else 
       $<#$Name(int time_step = 15) 
-      { 
+      {
+        ..$(init; "\n")
         ..$(marking;"\n")
         ..$(cons_expr;"\n")
       }#>);//<[decl: public this() { {..$marking} {..$cons_expr} }]>;
@@ -744,54 +816,71 @@ namespace PetriNetLib
       //def body = transitions.Where(_.IsTimed).Map(x => <[ $(x.Name : usesite)() ]>);
       def time_delay(p)
       {
-        def time = match (p.DestContainerType)
-        {
-          | TDestCont.MinusSingle
-          | TDestCont.ZeroSingle
-          | TDestCont.Single
-          | TDestCont.Var    => 
-                                $"$(p.Name)_time"
-          | _                => $"$(p.Name).next_token_delay()"
-        }
+        def (check, time) = match (p.DestContainerType)
+                    {
+                      | TDestCont.MinusSingle => ($"$(p.Name) != -1", $"$(p.Name)_time")
+                      | TDestCont.ZeroSingle => ($"$(p.Name) != 0", $"$(p.Name)_time")
+                      | TDestCont.Single => ($"$(p.Name)_flag", $"$(p.Name)_time")
+                      | TDestCont.Var    => 
+                          ("", $"$(p.Name)_time")
+                      | _                => ($"$(p.Name).is_have_tokens()", $"$(p.Name).next_token_delay()")
+                    }
         def arc_dl = p.OutputTransitions.Where((_, a : Arc) => a.ArcDelay.HasValue);
         def min_delay = if (arc_dl.Count() == 0) "" else
-                        if (arc_dl.Count() == 1) arc_dl.First()[1].ArcDelay.Value |> ConvExpr(_, false) else
-                        if (arc_dl.All((_, a) => a.ArcDelay.Value is <[ $(_ : int)]>)) arc_dl.Min((_, a) => if (a.ArcDelay.Value is <[ $(x : int) ]>) x else 0).ToString();
-                        else 
-                        {
-                          def delay = arc_dl.Select((_, a : Arc) => a.ArcDelay.Value |> ConvExpr(_, false));
-                          def min = delay.Select((x, i) => $<#int x$i = $x;
+                          if (arc_dl.Count() == 1) arc_dl.First()[1].ArcDelay.Value |> ConvExpr(_, false) else
+                            if (arc_dl.All((_, a) => a.ArcDelay.Value is <[ $(_ : int)]>)) arc_dl.Min((_, a) => if (a.ArcDelay.Value is <[ $(x : int) ]>) x else 0).ToString();
+                            else 
+                            {
+                              def delay = arc_dl.Select((_, a : Arc) => a.ArcDelay.Value |> ConvExpr(_, false));
+                              def min = delay.Select((x, i) => $<#int x$i = $x;
                                                            if (min_delay > x$i) min_delay = x$i;#>);
                           $<#u32 min_delay = 0xFFFFFFFF;
                           ..$(min; "\n")
                           #>                                          
-                        };
+                            };
         def arc_delay = if (!min_delay.IsEmpty()) " + " + min_delay else "";
-        (p, $"$time$arc_delay", !arc_delay.IsEmpty())
+        (p, check, $"$time$arc_delay", !arc_delay.IsEmpty())
       }
-      
+
       def next = places.Where(_.IsTimed).Map(time_delay);
 
       def tran = places.Where(_.IsTimed).Map(x => x.OutputGenTransitions.Where(x => x.IsUnnamed).Map(x => $"tr_$(x.Name)"));
+      
+      def create_time_body((_, c, x, _), t)
+      {
+        def t = t.Fold("", (x, a) => if (a.IsEmpty()) x else $"$a | $x");
+        
+        def body = $<#min = calc_min_time($x, min, $t, tr);#>;
+        //$<# time = ;
+        //      if (time < min) 
+        //      {
+        //        min = time;
+        //        tr = $t;
+        //      } else
+        //      if (min == time)
+        //      {
+        //        tr |= $t;
+        //      }#>;
+        if (c.IsEmpty())
+        {
+          body
+        } else
+        {
+          $<#if ($c)
+          {
+            $body
+          }
+          #>
+        }
+      }
+      
       def time_body = match (next)
                        {
                          | []    => ""
-                         | [(_, one, _)] => one
-                         | lst   => def next = lst.ZipLazy(tran).Map(((_, x, _), t) => 
-                         {
-                           $<# time = $x;
-                               if (min > time) 
-                               {
-                                 min = time;
-                                 ..$(t.Map(x => $"tr = $x"); "\n");
-                               } else
-                               if (min == time)
-                               {
-                                 ..$(t.Map(x => $"tr |= $x"); "\n");
-                               }#>
-                         });
+                         | [(_, _, one, _)] => one
+                         | lst   => def next = lst.ZipLazy(tran).Map(create_time_body);
                           $<#
-                                  u32 min = 0xFFFFFFFF, time;
+                                  u32 min = 0xFFFFFFFF;
                                   ..$(next;"\n");
                               #>
                        }
@@ -802,7 +891,7 @@ namespace PetriNetLib
                         res_tr = tr;
                         return min;
                       }#>);
-      
+
     }
 
     //CreateStepMethod() : void
@@ -841,7 +930,7 @@ namespace PetriNetLib
       }
     }
 
-    
+
 
     Define(decl : IEnumerable[string], pub : bool = false, first : bool = false) : void
     {
@@ -849,10 +938,10 @@ namespace PetriNetLib
       {
         if (first)
           first_public_fields.AddRange(decl); else
-         public_fields.AddRange(decl);          //public_fields ::= "\n"
+          public_fields.AddRange(decl);          //public_fields ::= "\n"
       } else
       {
-         private_fields.AddRange(decl);
+        private_fields.AddRange(decl);
       }
     }
 
@@ -874,7 +963,7 @@ namespace PetriNetLib
     {      
       //CreateOperators();
       //assert2(false);
-      
+
     // создаем типы генерации из цветов
       foreach (c in model.colour_sets)
       {
@@ -886,20 +975,20 @@ namespace PetriNetLib
       def sets = colours.Values.OrderBy(x => x.Colour.pos).Map(x => CreateColourSet(x)).Filter(_ != null).Select(_ + "\n");
       Define(sets, true, true);//typebuilder.DefineNestedTypeWithSource(m).Compile();
       def places = places.Map(CreatePlace).Filter(_ != null);      
-      
-      
-      
+
+
+
       //CreateStepMethod();
 
       CreateEvents();
       //CreateTranQueue();
       //CreateToString();
       CreateStartMethod();
-      
+
 
       Define(places + ["\n"])//_ = typebuilder.DefineWithSource(m);
     }
-    
+
     CreateMainDefs() : void
     {
       extern_fields.Add(if (model.IsTimed) <##include "timed_petrinet.h"
@@ -907,16 +996,16 @@ namespace PetriNetLib
       #>);
       extern_fields.Add(<#using namespace petrinet_lib;
       #>);
-      private_fields.Add($"typedef bool ($Name::*tran_func_type)();");
+      private_fields.Add($"typedef u32 ($Name::*tran_func_type)();");
       //
     }
-    
+
     // TODO: сделать комментарии в генерируемом тексте
     public PhaseTwo() : void
     {
       //CreateDummyMethod();
       CreateMainDefs();
-      
+
       CreateTransitions();      
       //def methods = CreateGroupTransitions();
       def private_methods = EnumTransitions.Where(x => !x.IsPartOfFuncPlace && !x.PartOfGroup.HasValue).MapToList(CreateTran);

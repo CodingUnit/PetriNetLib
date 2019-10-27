@@ -186,8 +186,11 @@ namespace PetriNetLib
 
     TranMask(tr : IEnumerable[GenTranCpp]) : string
     {
-      def tran = tr.Map(x => $"tr_$(x.ExecName)");
-      tran.Fold("", (t, a) => if (a.IsEmpty()) t else $"$t | $a");
+      if (tr.IsEmpty()) "0" else
+      {
+        def tran = tr.Map(x => $"tr_$(x.ExecName)");
+        tran.Fold("", (t, a) => if (a.IsEmpty()) t else $"$t | $a");
+      }
     }
     
     Base : string

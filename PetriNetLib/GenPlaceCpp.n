@@ -112,6 +112,24 @@ namespace PetriNetLib
       }
     }
 
+    public IsContainer : bool
+    {
+      [Memoize]
+      get
+      {
+        //!IsFuncPlace &&
+        match (DestContainerType)
+          {
+            | ZeroSingle
+            | MinusSingle 
+            | Var
+            | ReqContainer    // значение запрашивается из внешней функции
+            | Single    => false
+            | _         => true
+          }
+      }
+    }
+    
     public OutputGenTransitionsArcs : list[GenTranCpp * Arc]
     {
       [Memoize]
@@ -147,6 +165,15 @@ namespace PetriNetLib
       }
     }
 
+    public PartOfGroupTransition : bool
+    {
+      [Memoize]
+      get
+      {
+        gen.PlacesWithGroup.Exists(x => x : object == this)
+      }
+    }
+    
     public InitMarkWithoutTime : PExpr
     {
       [Memoize]
@@ -268,10 +295,32 @@ namespace PetriNetLib
       [Memoize]
       get
       {
-        OutputGenTransitions.Where(x => x.IsImmediate).First()
+        if (IsGroup) GroupTran else
+          OutputGenTransitions.Where(x => x.IsImmediate).First()
       }
     }
 
+    public IsGroup : bool
+    {
+      [Memoize]
+      get
+      {
+        OutputGenTransitions.Where(x => x.IsUnnamed && !x.IsTimed).Count() > 1 && 
+                             (!InputTransitions.IsEmpty() || port.HasValue) && 
+                             (!Var || port.HasValue)
+      }
+    }
+    
+    public GroupTran : GroupTranCpp
+    {
+      [Memoize]
+      get
+      {
+        if (IsGroup)
+          GroupTranCpp(OutputGenTransitions.Filter(x => x.IsUnnamed && !x.IsTimed), gen) else null
+      }
+    }
+    
     public LockPlaces : string
     {
       [Memoize]
@@ -306,20 +355,46 @@ namespace PetriNetLib
       }
     }
 
+    public StartInCycle : bool
+    {
+      [Memoize]
+      get
+      {
+        InputGenTransitions.Count() != 0 && PathThroughOrdinaryPlaces.Exists(x => x is PetriNetNode.Cycle(PetriNetNode.Place))
+      }
+    }
+    
+    public IsCycle : bool
+    {
+      [Memoize]
+      get
+      {
+        
+        PathThroughOrdinaryPlaces.Exists(x => if (x is PetriNetNode.Cycle(PetriNetNode.Place(p))) p : object == this else false)
+      }
+    }
+    
     public IsFuncPlace : bool
     {
       [Memoize]
       get
       {
         def tran = OutputGenTransitions.Where(x => x.IsImmediate);
-        !InputTransitions.IsEmpty() && // есть входные переходы
+        //def path_except = PathThroughOrdinaryPlaces.Filter(x => if (x is PetriNetNode.Place(p)) p : object != this else true);
+        //def cycle_cont = path_except.Exists(x => if (x is PetriNetNode.Place(p)) p.IsContainer && !p.IsFuncPlace else false);
+        Func ||
+        (
+         !InputTransitions.IsEmpty() && // есть входные переходы
          tran.Count() == 1           && // один выходной переход
          (init_mark is <[]> || init_mark == null) && // нет начальной маркировки
          tran.First().guard is <[]>  && // нет сторожевого условия
         !tran.First().IsTimed       && // переход не временной
          (port.IsNone || port is Some(PortType.InOut)) && // не порт
-        !PathThroughOrdinaryPlaces.Exists(x => if (x is PetriNetNode.Cycle(PetriNetNode.Place(p))) p : object == this else false) && // не имеет циклов на вход
+         IsContainer && // если контейнер
+         !ForceCont && // если нет флага принудительного контейнера
+        //!PathThroughOrdinaryPlaces.Exists(x => if (x is PetriNetNode.Cycle(PetriNetNode.Place(p))) p : object == this else false) && // не имеет циклов на вход
          tran.First().InputGenPlaces.Except(this).All(x => x.Var || x.Req) // из всех позиций перехода можно вынуть фишки с гарантией
+         )
       }
     }
 

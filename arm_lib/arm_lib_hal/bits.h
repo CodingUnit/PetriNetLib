@@ -1,6 +1,6 @@
 #pragma once
 #include "lib_incl.h"
-
+#include "core_cm3.h"
 	// число нижних нулей до первой единицы (порядок числа)
 	inline u8 LSB(u32 bits)
 	{

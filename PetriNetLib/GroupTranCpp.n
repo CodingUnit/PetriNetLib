@@ -74,7 +74,14 @@ namespace PetriNetLib
           
           def equal(x, y)
           {
+            | (null, null)
+            | (<[1 ` ()]>, <[ ()]>)
+            | (<[()]>, <[ 1 ` ()]>)
+            | (<[1 ` ()]>, <[ 1 ` ()]>)
+            | (<[]>, <[]>)
+            | (<[ () ]>, <[ () ]>)                        => true
             | (<[ $(n : usesite)]>, <[ $(n2 : usesite)]>) => n == n2
+            | (<[ (..$t1)]>, <[ (..$t2)]>)                => t1.ElementsEqual(t2, equal)
             | _                                           => false
           }
           
@@ -96,6 +103,58 @@ namespace PetriNetLib
       }
     }
     
+    public override Body : string
+    {
+      [Memoize]
+      get
+      {
+        def body = gen.CreateGroupTranBody(this);
+        
+        //def body = gen.CreateTranBody(this);
+          
+          ////def body = TranBody;
+            def places = PlacesParticipateMask;
+            def tr_next = NextTransitions;
+            def tr = if (PartOfGroup is Some(g)) $"tr_GroupTransition$g" else $"tr_$(ExecName)";
+            if (tr_next.IsEmpty())
+            $<#bool res = false;
+                  if (lock($places, $tr))
+                  {
+                    $body;
+                    unlock($places);
+                  }
+                  return res;#> else 
+            $<#bool res = false;
+                  if (lock($places, $tr))
+                  {
+                    $body;
+                    unlock($places);
+                    if (res)
+                    {
+                      ..$(tr_next; "\n")
+                    }
+                  }
+                  return res;#>
+      }
+    }
+    
+    public override InputGenPlaces : list[GenPlaceCpp]
+    {
+      [Memoize]
+      get
+      {
+        grouped.SelectMany(x => x.InputGenPlaces).Distinct().NToList()
+      }
+    }
+    
+    public override OutputGenPlaces : list[GenPlaceCpp]
+    {
+      [Memoize]
+      get
+      {
+        grouped.SelectMany(x => x.OutputGenPlaces).Distinct().NToList()
+      }
+    }
     public override Name : string
     {
       [Memoize]

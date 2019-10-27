@@ -120,13 +120,11 @@ namespace common {
 		}
 		// запуск функции
 
-#pragma optimize=low
 		void exec()
 		{
 			func.dfunc(obj);
 		}
 
-#pragma optimize=low
 		void exec_int(u32 parm)
 		{
 			if (obj)
@@ -141,7 +139,6 @@ namespace common {
 		}
 
 		template <class T>
-#pragma optimize=low
 		void exec(T parm)
 		{
 			typedef void(*func_parm)(void *, T);
@@ -161,7 +158,6 @@ namespace common {
 
 
 		template <class T, class V>
-#pragma optimize=low
 		void exec(T parm, V parm2)
 		{
 			typedef void(*func_parm)(void *, T, V);
@@ -181,7 +177,6 @@ namespace common {
 
 
 		template <class T>
-#pragma optimize=low
 		void exec_ref(const T &parm)
 		{
 			typedef void(*func_parm)(void *, const T &);
