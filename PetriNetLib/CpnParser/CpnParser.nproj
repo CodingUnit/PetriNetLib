@@ -38,17 +38,19 @@
     <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <MacroReference Include="Nitra.Compiler, Version=1.0.9999.0, Culture=neutral, PublicKeyToken=e080a9c724e2bfcd">
+    <MacroReference Include="Nitra.Compiler">
       <Name>Nitra.Compiler</Name>
       <AssemblyName>Nitra.Compiler.dll</AssemblyName>
-      <HintPath>C:\Program Files (x86)\nitra\Nitra.Compiler.dll</HintPath>
+      <HintPath>F:\Program Files (x86)\Nitra\Nitra.Compiler.dll</HintPath>
       <Private>False</Private>
+      <SpecificVersion>False</SpecificVersion>
     </MacroReference>
     <Reference Include="mscorlib" />
-    <Reference Include="Nitra.Runtime, Version=1.0.9999.0, Culture=neutral, PublicKeyToken=e080a9c724e2bfcd">
+    <Reference Include="Nitra.Runtime">
       <Name>Nitra.Runtime</Name>
       <AssemblyName>Nitra.Runtime.dll</AssemblyName>
-      <HintPath>C:\Program Files (x86)\nitra\Nitra.Runtime.dll</HintPath>
+      <HintPath>F:\Program Files (x86)\Nitra\Nitra.Runtime.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">

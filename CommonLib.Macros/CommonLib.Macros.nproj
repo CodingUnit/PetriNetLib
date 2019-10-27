@@ -120,11 +120,11 @@
     </Reference>
     <Reference Include="System.Windows">
       <Name>System.Windows</Name>
-      <HintPath>C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5\System.Windows.dll</HintPath>
+      <HintPath>System.Windows.dll</HintPath>
     </Reference>
     <Reference Include="WindowsBase">
       <Name>WindowsBase</Name>
-      <HintPath>C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5\WindowsBase.dll</HintPath>
+      <HintPath>WindowsBase.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

@@ -42,12 +42,12 @@
     <Reference Include="Nitra.Compiler, Version=1.0.9999.0, Culture=neutral, PublicKeyToken=e080a9c724e2bfcd">
       <Name>Nitra.Compiler</Name>
       <AssemblyName>Nitra.Compiler.dll</AssemblyName>
-      <HintPath>C:\Program Files (x86)\nitra\Nitra.Compiler.dll</HintPath>
+      <HintPath>$(Nitra)Nitra.Compiler.dll</HintPath>
     </Reference>
     <Reference Include="Nitra.Runtime, Version=1.0.9999.0, Culture=neutral, PublicKeyToken=e080a9c724e2bfcd">
       <Name>Nitra.Runtime</Name>
       <AssemblyName>Nitra.Runtime.dll</AssemblyName>
-      <HintPath>C:\Program Files (x86)\nitra\Nitra.Runtime.dll</HintPath>
+      <HintPath>$(Nitra)Nitra.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">

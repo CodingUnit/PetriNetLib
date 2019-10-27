@@ -42,7 +42,7 @@
     <Reference Include="Nemerle.Compiler, Version=1.2.0.550, Culture=neutral, PublicKeyToken=5291d186334f6101">
       <Name>Nemerle.Compiler</Name>
       <AssemblyName>Nemerle.Compiler.dll</AssemblyName>
-      <HintPath>C:\Program Files (x86)\Nemerle\Net-4.0\Nemerle.Compiler.dll</HintPath>
+      <HintPath>$(Nemerle)Nemerle.Compiler.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
