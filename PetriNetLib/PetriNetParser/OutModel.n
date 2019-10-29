@@ -14,7 +14,7 @@ namespace PetriNetLib
   /// Description of OutModel.
   /// </summary>
   [Record]
-  class OutModel
+  public class OutModel
   {
     public places      : array[Place];
     public transitions : array[Transition];

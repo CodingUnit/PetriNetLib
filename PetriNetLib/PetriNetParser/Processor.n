@@ -20,7 +20,7 @@ namespace PetriNetLib
     - fifo places
     - sorted tokens places
   */
-  class PetriNetProcessor
+  public class PetriNetProcessor
   {
     mutable places      : array[Place];
     mutable transitions : array[Transition];
@@ -73,7 +73,7 @@ namespace PetriNetLib
     mutable output_matrix      : array[2, list[Arc]];
     //mutable incidence_matrix   : array[2, int];
     colours            : list[Colour] = [];
-    [Accessor]
+    //[Accessor]
     converter          : Converter = Converter();
     
     public Flags : PetriNetFlags {get; private set;}

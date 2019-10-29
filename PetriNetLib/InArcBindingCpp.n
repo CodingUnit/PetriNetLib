@@ -316,7 +316,7 @@ namespace PetriNetLib
           | <[ () ]>            => $<#$name.have_tokens()#>
           | <[ $e %@+ $time]>   => $<#$name.have_relative_time($(unfold(e)), $time)#>
           | <[ $(_ : usesite)]> => $<#$name.have_tokens()#>
-          | _                   => def tok = Generator.GetTokenExpr(expr);
+          | _                   => def tok = gen.GetTokenExpr(expr);
                                    $<#$name.have($tok)#>
         }
         

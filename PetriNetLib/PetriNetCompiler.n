@@ -14,7 +14,7 @@ namespace PetriNetLib
 {
   public class PetriNetCompiler
   {
-    mutable gen : Generator;
+    //mutable gen : Generator;
     mutable cpp_gen : CppGenerator;
     mutable proc : PetriNetProcessor;
     mutable only_cpp : bool;
@@ -25,8 +25,8 @@ namespace PetriNetLib
     
     public PhaseTwo() : void
     {
-      when (!only_cpp)
-        gen.PhaseTwo();   
+      //when (!only_cpp)
+        //gen.PhaseTwo();   
       cpp_gen.PhaseTwo();
     }
     
@@ -38,18 +38,18 @@ namespace PetriNetLib
       def file = System.IO.Path.GetFileNameWithoutExtension(file);
       proc = PetriNetProcessor(file, Flags, typer, ty, parser.Places, parser.Transitions, parser.Arcs, parser.Decls);
       proc.Process();      
-      gen = Generator(proc.OutModel, proc);
-      cpp_gen = CppGenerator($"$file.h", gen, proc.OutModel, proc);
-      when (!only_cpp)
-        gen.PhaseOne();
+      //gen = Generator(proc.OutModel, proc);
+      cpp_gen = CppGenerator($"$file.h", proc.OutModel, proc);
+      //when (!only_cpp)
+        //gen.PhaseOne();
       cpp_gen.PhaseOne();
       ty.UserData["PetriNetGen"] = this;
     }
     
     public MainGen() : void
     {
-      when (!only_cpp)
-        gen.Generate();
+      //when (!only_cpp)
+        //gen.Generate();
       cpp_gen.Generate();
     }
   }

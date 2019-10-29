@@ -121,29 +121,7 @@ namespace PetriNetLib
     
     
     
-    internal static GetTokenExpr(expr : PExpr) : PExpr
-    {
-      def loop(e)
-      {
-        | <[ $(count : int) ` $expr ]> => Enumerable.Repeat(expr, count).NToList()
-        | <[ $left %++ $right ]>       => loop(left) + loop(right)
-        | _                            => [expr]
-      }
-      
-      match (expr)
-      {
-        | <[$_(..$_)]> as e => e
-        | <[ $(_ : int)]> as e
-        | <[ $(_ : long)]> as e
-        | <[ $(_ : short)]> as e
-        | <[ $(_ : ushort)]> as e
-        | <[ $(_ : byte)]> as e
-        | <[ $(_ : string)]> as e => e
-        | e                 => def e = loop(e);
-                               <[IEnumerable[..$e]]>
-      }
-      
-    }
+    
     
   }
 }

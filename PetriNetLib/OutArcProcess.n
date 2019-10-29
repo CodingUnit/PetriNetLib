@@ -22,7 +22,8 @@ namespace PetriNetLib
     public place      : Place;
     public transition : Transition;
     public arc        : Arc;
-
+    public gen        : CppGenerator;
+    
     public name : string
     {
       [Memoize]
@@ -77,7 +78,7 @@ namespace PetriNetLib
                                               } 
           | <[ $(_ : int) ` $_ ]> as e     => e                                    
           | <[ $e %@+ $time]>              => <[ $(unfold(e)) %@+ ($time + $global_time)]>
-          | <[ $_ %++ $_ ]> as e           => Generator.GetTokenExpr(e)
+          | <[ $_ %++ $_ ]> as e           => CppGenerator.GetTokenPExpr(e)
           | <[ 1 ` $e ]>                   => add(e)
           | <[ $_(..$_)]> as e
           | <[ $(_ : usesite) ]> as e

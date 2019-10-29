@@ -1,0 +1,120 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>537e2888-d9a1-4fca-a23a-22ad6638815b</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>PetriNetParser</RootNamespace>
+    <AssemblyName>PetriNetParser</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <NoStdLib>true</NoStdLib>
+    <NemerleVersion>Net-4.0</NemerleVersion>
+    <NemerleBinPathRoot Condition=" '$(NemerleBinPathRoot)' == '' ">$(ProgramFiles)\Nemerle</NemerleBinPathRoot>
+    <Nemerle Condition=" '$(Nemerle)' == '' ">$(NemerleBinPathRoot)\$(NemerleVersion)</Nemerle>
+    <Name>PetriNetParser</Name>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugSymbols>false</DebugSymbols>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="mscorlib" />
+    <Reference Include="Nemerle.Compiler, Version=1.2.0.550, Culture=neutral, PublicKeyToken=5291d186334f6101">
+      <Name>Nemerle.Compiler</Name>
+      <AssemblyName>Nemerle.Compiler.dll</AssemblyName>
+      <HintPath>F:\Program Files (x86)\Nemerle\Net-4.0\Nemerle.Compiler.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Collections.Immutable, Version=1.1.37.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <Name>System.Collections.Immutable</Name>
+      <AssemblyName>System.Collections.Immutable.dll</AssemblyName>
+      <HintPath>..\packages\System.Collections.Immutable.1.1.37\lib\dotnet\System.Collections.Immutable.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Xml.Linq">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Nemerle">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(Nemerle)\Nemerle.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <MacroReference Include="Nemerle.Linq">
+      <HintPath>$(Nemerle)\Nemerle.Linq.dll</HintPath>
+    </MacroReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Converter.n">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="NetModel.n">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="OutModel.n">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ParseModel.n">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Parser.n">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Processor.n">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.n" />
+    <Compile Include="XmlUtils.n">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\CommonLib.Macros\CommonLib.Macros.nproj">
+      <Name>CommonLib.Macros</Name>
+      <Project>{5e9cfda7-975a-4ef5-a7e7-b638df3d19f7}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\CpnParser\CpnParser.nproj">
+      <Name>CpnParser</Name>
+      <Project>{5bd4c7c7-4cce-4159-9acb-c3f324431ef7}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(Nemerle)\Nemerle.MSBuild.targets" />
+  <!--
+		To modify your build process, add your task inside one of the targets below and uncomment it. 
+		Other similar extension points exist, see Microsoft.Common.targets.
+
+	<Target Name="BeforeBuild">
+	</Target>
+	<Target Name="AfterBuild">
+	</Target>
+	-->
+</Project>

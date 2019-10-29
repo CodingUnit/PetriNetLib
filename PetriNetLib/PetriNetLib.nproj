@@ -113,9 +113,6 @@
     <Compile Include="DfsIter.n">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="GenColour.n">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="GenColourCpp.n">
       <SubType>Code</SubType>
     </Compile>
@@ -128,22 +125,10 @@
     <Compile Include="GeneratorCpp.n">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Generator.n">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="GenFuncCpp.n">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="GenImpl.n">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="GenPlace.n">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="GenPlaceCpp.n">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="GenTran.n">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="GenTranCpp.n">
@@ -152,13 +137,7 @@
     <Compile Include="GroupTranCpp.n">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="InArcBinding.n">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="InArcBindingCpp.n">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="NetModel.n">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="OutArcProcess.n">
@@ -167,26 +146,10 @@
     <Compile Include="OutArcProcessCpp.n">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="OutModel.n">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="ParseModel.n">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="PetriNetCompiler.n">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Processor.n" />
-    <Compile Include="Converter.n">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Parser.n">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="Properties\AssemblyInfo.n" />
-    <Compile Include="XmlUtils.n">
-      <SubType>Code</SubType>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
@@ -202,9 +165,9 @@
       <Project>{9756a67b-f1a6-4c59-a9a6-45492777b4ac}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="CpnParser\CpnParser.nproj">
-      <Name>CpnParser</Name>
-      <Project>{5bd4c7c7-4cce-4159-9acb-c3f324431ef7}</Project>
+    <ProjectReference Include="PetriNetParser\PetriNetParser.nproj">
+      <Name>PetriNetParser</Name>
+      <Project>{537e2888-d9a1-4fca-a23a-22ad6638815b}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>

@@ -17,6 +17,13 @@ using System.Threading.Tasks;
 
 namespace PetriNetLib
 {
+  variant PetriNetNode
+  {
+    | Place {place : GenPlaceCpp;}
+    | Tran {tran : GenTranCpp;}
+    | Cycle {node : PetriNetNode}
+  }
+  
   /// <summary>
   /// Description of GenCppImpl.
   /// </summary>
@@ -71,16 +78,14 @@ namespace PetriNetLib
       }
     }
 
-    public this(file : string, gen : Generator, model : OutModel, proc : PetriNetProcessor)
+    public this(file : string, model : OutModel, proc : PetriNetProcessor)
     {
       this.typer = proc.Typer;
       this.file = file;
-      this.gen = gen;
       this.typebuilder = proc.Typebuilder;
 
       this.model = model;
       this.proc = proc;
-      this.converter = proc.Converter;
       
       this.places = model.places.MapToArray(GenPlaceCpp(_, this, 0));
       //mutable idx = 0;
@@ -110,6 +115,30 @@ namespace PetriNetLib
     //  | _                    => true
     //}
 
+    internal static GetTokenPExpr(expr : PExpr) : PExpr
+    {
+      def loop(e)
+      {
+        | <[ $(count : int) ` $expr ]> => Enumerable.Repeat(expr, count).NToList()
+        | <[ $left %++ $right ]>       => loop(left) + loop(right)
+        | _                            => [expr]
+      }
+      
+      match (expr)
+      {
+        | <[$_(..$_)]> as e => e
+        | <[ $(_ : int)]> as e
+        | <[ $(_ : long)]> as e
+        | <[ $(_ : short)]> as e
+        | <[ $(_ : ushort)]> as e
+        | <[ $(_ : byte)]> as e
+        | <[ $(_ : string)]> as e => e
+        | e                 => def e = loop(e);
+                               <[IEnumerable[..$e]]>
+      }
+      
+    }    
+    
     internal GetTokenExpr(expr : PExpr) : string
     {
       def loop(e)
@@ -129,7 +158,7 @@ namespace PetriNetLib
         | <[ $(_ : byte)]> as e
         | <[ $(_ : string)]> as e => e |> ConvExpr(_, true)
         | e                       => def e = loop(e);
-                                    CreateArray(e)//<[array[..$e]]>
+                                     CreateArray(e)//<[array[..$e]]>
       }
     }
     

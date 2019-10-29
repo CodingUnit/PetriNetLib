@@ -12,16 +12,9 @@ using CommonLib.Macros;
 
 namespace PetriNetLib
 
-{
-
-  variant PetriNetNode
-  {
-    | Place {place : GenPlaceCpp;}
-    | Tran {tran : GenTranCpp;}
-    | Cycle {node : PetriNetNode}
-  }
+{  
   
-  enum TDestCont
+  public enum TDestCont
   {
     | MultiSet
     | RandomEnumerable
@@ -39,7 +32,7 @@ namespace PetriNetLib
 
   [Record]
   //[Lens]
-  class Place
+  public class Place
   {
     public idx    : int;
     public id     : string;
@@ -288,7 +281,7 @@ namespace PetriNetLib
 
   [Record]
   [Lens]
-  class Transition
+  public class Transition
   { 
     public idx : int;
     public id  : string;
@@ -381,13 +374,13 @@ namespace PetriNetLib
   }
 
   [Record]
-  variant ArcSource
+  public variant ArcSource
   {
     | PlaceEnd      {place : Place}
     | TransitionEnd {tran  : Transition}
   }
 
-  enum ArcKind
+  public enum ArcKind
   {
     | Normal
     | Reset
@@ -396,7 +389,7 @@ namespace PetriNetLib
     
   [Record]
   [Lens]
-  class Arc
+  public class Arc
   { 
     public expr : PExpr;
 
@@ -519,7 +512,7 @@ namespace PetriNetLib
   }
 
   [Record]
-  class ColourSet
+  public class ColourSet
   {
     public name : string;
     public type : Colour;

@@ -42,10 +42,9 @@ namespace PetriNetLib
     model       : OutModel;
     [Accessor]
     proc        : PetriNetProcessor;
-    converter   : Converter;
+    //converter   : Converter;
     typer       : Typer;
     typebuilder : TypeBuilder;
-    gen         : Generator;
     [Accessor]
     colours     : Hashtable[string, GenColourCpp] = Hashtable();
     [Accessor]
@@ -53,17 +52,19 @@ namespace PetriNetLib
     [Accessor]
     transitions : array[GenTranCpp];
 
-    internal TypingMethod : MethodBuilder
-    {
-      get
-      {
-        gen.TypingMethod 
-      }
-    }
-
     func_proc : Hashtable[string, GenFuncCpp];
     funcs     : list[GenFuncCpp];
 
+    public TypingMethod : MethodBuilder
+    {
+      [Memoize]
+      get
+      {
+        def meth = typebuilder.DefineAndReturn(<[decl: TypingMethod() : void {}]>);
+        meth :> MethodBuilder
+      }
+    }
+    
     public GroupTransitions : list[GroupTranCpp]
     {
       [Memoize]
@@ -82,9 +83,10 @@ namespace PetriNetLib
       }
     }
 
+    
     internal CreateArray(expr : list[PExpr]) : string
     {
-      def ty = Typer(gen.TypingMethod);
+      def ty = Typer(TypingMethod);
 
       def add_type(i, e)
       {
@@ -458,12 +460,17 @@ namespace PetriNetLib
       }
     }
 
+    TypeOfExpr(val : PExpr) : string
+    {
+      null
+    }
+    
     CreateGlobRef(name : string, val : PExpr) : string
     {
-      def ty = Typer(gen.TypingMethod);
-      def te = ty.TypeExpr(val);
+      //def ty = Typer(gen.TypingMethod);
+      //def te = ty.TypeExpr(val);
 
-      def type = ConvType(te);
+      def type = TypeOfExpr(val);//ConvType(te);
       def val = ConvExpr(val, true);
       //<[decl: mutable $(name : usesite) : $(te.ty : typed) = $val]>
       //cpp("decl: $(type : type) $name = $val;")
