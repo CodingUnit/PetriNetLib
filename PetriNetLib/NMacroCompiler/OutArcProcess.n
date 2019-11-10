@@ -1,0 +1,129 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Nemerle.Compiler.Parsetree;
+using Nemerle.Compiler;
+using PetriNetModel;
+
+namespace PetriNetLib
+{
+  /// <summary>
+  /// Description of OutArcProcess.
+  /// </summary>
+  [Record]
+  class OutArcProcess
+  {
+
+    public place      : Place;
+    public transition : Transition;
+    public arc        : Arc;
+    public gen        : CppGenerator;
+    
+    public name : string
+    {
+      [Memoize]
+      get
+      {
+        place.name
+      }
+    }
+    
+    public expr : PExpr
+    {
+      [Memoize]
+      get
+      {
+        arc.expr
+      }
+    }
+
+    is_time_expr : bool
+    {
+      [Memoize]
+      get
+      {
+        match (expr)
+        {
+          | <[ $_e %@ $_time]>               
+          | <[ $_e %@+ $_time]> => true
+          | _                   => false
+        }
+      }
+    }
+    
+    add_token_expr : PExpr
+    {
+      [Memoize]
+      get
+      {
+        def unfold(e)
+        {
+          | <[ () ]> => <[ Unit.Instance ]>
+          | e        => e
+        }
+        
+        def add(e)
+        {
+          | <[ () ]>                       => <[ Unit.Instance ]> 
+          | <[ $e %@+ $(time : int)]>      => match (global_time)
+                                              {
+                                                | <[ $(t : int)]> => def time = time + t;     
+                                                                     <[ $(unfold(e)) %@+ $time]>
+                                                | _               => null                     
+                                              } 
+          | <[ $(_ : int) ` $_ ]> as e     => e                                    
+          | <[ $e %@+ $time]>              => <[ $(unfold(e)) %@+ ($time + $global_time)]>
+          | <[ $_ %++ $_ ]> as e           => CppGenerator.GetTokenPExpr(e)
+          | <[ 1 ` $e ]>                   => add(e)
+          | <[ $_(..$_)]> as e
+          | <[ $(_ : usesite) ]> as e
+          
+          | e                              => e
+        }
+        
+        add(expr)
+      }
+    }
+    
+    public global_time : PExpr
+    {
+      [Memoize]
+      get
+      {
+        match (transition.time_expr)
+        {
+          | <[]>            => <[ 0 ]>
+          | <[ @Delay($t)]> => t
+          | _               => null
+        }
+      }
+    }
+    
+    public add_token : PExpr
+    {
+      [Memoize]
+      get
+      {
+        if (place.IsTimed)
+        {
+          if (is_time_expr)
+          {
+            <[ $(name : usesite).Add($add_token_expr)]>
+          } else
+          {
+            <[ $(name : usesite).Add($add_token_expr %@+ $global_time)]>
+          }
+        } else
+        {
+          <[ $(name : usesite).Add($add_token_expr)]>
+        }
+      }
+      
+    }
+  }
+}

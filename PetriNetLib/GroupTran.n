@@ -11,14 +11,14 @@ using CommonLib.Macros;
 namespace PetriNetLib
 {
   /// <summary>
-  /// Description of GroupTranCpp.
+  /// Description of GroupTran.
   /// </summary>
-  class GroupTranCpp : GenTranCpp
+  class GroupTran : GenTran
   {
-    public grouped : list[GenTranCpp];
-    public gen : CppGenerator;
+    public grouped : list[GenTran];
+    public gen : Generator;
     
-    public this(grouped : list[GenTranCpp], generator : CppGenerator)
+    public this(grouped : list[GenTran], generator : Generator)
     {
       base(null, generator);
       this.gen = generator;
@@ -95,7 +95,7 @@ namespace PetriNetLib
       }
     }
     
-    public override PartOfGroup : option[GroupTranCpp]
+    public override PartOfGroup : option[GroupTran]
     {
       get
       {
@@ -138,7 +138,7 @@ namespace PetriNetLib
       }
     }
     
-    public override InputGenPlaces : list[GenPlaceCpp]
+    public override InputGenPlaces : list[GenPlace]
     {
       [Memoize]
       get
@@ -147,7 +147,7 @@ namespace PetriNetLib
       }
     }
     
-    public override OutputGenPlaces : list[GenPlaceCpp]
+    public override OutputGenPlaces : list[GenPlace]
     {
       [Memoize]
       get

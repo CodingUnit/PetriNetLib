@@ -113,37 +113,37 @@
     <Compile Include="DfsIter.n">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="GenColourCpp.n">
+    <Compile Include="GenColour.n">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="GenCppImpl.n">
+    <Compile Include="GenImpl.n">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="GenerateTranCpp.n">
+    <Compile Include="GenerateTran.n">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="GeneratorCpp.n">
+    <Compile Include="Generator.n">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="GenFuncCpp.n">
+    <Compile Include="GenFunc.n">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="GenPlaceCpp.n">
+    <Compile Include="GenModel.n">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="GenTranCpp.n">
+    <Compile Include="GenPlace.n">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="GroupTranCpp.n">
+    <Compile Include="GenTran.n">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="InArcBindingCpp.n">
+    <Compile Include="GroupTran.n">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="InArcBinding.n">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="OutArcProcess.n">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="OutArcProcessCpp.n">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="PetriNetCompiler.n">

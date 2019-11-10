@@ -13,11 +13,11 @@ namespace PetriNetLib
   /// Description of GenColour.
   /// </summary>
   [Record]
-  class GenColourCpp
+  public class GenColour
   {
     [Accessor]
     colour : ColourSet;
-    gen : CppGenerator;
+    gen : Generator;
 
     public type : Colour
     {

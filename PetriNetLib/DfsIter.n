@@ -11,11 +11,11 @@ namespace PetriNetLib
 {
     class DfsIter
     {
-      gen : CppGenerator;
+      gen : Generator;
       visit_place : array[int];
       visit_tran : array[int];
       
-      public this(gen : CppGenerator)
+      public this(gen : Generator)
       {
         this.gen = gen;
         visit_place = array(gen.Places.Length);

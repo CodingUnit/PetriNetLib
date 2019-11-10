@@ -36,7 +36,7 @@ namespace PetriNetLib
   /// <summary>
   /// Description of Generator.
   /// </summary>
-  partial class CppGenerator
+  partial class Generator
   {
     [Accessor]
     model       : OutModel;
@@ -46,14 +46,15 @@ namespace PetriNetLib
     typer       : Typer;
     typebuilder : TypeBuilder;
     [Accessor]
-    colours     : Hashtable[string, GenColourCpp] = Hashtable();
+    colours     : Hashtable[string, GenColour] = Hashtable();
     [Accessor]
-    places      : array[GenPlaceCpp];
+    places      : array[GenPlace];
     [Accessor]
-    transitions : array[GenTranCpp];
+    transitions : array[GenTran];
 
-    func_proc : Hashtable[string, GenFuncCpp];
-    funcs     : list[GenFuncCpp];
+    gen_model : GenModel;
+    func_proc : Hashtable[string, GenFunc];
+    funcs     : list[GenFunc];
 
     public TypingMethod : MethodBuilder
     {
@@ -65,16 +66,16 @@ namespace PetriNetLib
       }
     }
     
-    public GroupTransitions : list[GroupTranCpp]
+    public GroupTransitions : list[GroupTran]
     {
       [Memoize]
       get
       {
-        PlacesWithGroup.Map(x => GroupTranCpp(x.OutputGenTransitions.Filter(x => x.IsUnnamed && !x.IsTimed), this))
+        PlacesWithGroup.Map(x => GroupTran(x.OutputGenTransitions.Filter(x => x.IsUnnamed && !x.IsTimed), this))
       }
     }
 
-    public PlacesWithGroup : list[GenPlaceCpp]
+    public PlacesWithGroup : list[GenPlace]
     {
       [Memoize]
       get
@@ -223,7 +224,7 @@ namespace PetriNetLib
          } tplace;#>
     }
 
-    CreateFuncPlace(place : GenPlaceCpp) : string
+    CreateFuncPlace(place : GenPlace) : string
     {
       def name = place.Name;
         //def name = name.Replace(" ", "").Replace("\n", "").Replace("\r", "");
@@ -238,10 +239,10 @@ namespace PetriNetLib
       #>
     }
 
-    CreateReqPlace(place : GenPlaceCpp) : string
+    CreateReqPlace(place : GenPlace) : string
     {
       def name = place.Name;
-      GenFuncCpp.FuncInitDecl(name, [], place.Colour.DestType |> Some)
+      GenFunc.FuncInitDecl(name, [], place.Colour.DestType |> Some)
       //$<#void init_$name(const function &func)
       //   {
       //     $name = func;
@@ -249,7 +250,7 @@ namespace PetriNetLib
       //   #>
     }
 
-    CreateInPortPlace(place : GenPlaceCpp) : string
+    CreateInPortPlace(place : GenPlace) : string
     {
       def name = place.Name;
       def type = place.Colour.VarSpec;
@@ -276,14 +277,14 @@ namespace PetriNetLib
       #>
     }
 
-    CreateOutPlace(place : GenPlaceCpp) : string
+    CreateOutPlace(place : GenPlace) : string
     {
       def name = place.Name;
-      private_fields.Add(GenFuncCpp.FuncTypedefDecl(name, [place.Colour], "void") + ";");
-      GenFuncCpp.FuncInitDecl(name, [place.Colour], if (place.port is Some(PortType.InOut)) "bool" |> Some else None())
+      private_fields.Add(GenFunc.FuncTypedefDecl(name, [place.Colour], "void") + ";");
+      GenFunc.FuncInitDecl(name, [place.Colour], if (place.port is Some(PortType.InOut)) "bool" |> Some else None())
     }
 
-    CreatePlace(place : GenPlaceCpp) : string
+    CreatePlace(place : GenPlace) : string
     {
 
       // TODO: transparent place
@@ -307,16 +308,16 @@ namespace PetriNetLib
         def dtype = place.DestContainerType;
         def dest_cont = match (dtype)
                          {
-                           | TDestCont.MultiSet  => "multi_set"//cpp("type: multi_set")
-                           | RandomEnumerable    => "random_array"//cpp("type: random_array")
-                           | SortedSet           => "sorted_array"//cpp("type: sorted_array")
-                           | TokenQueue          => "token_queue"//cpp("type: token_queue")
-                           | TimedSimpleMultiset => "timed_heap"//cpp("type: timed_heap")
+                           | TDestCont.MultiSet  => "multi_set"//("type: multi_set")
+                           | RandomEnumerable    => "random_array"//("type: random_array")
+                           | SortedSet           => "sorted_array"//("type: sorted_array")
+                           | TokenQueue          => "token_queue"//("type: token_queue")
+                           | TimedSimpleMultiset => "timed_heap"//("type: timed_heap")
                            | ZeroSingle
                            | MinusSingle
                            | Var
                            | Single              => type
-                           | ReqContainer        => GenFuncCpp.FuncTypedefDecl(place.Name, [], type)
+                           | ReqContainer        => GenFunc.FuncTypedefDecl(place.Name, [], type)
                          }
         def flag = match (dtype)
                     {
@@ -335,14 +336,14 @@ namespace PetriNetLib
           $<#$dest_cont;#> else
           $<#$dest_cont $name;$flag$time#>
       }
-      //cpp(<#decl: $(dest_cont : type) $name;#>)
+      //(<#decl: $(dest_cont : type) $name;#>)
       //if (place.IsTimed)
       //<[decl: $(name : usesite) : PetriNetModel.TimedPlace.[$type] = PetriNetModel.TimedPlace($(name : string), $dest_cont)]> else
       //<[decl: $(name : usesite) : PetriNetModel.Place.[$type] = PetriNetModel.Place($(name : string), $dest_cont)]>
     }
 
 
-    internal ColourOfVar(name : string) : GenColourCpp
+    internal ColourOfVar(name : string) : GenColour
     {
       match (model.vars.Find(x => x.Key == name))
       {
@@ -356,9 +357,9 @@ namespace PetriNetLib
       ColourOfVar(name)?.VarSpec
     }
 
-    mutable expr_ctx : SCG.Stack[GenColourCpp] = SCG.Stack();
+    mutable expr_ctx : SCG.Stack[GenColour] = SCG.Stack();
 
-    internal ConvExprPlaceCtx(expr : PExpr, ctx : GenColourCpp, statement : bool = false) : string
+    internal ConvExprPlaceCtx(expr : PExpr, ctx : GenColour, statement : bool = false) : string
     {
       expr_ctx.Push(ctx);
       def res = ConvExpr(expr, statement);
@@ -473,7 +474,7 @@ namespace PetriNetLib
       def type = TypeOfExpr(val);//ConvType(te);
       def val = ConvExpr(val, true);
       //<[decl: mutable $(name : usesite) : $(te.ty : typed) = $val]>
-      //cpp("decl: $(type : type) $name = $val;")
+      //("decl: $(type : type) $name = $val;")
       $"$type $name = $val;"
     }
 
@@ -485,12 +486,12 @@ namespace PetriNetLib
           def type = type |> ConvType;
           def val = ConvExpr(val, false);
           //<[ decl: $(name : usesite) : $(ty : typed) = $val ]>
-          //cpp("decl: $(type : type) $name = $val;")
+          //("decl: $(type : type) $name = $val;")
           $"static const $type $name = $val;"
       | _ => null
     }
 
-    CreateDecl(func : GenFuncCpp) : string
+    CreateDecl(func : GenFunc) : string
     {
       match (func.PrefixType)
       {
@@ -501,11 +502,11 @@ namespace PetriNetLib
                                   public_fields.Add(func.FuncSetDecl);
                                   $"$(func.FuncTypedef);"
                                   //$<#function $(func.Name);#>
-        | _                   => func.CppDecl
+        | _                   => func.Decl
       }
     }
 
-    CreateColourSet(col : GenColourCpp) : string
+    CreateColourSet(col : GenColour) : string
     {
       def get_bytes_func(fnames)
       {
@@ -624,7 +625,7 @@ namespace PetriNetLib
                                                   //def mods = AttributesAndModifiers(NemerleModifiers.Private, []);
                                                   //def al = TopDeclaration.Alias(name, mods, Typarms.Empty, <[ $(new_name : usesite) ]>);
                                                   //al |> ClassMember.TypeDeclaration.TypeDeclaration;
-                                                  // cpp("typedef $n $new_name")
+                                                  // ("typedef $n $new_name")
             //$"typedef $n $new_name;"
         //| ColourSet(n, Colour.Unit(Some(t))) => 
         | ColourSet(n, Colour.Unit(Some(t))) => $<#typedef $t $n;
@@ -640,7 +641,7 @@ namespace PetriNetLib
                                                 | "SBYTE"  => "s8"
                                                 | "BYTE"   => "u8"
                                                 | "SHORT"  => "short"
-                                                | "INTINF" => "unsigned long long"//cpp("type: int")
+                                                | "INTINF" => "unsigned long long"//("type: int")
                                                 | "INT"    => "int"
                                                 | "UINT"   => "u32"
                                                 | "USHORT" => "u16"
@@ -655,7 +656,7 @@ namespace PetriNetLib
                                                    {
                                                      ..$vals;
                                                    };#>
-        | ColourSet(n, Colour.Timed(c))   => CreateColourSet(ColourSet(n, c) |> GenColourCpp(_, this))
+        | ColourSet(n, Colour.Timed(c))   => CreateColourSet(ColourSet(n, c) |> GenColour(_, this))
 
         | ColourSet(n, Colour.List)      => def ty = match (n)
                                             {
@@ -670,7 +671,7 @@ namespace PetriNetLib
       }
     }    
 
-    CreateInitMarking(place : GenPlaceCpp) : string
+    CreateInitMarking(place : GenPlace) : string
     {
       def combine(e1, e2)
       {
@@ -914,7 +915,7 @@ namespace PetriNetLib
     CreateStartMethod() : void
     {
       //fields ::= []
-      /*cpp(<#decl: void Initiate()
+      /*(<#decl: void Initiate()
                       {
                         ..$init_body;
                       })*/
@@ -974,7 +975,7 @@ namespace PetriNetLib
     // создаем типы генерации из цветов
       foreach (c in model.colour_sets)
       {
-        colours.Add(c.Key, c.Value |> GenColourCpp(_, this))
+        colours.Add(c.Key, c.Value |> GenColour(_, this))
       }
 
       def places_enum = CreatePlaces();

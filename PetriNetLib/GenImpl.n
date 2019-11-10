@@ -17,17 +17,17 @@ using System.Threading.Tasks;
 
 namespace PetriNetLib
 {
-  variant PetriNetNode
+  public variant PetriNetNode
   {
-    | Place {place : GenPlaceCpp;}
-    | Tran {tran : GenTranCpp;}
+    | Place {place : GenPlace;}
+    | Tran {tran : GenTran;}
     | Cycle {node : PetriNetNode}
   }
   
   /// <summary>
-  /// Description of GenCppImpl.
+  /// Description of GenImpl.
   /// </summary>
-  partial class CppGenerator
+  partial class Generator
   {
         //mutable typing_method : MethodBuilder;
     //compiler : CompilerHost = CompilerHost();
@@ -87,10 +87,10 @@ namespace PetriNetLib
       this.model = model;
       this.proc = proc;
       
-      this.places = model.places.MapToArray(GenPlaceCpp(_, this, 0));
+      this.places = model.places.MapToArray(GenPlace(_, this, 0));
       //mutable idx = 0;
-      this.transitions = model.transitions.MapToArray(x => GenTranCpp(x, this)).ToArray();
-      funcs = model.ml_decls.Where(GenFuncCpp.IsFunc).Map(x => GenFuncCpp(x, this));
+      this.transitions = model.transitions.MapToArray(x => GenTran(x, this)).ToArray();
+      funcs = model.ml_decls.Where(GenFunc.IsFunc).Map(x => GenFunc(x, this));
       def funcs_wpre = funcs.Select(x => (x.NameWithPrefix, x));
       def funcs_pre = funcs.Where(x => x.PrefixType != FuncPrefix.None).Select(x => (x.Name, x));
       def conc = funcs_wpre.Concat(funcs_pre);
@@ -213,7 +213,7 @@ namespace PetriNetLib
       $<#$expr$deflt#>;
     }
 
-    TranMask(tr : IEnumerable[GenTranCpp]) : string
+    TranMask(tr : IEnumerable[GenTran]) : string
     {
       if (tr.IsEmpty()) "0" else
       {

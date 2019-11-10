@@ -11,15 +11,15 @@ using CommonLib.Macros;
 namespace PetriNetLib
 {
   /// <summary>
-  /// Description of GenTranCpp.
+  /// Description of GenTran.
   /// </summary>
   [Record]
   [Lens]
-  class GenTranCpp : Transition, IEquatable[GenTranCpp]
+  public class GenTran : Transition, IEquatable[GenTran]
   {
-    gen : CppGenerator;
+    gen : Generator;
 
-    public this(tran : Transition, gen : CppGenerator)
+    public this(tran : Transition, gen : Generator)
     {
       if (tran != null)
       base(tran.idx, tran.id, tran.name, tran.guard, tran.time_expr, tran.code_segment, tran.input, tran.output, tran.priority, tran.net, tran.UnnamedIdx); else
@@ -27,7 +27,7 @@ namespace PetriNetLib
       this.gen = gen;
     }
 
-    public Equals(tr : GenTranCpp) : bool
+    public Equals(tr : GenTran) : bool
     {
       this == tr : object
     }
@@ -62,7 +62,7 @@ namespace PetriNetLib
       }
     }
     
-    public IsCopyVar(place : GenPlaceCpp, arc : Arc) : bool
+    public IsCopyVar(place : GenPlace, arc : Arc) : bool
     {
       def is_use(n, a)
       {
@@ -108,7 +108,7 @@ namespace PetriNetLib
       }
     }
 
-    public IsCopyVarOut(place : GenPlaceCpp, arc : Arc) : bool
+    public IsCopyVarOut(place : GenPlace, arc : Arc) : bool
     {
       match (arc.ExprWithoutTime)
       {
@@ -147,7 +147,7 @@ namespace PetriNetLib
       }
     }
     
-    public virtual PartOfGroup : option[GroupTranCpp]
+    public virtual PartOfGroup : option[GroupTran]
     {
       [Memoize]
       get
@@ -173,7 +173,7 @@ namespace PetriNetLib
       }
     }
 
-    public PlacesParticipate : list[GenPlaceCpp]
+    public PlacesParticipate : list[GenPlace]
     {
       [Memoize]
       get
@@ -220,38 +220,38 @@ namespace PetriNetLib
       }
     }
 
-    public InArcProcess : list[InArcBindingCpp]
+    public InArcProcess : list[InArcBinding]
     {
       [Memoize]
       get
       {
-        InputPlacesArcs.Map((x, a) => InArcBindingCpp(x, gen, this, [], a))
+        InputPlacesArcs.Map((x, a) => InArcBinding(x, gen, this, [], a))
       }
     }
 
-    public OutArcProcess : list[OutArcProcessCpp]
+    public OutArcProcess : list[OutArcProcess]
     {
       [Memoize]
       get
       {
-        OutputPlacesArcs.Map((p, a) => OutArcProcessCpp(p, this, a, gen))
+        OutputPlacesArcs.Map((p, a) => OutArcProcess(p, this, a, gen))
       }
     }
 
-    public NextTran : list[GenTranCpp]
+    public NextTran : list[GenTran]
     {
       [Memoize]
       get
       {
         def out_tran = OutputGenPlaces.SelectMany(x => x.OutputGenTransitions.Select(y => (x, y)));
-        def tr_next = out_tran.Where((p, x : GenTranCpp) => (x.IsImmediate && !x.IsTimed && !x.IsPartOfFuncPlace && !x.PartOfGroup.HasValue) || (p.port is Some(PortType.In) && x.Name == p.Name))
-                         .Select((_, x : GenTranCpp) => x);
+        def tr_next = out_tran.Where((p, x : GenTran) => (x.IsImmediate && !x.IsTimed && !x.IsPartOfFuncPlace && !x.PartOfGroup.HasValue) || (p.port is Some(PortType.In) && x.Name == p.Name))
+                         .Select((_, x : GenTran) => x);
         
         tr_next.NToList()
       }
     }
     
-    public IsInputPort(pl : GenPlaceCpp) : bool
+    public IsInputPort(pl : GenPlace) : bool
     {
       def other = InputGenPlaces.Except(pl).Where(_.InputPort);
       pl.Name == Name || other.IsEmpty()
@@ -377,7 +377,7 @@ namespace PetriNetLib
       }
     }
 
-    public InputPlacesArcs : list[GenPlaceCpp * Arc]
+    public InputPlacesArcs : list[GenPlace * Arc]
     {
       [Memoize]
       get
@@ -388,14 +388,14 @@ namespace PetriNetLib
       }
     }
 
-    public virtual InputGenPlaces : list[GenPlaceCpp]
+    public virtual InputGenPlaces : list[GenPlace]
     {
       [Memoize]
       get
       {
         gen.Places.MapIndex((p, i) => (p, gen.Proc.OutputMatrix[i, idx]))
           .Filter((_, a) => a != null)
-          .Map((p : GenPlaceCpp, _) => p)
+          .Map((p : GenPlace, _) => p)
       }
     }
 
@@ -408,7 +408,7 @@ namespace PetriNetLib
       }
     }
 
-    public OutputPlacesArcs : list[GenPlaceCpp * Arc]
+    public OutputPlacesArcs : list[GenPlace * Arc]
     {
       [Memoize]
       get
@@ -419,7 +419,7 @@ namespace PetriNetLib
       }
     }
 
-    public virtual OutputGenPlaces : list[GenPlaceCpp]
+    public virtual OutputGenPlaces : list[GenPlace]
     {
       [Memoize]
       get

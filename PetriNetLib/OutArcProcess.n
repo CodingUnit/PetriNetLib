@@ -16,23 +16,23 @@ namespace PetriNetLib
   /// Description of OutArcProcess.
   /// </summary>
   [Record]
-  class OutArcProcess
+  public class OutArcProcess
   {
 
-    public place      : Place;
-    public transition : Transition;
+    public place      : GenPlace;
+    public transition : GenTran;
     public arc        : Arc;
-    public gen        : CppGenerator;
-    
+    public gen        : Generator;
+
     public name : string
     {
       [Memoize]
       get
       {
-        place.name
+        place.Name
       }
     }
-    
+
     public expr : PExpr
     {
       [Memoize]
@@ -55,41 +55,101 @@ namespace PetriNetLib
         }
       }
     }
-    
-    add_token_expr : PExpr
+
+    public IsCopyVar : bool
     {
       [Memoize]
       get
       {
-        def unfold(e)
-        {
-          | <[ () ]> => <[ Unit.Instance ]>
-          | e        => e
-        }
+        transition.IsCopyVarOut(place, arc)
+      }
+    }
+
+    add_token_ptr_expr : string * string
+    {
+      get
+      {
+        def var = Macros.NewSymbol();
         
         def add(e)
         {
-          | <[ () ]>                       => <[ Unit.Instance ]> 
-          | <[ $e %@+ $(time : int)]>      => match (global_time)
-                                              {
-                                                | <[ $(t : int)]> => def time = time + t;     
-                                                                     <[ $(unfold(e)) %@+ $time]>
-                                                | _               => null                     
-                                              } 
-          | <[ $(_ : int) ` $_ ]> as e     => e                                    
-          | <[ $e %@+ $time]>              => <[ $(unfold(e)) %@+ ($time + $global_time)]>
-          | <[ $_ %++ $_ ]> as e           => CppGenerator.GetTokenPExpr(e)
+          | <[ () ]>                       => ($<#char $var = 1;
+          #>, var.ToString());
+          //match (global_time)
+                                              //{
+                                              //  | <[ $(t : int)]> => def time = time + t;     
+
+                                              //  | _               => null
+                                              //} 
           | <[ 1 ` $e ]>                   => add(e)
-          | <[ $_(..$_)]> as e
-          | <[ $(_ : usesite) ]> as e
           
-          | e                              => e
+          | <[ $(n : usesite) ]>           => ("", n)
+          | <[ $_ %++ $_ ]> as e           => def e = gen.GetTokenExpr(e);
+                                              def ty = place.Colour.DestType;
+                                              ($<#$ty $var = $e;
+                                              #>, $<#$var#>)
+          | <[ $(_ : int) ` $_ ]> as e                                         
+          | <[ $_(..$_)]> as e             
+          | e                              => def e = e |> gen.ConvExprPlaceCtx(_, place.Colour, false);
+                                              def ty = place.Colour.DestType;
+                                              ($<#$ty $var = $e;
+                                              #>, $<#$var#>)
         }
-        
-        add(expr)
+
+        add(arc.ExprWithoutTime)
       }
     }
     
+    add_ctx_expr[T](func : void -> T) : string * T
+    {
+      def res = func();
+      def expr = gen.ReadCtxVar();
+      if (expr.IsEmpty()) ("", res) else ($<#..$(expr; "\n")
+      #>, res)
+    }
+    
+    add_token_expr : string
+    {
+      get
+      {
+        //def unfold(e)
+        //{
+        //  | <[ () ]> => <#1#>
+        //  | e        => e |> gen.ConvExpr(_, false)
+        //}
+
+        def add(e)
+        {
+          | <[ () ]>                       => <#1#>
+          //match (global_time)
+                                              //{
+                                              //  | <[ $(t : int)]> => def time = time + t;     
+
+                                              //  | _               => null
+                                              //} 
+          | <[ 1 ` $e ]>                   => add(e)                                    
+          | <[ $(_ : int) ` $_ ]> as e     => e |> gen.ConvExprPlaceCtx(_, place.Colour, false)                                    
+          | <[ $_ %++ $_ ]> as e           => gen.GetTokenExpr(e)
+
+          | <[ $_(..$_)]> as e
+          | <[ $(_ : usesite) ]> as e
+          | e                              => e |> gen.ConvExprPlaceCtx(_, place.Colour, false)                                    
+        }
+
+        add(arc.ExprWithoutTime)
+      }
+    }
+
+    
+    public global_time_str : string
+    {
+      [Memoize]
+      get
+      {
+        global_time |> gen.ConvExpr(_, false)
+      }
+    }
+
     public global_time : PExpr
     {
       [Memoize]
@@ -97,33 +157,98 @@ namespace PetriNetLib
       {
         match (transition.time_expr)
         {
-          | <[]>            => <[ 0 ]>
+          | <[]>            => <[0]>
           | <[ @Delay($t)]> => t
           | _               => null
         }
       }
     }
-    
-    public add_token : PExpr
+
+    public place_ena : string
+    {
+      [Memoize]
+      get
+      {
+        $"pl_$name"
+      }
+    }
+
+    public add_token : string
     {
       [Memoize]
       get
       {
         if (place.IsTimed)
         {
-          if (is_time_expr)
-          {
-            <[ $(name : usesite).Add($add_token_expr)]>
-          } else
-          {
-            <[ $(name : usesite).Add($add_token_expr %@+ $global_time)]>
-          }
+          def time_add = if (arc.TimeExpr is <[]>) "" else arc.TimeExpr |> gen.ConvExpr(_, true);
+          def time = if (time_add.IsEmpty()) $"\n$(name)_time = time();" else $"\n$(name)_time = time() + $time_add;";
+          def (ctx, add) = add_ctx_expr(_ => add_token_expr);
+          if (IsCopyVar) time else
+            match (place.DestContainerType)
+            {
+              | ZeroSingle // имеет 0 или 1 фишку, для отсутствия используется 0 если INT
+              | MinusSingle 
+              | Var       => $"$(name) = $add_token_expr;$time"
+              | Single    => if (place.IsUnit)
+                             {
+                               $<#$ctx$(name) = $add;$time#>
+                             } else
+                             {
+                            $<#$ctx$name = $add;
+                              $(name)_flag = true;$time#>
+                             }
+              | _ => //def expr = if (time_add.IsEmpty()) add_token_expr else $"\nadd_time($add_token_expr, $time_add);";
+                     $<#$ctx$(name).add($add);#>
+            }
+          //if (is_time_expr)
+          //{
+          //  $<#$name.add($add_token_expr);#>
+          //} else
+          //{
+          //  $<#$name.add(add_time($add_token_expr, $global_time_str));#>
+          //}
         } else
         {
-          <[ $(name : usesite).Add($add_token_expr)]>
+          def (ctx, add) = add_ctx_expr(_ => add_token_expr);
+          if (IsCopyVar) "" else
+            if (place.IsFuncPlace)
+            {
+              $<#$ctx$(name)($add);#>
+            } else
+            {
+              match (place.port)
+              {
+                | Some(PortType.Out) => 
+                    if (place.Colour.IsComplexType) 
+                    $<#$ctx$(name)($add);#> else
+                    $<#$ctx$(name)($add);#>
+                //| Some(PortType.InOut) => 
+                //    def parm = place.Colour.ParmType;
+                //    if (place.Colour.IsComplexType) 
+                //    $<#$(ctx)bool in = $(name).exec_ret<bool, $parm>($add);#> else
+                //    $<#$(ctx)bool in = $(name).exec_ret<bool, $parm>($add);#>
+                | _ => match (place.DestContainerType)
+                       {
+                         | ZeroSingle // имеет 0 или 1 фишку, для отсутствия используется 0 если INT
+                         | MinusSingle 
+                         | Var       => $"$(name) = $add;"
+                         | Single    => if (place.IsUnit)
+                                        {
+                                          $<#$ctx$(name) = $add;#>
+                                        } else
+                                        {
+                                          $<#$ctx$(name) = $add;
+                                          $(name)_flag = true;#>
+                                        }
+                         | _ => def (ctx, (var, add)) = add_ctx_expr(_ => add_token_ptr_expr);
+                                               //def (var, add) = add_token_ptr_expr;
+                                $<#$ctx$var$name.add((void *)&$add);#>
+                       }
+              }
+              
+            }
         }
       }
-      
     }
   }
 }

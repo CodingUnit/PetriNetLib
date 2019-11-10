@@ -78,6 +78,9 @@
     <Compile Include="InArcBinding.n">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="OutArcProcess.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.n" />
   </ItemGroup>
   <ItemGroup>

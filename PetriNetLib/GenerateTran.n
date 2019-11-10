@@ -11,11 +11,11 @@ using CommonLib.Macros;
 namespace PetriNetLib
 {
   /// <summary>
-  /// Description of GenerateTranCpp.
+  /// Description of GenerateTran.
   /// </summary>
-  partial class CppGenerator
+  partial class Generator
   {
-    internal CreateTranBody(tran : GenTranCpp) : string
+    internal CreateTranBody(tran : GenTran) : string
     {
       def name   = tran.Name;
 
@@ -40,7 +40,7 @@ namespace PetriNetLib
       }
 
       def input    = input.OrderBy(_.priority); 
-      def add_proc = tran.OutArcProcess;//output.Map((p, a) => OutArcProcessCpp(places[p.idx], tran, a, this));
+      def add_proc = tran.OutArcProcess;//output.Map((p, a) => OutArcProcess(places[p.idx], tran, a, this));
 
       def extract = input.Map(_.extract_expr);
       def add_body = add_proc.Map(_.add_token);
@@ -132,7 +132,7 @@ namespace PetriNetLib
      
     }    
     
-    public CreateGroupTranBody(g : GroupTranCpp) : string
+    public CreateGroupTranBody(g : GroupTran) : string
     {
         def sorted = g.grouped.OrderBy(x => x.priority).NToList();
         //def ret = if (g.InputGenPlaces.Count() == 1) !g.InputGenPlaces.First().IsFuncPlace else true;
@@ -151,7 +151,7 @@ namespace PetriNetLib
         if (dup)
         {
           
-          def fold_body(x : InArcBindingCpp, a)
+          def fold_body(x : InArcBinding, a)
           {
             def tran = x.transition;
             def add_proc = tran.OutArcProcess;
@@ -240,7 +240,7 @@ namespace PetriNetLib
         }
     }
     
-    EnumTransitions : list[GenTranCpp]
+    EnumTransitions : list[GenTran]
     {
       [Memoize]
       get
@@ -249,7 +249,7 @@ namespace PetriNetLib
         //def groups = PlacesWithGroup.Select(x => x.OutputTransitions.Where(x => x[0].IsUnnamed));
         //def groups = GroupTransitions.Select(x => (x.Name, ));//groups.Select(x => ("GroupTransition" + x.Fold("", ((x, _), a) => $"$(x.UnnamedIdx)$a"), x.Select(x => x[0].priority).Max(), null));
         def group = GroupTransitions.Where(x => !x.IsInline);
-        group.Map(_ : GenTranCpp) + tran
+        group.Map(_ : GenTran) + tran
       }
     }
     
@@ -330,7 +330,7 @@ namespace PetriNetLib
       cons_expr.Add(tran);
     }
     
-    CreateTran(tran : GenTranCpp) : string
+    CreateTran(tran : GenTran) : string
     {
       def name = tran.ExecName;
       

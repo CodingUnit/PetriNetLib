@@ -13,13 +13,13 @@ using PetriNetModel;
 namespace PetriNetLib
 {
   [Record]
-  class InArcBindingCpp
+  public class InArcBinding
   {
-    public place      : GenPlaceCpp;
+    public place      : GenPlace;
 
-    public gen : CppGenerator;
-    public transition : GenTranCpp;
-    public Depends     : list[InArcBindingCpp] {get;set;}
+    public gen : Generator;
+    public transition : GenTran;
+    public Depends     : list[InArcBinding] {get;set;}
       //public NeedBinding : bool {get;set;}
 
     public IsCopyVar : bool
@@ -176,7 +176,7 @@ namespace PetriNetLib
       }
     }
     
-    NextFuncTranArcProcess : option[OutArcProcessCpp]
+    NextFuncTranArcProcess : option[OutArcProcess]
     {
       [Memoize]
       get

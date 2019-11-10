@@ -17,18 +17,18 @@ namespace PetriNetLib
   /// Description of GenPlace.
   /// </summary>
   [Record]
-  class GenPlaceCpp : Place, IEquatable[GenPlaceCpp]
+  public class GenPlace : Place, IEquatable[GenPlace]
   {
-    gen : CppGenerator;
+    gen : Generator;
 
-    public this(pl : Place, gen : CppGenerator, idx : int)
+    public this(pl : Place, gen : Generator, idx : int)
     {
       base(pl.idx, pl.id, pl.name, pl.colour, pl.init_mark, pl.port, pl.tree, pl.net, 0);
       this.gen = gen;
       this.gen_idx = idx;
     }
 
-    public Equals(obj : GenPlaceCpp) : bool
+    public Equals(obj : GenPlace) : bool
     {
       this == obj : object
     }
@@ -130,7 +130,7 @@ namespace PetriNetLib
       }
     }
     
-    public OutputGenTransitionsArcs : list[GenTranCpp * Arc]
+    public OutputGenTransitionsArcs : list[GenTran * Arc]
     {
       [Memoize]
       get
@@ -142,7 +142,7 @@ namespace PetriNetLib
       }
     }
 
-    public InputGenTransitionsArcs : list[GenTranCpp * Arc]
+    public InputGenTransitionsArcs : list[GenTran * Arc]
     {
       [Memoize]
       get
@@ -153,7 +153,7 @@ namespace PetriNetLib
       }
     }
 
-    public OutputGenTransitions : list[GenTranCpp]
+    public OutputGenTransitions : list[GenTran]
     {
       [Memoize]
       get
@@ -210,7 +210,7 @@ namespace PetriNetLib
       }
     }
 
-    public InputGenTransitions : list[GenTranCpp]
+    public InputGenTransitions : list[GenTran]
     {
       [Memoize]
       get
@@ -267,12 +267,12 @@ namespace PetriNetLib
       }
     }
 
-    public Colour : GenColourCpp
+    public Colour : GenColour
     {
       [Memoize]
       get
       {
-        GenColourCpp(colour, gen)
+        GenColour(colour, gen)
       }
     }
 
@@ -290,7 +290,7 @@ namespace PetriNetLib
       }
     }
 
-    public FuncTran : GenTranCpp
+    public FuncTran : GenTran
     {
       [Memoize]
       get
@@ -311,13 +311,13 @@ namespace PetriNetLib
       }
     }
     
-    public GroupTran : GroupTranCpp
+    public GroupTran : GroupTran
     {
       [Memoize]
       get
       {
         if (IsGroup)
-          GroupTranCpp(OutputGenTransitions.Filter(x => x.IsUnnamed && !x.IsTimed), gen) else null
+          GroupTran(OutputGenTransitions.Filter(x => x.IsUnnamed && !x.IsTimed), gen) else null
       }
     }
     

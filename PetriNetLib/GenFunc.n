@@ -23,13 +23,13 @@ namespace PetriNetLib
   }
 
   /// <summary>
-  /// Description of GenFuncCpp.
+  /// Description of GenFunc.
   /// </summary>
   [Record]
-  class GenFuncCpp
+  class GenFunc
   {
     public expr : PExpr;
-    public gen  : CppGenerator;
+    public gen  : Generator;
 
     public NameWithPrefix : string
     {
@@ -105,7 +105,7 @@ namespace PetriNetLib
       }
     }
 
-    public static FuncInitDecl(name : string, parms : list[GenColourCpp], ret : option[string]) : string
+    public static FuncInitDecl(name : string, parms : list[GenColour], ret : option[string]) : string
     {
       def parms = parms.Map(x => x.ParmType);
       def ret = if (ret is Some(r)) r else "void";
@@ -127,7 +127,7 @@ namespace PetriNetLib
           */
     }
     
-    public static FuncTypedefDecl(name : string, parms : list[GenColourCpp], ret : string) : string
+    public static FuncTypedefDecl(name : string, parms : list[GenColour], ret : string) : string
     {
         def parms = parms.Map(x => x.ParmType);
         //def parms = if (parms.IsEmpty()) "" else $<#..$(parms; ",")#>;
@@ -209,7 +209,7 @@ namespace PetriNetLib
       }
     }
 
-    public CppDecl : string
+    public Decl : string
     {
       [Memoize]
       get
@@ -238,7 +238,7 @@ namespace PetriNetLib
       }
     }
     
-    public ParmsColour : list[GenColourCpp]
+    public ParmsColour : list[GenColour]
     {
       [Memoize]
       get

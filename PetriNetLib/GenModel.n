@@ -1,0 +1,52 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Nemerle.Compiler.Parsetree;
+
+namespace PetriNetLib
+{
+  public variant FunBodyKind
+  {
+  }
+  
+  public variant FuncBodyExpr
+  {
+    | Sequence { seq : list[FuncBodyExpr]}
+    | Lock { places : list[GenPlace]}
+    | Unlock { places : list[GenPlace]}
+    | GetTokensExpr { expr : PExpr}
+    | AddTokensExpr { expr : PExpr}
+    | CombinedExpr  {expr : PExpr}
+    | Action {name : string; parms : list[PExpr];}
+    | CallTran {tran : GenTran}
+    | CallTranFunc {tran : GenTran; parm : PExpr}
+  }
+  
+  public class PetriNetFunc
+  {
+    ret_type : GenColour;
+    
+    name : string;
+    
+    kind : FunBodyKind;
+    body : FuncBodyExpr;
+  }
+  
+  /// <summary>
+  /// Description of GenModel.
+  /// </summary>
+  [Record]
+  public class GenModel
+  {
+    places : list[GenPlace];
+    tran   : list[GenTran];
+    colours : list[GenColour];
+    funcs   : list[PetriNetFunc];
+    add_place_funcs : list[PetriNetFunc];
+  }
+}

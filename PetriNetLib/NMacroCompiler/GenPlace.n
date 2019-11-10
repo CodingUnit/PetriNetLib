@@ -6,6 +6,7 @@ using Nemerle.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using PetriNetModel;
 
 namespace PetriNetLib
 {
@@ -13,7 +14,7 @@ namespace PetriNetLib
   /// Description of GenPlace.
   /// </summary>
   [Record]
-  class GenPlace : Place
+  public class GenPlace : Place
   {
     gen : Generator;
     
