@@ -16,7 +16,7 @@ namespace PetriNetLib
   /// <summary>
   /// Description of GenImpl.
   /// </summary>
-  partial class Generator
+  partial class NGenerator
   {
     [Accessor]
     model       : OutModel;

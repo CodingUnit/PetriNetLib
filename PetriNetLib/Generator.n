@@ -43,8 +43,8 @@ namespace PetriNetLib
     [Accessor]
     proc        : PetriNetProcessor;
     //converter   : Converter;
-    typer       : Typer;
-    typebuilder : TypeBuilder;
+    //typer       : Typer;
+    //typebuilder : TypeBuilder;
     [Accessor]
     colours     : Hashtable[string, GenColour] = Hashtable();
     [Accessor]
@@ -56,15 +56,17 @@ namespace PetriNetLib
     func_proc : Hashtable[string, GenFunc];
     funcs     : list[GenFunc];
 
-    public TypingMethod : MethodBuilder
-    {
-      [Memoize]
-      get
-      {
-        def meth = typebuilder.DefineAndReturn(<[decl: TypingMethod() : void {}]>);
-        meth :> MethodBuilder
-      }
-    }
+    [Accessor]
+    typer : ITypeInterface;
+    //public TypingMethod : MethodBuilder
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    def meth = typebuilder.DefineAndReturn(<[decl: TypingMethod() : void {}]>);
+    //    meth :> MethodBuilder
+    //  }
+    //}
     
     public GroupTransitions : list[GroupTran]
     {
@@ -87,7 +89,7 @@ namespace PetriNetLib
     
     internal CreateArray(expr : list[PExpr]) : string
     {
-      def ty = Typer(TypingMethod);
+      //def ty = Typer(TypingMethod);
 
       def add_type(i, e)
       {
@@ -104,7 +106,7 @@ namespace PetriNetLib
       }
 
       def nexpr = if (expr.Length > 1) expr.MapI(add_type) else expr;
-      def te = ty.TypeExpr(<[ [..$nexpr] ]>);
+      def te = typer.TypeExpr(<[ [..$nexpr] ]>);
       def ty = te.ty;
       def len = expr.Length;
       def (type, n, len, ty) = match (ty)

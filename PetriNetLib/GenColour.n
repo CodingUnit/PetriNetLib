@@ -13,7 +13,7 @@ namespace PetriNetLib
   /// Description of GenColour.
   /// </summary>
   [Record]
-  public class GenColour
+  class GenColour
   {
     [Accessor]
     colour : ColourSet;

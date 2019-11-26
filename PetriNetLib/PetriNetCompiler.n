@@ -12,6 +12,7 @@ using System.IO;
 
 namespace PetriNetLib
 {
+  
   public class PetriNetCompiler
   {
     //mutable gen : Generator;

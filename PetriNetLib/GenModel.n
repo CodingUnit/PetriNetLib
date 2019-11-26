@@ -14,17 +14,29 @@ namespace PetriNetLib
   {
   }
   
+  public class GPlace
+  {
+  }
+  
+  public class GTran
+  {
+  }
+  
+  public class GColour
+  {
+  }
+  
   public variant FuncBodyExpr
   {
     | Sequence { seq : list[FuncBodyExpr]}
-    | Lock { places : list[GenPlace]}
-    | Unlock { places : list[GenPlace]}
+    | Lock { places : list[GPlace]}
+    | Unlock { places : list[GPlace]}
     | GetTokensExpr { expr : PExpr}
     | AddTokensExpr { expr : PExpr}
     | CombinedExpr  {expr : PExpr}
     | Action {name : string; parms : list[PExpr];}
-    | CallTran {tran : GenTran}
-    | CallTranFunc {tran : GenTran; parm : PExpr}
+    | CallTran {tran : GTran}
+    | CallTranFunc {tran : GTran; parm : PExpr}
   }
   
   public class PetriNetFunc
@@ -43,9 +55,9 @@ namespace PetriNetLib
   [Record]
   public class GenModel
   {
-    places : list[GenPlace];
-    tran   : list[GenTran];
-    colours : list[GenColour];
+    places : list[GPlace];
+    tran   : list[GTran];
+    colours : list[GColour];
     funcs   : list[PetriNetFunc];
     add_place_funcs : list[PetriNetFunc];
   }

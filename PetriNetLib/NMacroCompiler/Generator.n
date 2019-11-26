@@ -20,7 +20,7 @@ namespace PetriNetLib
   /// <summary>
   /// Description of Generator.
   /// </summary>
-  public partial class Generator
+  public partial class NGenerator
   {
     
     

@@ -194,8 +194,8 @@ namespace PetriNetLib
         match (expr)
         {
           | <[ def $(_ : usesite)(..$_) { ..$_ } ]> =>
-              def ty = Typer(gen.TypingMethod);
-              match (ty.TypeExpr(expr))
+              //def ty = Typer(gen.TypingMethod);
+              match (gen.Typer.TypeExpr(expr))
               {
                 | TExpr.DefFunctionsIn(h :: _, _) => h.ReturnType |> gen.ConvType
                 | _                               => throw InvalidOperationException()

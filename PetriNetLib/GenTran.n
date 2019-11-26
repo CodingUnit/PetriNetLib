@@ -15,7 +15,7 @@ namespace PetriNetLib
   /// </summary>
   [Record]
   [Lens]
-  public class GenTran : Transition, IEquatable[GenTran]
+  class GenTran : Transition, IEquatable[GenTran]
   {
     gen : Generator;
 

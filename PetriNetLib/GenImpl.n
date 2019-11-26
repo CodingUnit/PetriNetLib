@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 
 namespace PetriNetLib
 {
-  public variant PetriNetNode
+  variant PetriNetNode
   {
     | Place {place : GenPlace;}
     | Tran {tran : GenTran;}
@@ -80,9 +80,9 @@ namespace PetriNetLib
 
     public this(file : string, model : OutModel, proc : PetriNetProcessor)
     {
-      this.typer = proc.Typer;
+      this.typer = proc.TypeInt;
       this.file = file;
-      this.typebuilder = proc.Typebuilder;
+      //this.typebuilder = proc.Typebuilder;
 
       this.model = model;
       this.proc = proc;
@@ -171,7 +171,7 @@ namespace PetriNetLib
     {
       def tystr = te.ToString().TrimEnd('-', '+');
       //def enum_ty = typer.BindType(<[ System.Collections.Generic.IEnumerable[_] ]>);
-      def list_ty = typer.BindType(<[ list[_] ]>);
+      def list_ty = typer.Typer.BindType(<[ list[_] ]>);
       def ty = te.Fix();
       if (te.TryRequire(list_ty))
       {

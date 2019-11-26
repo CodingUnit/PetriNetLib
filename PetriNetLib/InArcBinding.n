@@ -13,7 +13,7 @@ using PetriNetModel;
 namespace PetriNetLib
 {
   [Record]
-  public class InArcBinding
+  class InArcBinding
   {
     public place      : GenPlace;
 
