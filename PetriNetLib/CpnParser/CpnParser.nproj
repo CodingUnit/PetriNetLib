@@ -41,7 +41,7 @@
     <MacroReference Include="Nitra.Compiler">
       <Name>Nitra.Compiler</Name>
       <AssemblyName>Nitra.Compiler.dll</AssemblyName>
-      <HintPath>F:\Program Files (x86)\Nitra\Nitra.Compiler.dll</HintPath>
+      <HintPath>$(NitraPath)\Nitra.Compiler.dll</HintPath>
       <Private>False</Private>
       <SpecificVersion>False</SpecificVersion>
     </MacroReference>
@@ -49,7 +49,7 @@
     <Reference Include="Nitra.Runtime">
       <Name>Nitra.Runtime</Name>
       <AssemblyName>Nitra.Runtime.dll</AssemblyName>
-      <HintPath>F:\Program Files (x86)\Nitra\Nitra.Runtime.dll</HintPath>
+      <HintPath>$(NitraPath)\Nitra.Runtime.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
     </Reference>
     <Reference Include="System" />
