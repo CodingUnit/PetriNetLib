@@ -1,0 +1,36 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace PetriNetLib
+{
+  
+  [Record]
+  class TypeInterface : ITypeInterface
+  {
+      [Accessor]
+      typer : Typer;
+      
+      public typing_stage : Action {get;set}
+      
+      public InitTyping() : void
+      {
+          typing_stage()
+      }
+      
+      public BindType(expr : PExpr) : TypeVar
+      {
+          typer.BindType(expr)
+      }
+      
+      public TypeExpr(expr : PExpr) : TExpr
+      {
+          typer.TypeExpr(expr)
+      }
+  } 
+}

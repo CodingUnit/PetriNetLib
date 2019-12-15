@@ -15,29 +15,7 @@ using Nemerle.Compiler;
 
 namespace PetriNetLib
 {
- public interface ITypeInterface
-  {
-      TypeExpr(expr : PExpr) : TExpr;
-      BindType(expr : PExpr) : TypeVar;
-      Typer : Typer {get;}
-  }
-  
-  [Record]
-  class TypeInterface : ITypeInterface
-  {
-      [Accessor]
-      typer : Typer;
-      
-      public BindType(expr : PExpr) : TypeVar
-      {
-          typer.BindType(expr)
-      }
-      
-      public TypeExpr(expr : PExpr) : TExpr
-      {
-          typer.TypeExpr(expr)
-      }
-  }
+
   
   /*
   todo:
@@ -64,15 +42,6 @@ namespace PetriNetLib
     typer : Typer;
     [Accessor]
     typebuilder : TypeBuilder;
-    
-    public TypeInt : ITypeInterface
-    {
-        [Memoize]
-        get
-        {
-            TypeInterface(typer)
-        }
-    }
     
     public Vals : Hashtable[string, PExpr]
     {

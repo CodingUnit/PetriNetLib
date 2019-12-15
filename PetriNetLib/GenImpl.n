@@ -78,9 +78,9 @@ namespace PetriNetLib
       }
     }
 
-    public this(file : string, model : OutModel, proc : PetriNetProcessor)
+    public this(file : string, model : OutModel, proc : PetriNetProcessor, type_int : ITypeInterface)
     {
-      this.typer = proc.TypeInt;
+      this.typer = type_int;
       this.file = file;
       //this.typebuilder = proc.Typebuilder;
 

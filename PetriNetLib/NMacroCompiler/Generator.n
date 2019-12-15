@@ -471,6 +471,18 @@ namespace PetriNetLib
                                           else <[PetriNet]>);
     }
     
+    // фаза типизации, необходима для правильной типизации во всех языках
+    public TypingPhase() : void
+    {
+        def vals = model.ml_decls.Map(CreateVals).Filter(_ != null);
+          foreach (m in vals) _ = typebuilder.DefineWithSource(m);
+          def decls = model.ml_decls.Map(CreateDecl).Filter(_ != null);
+          def decls = decls + methods;
+          foreach (m in decls) _ = typebuilder.DefineWithSource(m);
+          def globrefs = model.glob_refs.KeyValuePairs.MapToList(CreateGlobRef);
+          foreach (m in globrefs) _ = typebuilder.DefineWithSource(m);
+    }
+    
     public PhaseTwo() : void
     {
       //CreateDummyMethod();

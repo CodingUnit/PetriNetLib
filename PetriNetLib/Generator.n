@@ -58,6 +58,7 @@ namespace PetriNetLib
 
     [Accessor]
     typer : ITypeInterface;
+    
     //public TypingMethod : MethodBuilder
     //{
     //  [Memoize]

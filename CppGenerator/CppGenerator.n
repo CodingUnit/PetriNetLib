@@ -1,0 +1,73 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace PetriNetLib
+{
+  /// <summary>
+  /// Description of CppGenerator.
+  /// </summary>
+  public class CppGenerator
+  {
+    model : GenModel;
+    colours  : Hashtable[string, CppColour] = Hashtable();
+    
+    public this(model : GenModel)
+    {
+      this.model = model;
+    }
+    
+    public Generate() : void
+    {
+      //  // создаем типы генерации из цветов
+      foreach (c in model.colours)
+      {
+        colours.Add(c.Key, c.Value |> GenColour(_, this))
+      }
+
+      //def places_enum = CreatePlaces();
+      //Define(places_enum);
+      //def sets = colours.Values.OrderBy(x => x.Colour.pos).Map(x => CreateColourSet(x)).Filter(_ != null).Select(_ + "\n");
+      //Define(sets, true, true);//typebuilder.DefineNestedTypeWithSource(m).Compile();
+      //def places = places.Map(CreatePlace).Filter(_ != null);      
+
+
+
+
+      //CreateEvents();
+      //CreateStartMethod();
+
+
+      //Define(places + ["\n"])//_ = typebuilder.DefineWithSource(m);
+//CreateDummyMethod();
+      //CreateMainDefs();
+
+      //CreateTransitions();      
+      ////def methods = CreateGroupTransitions();
+      //def private_methods = EnumTransitions.Where(x => !x.IsPartOfFuncPlace && !x.PartOfGroup.HasValue).MapToList(CreateTran);
+      //def methods = places.Where(x => x.IsFuncPlace).MapToList(CreateFuncPlace);
+      //def req_methods = places.Where(x => x.Req).Map(CreateReqPlace);
+      //def vals = model.ml_decls.Map(CreateVals).Filter(_ != null);
+      //Define(vals + ["\n"]);//_ = typebuilder.DefineWithSource(m);
+      //def decls = funcs.Map(CreateDecl).Filter(_ != null);
+      //def (ext, decls) = decls.Partition(x => x.StartsWith("function"));
+      //def in_ports = places.Where(x => x.port is Some(PortType.In) && !x.Req).MapToList(CreateInPortPlace);
+      //def out_ports = places.Where(x => x.port is Some(PortType.Out) || x.port is Some(PortType.InOut)).MapToList(CreateOutPlace);
+      //def globrefs = model.glob_refs.KeyValuePairs.MapToList(CreateGlobRef);
+      //CreateCons();
+      //Define(globrefs);//_ = typebuilder.DefineWithSource(m);
+      //Define(methods + req_methods, true);
+      //Define(private_methods);
+      //Define(decls);
+      //when (model.IsTimed) CreateTimeMethods();
+      //Define(ext, true);
+      //Define("\n" :: in_ports + out_ports, true);
+      //System.IO.File.WriteAllText(file, main_class)      
+    }
+  }
+}

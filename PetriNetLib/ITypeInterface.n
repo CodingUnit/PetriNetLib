@@ -1,0 +1,23 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Nemerle.Compiler.Parsetree;
+using Nemerle.Compiler;
+using Nemerle.Compiler.Typedtree;
+
+namespace PetriNetLib
+{
+  public interface ITypeInterface
+  {
+      TypeExpr(expr : PExpr) : TExpr;
+      BindType(expr : PExpr) : TypeVar;
+      Typer : Typer {get;}
+      InitTyping() : void;
+  }
+    
+}

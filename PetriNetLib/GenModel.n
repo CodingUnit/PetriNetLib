@@ -22,8 +22,18 @@ namespace PetriNetLib
   {
   }
   
+  
   public class GColour
   {
+    gen : GenColour;
+    
+    public Name : string
+    {
+      get
+      {
+        gen.Name;
+      }
+    }
   }
   
   public variant FuncBodyExpr
@@ -55,10 +65,10 @@ namespace PetriNetLib
   [Record]
   public class GenModel
   {
-    places : list[GPlace];
-    tran   : list[GTran];
-    colours : list[GColour];
-    funcs   : list[PetriNetFunc];
-    add_place_funcs : list[PetriNetFunc];
+    public places          : list[GPlace];
+    public tran            : list[GTran];
+    public colours         : list[GColour];
+    public funcs           : list[PetriNetFunc];
+    public add_place_funcs : list[PetriNetFunc];
   }
 }
