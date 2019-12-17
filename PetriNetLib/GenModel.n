@@ -20,6 +20,9 @@ namespace PetriNetLib
   
   public class GTran
   {
+    public name : string;
+    
+    public body : FuncBodyExpr;
   }
   
   

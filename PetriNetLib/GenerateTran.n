@@ -15,7 +15,7 @@ namespace PetriNetLib
   /// </summary>
   partial class Generator
   {
-    internal CreateTranBody(tran : GenTran) : string
+    internal CreateTranBody(tran : GenTran) : FuncBodyExpr
     {
       def name   = tran.Name;
 

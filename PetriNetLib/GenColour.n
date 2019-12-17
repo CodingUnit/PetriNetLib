@@ -192,22 +192,22 @@ namespace PetriNetLib
     //  }
     //}
 
-    public ParmType : string
-    {
-      [Memoize]
-      get
-      {
-        def type = match (DestType)
-                  {
-                    | x when x.StartsWith("bytes") => "bytes"
-                    | x                            => x
-                  }
-        if (IsComplexType) 
-        {
-          $<#const $type &#> 
-        } else $<#$type #>;
-      }
-    }
+    //public ParmType : string
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    def type = match (DestType)
+    //              {
+    //                | x when x.StartsWith("bytes") => "bytes"
+    //                | x                            => x
+    //              }
+    //    if (IsComplexType) 
+    //    {
+    //      $<#const $type &#> 
+    //    } else $<#$type #>;
+    //  }
+    //}
     
     public IsUnit : bool
     {
@@ -218,103 +218,103 @@ namespace PetriNetLib
       }
     }
     
-    public VarSpec : string
-    {
-      [Memoize]
-      get
-      {
-        if (IsComplexType) $"const $DestType &" else $"$DestType "
-      }
-    }
+    //public VarSpec : string
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    if (IsComplexType) $"const $DestType &" else $"$DestType "
+    //  }
+    //}
     
-    public VarSpecCopy : string
-    {
-      [Memoize]
-      get
-      {
-        if (IsComplexType) $"const $DestType *" else $"$DestType "
-      }
-    }
+    //public VarSpecCopy : string
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    if (IsComplexType) $"const $DestType *" else $"$DestType "
+    //  }
+    //}
     
-    public DestType : string
-    {
-      [Memoize]
-      get
-      {
-        def get_type(c)
-        {
-          | Colour.Integer =>
-              match (Name)
-              {
-                | "SBYTE"  => "s8"
-                | "BYTE"   => "u8"
-                | "SHORT"  => "short"
-                | "INT"    => "int"
-                | "INTINF" => "unsigned long long"//cpp("type: int")
-                | "UINT"   => "u32"
-                | "USHORT" => "u16"
-                | _        => "int"
-              }
+    //public DestType : string
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    def get_type(c)
+    //    {
+    //      | Colour.Integer =>
+    //          match (Name)
+    //          {
+    //            | "SBYTE"  => "s8"
+    //            | "BYTE"   => "u8"
+    //            | "SHORT"  => "short"
+    //            | "INT"    => "int"
+    //            | "INTINF" => "unsigned long long"//cpp("type: int")
+    //            | "UINT"   => "u32"
+    //            | "USHORT" => "u16"
+    //            | _        => "int"
+    //          }
 
-          | Colour.Alias(type)  => 
-              match (Name)
-              {
-                | "SBYTE"  => "s8"
-                | "BYTE"   => "u8"
-                | "SHORT"  => "short"
-                | "INTINF" => "unsigned long long"//cpp("type: int")
-                | "INT"    => "int"
-                | "UINT"   => "u32"
-                | "USHORT" => "u16"
-                | _        => get_type(gen.Proc.colour_sets[type].type)
-              }
-          | Colour.Simple(type) => 
-              match (type)
-              {
-                | "string" => "char *"//cpp("type: char *")
-                | "int"    => "int"//cpp("type: int")
-                | "TIME"   => "int"
-                | "INTINF"
-                | "intinf" => "long long"//cpp("type: int")
-                | "real"   => "float"//cpp("type: float")
-                | "time"   => "int"//cpp("type: int")
-                | "bool"   => "bool"//cpp("type: bool")
-                | "unit"   => "char"//cpp("type: Unit")
-                | "SBYTE"  => "s8"
-                | "BYTE"   => "u8"
-                | "SHORT"  => "short"
-                | "INT"    => "int"
-                | "UINT"   => "u32"
-                | "USHORT" => "u16"
-                | str      => get_type(gen.Proc.colour_sets[str].type)
-              }
-          | Unit(None())  => "char"//cpp("type: Unit")
-          | Unit(Some(t)) => t//cpp("type: $t")
-      //| Product(vals) => def vals = vals.Map(TypeFromStr);
-      //                  $<#type: tuple2<..$vals>#>//cpp(<#type: tuple2<..$vals>#>)
-          | List(t, r)    => match (t)
-              {
-                | "INT" with mul = 4
-                | "SHORT" with mul = 2
-                | "USHORT" with mul = 2
-                | "BYTE"  with mul = 1 => if (r is Some((mn, mx))) 
-                              {
-                                def diff = mx - mn + 1;
-                                def size = diff * mul;
-                                if (size > 8) "bytesn" else
-                                $"bytes$size" 
-                              } else "bytesn"
-                | _ => null               
-              }
-          | Timed(p) => p |> get_type
-          | _        => Name//cpp("type: $n")
-                        //cpp("type: $(inner : type) *")
+    //      | Colour.Alias(type)  => 
+    //          match (Name)
+    //          {
+    //            | "SBYTE"  => "s8"
+    //            | "BYTE"   => "u8"
+    //            | "SHORT"  => "short"
+    //            | "INTINF" => "unsigned long long"//cpp("type: int")
+    //            | "INT"    => "int"
+    //            | "UINT"   => "u32"
+    //            | "USHORT" => "u16"
+    //            | _        => get_type(gen.Proc.colour_sets[type].type)
+    //          }
+    //      | Colour.Simple(type) => 
+    //          match (type)
+    //          {
+    //            | "string" => "char *"//cpp("type: char *")
+    //            | "int"    => "int"//cpp("type: int")
+    //            | "TIME"   => "int"
+    //            | "INTINF"
+    //            | "intinf" => "long long"//cpp("type: int")
+    //            | "real"   => "float"//cpp("type: float")
+    //            | "time"   => "int"//cpp("type: int")
+    //            | "bool"   => "bool"//cpp("type: bool")
+    //            | "unit"   => "char"//cpp("type: Unit")
+    //            | "SBYTE"  => "s8"
+    //            | "BYTE"   => "u8"
+    //            | "SHORT"  => "short"
+    //            | "INT"    => "int"
+    //            | "UINT"   => "u32"
+    //            | "USHORT" => "u16"
+    //            | str      => get_type(gen.Proc.colour_sets[str].type)
+    //          }
+    //      | Unit(None())  => "char"//cpp("type: Unit")
+    //      | Unit(Some(t)) => t//cpp("type: $t")
+    //  //| Product(vals) => def vals = vals.Map(TypeFromStr);
+    //  //                  $<#type: tuple2<..$vals>#>//cpp(<#type: tuple2<..$vals>#>)
+    //      | List(t, r)    => match (t)
+    //          {
+    //            | "INT" with mul = 4
+    //            | "SHORT" with mul = 2
+    //            | "USHORT" with mul = 2
+    //            | "BYTE"  with mul = 1 => if (r is Some((mn, mx))) 
+    //                          {
+    //                            def diff = mx - mn + 1;
+    //                            def size = diff * mul;
+    //                            if (size > 8) "bytesn" else
+    //                            $"bytes$size" 
+    //                          } else "bytesn"
+    //            | _ => null               
+    //          }
+    //      | Timed(p) => p |> get_type
+    //      | _        => Name//cpp("type: $n")
+    //                    //cpp("type: $(inner : type) *")
 
-        }
+    //    }
 
-        get_type(type)
-      }
-    }
+    //    get_type(type)
+    //  }
+    //}
 
     public Public : bool
     {
@@ -326,14 +326,14 @@ namespace PetriNetLib
       }
     }
     
-    public IsBytes : bool
-    {
-      [Memoize]
-      get
-      {
-        Colour.type is Colour.List || Colour.name.StartsWith("BYTES")
-      }
-    }
+    //public IsBytes : bool
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    Colour.type is Colour.List || Colour.name.StartsWith("BYTES")
+    //  }
+    //}
     
     //FinalType(str : string) : string
     //{

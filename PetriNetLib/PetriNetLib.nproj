@@ -110,6 +110,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GenType.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="ITypeInterface.n">
       <SubType>Code</SubType>
     </Compile>
