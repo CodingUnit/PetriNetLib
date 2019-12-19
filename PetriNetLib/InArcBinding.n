@@ -101,20 +101,20 @@ namespace PetriNetLib
       }
     }
     
-    public source_token_peek(n : string) : string
+    public source_token_peek(n : string) : FuncBodyExpr
     {
-      if (place.IsIndexedContainer)
-        $<#$name.peek_indexed($n)#> else
+      if (place.IsIndexedContainer) FuncBodyExpr.PeekIndexed(name, n)//$<#$name.peek_indexed($n)#>
+      else
       {
-        def ty = place.Colour.DestType;
+        //def ty = place.Colour.DestType;
         match (place.DestContainerType)
         {
           | ZeroSingle // имеет 0 или 1 фишку, для отсутствия используется 0 если INT
           | MinusSingle
           | Var    // имеет 1 фишку, аналогично обычному полю
-          | Single       => $<#$name#>// имеет 0 или 1 фишку, для отсутствия использует отдельный флаг
-          | ReqContainer => $<#$name()#>
-          | _            => $<#*($ty *)$name.peek()#>    // значение запрашивается из внешней функции
+          | Single       => FuncBodyExpr.VarRef(name)//$<#$name#>// имеет 0 или 1 фишку, для отсутствия использует отдельный флаг
+          | ReqContainer => FuncBodyExpr.FuncExec(name)//$<#$name()#>
+          | _            => FuncBodyExpr.Peek(GColour(place.Colour), name)// $<#*($ty *)$name.peek()#>    // значение запрашивается из внешней функции
         }
         
       }
@@ -129,7 +129,7 @@ namespace PetriNetLib
       }
     }
     
-    public timed_bind_expr : string
+    public timed_bind_expr : FuncBodyExpr
     {
       [Memoize]
       get
@@ -138,26 +138,28 @@ namespace PetriNetLib
         {
           match (expr)
           {
-            | <[ $(n : usesite) ]> => def ty = TokenType;
+            | <[ $(n : usesite) ]> => //def ty = TokenType;
                                       if (place.IsIndexedContainer) 
                                       {
-                                          $<#int $(idx_name(n));
-                                          $ty $source_token_name = $(source_token_peek(n));#>
+                                        FuncBodyExpr.Sequence([FuncBodyExpr.ImmutableVarDeclSimple(<[ int ]>, idx_name(n), None()), 
+                                                               FuncBodyExpr.ImmutableVarDecl(GColour(place.Colour), source_token_name, Some(source_token_peek(n)))])
+                                          //$<#int $(idx_name(n));
+                                          //$ty $source_token_name = $(source_token_peek(n));#>
                                       } else
                                       {
                                         match (place.DestContainerType)
                                         {
-                                          | TDestCont.TimedSimpleMultiset => $<#$ty $source_token_name = $(source_token_peek(n));#>
-                                          | _                             => ""
+                                          | TDestCont.TimedSimpleMultiset => FuncBodyExpr.ImmutableVarDecl(GColour(place.Colour), source_token_name, Some(source_token_peek(n)))//$<#$ty $source_token_name = $(source_token_peek(n));#>
+                                          | _                             => FuncBodyExpr.Empty()
                                         }
                                           
                                       }
-            | _                     => ""
+            | _                     => FuncBodyExpr.Empty()
           }
           
         } else
         {
-          ""
+          FuncBodyExpr.Empty()
         }
       }
     }

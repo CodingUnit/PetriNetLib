@@ -26,6 +26,7 @@ namespace PetriNetLib
   }
   
   
+  [Record]
   public class GColour
   {
     gen : GenColour;
@@ -44,7 +45,13 @@ namespace PetriNetLib
     | Sequence { seq : list[FuncBodyExpr]}
     | Lock { places : list[GPlace]}
     | Unlock { places : list[GPlace]}
+    | VarRef { name : string }
+    | ImmutableVarDeclSimple { ty : PExpr; name : string; init : option[FuncBodyExpr]}
+    | ImmutableVarDecl { ty : GColour; name : string; init : option[FuncBodyExpr]}
+    | FuncExec { name : string }
     | GetTokensExpr { expr : PExpr}
+    | PeekIndexed { name : string; arc_name : string; }
+    | Peek { ty : GColour; name : string}
     | AddTokensExpr { expr : PExpr}
     | CombinedExpr  {expr : PExpr}
     | Action {name : string; parms : list[PExpr];}
