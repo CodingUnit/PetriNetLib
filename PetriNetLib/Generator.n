@@ -208,7 +208,7 @@ namespace PetriNetLib
 
 
 
-    CreatePlaces() : string
+    CreatePlaces() : void
     {
       mutable gen_idx = 0;
       foreach (p in places)
@@ -220,11 +220,7 @@ namespace PetriNetLib
         }
       }
 
-      def enums = places.Where(x => !x.IsFuncPlace).Map(x => $<#pl_$(x.Name) = 0x$((1 << x.gen_idx).ToString("X"))#>);
-      $<#typedef enum
-         {
-           ..$(enums;",\n")
-         } tplace;#>
+      
     }
 
     CreateFuncPlace(place : GenPlace) : string
@@ -943,27 +939,27 @@ namespace PetriNetLib
 
 
 
-    Define(decl : IEnumerable[string], pub : bool = false, first : bool = false) : void
-    {
-      if (pub)
-      {
-        if (first)
-          first_public_fields.AddRange(decl); else
-          public_fields.AddRange(decl);          //public_fields ::= "\n"
-      } else
-      {
-        private_fields.AddRange(decl);
-      }
-    }
+    //Define(decl : IEnumerable[string], pub : bool = false, first : bool = false) : void
+    //{
+    //  if (pub)
+    //  {
+    //    if (first)
+    //      first_public_fields.AddRange(decl); else
+    //      public_fields.AddRange(decl);          //public_fields ::= "\n"
+    //  } else
+    //  {
+    //    private_fields.AddRange(decl);
+    //  }
+    //}
 
-    Define(decl : string) : void
-    {
-      private_fields.Add(decl);
-      //private_fields ::= "\n"
-      //def ty = CTree.Type.type_lens >> CComplexType.Class.decls_lens;
-      //main_class = ty.Update(main_class, x => x.Append(decl));
-      //(main_class.type :> CComplexType.Class).
-    }
+    //Define(decl : string) : void
+    //{
+    //  private_fields.Add(decl);
+    //  //private_fields ::= "\n"
+    //  //def ty = CTree.Type.type_lens >> CComplexType.Class.decls_lens;
+    //  //main_class = ty.Update(main_class, x => x.Append(decl));
+    //  //(main_class.type :> CComplexType.Class).
+    //}
 
 
     public PhaseOne() : void
@@ -981,15 +977,11 @@ namespace PetriNetLib
         colours.Add(c.Key, c.Value |> GenColour(_, this))
       }
 
-      def places_enum = CreatePlaces();
-      Define(places_enum);
-      def sets = colours.Values.OrderBy(x => x.Colour.pos).Map(x => CreateColourSet(x)).Filter(_ != null).Select(_ + "\n");
-      Define(sets, true, true);//typebuilder.DefineNestedTypeWithSource(m).Compile();
-      def places = places.Map(CreatePlace).Filter(_ != null);      
-
-
-
-      //CreateStepMethod();
+      CreatePlaces();
+      //Define(places_enum);
+      //def sets = colours.Values.OrderBy(x => x.Colour.pos).Map(x => CreateColourSet(x)).Filter(_ != null).Select(_ + "\n");
+      //Define(sets, true, true);//typebuilder.DefineNestedTypeWithSource(m).Compile();
+      //def places = places.Map(CreatePlace).Filter(_ != null);            
 
       CreateEvents();
       //CreateTranQueue();
@@ -997,7 +989,7 @@ namespace PetriNetLib
       CreateStartMethod();
 
 
-      Define(places + ["\n"])//_ = typebuilder.DefineWithSource(m);
+      //Define(places + ["\n"])//_ = typebuilder.DefineWithSource(m);
     }
 
     CreateMainDefs() : void
@@ -1030,15 +1022,14 @@ namespace PetriNetLib
       def out_ports = places.Where(x => x.port is Some(PortType.Out) || x.port is Some(PortType.InOut)).MapToList(CreateOutPlace);
       def globrefs = model.glob_refs.KeyValuePairs.MapToList(CreateGlobRef);
       CreateCons();
-      Define(globrefs);//_ = typebuilder.DefineWithSource(m);
-      Define(methods + req_methods, true);
-      Define(private_methods);
-      Define(decls);
+      //Define(globrefs);//_ = typebuilder.DefineWithSource(m);
+      //Define(methods + req_methods, true);
+      //Define(private_methods);
+      //Define(decls);
       when (model.IsTimed) CreateTimeMethods();
-      Define(ext, true);
-      Define("\n" :: in_ports + out_ports, true);
+      //Define(ext, true);
+      //Define("\n" :: in_ports + out_ports, true);
       System.IO.File.WriteAllText(file, main_class)
-      //typebuilder.Compile()
     }
   }
 }

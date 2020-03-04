@@ -18,6 +18,22 @@ namespace PetriNetLib
   {
   }
   
+  [Record]
+  public class LinearGPlace : GPlace
+  {
+    public Name : string;
+    public Idx : int;
+        
+    public Decl : string * int
+    {
+      [Memoize]
+      get
+      {
+        ($<#pl_$(Name)#>, 1 << Idx)
+      }
+    }
+  }
+  
   public class GTran
   {
     public name : string;
@@ -40,9 +56,15 @@ namespace PetriNetLib
     }
   }
   
+  public variant GDecls
+  {
+    | EnumBitMask { vals : list[string * int]}  
+  }
+  
   public variant FuncBodyExpr
   {
     | Sequence { seq : list[FuncBodyExpr]}
+    | Empty
     | Lock { places : list[GPlace]}
     | Unlock { places : list[GPlace]}
     | VarRef { name : string }

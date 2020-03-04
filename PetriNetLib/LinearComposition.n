@@ -1,0 +1,45 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace PetriNetLib
+{
+  /// <summary>
+  /// Description of LinearComposition.
+  /// </summary>
+  class LinearComposition : ProcessComposition
+  {
+    model : OutModel;
+    
+    gen : Generator;
+    
+    places : array[GenPlace]
+    {
+      get
+      {
+        gen.Places
+      }
+    }
+    
+    CreatePlaces() : list[GPlace]
+    {
+      places.Where(x => !x.IsFuncPlace).Map(x => LinearGPlace(x.Name, x.gen_idx));
+      //$<#pl_$(x.Name) = 0x$((1 << x.gen_idx).ToString("X"))#>
+      //$<#typedef enum
+      //   {
+      //     ..$(enums;",\n")
+      //   } tplace;#>
+    }
+    
+    public Process(model : OutModel) : GenModel
+    {
+      def places = CreatePlaces();
+      null
+    }
+  }
+}
