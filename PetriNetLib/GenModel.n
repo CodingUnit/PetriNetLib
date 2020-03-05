@@ -24,23 +24,66 @@ namespace PetriNetLib
     public Name : string;
     public Idx : int;
         
-    public Decl : string * int
+    public Decl : GClassDecl.EnumBitMask
     {
       [Memoize]
       get
       {
-        ($<#pl_$(Name)#>, 1 << Idx)
+        GClassDecl.EnumBitMask($<#pl_$(Name)#>, 1 << Idx)
+      }
+    }
+    
+    public Decls : list[GClassDecl]
+    {
+      get
+      {
+        []
       }
     }
   }
   
+  [Record]
   public class GTran
   {
     public name : string;
     
-    public body : FuncBodyExpr;
+    public body : FuncBodyExpr
+    {
+      get
+      {
+        null
+      }
+    }
   }
   
+  [Record]
+  public variant GClassDecl
+  {
+    | EnumBitMask {name : string; val : int}
+  }
+  
+  [Record]
+  public class LinearGTran : GTran
+  {
+    public Idx : int;
+    
+    public Decl : GClassDecl.EnumBitMask
+    {
+      [Memoize]
+      get
+      {
+        GClassDecl.EnumBitMask("tr_$(x.ExecName)", (1 << Idx))
+      }
+    }
+    
+    public Decls : list[GClassDecl]
+    {
+      get
+      {
+        []
+      }
+    }
+  }
   
   [Record]
   public class GColour

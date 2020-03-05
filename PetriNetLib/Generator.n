@@ -994,12 +994,12 @@ namespace PetriNetLib
 
     CreateMainDefs() : void
     {
-      extern_fields.Add(if (model.IsTimed) <##include "timed_petrinet.h"
-      #> else <##include "petrinet.h"
-      #>);
-      extern_fields.Add(<#using namespace petrinet_lib;
-      #>);
-      private_fields.Add($"typedef u32 ($Name::*tran_func_type)();");
+      //extern_fields.Add(if (model.IsTimed) <##include "timed_petrinet.h"
+      //#> else <##include "petrinet.h"
+      //#>);
+      //extern_fields.Add(<#using namespace petrinet_lib;
+      //#>);
+      //private_fields.Add($"typedef u32 ($Name::*tran_func_type)();");
       //
     }
 
