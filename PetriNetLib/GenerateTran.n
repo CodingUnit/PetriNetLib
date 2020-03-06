@@ -255,15 +255,15 @@ namespace PetriNetLib
     
     CreateTransitions() : void
     {
-      def func = $<#      
-      tran_func get_transition(int n) const
-	    {
-		    return *(tran_func *)&tran_funcs[n];
-	    }
-      #>;
-      protected_fields.Add(func);
+     // def func = $<#      
+     // tran_func get_transition(int n) const
+	    //{
+		   // return *(tran_func *)&tran_funcs[n];
+	    //}
+     // #>;
+     // protected_fields.Add(func);
       def tran = EnumTransitions.OrderBy(x => x.Priority);
-      def restran = tran.Select((x, i) => $<#tr_$(x.ExecName) = 0x$((1 << i).ToString("X"))#>);
+      def restran = tran.Select((x, i) => LinearGTran(x.ExecName, i))//$<#tr_$(x.ExecName) = 0x$((1 << i).ToString("X"))#>);
       
       
       

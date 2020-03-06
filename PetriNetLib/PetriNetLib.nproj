@@ -110,6 +110,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Composition.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="GenType.n">
       <SubType>Code</SubType>
     </Compile>
@@ -147,6 +150,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="InArcBinding.n">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="LinearComposition.n">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="OutArcProcess.n">

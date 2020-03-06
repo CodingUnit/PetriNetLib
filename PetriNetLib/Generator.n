@@ -1007,7 +1007,7 @@ namespace PetriNetLib
     public PhaseTwo() : void
     {
       //CreateDummyMethod();
-      CreateMainDefs();
+      //CreateMainDefs();
 
       CreateTransitions();      
       //def methods = CreateGroupTransitions();
