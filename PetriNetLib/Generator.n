@@ -465,17 +465,12 @@ namespace PetriNetLib
       null
     }
     
-    CreateGlobRef(name : string, val : PExpr) : string
-    {
-      //def ty = Typer(gen.TypingMethod);
-      //def te = ty.TypeExpr(val);
-
-      def type = TypeOfExpr(val);//ConvType(te);
-      def val = ConvExpr(val, true);
-      //<[decl: mutable $(name : usesite) : $(te.ty : typed) = $val]>
-      //("decl: $(type : type) $name = $val;")
-      $"$type $name = $val;"
-    }
+    //CreateGlobRef(name : string, val : PExpr) : string
+    //{
+    //  def type = TypeOfExpr(val);//ConvType(te);
+    //  def val = ConvExpr(val, true);
+    //  $"$type $name = $val;"
+    //}
 
     CreateVals(expr : PExpr) : string
     {
@@ -670,7 +665,7 @@ namespace PetriNetLib
       }
     }    
 
-    CreateInitMarking(place : GenPlace) : string
+    CreateInitMarking(place : GenPlace) : GInitValue
     {
       def combine(e1, e2)
       {
@@ -714,64 +709,66 @@ namespace PetriNetLib
       if (place.init_mark == null) null else
       {
         def markexpr = fold(place.init_mark);
-        def mark = markexpr |> ConvExprPlaceCtx(_, place.Colour, false);
-        def name = place.Name;
+        //def mark = markexpr |> ConvExprPlaceCtx(_, place.Colour, false);
+        def mark = null;
+        //def name = place.Name;
 
 
-        def mark = if (place.IsTimed) 
-                    {
-                      match (place.DestContainerType)
-                      {
-                        | TDestCont.MinusSingle
-                        | TDestCont.Single     
-                        | TDestCont.ZeroSingle
-                        | TDestCont.Var         => place.InitMarkWithoutTime |> ConvExpr(_, false)
-                        | _                     => $"add_time($mark, 0);"
-                      }
+        //def mark = if (place.IsTimed) 
+        //            {
+        //              match (place.DestContainerType)
+        //              {
+        //                | TDestCont.MinusSingle
+        //                | TDestCont.Single     
+        //                | TDestCont.ZeroSingle
+        //                | TDestCont.Var         => place.InitMarkWithoutTime |> ConvExpr(_, false)
+        //                | _                     => $"add_time($mark, 0);"
+        //              }
 
-                    } else mark;
+        //            } else mark;
 
-        def time = if (place.IsTimed) 
-                    {
-                      match (place.DestContainerType)
-                      {
-                        | TDestCont.MinusSingle
-                        | TDestCont.Single     
-                        | TDestCont.ZeroSingle
-                        | TDestCont.Var         => $"\n$(name)_time = $(place.InitTime);"
-                        | _                     => ""
-                      }
-                    } else "";
+        //def time = if (place.IsTimed) 
+        //            {
+        //              match (place.DestContainerType)
+        //              {
+        //                | TDestCont.MinusSingle
+        //                | TDestCont.Single     
+        //                | TDestCont.ZeroSingle
+        //                | TDestCont.Var         => $"\n$(name)_time = $(place.InitTime);"
+        //                | _                     => ""
+        //              }
+        //            } else "";
         //<[ $(name : usesite).Add($mark)]>
-        if ((place.port is Some(PortType.In) && place.Req)
-             || place.port is Some(PortType.Out) 
-             || place.port is Some(PortType.InOut) 
-          || place.IsFuncPlace) "" else
+        //if ((place.port is Some(PortType.In) && place.Req)
+        //     || place.port is Some(PortType.Out) 
+        //     || place.port is Some(PortType.InOut) 
+        //  || place.IsFuncPlace) "" else
           if (markexpr is <[]>)
           {
             match (place.DestContainerType)
             {
-              | TDestCont.MinusSingle => $"$(name) = -1;"
+              | TDestCont.MinusSingle => GInitValue.Val(-1)//$"$(name) = -1;"
               | TDestCont.Single      => if (place.IsUnit)
                                          {
-                                           $"$(name) = 0;"
-                                         } else $"$(name)_flag = false;"
-              | TDestCont.ZeroSingle  => $"$(name) = 0;"
+                                           GInitValue.Val(0)//$"$(name) = 0;"
+                                         } else GInitValue.Flag(false);//$"$(name)_flag = false;"
+              | TDestCont.ZeroSingle  => GInitValue.Val(0)//$"$(name) = 0;"
               | _                     => mark
             }
-          } else 
-            match (place.DestContainerType)
-            {
+          } else mark
+          //else 
+          //  match (place.DestContainerType)
+          //  {
 
-              | TDestCont.Single when place.IsUnit => $<#$name = $mark;#>
-              | TDestCont.Single                   => $<#$name = $mark;
-                                       $(name)_flag = true;$time#>;
-              | TDestCont.Var
-              | TDestCont.ZeroSingle
-              | TDestCont.MinusSingle
-                                  => $"$name = $mark;$time"
-              | _                     => $"$name.add($mark);"
-            }
+          //    | TDestCont.Single when place.IsUnit => mark//$<#$name = $mark;#>
+          //    | TDestCont.Single                   => mark//$<#$name = $mark;
+          //                             $(name)_flag = true;$time#>;
+          //    | TDestCont.Var
+          //    | TDestCont.ZeroSingle
+          //    | TDestCont.MinusSingle
+          //                        => $"$name = $mark;$time"
+          //    | _                     => $"$name.add($mark);"
+          //  }
 
       }
     }
@@ -789,33 +786,33 @@ namespace PetriNetLib
 
     CreateCons() : void
     {
-      def marking = places.MapToList(CreateInitMarking).Filter(x => x != null && !x.IsEmpty());
+      //def marking = places.MapToList(CreateInitMarking).Filter(x => x != null && !x.IsEmpty());
 
-      def cont = places.Where(x => x.IsContainer && !x.IsFuncPlace);
+      //def cont = places.Where(x => x.IsContainer && !x.IsFuncPlace);
       
-      def init_cont(x)
-      {
-        def name = x.Name;
-        def len = x.Len;
-        def type = x.Colour.DestType;
-        def elem_size = $"sizeof($type)";
-        $"$name.init($len, $elem_size);"
-      }
+      ////def init_cont(x)
+      ////{
+      ////  def name = x.Name;
+      ////  def len = x.Len;
+      ////  def type = x.Colour.DestType;
+      ////  def elem_size = $"sizeof($type)";
+      ////  $"$name.init($len, $elem_size);"
+      ////}
       
-      def init = cont.Map(init_cont);
-      public_fields.Add(if (model.IsTimed || model.IsHaveImmediateTransitions) 
-      $<#$Name(int time_step = 15) : $Base(time_step)
-      {
-        ..$(init; "\n")
-        ..$(marking;"\n")
-        ..$(cons_expr;"\n")
-      }#>; else 
-      $<#$Name(int time_step = 15) 
-      {
-        ..$(init; "\n")
-        ..$(marking;"\n")
-        ..$(cons_expr;"\n")
-      }#>);//<[decl: public this() { {..$marking} {..$cons_expr} }]>;
+      ////def init = cont.Map(init_cont);
+      //public_fields.Add(if (model.IsTimed || model.IsHaveImmediateTransitions) 
+      //$<#$Name(int time_step = 15) : $Base(time_step)
+      //{
+      //  ..$(init; "\n")
+      //  ..$(marking;"\n")
+      //  ..$(cons_expr;"\n")
+      //}#>; else 
+      //$<#$Name(int time_step = 15) 
+      //{
+      //  ..$(init; "\n")
+      //  ..$(marking;"\n")
+      //  ..$(cons_expr;"\n")
+      //}#>);
     }
 
     CreateTimeMethods() : void
@@ -1009,27 +1006,27 @@ namespace PetriNetLib
       //CreateDummyMethod();
       //CreateMainDefs();
 
-      CreateTransitions();      
+      //CreateTransitions();      
       //def methods = CreateGroupTransitions();
-      def private_methods = EnumTransitions.Where(x => !x.IsPartOfFuncPlace && !x.PartOfGroup.HasValue).MapToList(CreateTran);
-      def methods = places.Where(x => x.IsFuncPlace).MapToList(CreateFuncPlace);
-      def req_methods = places.Where(x => x.Req).Map(CreateReqPlace);
-      def vals = model.ml_decls.Map(CreateVals).Filter(_ != null);
-      Define(vals + ["\n"]);//_ = typebuilder.DefineWithSource(m);
-      def decls = funcs.Map(CreateDecl).Filter(_ != null);
-      def (ext, decls) = decls.Partition(x => x.StartsWith("function"));
-      def in_ports = places.Where(x => x.port is Some(PortType.In) && !x.Req).MapToList(CreateInPortPlace);
-      def out_ports = places.Where(x => x.port is Some(PortType.Out) || x.port is Some(PortType.InOut)).MapToList(CreateOutPlace);
-      def globrefs = model.glob_refs.KeyValuePairs.MapToList(CreateGlobRef);
-      CreateCons();
+      //def private_methods = EnumTransitions.Where(x => !x.IsPartOfFuncPlace && !x.PartOfGroup.HasValue).MapToList(CreateTran);
+      //def methods = places.Where(x => x.IsFuncPlace).MapToList(CreateFuncPlace);
+      //def req_methods = places.Where(x => x.Req).Map(CreateReqPlace);
+      //def vals = model.ml_decls.Map(CreateVals).Filter(_ != null);
+      //Define(vals + ["\n"]);//_ = typebuilder.DefineWithSource(m);
+      //def decls = funcs.Map(CreateDecl).Filter(_ != null);
+      //def (ext, decls) = decls.Partition(x => x.StartsWith("function"));
+      //def in_ports = places.Where(x => x.port is Some(PortType.In) && !x.Req).MapToList(CreateInPortPlace);
+      //def out_ports = places.Where(x => x.port is Some(PortType.Out) || x.port is Some(PortType.InOut)).MapToList(CreateOutPlace);
+      //def globrefs = model.glob_refs.KeyValuePairs.MapToList(CreateGlobRef);
+      //CreateCons();
       //Define(globrefs);//_ = typebuilder.DefineWithSource(m);
       //Define(methods + req_methods, true);
       //Define(private_methods);
       //Define(decls);
-      when (model.IsTimed) CreateTimeMethods();
+      //when (model.IsTimed) CreateTimeMethods();
       //Define(ext, true);
       //Define("\n" :: in_ports + out_ports, true);
-      System.IO.File.WriteAllText(file, main_class)
+      //System.IO.File.WriteAllText(file, main_class)
     }
   }
 }

@@ -155,6 +155,9 @@
     <Compile Include="LinearComposition.n">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="LinearTree.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="OutArcProcess.n">
       <SubType>Code</SubType>
     </Compile>

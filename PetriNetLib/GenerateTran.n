@@ -240,7 +240,7 @@ namespace PetriNetLib
         }
     }
     
-    EnumTransitions : list[GenTran]
+    public EnumTransitions : list[GenTran]
     {
       [Memoize]
       get
@@ -262,39 +262,39 @@ namespace PetriNetLib
 	    //}
      // #>;
      // protected_fields.Add(func);
-      def tran = EnumTransitions.OrderBy(x => x.Priority);
-      def restran = tran.Select((x, i) => LinearGTran(x.ExecName, i))//$<#tr_$(x.ExecName) = 0x$((1 << i).ToString("X"))#>);
+      //def tran = EnumTransitions.OrderBy(x => x.Priority);
+      //def restran = tran.Select((x, i) => LinearGTran(x.ExecName, i))//$<#tr_$(x.ExecName) = 0x$((1 << i).ToString("X"))#>);
       
       
       
-      private_fields.Add($<#
-      typedef enum 
-      {
-        ..$(restran;",\n")
-      } ttran;#>);
+      //private_fields.Add($<#
+      //typedef enum 
+      //{
+      //  ..$(restran;",\n")
+      //} ttran;#>);
       
-      def lock_places = tran.Select(x => if (x == null) "(tplace)0" else x.PlacesParticipateMask);
+      //def lock_places = tran.Select(x => if (x == null) "(tplace)0" else x.PlacesParticipateMask);
       //def next = tran.Select(x => if (x == null) "(ttran)0" else x.NextTran |> TranToMask);
-      def can_rep = tran.Select((x, i) => if (x == null) 1 << i else if (x.CompleteTran) 1 << i else 0);
+      //def can_rep = tran.Select((x, i) => if (x == null) 1 << i else if (x.CompleteTran) 1 << i else 0);
       //def can_rep = can_rep.Fold(0, _ | _);
       //def size = tran.Length;
       
-      private_fields.Add($<#const tran_func_type *tran_funcs;
-      #>);
+      //private_fields.Add($<#const tran_func_type *tran_funcs;
+      //#>);
       
-      def init = tran.Select(x => $<#&$Name::$(x.ExecName)#>);//..$(tran;",\n");
-      def init = $<#static const tran_func_type tr_funcs[] = {..$(init; ",\n")};
-                   tran_funcs = tr_funcs; 
-                  #>;
+      //def init = tran.Select(x => $<#&$Name::$(x.ExecName)#>);//..$(tran;",\n");
+      //def init = $<#static const tran_func_type tr_funcs[] = {..$(init; ",\n")};
+      //             tran_funcs = tr_funcs; 
+      //            #>;
                   
-      def lock_init = $<#static const tplace tr_lock[] = {..$(lock_places; ",\n")};
-                         tran_lock = tr_lock;
-                       #>;
+      //def lock_init = $<#static const tplace tr_lock[] = {..$(lock_places; ",\n")};
+      //                   tran_lock = tr_lock;
+      //                 #>;
                        
       //def next_tr = $<#static const ttran next_tr[] = {..$(next; ",\n")};
       //                 next_tran = next_tr;
       //                #>;
-      cons_expr.AddRange(init :: lock_init :: []);
+      //cons_expr.AddRange(init :: lock_init :: []);
       
       //private_fields.Add($<#u32 can_repeat(u32 tr) const
       //{
@@ -324,35 +324,36 @@ namespace PetriNetLib
 		//	}
 		//}#>);
       // все переходы у которых во входных позициях есть фишки
-      def tran = transitions.Where(x => x.IsUnnamed && !x.IsTimed && x.InputGenPlaces.All(x => x.IsHaveInitMarking && x.port.IsNone));
-      def tran = tran |> TranMask;
-      def tran = $<#tran_ena($tran);#>;
-      cons_expr.Add(tran);
+      //def tran = transitions.Where(x => x.IsUnnamed && !x.IsTimed && x.InputGenPlaces.All(x => x.IsHaveInitMarking && x.port.IsNone));
+      //def tran = tran |> TranMask;
+      //def tran = $<#tran_ena($tran);#>;
+      //cons_expr.Add(tran);
     }
     
     CreateTran(tran : GenTran) : string
     {
-      def name = tran.ExecName;
+    //  def name = tran.ExecName;
       
-      if (tran.IsFuncTran)
-      {
-        def body = tran.Body;      
-        def parms = tran.InArcProcess.Map(x => $"$(x.place.Colour.VarSpec)$(x.bind_var)");
-        $<#
-        bool $name(..$(parms; ","))
-            {
-              $body
-            }#>
-      } else
-      {
-        def body = tran.Body;
-        $<#
-        bool $name()
-            {
-              $body
-            }#>//)
-        }
+    //  if (tran.IsFuncTran)
+    //  {
+    //    def body = tran.Body;      
+    //    def parms = tran.InArcProcess.Map(x => $"$(x.place.Colour.VarSpec)$(x.bind_var)");
+    //    $<#
+    //    bool $name(..$(parms; ","))
+    //        {
+    //          $body
+    //        }#>
+    //  } else
+    //  {
+    //    def body = tran.Body;
+    //    $<#
+    //    bool $name()
+    //        {
+    //          $body
+    //        }#>//)
+    //    }
+    //}
+      null
     }
-
   }
 }

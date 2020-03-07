@@ -18,29 +18,6 @@ namespace PetriNetLib
   {
   }
   
-  [Record]
-  public class LinearGPlace : GPlace
-  {
-    public Name : string;
-    public Idx : int;
-        
-    public Decl : GClassDecl.EnumBitMask
-    {
-      [Memoize]
-      get
-      {
-        GClassDecl.EnumBitMask($<#pl_$(Name)#>, 1 << Idx)
-      }
-    }
-    
-    public Decls : list[GClassDecl]
-    {
-      get
-      {
-        []
-      }
-    }
-  }
   
   [Record]
   public class GTran
@@ -60,30 +37,17 @@ namespace PetriNetLib
   public variant GClassDecl
   {
     | EnumBitMask {name : string; val : int}
+    | Field       { name : string; type : PExpr; val : option[PExpr] }
   }
   
   [Record]
-  public class LinearGTran : GTran
+  public class GGlobRef
   {
-    public Idx : int;
-    
-    public Decl : GClassDecl.EnumBitMask
-    {
-      [Memoize]
-      get
-      {
-        GClassDecl.EnumBitMask("tr_$(x.ExecName)", (1 << Idx))
-      }
-    }
-    
-    public Decls : list[GClassDecl]
-    {
-      get
-      {
-        []
-      }
-    }
+    public Name : string;
+    public Val  : option[PExpr];
+    public Type : PExpr;
   }
+  
   
   [Record]
   public class GColour
@@ -102,6 +66,22 @@ namespace PetriNetLib
   public variant GDecls
   {
     | EnumBitMask { vals : list[string * int]}  
+    | Field       { name : string; type : PExpr; value : option[PExpr]} 
+  }
+
+  public variant GInitValue
+  {
+    | Val {val : int}
+    | Flag { val : bool}
+    | Multiset
+  }
+  
+  public variant GInitMarking
+  {
+    | Empty
+    | Value { init_value : GInitValue;}
+    
+    place : GPlace;
   }
   
   public variant FuncBodyExpr
@@ -141,7 +121,9 @@ namespace PetriNetLib
   public class GenModel
   {
     public places          : list[GPlace];
+    public init_marking    : list[GInitMarking];
     public tran            : list[GTran];
+    public glob_refs       : list[GGlobRef];
     public colours         : list[GColour];
     public funcs           : list[PetriNetFunc];
     public add_place_funcs : list[PetriNetFunc];

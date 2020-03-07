@@ -1,0 +1,75 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace PetriNetLib
+{
+  /// <summary>
+  /// Description of LinearTree.
+  /// </summary>
+  public class LinearGlobRef : GGlobRef
+  {
+    public Decl : GClassDecl.Field
+    {
+      [Memoize]
+      get
+      {
+        GClassDecl.Field(Name, Type, Val)
+        //$"$type $name = $val;"
+      }
+    }
+  }
+  
+  [Record]
+  public class LinearGPlace : GPlace
+  {
+    public Name : string;
+    public Idx : int;
+        
+    public Decl : GClassDecl.EnumBitMask
+    {
+      [Memoize]
+      get
+      {
+        GClassDecl.EnumBitMask($<#pl_$(Name)#>, 1 << Idx)
+      }
+    }
+    
+    public Decls : list[GClassDecl]
+    {
+      get
+      {
+        []
+      }
+    }
+  }
+    
+  [Record]
+  public class LinearTran : GTran
+  {
+    public Idx : int;
+    
+    public Decl : GClassDecl.EnumBitMask
+    {
+      [Memoize]
+      get
+      {
+        GClassDecl.EnumBitMask("tr_$(x.ExecName)", (1 << Idx))
+      }
+    }
+    
+    public Decls : list[GClassDecl]
+    {
+      get
+      {
+        []
+      }
+    }
+  }
+  
+}
