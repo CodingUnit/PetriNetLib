@@ -72,4 +72,8 @@ namespace PetriNetLib
     }
   }
   
+  public class LinearInitMarking : GInitMarking
+  {
+    
+  }
 }
