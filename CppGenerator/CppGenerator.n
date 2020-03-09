@@ -22,6 +22,51 @@ namespace PetriNetLib
       this.model = model;
     }
     
+    net_name : string
+    {
+      get
+      {
+        ""
+      }
+    }
+    
+    text_colours : list[string]
+    {
+      get
+      {
+        []
+      }
+    }
+    
+    text_places : list[string]
+    {
+      get
+      {
+        []
+      }
+    }
+    
+    Result : string    
+    {
+      get
+      {
+        <#
+        class $net_name
+        {
+          ..$(text_colours;"\n")
+          ..$(text_places;"\n")
+          public:
+            
+            void transition()
+            {
+              ..$(transitions;"\n")
+            }
+        };
+        #>
+      }
+    }
+    
+    
     public Generate() : void
     {
       //  // создаем типы генерации из цветов
