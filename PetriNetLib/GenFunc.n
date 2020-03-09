@@ -105,46 +105,46 @@ namespace PetriNetLib
       }
     }
 
-    public static FuncInitDecl(name : string, parms : list[GenColour], ret : option[string]) : string
-    {
-      def parms = parms.Map(x => x.ParmType);
-      def ret = if (ret is Some(r)) r else "void";
-        def func = $<#$ret(*func)(..$(parms; ","))#>;          //void( function_hal::*self_func_type )( );
-        //def parms = if (parms.IsEmpty()) "" else $<#, ..$(parms; ",")#>;
-        //def funct = $<#$ret(T::*func)(T *obj$parms)#>;
-        $<#void init_$name($func)
-          {
-            $name = func;
-          }
+    //public static FuncInitDecl(name : string, parms : list[GenColour], ret : option[string]) : string
+    //{
+    //  def parms = parms.Map(x => x.ParmType);
+    //  def ret = if (ret is Some(r)) r else "void";
+    //    def func = $<#$ret(*func)(..$(parms; ","))#>;          //void( function_hal::*self_func_type )( );
+    //    //def parms = if (parms.IsEmpty()) "" else $<#, ..$(parms; ",")#>;
+    //    //def funct = $<#$ret(T::*func)(T *obj$parms)#>;
+    //    $<#void init_$name($func)
+    //      {
+    //        $name = func;
+    //      }
          
-          #>
-          /*
-           template <class T>
-          void init_$name(T *obj, $funct)
-          {
-            $name = function(obj, func);
-          }
-          */
-    }
+    //      #>
+    //      /*
+    //       template <class T>
+    //      void init_$name(T *obj, $funct)
+    //      {
+    //        $name = function(obj, func);
+    //      }
+    //      */
+    //}
     
-    public static FuncTypedefDecl(name : string, parms : list[GenColour], ret : string) : string
-    {
-        def parms = parms.Map(x => x.ParmType);
-        //def parms = if (parms.IsEmpty()) "" else $<#..$(parms; ",")#>;
-        $<#$ret (*$name)(..$(parms; ","))#>
-    }
+    //public static FuncTypedefDecl(name : string, parms : list[GenColour], ret : string) : string
+    //{
+    //    def parms = parms.Map(x => x.ParmType);
+    //    //def parms = if (parms.IsEmpty()) "" else $<#..$(parms; ",")#>;
+    //    $<#$ret (*$name)(..$(parms; ","))#>
+    //}
     
-    public FuncTypedef : string
-    {
-      [Memoize]
-      get
-      {
-        def ret = if (IsVoid) "void" else ReturnType;
-        def parms = ParmsColour.Map(x => x.ParmType);
-        //def parms = if (parms.IsEmpty()) "" else $<#..$(parms; ",")#>;
-        $<#$ret (*$Name)(..$(parms; ","))#>
-      }
-    }
+    //public FuncTypedef : string
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    def ret = if (IsVoid) "void" else ReturnType;
+    //    def parms = ParmsColour.Map(x => x.ParmType);
+    //    //def parms = if (parms.IsEmpty()) "" else $<#..$(parms; ",")#>;
+    //    $<#$ret (*$Name)(..$(parms; ","))#>
+    //  }
+    //}
     
     //public static FuncTypedef() : string
     //{
@@ -156,14 +156,14 @@ namespace PetriNetLib
     //    $<#$ret (*Name)(..$(parms; ","))#>
     //  }
     //}
-    public FuncSetDecl : string
-    {
-      [Memoize]
-      get
-      {
-        FuncInitDecl(Name, ParmsColour, if (IsVoid) None() else Some(ReturnType))
-      }
-    }
+    //public FuncSetDecl : string
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    FuncInitDecl(Name, ParmsColour, if (IsVoid) None() else Some(ReturnType))
+    //  }
+    //}
     
     public Prefix : string
     {
@@ -177,58 +177,58 @@ namespace PetriNetLib
       }
     }
 
-    public IsVoid : bool
-    {
-      [Memoize]
-      get
-      {
-        ReturnType == "void"
-      }
-    }
+    //public IsVoid : bool
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    ReturnType == "void"
+    //  }
+    //}
     
-    public ReturnType : string
-    {
-      [Memoize]
-      get
-      {
-        match (expr)
-        {
-          | <[ def $(_ : usesite)(..$_) { ..$_ } ]> =>
-              //def ty = Typer(gen.TypingMethod);
-              match (gen.Typer.TypeExpr(expr))
-              {
-                | TExpr.DefFunctionsIn(h :: _, _) => h.ReturnType |> gen.ConvType
-                | _                               => throw InvalidOperationException()
-              }
+    //public ReturnType : string
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    match (expr)
+    //    {
+    //      | <[ def $(_ : usesite)(..$_) { ..$_ } ]> =>
+    //          //def ty = Typer(gen.TypingMethod);
+    //          match (gen.Typer.TypeExpr(expr))
+    //          {
+    //            | TExpr.DefFunctionsIn(h :: _, _) => h.ReturnType |> gen.ConvType
+    //            | _                               => throw InvalidOperationException()
+    //          }
 
-          | <[ def $(_ : usesite)(..$_) : $t { ..$_ } ]> => t.ToString()
-          | _                                            => throw InvalidOperationException()
-        }
+    //      | <[ def $(_ : usesite)(..$_) : $t { ..$_ } ]> => t.ToString()
+    //      | _                                            => throw InvalidOperationException()
+    //    }
 
 
-      }
-    }
+    //  }
+    //}
 
-    public Decl : string
-    {
-      [Memoize]
-      get
-      {
-        def ret = ReturnType;
-        def expr = Body.Map(gen.ConvExpr(_, true));
-        def ctx = gen.ReadCtxVar();
-        def ctx = if (!ctx.IsEmpty()) $<#..$(ctx; ",")
-        #> else "";
-        def (last, expr) = expr.PartitionLast();
-        def parms = Parms.Map(gen.ConvParm);
-        def n = Name;
-        $<#$ret $n(..$(parms; ","))
-          {$ctx..$(expr;";\n")
-            return $last;
-          }
-          #>
-      }
-    }
+    //public Decl : string
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    def ret = ReturnType;
+    //    def expr = Body.Map(gen.ConvExpr(_, true));
+    //    def ctx = gen.ReadCtxVar();
+    //    def ctx = if (!ctx.IsEmpty()) $<#..$(ctx; ",")
+    //    #> else "";
+    //    def (last, expr) = expr.PartitionLast();
+    //    def parms = Parms.Map(gen.ConvParm);
+    //    def n = Name;
+    //    $<#$ret $n(..$(parms; ","))
+    //      {$ctx..$(expr;";\n")
+    //        return $last;
+    //      }
+    //      #>
+    //  }
+    //}
     
     public ParmsCall : list[string]
     {
@@ -247,52 +247,52 @@ namespace PetriNetLib
       }
     }
     
-    public ParmsType : list[string]
-    {
-      [Memoize]
-      get
-      {
-        ParmsColour.Map(_.ParmType)
-      }
-    }
+    //public ParmsType : list[string]
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    ParmsColour.Map(_.ParmType)
+    //  }
+    //}
     
-    public Call(parms : list[PExpr]) : string
-    {
-        match (PrefixType)
-        {
-          | FuncPrefix.Ext        => if (ReturnType == "void") 
-                                     {
-                                       //def ty = if (ParmsType.Length != 0) $<#<..$(ParmsType; ",")>#> else "";
-                                      $<#$(Name)(..$(parms; ","))#>
-                                     }
-                                    else 
-                                    {
-                                      //def ty = ReturnType :: ParmsType;
-                                      $<#$(Name)(..$(parms; ","))#>
-                                    }
-          | FuncPrefix.GetBytes   => //
-                                     def parm = parms.First();// |> gen.ConvExpr(_, false);
-                                     def parmtype = Parms.First().Type.ToString();
-                                     def type = gen.Colours[parmtype];
-                                     if (type.IsComplexType)
-                                     {
-                                       match (parm)
-                                       {
-                                         | <[ $(n : usesite) ]> => $<#$(n).get_bytes()#>
-                                         | e                    => def var = Macros.NewSymbol();
-                                                                   def expr = e |> gen.ConvExprPlaceCtx(_, type, false);
-                                                                   gen.AddCtxVar($<#$parmtype $var = $expr;#>);
-                                                                   $<#$var.get_bytes()#>
-                                       }
-                                    } else
-                                     $<#bytesn((void *)&$(parm), sizeof($(parmtype)))#>
-          | FuncPrefix.GetStruct  => def parm = parms.First();
-                                     $<#(*($ReturnType *)$(parm).get_buf())#>
-          | _                     => 
-            def parms = parms.Map(x => gen.ConvExpr(x, false));
-            $<#$Name(..$(parms; ","))#>
-        }
-    }
+    //public Call(parms : list[PExpr]) : string
+    //{
+    //    match (PrefixType)
+    //    {
+    //      | FuncPrefix.Ext        => if (ReturnType == "void") 
+    //                                 {
+    //                                   //def ty = if (ParmsType.Length != 0) $<#<..$(ParmsType; ",")>#> else "";
+    //                                  $<#$(Name)(..$(parms; ","))#>
+    //                                 }
+    //                                else 
+    //                                {
+    //                                  //def ty = ReturnType :: ParmsType;
+    //                                  $<#$(Name)(..$(parms; ","))#>
+    //                                }
+    //      | FuncPrefix.GetBytes   => //
+    //                                 def parm = parms.First();// |> gen.ConvExpr(_, false);
+    //                                 def parmtype = Parms.First().Type.ToString();
+    //                                 def type = gen.Colours[parmtype];
+    //                                 if (type.IsComplexType)
+    //                                 {
+    //                                   match (parm)
+    //                                   {
+    //                                     | <[ $(n : usesite) ]> => $<#$(n).get_bytes()#>
+    //                                     | e                    => def var = Macros.NewSymbol();
+    //                                                               def expr = e |> gen.ConvExprPlaceCtx(_, type, false);
+    //                                                               gen.AddCtxVar($<#$parmtype $var = $expr;#>);
+    //                                                               $<#$var.get_bytes()#>
+    //                                   }
+    //                                } else
+    //                                 $<#bytesn((void *)&$(parm), sizeof($(parmtype)))#>
+    //      | FuncPrefix.GetStruct  => def parm = parms.First();
+    //                                 $<#(*($ReturnType *)$(parm).get_buf())#>
+    //      | _                     => 
+    //        def parms = parms.Map(x => gen.ConvExpr(x, false));
+    //        $<#$Name(..$(parms; ","))#>
+    //    }
+    //}
     
     public Processed : PExpr
     {

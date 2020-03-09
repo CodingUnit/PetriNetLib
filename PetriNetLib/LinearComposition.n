@@ -28,7 +28,7 @@ namespace PetriNetLib
     
     CreatePlaces() : list[GPlace]
     {
-      places.Where(x => !x.IsFuncPlace).Map(x => LinearGPlace(x.Name, x.gen_idx));
+      places.Where(x => !x.IsFuncPlace).Map(x => LinearGPlace(x.Name, x.Colour, x.gen_idx));
       //$<#pl_$(x.Name) = 0x$((1 << x.gen_idx).ToString("X"))#>
       //$<#typedef enum
       //   {

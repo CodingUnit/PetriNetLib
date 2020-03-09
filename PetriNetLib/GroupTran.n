@@ -103,40 +103,40 @@ namespace PetriNetLib
       }
     }
     
-    public override Body : string
-    {
-      [Memoize]
-      get
-      {
-        def body = gen.CreateGroupTranBody(this);
+    //public override Body : string
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    def body = gen.CreateGroupTranBody(this);
         
-        //def body = gen.CreateTranBody(this);
+    //    //def body = gen.CreateTranBody(this);
           
-          ////def body = TranBody;
-            def places = PlacesParticipateMask;
-            def tr_next = NextTransitions;
-            def tr = if (PartOfGroup is Some(g)) $"tr_GroupTransition$g" else $"tr_$(ExecName)";
-            if (tr_next.IsEmpty())
-            $<#bool res = false;
-                  if (lock($places, $tr))
-                  {
-                    $body;
-                    unlock($places);
-                  }
-                  return res;#> else 
-            $<#bool res = false;
-                  if (lock($places, $tr))
-                  {
-                    $body;
-                    unlock($places);
-                    if (res)
-                    {
-                      ..$(tr_next; "\n")
-                    }
-                  }
-                  return res;#>
-      }
-    }
+    //      ////def body = TranBody;
+    //        def places = PlacesParticipateMask;
+    //        def tr_next = NextTransitions;
+    //        def tr = if (PartOfGroup is Some(g)) $"tr_GroupTransition$g" else $"tr_$(ExecName)";
+    //        if (tr_next.IsEmpty())
+    //        $<#bool res = false;
+    //              if (lock($places, $tr))
+    //              {
+    //                $body;
+    //                unlock($places);
+    //              }
+    //              return res;#> else 
+    //        $<#bool res = false;
+    //              if (lock($places, $tr))
+    //              {
+    //                $body;
+    //                unlock($places);
+    //                if (res)
+    //                {
+    //                  ..$(tr_next; "\n")
+    //                }
+    //              }
+    //              return res;#>
+    //  }
+    //}
     
     public override InputGenPlaces : list[GenPlace]
     {

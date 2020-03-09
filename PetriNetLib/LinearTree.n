@@ -14,12 +14,12 @@ namespace PetriNetLib
   /// </summary>
   public class LinearGlobRef : GGlobRef
   {
-    public Decl : GClassDecl.Field
+    public Decl : GClassDecl
     {
       [Memoize]
       get
       {
-        GClassDecl.Field(Name, Type, Val)
+        GClassDecl.ColourField(Name, Type, Val)
         //$"$type $name = $val;"
       }
     }
@@ -28,15 +28,23 @@ namespace PetriNetLib
   [Record]
   public class LinearGPlace : GPlace
   {
-    public Name : string;
     public Idx : int;
         
-    public Decl : GClassDecl.EnumBitMask
+    public override Decl : GClassDecl
     {
       [Memoize]
       get
       {
         GClassDecl.EnumBitMask($<#pl_$(Name)#>, 1 << Idx)
+      }
+    }
+    
+    public override VarDecl : GClassDecl
+    {
+      [Memoize]
+      get
+      {
+        GClassDecl.ColourField(Name, Colour, None())
       }
     }
     
@@ -54,7 +62,7 @@ namespace PetriNetLib
   {
     public Idx : int;
     
-    public Decl : GClassDecl.EnumBitMask
+    public override Decl : GClassDecl
     {
       [Memoize]
       get
@@ -72,8 +80,27 @@ namespace PetriNetLib
     }
   }
   
-  public class LinearInitMarking : GInitMarking
+  [Record]
+  public class LinearNet : INetComposer
   {
+    model : GenModel;
     
+    public Result : list[GenNode]
+    {
+      [Memoize]
+      get
+      {
+        model.colours.Concat(model.funcs).
+                      Concat(model.glob_refs).
+                      Concat(model.places.Select(x => x.Decl)).
+                      Concat(model.places.Select(x => x.VarDecl)).
+                      Concat(model.tran).NToList()
+      }      
+    }
   }
+  
+  //public class LinearInitMarking : GInitValue
+  //{
+    
+  //}
 }

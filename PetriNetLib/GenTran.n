@@ -40,112 +40,112 @@ namespace PetriNetLib
       }
     }
     
-    public Code : string
-    {
-      [Memoize]
-      get
-      {
-        if (code_segment is <[]>) "" else
-        if (output is <[]>)
-        {
-          (code_segment |> gen.ConvExpr(_, true)) + ";";
-        } else
-        {
-          match (output)
-          {
-            | <[ $(n : usesite)]> => def ty = gen.TypeOfVar(n);
-                                     def code = code_segment |> gen.ConvExpr(_, true);
-                                     $<#$ty $n = $code;#>
-            | _                   => throw InvalidOperationException("unknown expr")
-          }
-        }
-      }
-    }
+    //public Code : string
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    if (code_segment is <[]>) "" else
+    //    if (output is <[]>)
+    //    {
+    //      (code_segment |> gen.ConvExpr(_, true)) + ";";
+    //    } else
+    //    {
+    //      match (output)
+    //      {
+    //        | <[ $(n : usesite)]> => def ty = gen.TypeOfVar(n);
+    //                                 def code = code_segment |> gen.ConvExpr(_, true);
+    //                                 $<#$ty $n = $code;#>
+    //        | _                   => throw InvalidOperationException("unknown expr")
+    //      }
+    //    }
+    //  }
+    //}
     
-    public IsCopyVar(place : GenPlace, arc : Arc) : bool
-    {
-      def is_use(n, a)
-      {
-        // выходные позиции с дугами исключая эту, использует это имя в разных выражениях
-        // или сложное выражение использует это имя
-        OutputPlacesArcs.Exclude(x => x[0] == place : object).Exists((_, a) => a.IsUseVar(n)) || a.IsUseVarComplex(n)
-      }
+    //public IsCopyVar(place : GenPlace, arc : Arc) : bool
+    //{
+    //  def is_use(n, a)
+    //  {
+    //    // выходные позиции с дугами исключая эту, использует это имя в разных выражениях
+    //    // или сложное выражение использует это имя
+    //    OutputPlacesArcs.Exclude(x => x[0] == place : object).Exists((_, a) => a.IsUseVar(n)) || a.IsUseVarComplex(n)
+    //  }
 
-      match (arc.ExprWithoutTime)
-      {
-        | <[ () ]>             =>
-              def check2(places)
-              {
-                match (places.Find((p, _) => place == p : object))
-                {
-                  | Some((_, Arc(ExprWithoutTime = <[ () ]>))) => true
-                  | _                                          => false
-                }
-              }
-              match (arc.from)
-              {
-                | ArcSource.PlaceEnd      => check2(OutputPlacesArcs)
-                | ArcSource.TransitionEnd => check2(InputPlacesArcs)
-              }
-        | <[ $(n : usesite) ]> => 
-              def check(places)
-              {
-                match (places.Find((p, _) => place : object == p))
-                {
-                  // если у места дуги с названиями без времени равны и выражение - переменная
-                  | Some((_, Arc(ExprWithoutTime = <[ $(n2 : usesite) ]>) as a)) 
-                      when (n == n2) => !is_use(n, a) // и не используется в других выходных дугах
-                  | _                => false
-                }
-              }
+    //  match (arc.ExprWithoutTime)
+    //  {
+    //    | <[ () ]>             =>
+    //          def check2(places)
+    //          {
+    //            match (places.Find((p, _) => place == p : object))
+    //            {
+    //              | Some((_, Arc(ExprWithoutTime = <[ () ]>))) => true
+    //              | _                                          => false
+    //            }
+    //          }
+    //          match (arc.from)
+    //          {
+    //            | ArcSource.PlaceEnd      => check2(OutputPlacesArcs)
+    //            | ArcSource.TransitionEnd => check2(InputPlacesArcs)
+    //          }
+    //    | <[ $(n : usesite) ]> => 
+    //          def check(places)
+    //          {
+    //            match (places.Find((p, _) => place : object == p))
+    //            {
+    //              // если у места дуги с названиями без времени равны и выражение - переменная
+    //              | Some((_, Arc(ExprWithoutTime = <[ $(n2 : usesite) ]>) as a)) 
+    //                  when (n == n2) => !is_use(n, a) // и не используется в других выходных дугах
+    //              | _                => false
+    //            }
+    //          }
 
-            match (arc.from)
-            {
-              | ArcSource.PlaceEnd      => check(OutputPlacesArcs)
-              | ArcSource.TransitionEnd => check(InputPlacesArcs)
-            }
-        | _ => false  
-      }
-    }
+    //        match (arc.from)
+    //        {
+    //          | ArcSource.PlaceEnd      => check(OutputPlacesArcs)
+    //          | ArcSource.TransitionEnd => check(InputPlacesArcs)
+    //        }
+    //    | _ => false  
+    //  }
+    //}
 
-    public IsCopyVarOut(place : GenPlace, arc : Arc) : bool
-    {
-      match (arc.ExprWithoutTime)
-      {
-        | <[ () ]>             =>
-              def check2(places)
-              {
-                match (places.Find((p, _) => place == p : object))
-                {
-                  | Some((_, Arc(ExprWithoutTime = <[ () ]>))) => true
-                  | _                                          => false
-                }
-              }
-              match (arc.from)
-              {
-                | ArcSource.PlaceEnd      => check2(OutputPlacesArcs)
-                | ArcSource.TransitionEnd => check2(InputPlacesArcs)
-              }
-        | <[ $(n : usesite) ]> => 
-              def check(places)
-              {
-                match (places.Find((p, _) => place : object == p))
-                {
-                  // если у места дуги с названиями без времени равны и выражение - переменная
-                  | Some((_, Arc(ExprWithoutTime = <[ $(n2 : usesite) ]>))) 
-                      when (n == n2) => true
-                  | _                => false
-                }
-              }
+    //public IsCopyVarOut(place : GenPlace, arc : Arc) : bool
+    //{
+    //  match (arc.ExprWithoutTime)
+    //  {
+    //    | <[ () ]>             =>
+    //          def check2(places)
+    //          {
+    //            match (places.Find((p, _) => place == p : object))
+    //            {
+    //              | Some((_, Arc(ExprWithoutTime = <[ () ]>))) => true
+    //              | _                                          => false
+    //            }
+    //          }
+    //          match (arc.from)
+    //          {
+    //            | ArcSource.PlaceEnd      => check2(OutputPlacesArcs)
+    //            | ArcSource.TransitionEnd => check2(InputPlacesArcs)
+    //          }
+    //    | <[ $(n : usesite) ]> => 
+    //          def check(places)
+    //          {
+    //            match (places.Find((p, _) => place : object == p))
+    //            {
+    //              // если у места дуги с названиями без времени равны и выражение - переменная
+    //              | Some((_, Arc(ExprWithoutTime = <[ $(n2 : usesite) ]>))) 
+    //                  when (n == n2) => true
+    //              | _                => false
+    //            }
+    //          }
 
-            match (arc.from)
-            {
-              | ArcSource.PlaceEnd      => check(OutputPlacesArcs)
-              | ArcSource.TransitionEnd => check(InputPlacesArcs)
-            }
-        | _ => false  
-      }
-    }
+    //        match (arc.from)
+    //        {
+    //          | ArcSource.PlaceEnd      => check(OutputPlacesArcs)
+    //          | ArcSource.TransitionEnd => check(InputPlacesArcs)
+    //        }
+    //    | _ => false  
+    //  }
+    //}
     
     public virtual PartOfGroup : option[GroupTran]
     {
@@ -304,53 +304,53 @@ namespace PetriNetLib
       }
     }
     
-    public virtual Body : string
-    {
-      [Memoize]
-      get
-      {
-        //def places = PlacesParticipateMask;
-        //def tr_next = NextTran;
+    //public virtual Body : string
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    //def places = PlacesParticipateMask;
+    //    //def tr_next = NextTran;
         
-        //def next_tran(x)
-        //{
-        //  if (x.IsFuncTran)
-        //  {
-        //    def var = if (x.InputGenPlaces.First().Colour.IsComplexType) $"*res_$(x.InArcProcess.First().bind_var)" else $"res_$(x.InArcProcess.First().bind_var)";
-        //    (x, var) 
-        //  } else (x, "")
-        //}
+    //    //def next_tran(x)
+    //    //{
+    //    //  if (x.IsFuncTran)
+    //    //  {
+    //    //    def var = if (x.InputGenPlaces.First().Colour.IsComplexType) $"*res_$(x.InArcProcess.First().bind_var)" else $"res_$(x.InArcProcess.First().bind_var)";
+    //    //    (x, var) 
+    //    //  } else (x, "")
+    //    //}
 
-        //def tr_next = tr_next.Map(next_tran);
-        //def tr_next = tr_next.Map((x, p) => $<#$(x.ExecName)($p);#>);
-          def body = gen.CreateTranBody(this);
+    //    //def tr_next = tr_next.Map(next_tran);
+    //    //def tr_next = tr_next.Map((x, p) => $<#$(x.ExecName)($p);#>);
+    //      def body = gen.CreateTranBody(this);
           
-          //def body = TranBody;
-            def places = PlacesParticipateMask;
-            def tr_next = NextTransitions;
-            def tr = if (PartOfGroup is Some(g)) $"tr_GroupTransition$g" else $"tr_$(ExecName)";
-            if (tr_next.IsEmpty())
-            $<#bool res = false;
-                  if (lock($places, $tr))
-                  {
-                    $body;
-                    unlock($places);
-                  }
-                  return res;#> else 
-            $<#bool res = false;
-                  if (lock($places, $tr))
-                  {
-                    $body;
-                    unlock($places);
-                    if (res)
-                    {
-                      ..$(tr_next; "\n")
-                    }
-                  }
-                  return res;#>
+    //      //def body = TranBody;
+    //        def places = PlacesParticipateMask;
+    //        def tr_next = NextTransitions;
+    //        def tr = if (PartOfGroup is Some(g)) $"tr_GroupTransition$g" else $"tr_$(ExecName)";
+    //        if (tr_next.IsEmpty())
+    //        $<#bool res = false;
+    //              if (lock($places, $tr))
+    //              {
+    //                $body;
+    //                unlock($places);
+    //              }
+    //              return res;#> else 
+    //        $<#bool res = false;
+    //              if (lock($places, $tr))
+    //              {
+    //                $body;
+    //                unlock($places);
+    //                if (res)
+    //                {
+    //                  ..$(tr_next; "\n")
+    //                }
+    //              }
+    //              return res;#>
                                 
-      }
-    }
+    //  }
+    //}
 
     public DfsIterator : IEnumerable[PetriNetNode]
     {

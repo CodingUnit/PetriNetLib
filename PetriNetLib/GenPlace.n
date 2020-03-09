@@ -33,84 +33,84 @@ namespace PetriNetLib
       this == obj : object
     }
     
-    AddTokenExpr(expr : PExpr) : string
-    {
+    //AddTokenExpr(expr : PExpr) : string
+    //{
 
-      def add(e)
-      {
-        | <[ () ]>                       => <#1#>
-          //match (global_time)
-                                              //{
-                                              //  | <[ $(t : int)]> => def time = time + t;     
+    //  def add(e)
+    //  {
+    //    | <[ () ]>                       => <#1#>
+    //      //match (global_time)
+    //                                          //{
+    //                                          //  | <[ $(t : int)]> => def time = time + t;     
 
-                                              //  | _               => null
-                                              //} 
-        | <[ 1 ` $e ]>                   => add(e)                                    
-        | <[ $(_ : int) ` $_ ]> as e     => e |> gen.ConvExpr(_, false)                                    
-        | <[ $_ %++ $_ ]> as e           => gen.GetTokenExpr(e)
+    //                                          //  | _               => null
+    //                                          //} 
+    //    | <[ 1 ` $e ]>                   => add(e)                                    
+    //    | <[ $(_ : int) ` $_ ]> as e     => e |> gen.ConvExpr(_, false)                                    
+    //    | <[ $_ %++ $_ ]> as e           => gen.GetTokenExpr(e)
 
-        | <[ $_(..$_)]> as e
-        | <[ $(_ : usesite) ]> as e
-        | e                              => e |> gen.ConvExpr(_, false)
-      }
+    //    | <[ $_(..$_)]> as e
+    //    | <[ $(_ : usesite) ]> as e
+    //    | e                              => e |> gen.ConvExpr(_, false)
+    //  }
 
-      add(expr)
-    }
+    //  add(expr)
+    //}
 
-    public AddPlaceExpr(expr : PExpr) : string
-    {
-      def name = Name;
-      def expr = AddTokenExpr(expr);
-      if (IsTimed)
-      {
+    //public AddPlaceExpr(expr : PExpr) : string
+    //{
+    //  def name = Name;
+    //  def expr = AddTokenExpr(expr);
+    //  if (IsTimed)
+    //  {
 
-        def time = $"\n$(name)_time = time();";
-        match (DestContainerType)
-        {
-          | ZeroSingle // имеет 0 или 1 фишку, для отсутствия используется 0 если INT
-          | MinusSingle 
-          | Var       => $"$(name) = $expr;$time"
-          | Single    => if (IsUnit)
-                         {
-                           $<#$(name) = $expr;$time#>
-                         } else
-                         {
-                            $<#$(name) = $expr;
-                              $(name)_flag = true;$time#>
-                         }
-          | _ => $<#$name.add($expr);#>
-        }
-          //if (is_time_expr)
-          //{
-          //  $<#$name.add($add_token_expr);#>
-          //} else
-          //{
-          //  $<#$name.add(add_time($add_token_expr, $global_time_str));#>
-          //}
-      } else
-      {
-        if (IsFuncPlace)
-        {
-          $<#$(name)($expr);#>
-        } else
-          match (DestContainerType)
-          {
-            | ZeroSingle // имеет 0 или 1 фишку, для отсутствия используется 0 если INT
-            | MinusSingle 
-            | Var       => $"$(name) = $expr;"
-            | Single    => if (IsUnit)
-                           {
-                             $<#$(name) = $expr;#>
-                           } else
-                           {
-                            $<#$(name) = $expr;
-                              $(name)_flag = true;#>
-                           }
-            | _ => $<#$name.add($expr);#>
-          }
+    //    def time = $"\n$(name)_time = time();";
+    //    match (DestContainerType)
+    //    {
+    //      | ZeroSingle // имеет 0 или 1 фишку, для отсутствия используется 0 если INT
+    //      | MinusSingle 
+    //      | Var       => $"$(name) = $expr;$time"
+    //      | Single    => if (IsUnit)
+    //                     {
+    //                       $<#$(name) = $expr;$time#>
+    //                     } else
+    //                     {
+    //                        $<#$(name) = $expr;
+    //                          $(name)_flag = true;$time#>
+    //                     }
+    //      | _ => $<#$name.add($expr);#>
+    //    }
+    //      //if (is_time_expr)
+    //      //{
+    //      //  $<#$name.add($add_token_expr);#>
+    //      //} else
+    //      //{
+    //      //  $<#$name.add(add_time($add_token_expr, $global_time_str));#>
+    //      //}
+    //  } else
+    //  {
+    //    if (IsFuncPlace)
+    //    {
+    //      $<#$(name)($expr);#>
+    //    } else
+    //      match (DestContainerType)
+    //      {
+    //        | ZeroSingle // имеет 0 или 1 фишку, для отсутствия используется 0 если INT
+    //        | MinusSingle 
+    //        | Var       => $"$(name) = $expr;"
+    //        | Single    => if (IsUnit)
+    //                       {
+    //                         $<#$(name) = $expr;#>
+    //                       } else
+    //                       {
+    //                        $<#$(name) = $expr;
+    //                          $(name)_flag = true;#>
+    //                       }
+    //        | _ => $<#$name.add($expr);#>
+    //      }
 
-      }
-    }
+    //  }
+    //}
 
     public IsContainer : bool
     {

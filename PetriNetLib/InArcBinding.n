@@ -22,14 +22,14 @@ namespace PetriNetLib
     public Depends     : list[InArcBinding] {get;set;}
       //public NeedBinding : bool {get;set;}
 
-    public IsCopyVar : bool
-    {
-      [Memoize]
-      get
-      {
-        transition.IsCopyVar(place, arc)
-      }
-    }
+    //public IsCopyVar : bool
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    transition.IsCopyVar(place, arc)
+    //  }
+    //}
     
     //public IsCopyVarIO : bool
     //{
@@ -91,34 +91,34 @@ namespace PetriNetLib
       }
     }
 
-    public TokenType : string
-    {
-      [Memoize]
-      get
-      {
-        def gc = place.Colour;
-        gc.DestType
-      }
-    }
+    //public TokenType : string
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    def gc = place.Colour;
+    //    gc.DestType
+    //  }
+    //}
     
-    public source_token_peek(n : string) : FuncBodyExpr
-    {
-      if (place.IsIndexedContainer) FuncBodyExpr.PeekIndexed(name, n)//$<#$name.peek_indexed($n)#>
-      else
-      {
-        //def ty = place.Colour.DestType;
-        match (place.DestContainerType)
-        {
-          | ZeroSingle // имеет 0 или 1 фишку, для отсутствия используется 0 если INT
-          | MinusSingle
-          | Var    // имеет 1 фишку, аналогично обычному полю
-          | Single       => FuncBodyExpr.VarRef(name)//$<#$name#>// имеет 0 или 1 фишку, для отсутствия использует отдельный флаг
-          | ReqContainer => FuncBodyExpr.FuncExec(name)//$<#$name()#>
-          | _            => FuncBodyExpr.Peek(GColour(place.Colour), name)// $<#*($ty *)$name.peek()#>    // значение запрашивается из внешней функции
-        }
+    //public source_token_peek(n : string) : FuncBodyExpr
+    //{
+    //  if (place.IsIndexedContainer) FuncBodyExpr.PeekIndexed(name, n)//$<#$name.peek_indexed($n)#>
+    //  else
+    //  {
+    //    //def ty = place.Colour.DestType;
+    //    match (place.DestContainerType)
+    //    {
+    //      | ZeroSingle // имеет 0 или 1 фишку, для отсутствия используется 0 если INT
+    //      | MinusSingle
+    //      | Var    // имеет 1 фишку, аналогично обычному полю
+    //      | Single       => FuncBodyExpr.VarRef(name)//$<#$name#>// имеет 0 или 1 фишку, для отсутствия использует отдельный флаг
+    //      | ReqContainer => FuncBodyExpr.FuncExec(name)//$<#$name()#>
+    //      | _            => FuncBodyExpr.Peek(GColour(place.Colour), name)// $<#*($ty *)$name.peek()#>    // значение запрашивается из внешней функции
+    //    }
         
-      }
-    }
+    //  }
+    //}
 
     source_token_name : string
     {
@@ -129,40 +129,40 @@ namespace PetriNetLib
       }
     }
     
-    public timed_bind_expr : FuncBodyExpr
-    {
-      [Memoize]
-      get
-      {
-        if (place.IsTimed)
-        {
-          match (expr)
-          {
-            | <[ $(n : usesite) ]> => //def ty = TokenType;
-                                      if (place.IsIndexedContainer) 
-                                      {
-                                        FuncBodyExpr.Sequence([FuncBodyExpr.ImmutableVarDeclSimple(<[ int ]>, idx_name(n), None()), 
-                                                               FuncBodyExpr.ImmutableVarDecl(GColour(place.Colour), source_token_name, Some(source_token_peek(n)))])
-                                          //$<#int $(idx_name(n));
-                                          //$ty $source_token_name = $(source_token_peek(n));#>
-                                      } else
-                                      {
-                                        match (place.DestContainerType)
-                                        {
-                                          | TDestCont.TimedSimpleMultiset => FuncBodyExpr.ImmutableVarDecl(GColour(place.Colour), source_token_name, Some(source_token_peek(n)))//$<#$ty $source_token_name = $(source_token_peek(n));#>
-                                          | _                             => FuncBodyExpr.Empty()
-                                        }
+    //public timed_bind_expr : FuncBodyExpr
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    if (place.IsTimed)
+    //    {
+    //      match (expr)
+    //      {
+    //        | <[ $(n : usesite) ]> => //def ty = TokenType;
+    //                                  if (place.IsIndexedContainer) 
+    //                                  {
+    //                                    FuncBodyExpr.Sequence([FuncBodyExpr.ImmutableVarDeclSimple(<[ int ]>, idx_name(n), None()), 
+    //                                                           FuncBodyExpr.ImmutableVarDecl(GColour(place.Colour), source_token_name, Some(source_token_peek(n)))])
+    //                                      //$<#int $(idx_name(n));
+    //                                      //$ty $source_token_name = $(source_token_peek(n));#>
+    //                                  } else
+    //                                  {
+    //                                    match (place.DestContainerType)
+    //                                    {
+    //                                      | TDestCont.TimedSimpleMultiset => FuncBodyExpr.ImmutableVarDecl(GColour(place.Colour), source_token_name, Some(source_token_peek(n)))//$<#$ty $source_token_name = $(source_token_peek(n));#>
+    //                                      | _                             => FuncBodyExpr.Empty()
+    //                                    }
                                           
-                                      }
-            | _                     => FuncBodyExpr.Empty()
-          }
+    //                                  }
+    //        | _                     => FuncBodyExpr.Empty()
+    //      }
           
-        } else
-        {
-          FuncBodyExpr.Empty()
-        }
-      }
-    }
+    //    } else
+    //    {
+    //      FuncBodyExpr.Empty()
+    //    }
+    //  }
+    //}
 
     idx_name(name : string) : string
     {
@@ -202,20 +202,20 @@ namespace PetriNetLib
       }
     }
     
-    public pre_bind_expr : string
-    {
-      [Memoize]
-      get
-      {
-        if (NextFuncTranArcProcess is Some(tran))
-        {
+    //public pre_bind_expr : string
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    if (NextFuncTranArcProcess is Some(tran))
+    //    {
           
-          def ty = tran.place.Colour.VarSpecCopy;
-          $<#$(ty)$NextFuncTranArcVar;
-          #>
-        } else ""
-      }
-    }
+    //      def ty = tran.place.Colour.VarSpecCopy;
+    //      $<#$(ty)$NextFuncTranArcVar;
+    //      #>
+    //    } else ""
+    //  }
+    //}
     
     public MainGroup : bool
     {
@@ -225,78 +225,78 @@ namespace PetriNetLib
       }
     }
     
-    public bind_expr  : string
-    {
-      [Memoize]
-      get
-      {
-        if (place.IsFuncPlace || transition.IsFuncTran) "" else
-        if (place.IsTimed)
-        {
-          def time_expr = if (timed_bind_expr.IsEmpty()) "" else $"$timed_bind_expr;";
-          def bind_expr = match (expr)
-          {
+    //public bind_expr  : string
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    if (place.IsFuncPlace || transition.IsFuncTran) "" else
+    //    if (place.IsTimed)
+    //    {
+    //      def time_expr = if (timed_bind_expr.IsEmpty()) "" else $"$timed_bind_expr;";
+    //      def bind_expr = match (expr)
+    //      {
             
-            | <[ $(n : usesite) ]> => 
-                def ty = gen.TypeOfVar(n);
-                if (place.DestContainerType == TDestCont.TimedSimpleMultiset)
-                {
-                  $<#$ty $expr = $source_token_name;#>
-                } else 
-                {
-                  if (IsCopyVar)
-                  {
-                    ""
-                  } else
-                  $<#$ty$n = $(source_token_peek("")); #>;
-                }
-            | _                    => ""
-          }
-          $<#$time_expr$bind_expr#>
-        } else
-        match (expr)
-        {
-//          | <[ () ]>             => <[]>
-          | <[ (..$e) ]>         => def bind_tuple_elem(x, i)
-                                    {
-                                      match (x)
-                                      {
-                                        | <[ $(n : usesite) ]> =>
-                                            def ty = gen.TypeOfVar(n);
-                                            $"$ty$x = $(name).field$(i + 1);"
-                                        | _ => throw InvalidOperationException()
-                                      }
-                                    }
+    //        | <[ $(n : usesite) ]> => 
+    //            def ty = gen.TypeOfVar(n);
+    //            if (place.DestContainerType == TDestCont.TimedSimpleMultiset)
+    //            {
+    //              $<#$ty $expr = $source_token_name;#>
+    //            } else 
+    //            {
+    //              if (IsCopyVar)
+    //              {
+    //                ""
+    //              } else
+    //              $<#$ty$n = $(source_token_peek("")); #>;
+    //            }
+    //        | _                    => ""
+    //      }
+    //      $<#$time_expr$bind_expr#>
+    //    } else
+    //    match (expr)
+    //    {
+//  //        | <[ () ]>             => <[]>
+    //      | <[ (..$e) ]>         => def bind_tuple_elem(x, i)
+    //                                {
+    //                                  match (x)
+    //                                  {
+    //                                    | <[ $(n : usesite) ]> =>
+    //                                        def ty = gen.TypeOfVar(n);
+    //                                        $"$ty$x = $(name).field$(i + 1);"
+    //                                    | _ => throw InvalidOperationException()
+    //                                  }
+    //                                }
                                     
-                                    def bind = e.Select(bind_tuple_elem);
-                                    $<#..$(bind;"\n")#>
-          | <[ $(n : usesite) ]> when !IsCopyVar => 
-                                    def col = gen.ColourOfVar(n);
-                                    def ty = col.VarSpec;
-                                    if (place.IsIndexedContainer) 
-                                    {
-                                      def idx = idx_name(n);
-                                      $<# int $idx;
-                                          $ty$n = $(source_token_peek(idx));#>
-                                    } else
-                                    if (NextFuncTranArcProcess is Some(tran))
-                                    {
-                                      def copy = if (tran.place.Colour.IsComplexType) $"$NextFuncTranArcVar = &$n;" else $"$NextFuncTranArcVar = $n;";
-                                      $<#$ty$n = $(source_token_peek(""));
-                                      $copy
-                                      #>
-                                    } else
-                                        $<#$ty$n = $(source_token_peek("")); #>
-          | _                    => ""
-        }
-      }
-    }
+    //                                def bind = e.Select(bind_tuple_elem);
+    //                                $<#..$(bind;"\n")#>
+    //      | <[ $(n : usesite) ]> when !IsCopyVar => 
+    //                                def col = gen.ColourOfVar(n);
+    //                                def ty = col.VarSpec;
+    //                                if (place.IsIndexedContainer) 
+    //                                {
+    //                                  def idx = idx_name(n);
+    //                                  $<# int $idx;
+    //                                      $ty$n = $(source_token_peek(idx));#>
+    //                                } else
+    //                                if (NextFuncTranArcProcess is Some(tran))
+    //                                {
+    //                                  def copy = if (tran.place.Colour.IsComplexType) $"$NextFuncTranArcVar = &$n;" else $"$NextFuncTranArcVar = $n;";
+    //                                  $<#$ty$n = $(source_token_peek(""));
+    //                                  $copy
+    //                                  #>
+    //                                } else
+    //                                    $<#$ty$n = $(source_token_peek("")); #>
+    //      | _                    => ""
+    //    }
+    //  }
+    //}
 
-    unfold(e : PExpr) : string
-    {
-      | <[ () ]> => <#unit.instance()#>
-      | e        => e |> gen.ConvExpr(_, false)
-    }
+    //unfold(e : PExpr) : string
+    //{
+    //  | <[ () ]> => <#unit.instance()#>
+    //  | e        => e |> gen.ConvExpr(_, false)
+    //}
         
     public IsInhibitor : bool
     {
@@ -307,58 +307,58 @@ namespace PetriNetLib
       }
     }
     
-    public check_expr : string
-    {
-      [Memoize]
-      get
-      {
-        def check_func(e)
-        {
-          | <[ 1 ` $expr]>      => expr |> check_func
-          | <[ () ]>            => $<#$name.have_tokens()#>
-          | <[ $e %@+ $time]>   => $<#$name.have_relative_time($(unfold(e)), $time)#>
-          | <[ $(_ : usesite)]> => $<#$name.have_tokens()#>
-          | _                   => def tok = gen.GetTokenExpr(expr);
-                                   $<#$name.have($tok)#>
-        }
+    //public check_expr : string
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    def check_func(e)
+    //    {
+    //      | <[ 1 ` $expr]>      => expr |> check_func
+    //      | <[ () ]>            => $<#$name.have_tokens()#>
+    //      | <[ $e %@+ $time]>   => $<#$name.have_relative_time($(unfold(e)), $time)#>
+    //      | <[ $(_ : usesite)]> => $<#$name.have_tokens()#>
+    //      | _                   => def tok = gen.GetTokenExpr(expr);
+    //                               $<#$name.have($tok)#>
+    //    }
         
-        def cont_proc(other)
-        {
-          match (place.DestContainerType)
-          {
-            | Var 
-            | ReqContainer => ""
-            | Single when place.IsUnit => $<#$(name)#>
-            | Single       => $<#$(name)_flag#>
-            | ZeroSingle   => $<#$(name)#>
-            | MinusSingle  => $<#$(name) != -1#>
-            | _            => other()
-          }
-        }
+    //    def cont_proc(other)
+    //    {
+    //      match (place.DestContainerType)
+    //      {
+    //        | Var 
+    //        | ReqContainer => ""
+    //        | Single when place.IsUnit => $<#$(name)#>
+    //        | Single       => $<#$(name)_flag#>
+    //        | ZeroSingle   => $<#$(name)#>
+    //        | MinusSingle  => $<#$(name) != -1#>
+    //        | _            => other()
+    //      }
+    //    }
         
-        def cont_proc_inv(other)
-        {
-          match (place.DestContainerType)
-          {
-            | Var 
-            | ReqContainer => ""
-            | Single when place.IsUnit => $<#!$(name)#>
-            | Single       => $<#!$(name)_flag#>
-            | ZeroSingle   => $<#!$(name)#>
-            | MinusSingle  => $<#$(name) == -1#>
-            | _            => other()
-          }
-        }
+    //    def cont_proc_inv(other)
+    //    {
+    //      match (place.DestContainerType)
+    //      {
+    //        | Var 
+    //        | ReqContainer => ""
+    //        | Single when place.IsUnit => $<#!$(name)#>
+    //        | Single       => $<#!$(name)_flag#>
+    //        | ZeroSingle   => $<#!$(name)#>
+    //        | MinusSingle  => $<#$(name) == -1#>
+    //        | _            => other()
+    //      }
+    //    }
         
-        if (place.IsFuncPlace || transition.IsFuncTran) "" else
-        match (arc_kind)
-        {
-          | ArcKind.Normal    => cont_proc(_ => check_func(expr))
-          | ArcKind.Inhibitor => cont_proc_inv(_ => $<#!$name.have_tokens()#>)
-          | _                 => ""
-        }
-      }
-    }
+    //    if (place.IsFuncPlace || transition.IsFuncTran) "" else
+    //    match (arc_kind)
+    //    {
+    //      | ArcKind.Normal    => cont_proc(_ => check_func(expr))
+    //      | ArcKind.Inhibitor => cont_proc_inv(_ => $<#!$name.have_tokens()#>)
+    //      | _                 => ""
+    //    }
+    //  }
+    //}
     
     public extract_expr   : string
     {

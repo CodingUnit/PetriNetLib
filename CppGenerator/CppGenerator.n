@@ -30,6 +30,11 @@ namespace PetriNetLib
       }
     }
     
+    PlaceToText(pl : GClassDecl) : string
+    {
+      null
+    }
+    
     text_colours : list[string]
     {
       get

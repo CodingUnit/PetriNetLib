@@ -14,16 +14,22 @@ namespace PetriNetLib
   {
   }
   
-  public class GPlace
+  [Record]
+  public abstract class GPlace : GenNode
   {
+    public Name : string;
+    public Colour : GColour;
+    public abstract Decl : GClassDecl {get;}
+    public abstract VarDecl : GClassDecl {get;}
   }
   
   
   [Record]
-  public class GTran
+  public class GTran : GenNode
   {
     public name : string;
     
+    public virtual Decl : GClassDecl {get;}
     public body : FuncBodyExpr
     {
       get
@@ -34,33 +40,31 @@ namespace PetriNetLib
   }
   
   [Record]
-  public variant GClassDecl
+  public variant GClassDecl : GenNode
   {
+    | None
     | EnumBitMask {name : string; val : int}
-    | Field       { name : string; type : PExpr; val : option[PExpr] }
+    | ColourField       { name : string; type : GColour; val : option[PExpr] }
   }
   
   [Record]
-  public class GGlobRef
+  public class GGlobRef : GenNode
   {
     public Name : string;
     public Val  : option[PExpr];
-    public Type : PExpr;
+    public Type : GColour;
   }
   
+  public class GenNode
+  {
+  }
   
   [Record]
-  public class GColour
+  public class GColour : GenNode
   {
-    gen : GenColour;
+    //gen : GenColour;
     
-    public Name : string
-    {
-      get
-      {
-        gen.Name;
-      }
-    }
+    public Name : string;
   }
   
   public variant GDecls
@@ -104,7 +108,7 @@ namespace PetriNetLib
     | CallTranFunc {tran : GTran; parm : PExpr}
   }
   
-  public class PetriNetFunc
+  public class PetriNetFunc : GenNode
   {
     ret_type : GenColour;
     
@@ -114,12 +118,18 @@ namespace PetriNetLib
     body : FuncBodyExpr;
   }
   
+  public interface INetComposer
+  {
+    Result : list[GenNode] {get;}
+  }
+  
   /// <summary>
   /// Description of GenModel.
   /// </summary>
   [Record]
   public class GenModel
   {
+    public composer        : INetComposer;
     public places          : list[GPlace];
     public init_marking    : list[GInitMarking];
     public tran            : list[GTran];

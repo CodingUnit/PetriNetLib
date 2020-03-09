@@ -53,30 +53,30 @@ namespace PetriNetLib
       res
     }
     
-    main_class : string
-    {
-      [Memoize]
-      get
-      {
+    //main_class : string
+    //{
+    //  [Memoize]
+    //  get
+    //  {
         
-        $<# ..$(extern_fields;"\n")
-            class $Name : public $Base
-            {
-              public:
-                ..$(first_public_fields;"\n")
-              private:
+    //    $<# ..$(extern_fields;"\n")
+    //        class $Name : public $Base
+    //        {
+    //          public:
+    //            ..$(first_public_fields;"\n")
+    //          private:
                   
-              ..$(private_fields;"\n")
+    //          ..$(private_fields;"\n")
 
-              protected:
-                ..$(protected_fields;"\n")
-              public:
+    //          protected:
+    //            ..$(protected_fields;"\n")
+    //          public:
 
-              ..$(public_fields;"\n")
-            };
-        #>
-      }
-    }
+    //          ..$(public_fields;"\n")
+    //        };
+    //    #>
+    //  }
+    //}
 
     public this(file : string, model : OutModel, proc : PetriNetProcessor, type_int : ITypeInterface)
     {
@@ -139,98 +139,98 @@ namespace PetriNetLib
       
     }    
     
-    internal GetTokenExpr(expr : PExpr) : string
-    {
-      def loop(e)
-      {
-        | <[ $(count : int) ` $expr ]> => Enumerable.Repeat(expr, count).NToList()
-        | <[ $left %++ $right ]>       => loop(left) + loop(right)
-        | _                            => [expr]
-      }
-
-      match (expr)
-      {
-        | <[$_(..$_)]> as e       => e |> ConvExpr(_, true)
-        | <[ $(_ : int)]> as e
-        | <[ $(_ : long)]> as e
-        | <[ $(_ : short)]> as e
-        | <[ $(_ : ushort)]> as e
-        | <[ $(_ : byte)]> as e
-        | <[ $(_ : string)]> as e => e |> ConvExpr(_, true)
-        | e                       => def e = loop(e);
-                                     CreateArray(e)//<[array[..$e]]>
-      }
-    }
-    
-    internal ConvType(te : TExpr) : string
-    {
-      te.Type.ToString()
-    }
-
-    internal ConvType(te : TypeVar) : string
-    {
-      def tystr = te.ToString().TrimEnd('-', '+');
-      //def enum_ty = typer.BindType(<[ System.Collections.Generic.IEnumerable[_] ]>);
-      def list_ty = typer.Typer.BindType(<[ list[_] ]>);
-      def ty = te.Fix();
-      if (te.TryRequire(list_ty))
-      {
-        def _ty = ty :> FixedType.Class;
-        //def args = ty.args;
-        //def args = args.Map(ConvType);
-        //<#token_iter#>
-        //def t = ty.args.Map(ConvType).First();
-        <#bytesn#>
-      } else
-        match (ty)
-        {
-          | FixedType.Tuple(args) => def vals = args.Map(ConvType);
-                                  def n = vals.Length;
-                                  $<#tuple$n<..$(vals;",")>#>
-          | _                     => tystr
-        }
-    }
-
-    //ConvFunc(func : string) : string
+    //internal GetTokenExpr(expr : PExpr) : string
     //{
-    //  if (func.StartsWith("EXT_")) func.Substring(4) else
-    //  if (func.StartsWith("FUNC_")) func.Substring(5) else func
+    //  def loop(e)
+    //  {
+    //    | <[ $(count : int) ` $expr ]> => Enumerable.Repeat(expr, count).NToList()
+    //    | <[ $left %++ $right ]>       => loop(left) + loop(right)
+    //    | _                            => [expr]
+    //  }
+
+    //  match (expr)
+    //  {
+    //    | <[$_(..$_)]> as e       => e |> ConvExpr(_, true)
+    //    | <[ $(_ : int)]> as e
+    //    | <[ $(_ : long)]> as e
+    //    | <[ $(_ : short)]> as e
+    //    | <[ $(_ : ushort)]> as e
+    //    | <[ $(_ : byte)]> as e
+    //    | <[ $(_ : string)]> as e => e |> ConvExpr(_, true)
+    //    | e                       => def e = loop(e);
+    //                                 CreateArray(e)//<[array[..$e]]>
+    //  }
+    //}
+    
+    //internal ConvType(te : TExpr) : string
+    //{
+    //  te.Type.ToString()
     //}
 
-    ConvParm(n : string, t : string) : string
-    {
-      def col = colours[t];
-      def type = col.ParmType;
-      $<#$type$n#>;
-    }
+    //internal ConvType(te : TypeVar) : string
+    //{
+    //  def tystr = te.ToString().TrimEnd('-', '+');
+    //  //def enum_ty = typer.BindType(<[ System.Collections.Generic.IEnumerable[_] ]>);
+    //  def list_ty = typer.Typer.BindType(<[ list[_] ]>);
+    //  def ty = te.Fix();
+    //  if (te.TryRequire(list_ty))
+    //  {
+    //    def _ty = ty :> FixedType.Class;
+    //    //def args = ty.args;
+    //    //def args = args.Map(ConvType);
+    //    //<#token_iter#>
+    //    //def t = ty.args.Map(ConvType).First();
+    //    <#bytesn#>
+    //  } else
+    //    match (ty)
+    //    {
+    //      | FixedType.Tuple(args) => def vals = args.Map(ConvType);
+    //                              def n = vals.Length;
+    //                              $<#tuple$n<..$(vals;",")>#>
+    //      | _                     => tystr
+    //    }
+    //}
 
-    internal ConvParm(expr : PParameter) : string
-    {
-      def deflt = expr.DefaultValue.Map(x => $" = $(ConvExpr(x, false))").WithDefault("");
-      //def t = expr.Type;
-      //def type = if (IsComplexType(t.ToString())) $<#const $t &#> else $<#$t #>;
-      def expr = ConvParm(expr.Name, expr.Type.ToString());
-      $<#$expr$deflt#>;
-    }
+    ////ConvFunc(func : string) : string
+    ////{
+    ////  if (func.StartsWith("EXT_")) func.Substring(4) else
+    ////  if (func.StartsWith("FUNC_")) func.Substring(5) else func
+    ////}
 
-    TranMask(tr : IEnumerable[GenTran]) : string
-    {
-      if (tr.IsEmpty()) "0" else
-      {
-        def tran = tr.Map(x => $"tr_$(x.ExecName)");
-        tran.Fold("", (t, a) => if (a.IsEmpty()) t else $"$t | $a");
-      }
-    }
+    //ConvParm(n : string, t : string) : string
+    //{
+    //  def col = colours[t];
+    //  def type = col.ParmType;
+    //  $<#$type$n#>;
+    //}
+
+    //internal ConvParm(expr : PParameter) : string
+    //{
+    //  def deflt = expr.DefaultValue.Map(x => $" = $(ConvExpr(x, false))").WithDefault("");
+    //  //def t = expr.Type;
+    //  //def type = if (IsComplexType(t.ToString())) $<#const $t &#> else $<#$t #>;
+    //  def expr = ConvParm(expr.Name, expr.Type.ToString());
+    //  $<#$expr$deflt#>;
+    //}
+
+    //TranMask(tr : IEnumerable[GenTran]) : string
+    //{
+    //  if (tr.IsEmpty()) "0" else
+    //  {
+    //    def tran = tr.Map(x => $"tr_$(x.ExecName)");
+    //    tran.Fold("", (t, a) => if (a.IsEmpty()) t else $"$t | $a");
+    //  }
+    //}
     
-    Base : string
-    {
-      [Memoize]
-      get
-      {
-        def s32 = if (places.Filter(x => !x.IsFuncPlace).Length <= 32 && EnumTransitions.Length <= 32) "32" else "";
-        if (model.IsTimed) $"timed_petri_net$s32" else $"petri_net$s32"
-      }
-    }
+    //Base : string
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    def s32 = if (places.Filter(x => !x.IsFuncPlace).Length <= 32 && EnumTransitions.Length <= 32) "32" else "";
+    //    if (model.IsTimed) $"timed_petri_net$s32" else $"petri_net$s32"
+    //  }
+    //}
     
   }
 }
