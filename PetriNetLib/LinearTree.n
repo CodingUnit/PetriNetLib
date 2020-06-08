@@ -52,7 +52,7 @@ namespace PetriNetLib
     {
       get
       {
-        []
+        Decl :: VarDecl :: []
       }
     }
   }
@@ -89,7 +89,7 @@ namespace PetriNetLib
     {
       [Memoize]
       get
-      {
+      {        
         model.colours.Concat(model.funcs).
                       Concat(model.glob_refs).
                       Concat(model.places.Select(x => x.Decl)).

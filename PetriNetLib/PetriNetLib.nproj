@@ -41,16 +41,17 @@
       <Name>Nemerle.Compiler</Name>
       <AssemblyName>Nemerle.Compiler.dll</AssemblyName>
       <HintPath>$(Nemerle)\Nemerle.Compiler.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Nitra.Compiler, Version=1.0.9999.0, Culture=neutral, PublicKeyToken=e080a9c724e2bfcd">
       <Name>Nitra.Compiler</Name>
       <AssemblyName>Nitra.Compiler.dll</AssemblyName>
-      <HintPath>$(Nitra)\Nitra.Compiler.dll</HintPath>
+      <HintPath>$(NitraPath)\Nitra.Compiler.dll</HintPath>
     </Reference>
     <Reference Include="Nitra.Runtime, Version=1.0.9999.0, Culture=neutral, PublicKeyToken=e080a9c724e2bfcd">
       <Name>Nitra.Runtime</Name>
       <AssemblyName>Nitra.Runtime.dll</AssemblyName>
-      <HintPath>$(Nitra)\Nitra.Runtime.dll</HintPath>
+      <HintPath>$(NitraPath)\Nitra.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Collections.Immutable, Version=1.1.37.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
