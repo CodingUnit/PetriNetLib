@@ -28,7 +28,7 @@ namespace PetriNetLib
     
     CreatePlaces() : list[GPlace]
     {
-      places.Where(x => !x.IsFuncPlace).Map(x => LinearGPlace(x.Name, x.Colour, x.gen_idx));
+      places.Where(x => !x.IsFuncPlace).Map(x => LinearGPlace(x.Name, GColour(x.Colour.Name), x.gen_idx) : GPlace);
       //$<#pl_$(x.Name) = 0x$((1 << x.gen_idx).ToString("X"))#>
       //$<#typedef enum
       //   {
@@ -46,7 +46,7 @@ namespace PetriNetLib
      // #>;
      // protected_fields.Add(func);
       def tran = gen.EnumTransitions.OrderBy(x => x.Priority);
-      def restran = tran.Select((x, i) => LinearGTran(x.ExecName, i))//$<#tr_$(x.ExecName) = 0x$((1 << i).ToString("X"))#>);
+      def restran = tran.Select((x, i) => LinearTran(x.ExecName, i) : GTran).NToList();//$<#tr_$(x.ExecName) = 0x$((1 << i).ToString("X"))#>);
       
       
       
@@ -79,7 +79,7 @@ namespace PetriNetLib
       //def tran = tran |> TranMask;
       //def tran = $<#tran_ena($tran);#>;
       //cons_expr.Add(tran);
-      []
+      restran
     }      
     
     public Process(model : OutModel) : GenModel

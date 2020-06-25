@@ -12,6 +12,7 @@ namespace PetriNetLib
   /// <summary>
   /// Description of LinearTree.
   /// </summary>
+  [Record]
   public class LinearGlobRef : GGlobRef
   {
     public Decl : GClassDecl

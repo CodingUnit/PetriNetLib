@@ -25,11 +25,11 @@ namespace PetriNetLib
   
   
   [Record]
-  public class GTran : GenNode
+  public abstract class GTran : GenNode
   {
     public name : string;
     
-    public virtual Decl : GClassDecl {get;}
+    public abstract Decl : GClassDecl {get;}
     public body : FuncBodyExpr
     {
       get

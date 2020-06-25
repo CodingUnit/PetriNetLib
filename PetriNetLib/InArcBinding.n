@@ -365,40 +365,41 @@ namespace PetriNetLib
       [Memoize]
       get
       {
-        def extract(e)
-        {
-            //| <[ $e %@+ $time ]>  => <[]>
-          | <[ 1 ` $expr]>      => extract(expr)
-          | <[ $e %@+ $time]>   => $<#$name.get_relative_time($(unfold(e)), $time);#>
-          | <[ () ]>            => $<#$name.get();#>
-          | <[ $(n : usesite)]> => if (place.IsIndexedContainer) 
-                                    $<#$name.get_indexed($(idx_name(n)));#> else 
-                                    $<#$name.get($expr);#>
-          | _                   => $<#$name.get($expr);#>
-        }
+        ""
+        //def extract(e)
+        //{
+        //    //| <[ $e %@+ $time ]>  => <[]>
+        //  | <[ 1 ` $expr]>      => extract(expr)
+        //  | <[ $e %@+ $time]>   => $<#$name.get_relative_time($(unfold(e)), $time);#>
+        //  | <[ () ]>            => $<#$name.get();#>
+        //  | <[ $(n : usesite)]> => if (place.IsIndexedContainer) 
+        //                            $<#$name.get_indexed($(idx_name(n)));#> else 
+        //                            $<#$name.get($expr);#>
+        //  | _                   => $<#$name.get($expr);#>
+        //}
         
-        def cont_proc(other)
-        {
-          match (place.DestContainerType)
-          {
-            | Var 
-            | ReqContainer => ""
-            | Single when place.IsUnit => $<#$(name) = 0;#>
-            | Single       => $<#$(name)_flag = false;#>
-            | ZeroSingle   => $<#$(name) = 0;#>
-            | MinusSingle  => $<#$(name) = -1;#>
-            | TokenQueue   => $<#$name.get();#>
-            | _            => other()
-          }
-        }
+        //def cont_proc(other)
+        //{
+        //  match (place.DestContainerType)
+        //  {
+        //    | Var 
+        //    | ReqContainer => ""
+        //    | Single when place.IsUnit => $<#$(name) = 0;#>
+        //    | Single       => $<#$(name)_flag = false;#>
+        //    | ZeroSingle   => $<#$(name) = 0;#>
+        //    | MinusSingle  => $<#$(name) = -1;#>
+        //    | TokenQueue   => $<#$name.get();#>
+        //    | _            => other()
+        //  }
+        //}
         
-        if (place.IsFuncPlace || transition.IsFuncTran) "" else
-        match (arc_kind)
-        {
-         | ArcKind.Normal         => if (IsCopyVar) "" else cont_proc(_ => extract(expr))
-         | ArcKind.Reset          => cont_proc(_ => $<#$name.get_all();#>)
-         | _                      => ""
-        }
+        //if (place.IsFuncPlace || transition.IsFuncTran) "" else
+        //match (arc_kind)
+        //{
+        // | ArcKind.Normal         => if (IsCopyVar) "" else cont_proc(_ => extract(expr))
+        // | ArcKind.Reset          => cont_proc(_ => $<#$name.get_all();#>)
+        // | _                      => ""
+        //}
       }
     }
 

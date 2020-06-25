@@ -15,230 +15,230 @@ namespace PetriNetLib
   /// </summary>
   partial class Generator
   {
-    internal CreateTranBody(tran : GenTran) : FuncBodyExpr
-    {
-      def name   = tran.Name;
+    //internal CreateTranBody(tran : GenTran) : FuncBodyExpr
+    //{
+    //  def name   = tran.Name;
 
-      def input = tran.InArcProcess;
+    //  def input = tran.InArcProcess;
 
-      foreach (i in input)
-      {
-        match (i.expr)
-        {
-          | <[ $_(..$p) ]> => foreach (p in p)
-                                {
-                                  | <[ $(n : usesite)]> => match (input.Find(x => x.bind_var == n))
-                                      {
-                                        | Some(x) => i.Depends ::= x;
-                                        | _       => ()
-                                      }
-                                  | _                   => ()
-                                }
-          | _ => ()
-        }
-        //map[i.name] = i;
-      }
+    //  foreach (i in input)
+    //  {
+    //    match (i.expr)
+    //    {
+    //      | <[ $_(..$p) ]> => foreach (p in p)
+    //                            {
+    //                              | <[ $(n : usesite)]> => match (input.Find(x => x.bind_var == n))
+    //                                  {
+    //                                    | Some(x) => i.Depends ::= x;
+    //                                    | _       => ()
+    //                                  }
+    //                              | _                   => ()
+    //                            }
+    //      | _ => ()
+    //    }
+    //    //map[i.name] = i;
+    //  }
 
-      def input    = input.OrderBy(_.priority); 
-      def add_proc = tran.OutArcProcess;//output.Map((p, a) => OutArcProcess(places[p.idx], tran, a, this));
+    //  def input    = input.OrderBy(_.priority); 
+    //  def add_proc = tran.OutArcProcess;//output.Map((p, a) => OutArcProcess(places[p.idx], tran, a, this));
 
-      def extract = input.Map(_.extract_expr);
-      def add_body = add_proc.Map(_.add_token);
-      def code = tran.Code;
+    //  def extract = input.Map(_.extract_expr);
+    //  def add_body = add_proc.Map(_.add_token);
+    //  def code = tran.Code;
       
-      //def out_tran = tran.OutputGenPlaces.SelectMany(x => x.OutputGenTransitions).NToList();
-      //def participate_tran = out_tran;
+    //  //def out_tran = tran.OutputGenPlaces.SelectMany(x => x.OutputGenTransitions).NToList();
+    //  //def participate_tran = out_tran;
       
-      //def next = tran.NextTran |> TranMask;
-      //def next = if (next.IsEmpty() || next == "0") "true" else next;
-      //def tr_pl_mask = participate_tran.Where(x => x.IsImmediate && !x.IsTimed && !x.IsPartOfFuncPlace);//.Map(x => $"tr_$(x.Name)");//, x.InputPlaces.Select(x => x[0]) |> mask_for_places));
-      //def tr_comp_mask = if (tran.IsImmediate && !tran.IsPartOfGroupTransition && !tran.IsTimed && !tran.IsPartOfFuncPlace && !tran.IsFuncTran) $"tr_$(tran.Name)" else "0";
-      //def tr_mask = tr_pl_mask.Fold("", (t, a) => if (a.IsEmpty()) t else $"$t | $a");
-      //def tr_mask = if (tr_mask.IsEmpty()) "0" else tr_mask;
-      //def tr_ena = if (tr_comp_mask == "0") "" else $"tran_ena($tr_comp_mask);";
-      //def tr_next = tr_pl_mask.Map(x => $<#$(x.Name)();#>);
-      def res = if (tran.IsPartOfFuncPlace || tran.IsFuncTran) [] else ["res = true;"];//if (output.Exists(x => x[0].port is Some(PortType.InOut)))
-                                                    //["res = in;"] else
-                                                    //[$"res = $next;"];
-      def body = extract + (code :: add_body) + res;
+    //  //def next = tran.NextTran |> TranMask;
+    //  //def next = if (next.IsEmpty() || next == "0") "true" else next;
+    //  //def tr_pl_mask = participate_tran.Where(x => x.IsImmediate && !x.IsTimed && !x.IsPartOfFuncPlace);//.Map(x => $"tr_$(x.Name)");//, x.InputPlaces.Select(x => x[0]) |> mask_for_places));
+    //  //def tr_comp_mask = if (tran.IsImmediate && !tran.IsPartOfGroupTransition && !tran.IsTimed && !tran.IsPartOfFuncPlace && !tran.IsFuncTran) $"tr_$(tran.Name)" else "0";
+    //  //def tr_mask = tr_pl_mask.Fold("", (t, a) => if (a.IsEmpty()) t else $"$t | $a");
+    //  //def tr_mask = if (tr_mask.IsEmpty()) "0" else tr_mask;
+    //  //def tr_ena = if (tr_comp_mask == "0") "" else $"tran_ena($tr_comp_mask);";
+    //  //def tr_next = tr_pl_mask.Map(x => $<#$(x.Name)();#>);
+    //  //def res = if (tran.IsPartOfFuncPlace || tran.IsFuncTran) [] else ["res = true;"];//if (output.Exists(x => x[0].port is Some(PortType.InOut)))
+    //                                                //["res = in;"] else
+    //                                                //[$"res = $next;"];
+    //  def body = extract + (code :: add_body) + res;
       
-      def body = body.Filter(x => !x.IsEmpty());
-      mutable check = false;
-      def body = if (tran.guard is <[]> || tran.guard == null) body else //tran_ena($t, $p);
-                  {
-                    def guard = tran.guard |> ConvExpr(_, false);
-                    check = true;
-                    $<#if ($guard) 
-                    {
-                      ..$(body;"\n")
-                    }#> :: [];
-                  }
+    //  def body = body.Filter(x => !x.IsEmpty());
+    //  mutable check = false;
+    //  def body = if (tran.guard is <[]> || tran.guard == null) body else //tran_ena($t, $p);
+    //              {
+    //                def guard = tran.guard |> ConvExpr(_, false);
+    //                check = true;
+    //                $<#if ($guard) 
+    //                {
+    //                  ..$(body;"\n")
+    //                }#> :: [];
+    //              }
 
-      def tran_evt = if (proc.Flags.HasFlag(PetriNetFlags.Events)) $<#On$name()#> else "";
+    //  def tran_evt = if (proc.Flags.HasFlag(PetriNetFlags.Events)) $<#On$name()#> else "";
 
-      def fold(x, a)
-      {
-        def pre_bind = x.pre_bind_expr;
-        if (a : object == null)
-        {
-          def expr = x.bind_expr :: body + [tran_evt];
-          def expr = expr.Filter(x => !x.IsEmpty());
-          def expr = $<#..$(expr;"\n")#>;
-          if (x.check_expr.IsEmpty())
-          {
-            $<#$pre_bind$expr#>
-          }
-          else
-          {
-            check = true;
-            $<#$pre_bind if ($(x.check_expr))
-                {
-                  $expr
-                }#>
-          }
-        } else
-        {
+    //  def fold(x, a)
+    //  {
+    //    def pre_bind = x.pre_bind_expr;
+    //    if (a : object == null)
+    //    {
+    //      def expr = x.bind_expr :: body + [tran_evt];
+    //      def expr = expr.Filter(x => !x.IsEmpty());
+    //      def expr = $<#..$(expr;"\n")#>;
+    //      if (x.check_expr.IsEmpty())
+    //      {
+    //        $<#$pre_bind$expr#>
+    //      }
+    //      else
+    //      {
+    //        check = true;
+    //        $<#$pre_bind if ($(x.check_expr))
+    //            {
+    //              $expr
+    //            }#>
+    //      }
+    //    } else
+    //    {
           
-          def expr = [x.bind_expr] + [a];
-          def expr = expr.Filter(x => !x.IsEmpty());
-          def expr = $<#..$(expr;"\n")#>;
-          if (x.check_expr.IsEmpty())
-            expr
-          else
-          {
-            check = true;
-            $<#$pre_bind if ($(x.check_expr))
-              {
-                $expr
-              }#>
-          } 
-        }
-      }
+    //      def expr = [x.bind_expr] + [a];
+    //      def expr = expr.Filter(x => !x.IsEmpty());
+    //      def expr = $<#..$(expr;"\n")#>;
+    //      if (x.check_expr.IsEmpty())
+    //        expr
+    //      else
+    //      {
+    //        check = true;
+    //        $<#$pre_bind if ($(x.check_expr))
+    //          {
+    //            $expr
+    //          }#>
+    //      } 
+    //    }
+    //  }
 
 
-      //def input = eval(input, []);
+    //  //def input = eval(input, []);
 
-     def body = input.Fold(null, fold);
-     if (check)
-     {
-       $<#$body
-       #>
-     } else body;
+    // def body = input.Fold(null, fold);
+    // if (check)
+    // {
+    //   $<#$body
+    //   #>
+    // } else body;
      
      
      
      
-     ///
+    // ///
      
-    }    
+    //}    
     
-    public CreateGroupTranBody(g : GroupTran) : string
-    {
-        def sorted = g.grouped.OrderBy(x => x.priority).NToList();
-        //def ret = if (g.InputGenPlaces.Count() == 1) !g.InputGenPlaces.First().IsFuncPlace else true;
-        def binding = sorted.SelectMany(x => x.InArcProcess).NToList();
-        def dup = g.GroupBindMode;
+    //public CreateGroupTranBody(g : GroupTran) : string
+    //{
+    //    def sorted = g.grouped.OrderBy(x => x.priority).NToList();
+    //    //def ret = if (g.InputGenPlaces.Count() == 1) !g.InputGenPlaces.First().IsFuncPlace else true;
+    //    def binding = sorted.SelectMany(x => x.InArcProcess).NToList();
+    //    def dup = g.GroupBindMode;
         
-        def create_body(x, a)
-        {
-          def last = sorted.Last() == x : object;
-          def els = if (last) "" else " else";
-          def res = x.Body;
+    //    def create_body(x, a)
+    //    {
+    //      def last = sorted.Last() == x : object;
+    //      def els = if (last) "" else " else";
+    //      def res = x.Body;
           
-          $"$res$els$a"
-        }
+    //      $"$res$els$a"
+    //    }
         
-        if (dup)
-        {
+    //    if (dup)
+    //    {
           
-          def fold_body(x : InArcBinding, a)
-          {
-            def tran = x.transition;
-            def add_proc = tran.OutArcProcess;
-            def add_body = add_proc.Map(_.add_token);
+    //      def fold_body(x : InArcBinding, a)
+    //      {
+    //        def tran = x.transition;
+    //        def add_proc = tran.OutArcProcess;
+    //        def add_body = add_proc.Map(_.add_token);
       
-            def next = tran.NextTransitions;
-            //def next = if (ret) if (tran.NextTran.IsEmpty()) "true" else "res" else "";
-            def code = tran.Code;
-            def res = "res = true;";
-            def body = (code :: add_body) + [res];
+    //        def next = tran.NextTransitions;
+    //        //def next = if (ret) if (tran.NextTran.IsEmpty()) "true" else "res" else "";
+    //        def code = tran.Code;
+    //        def res = "res = true;";
+    //        def body = (code :: add_body) + [res];
       
-            def body = body.Filter(x => !x.IsEmpty());
-            def body = if (tran.guard is <[]>) body else //tran_ena($t, $p);
-                  {
-                    def guard = tran.guard |> ConvExpr(_, false);
-                    def pre = if (a == null : object) "" else "else\n";
-                    $<#$(pre)if ($guard) 
-                    {
-                      ..$(body;"\n")
-                      ..$(next;"\n")
-                    }#> :: [];
-                  }
+    //        def body = body.Filter(x => !x.IsEmpty());
+    //        def body = if (tran.guard is <[]>) body else //tran_ena($t, $p);
+    //              {
+    //                def guard = tran.guard |> ConvExpr(_, false);
+    //                def pre = if (a == null : object) "" else "else\n";
+    //                $<#$(pre)if ($guard) 
+    //                {
+    //                  ..$(body;"\n")
+    //                  ..$(next;"\n")
+    //                }#> :: [];
+    //              }
 
-            def expr = if (a : object == null) body else a :: body;
-            def expr = expr.Filter(x => !x.IsEmpty());
-            $<#..$(expr;"\n")#>;
-          }
+    //        def expr = if (a : object == null) body else a :: body;
+    //        def expr = expr.Filter(x => !x.IsEmpty());
+    //        $<#..$(expr;"\n")#>;
+    //      }
           
-          def body = binding.Where(x => x.MainGroup).Fold(null, fold_body);
-          def binding = binding.RemoveDuplicatesSort((x, y) => x.place.idx.CompareTo(y.place.idx));
-          def extract = binding.Map(_.extract_expr);
+    //      def body = binding.Where(x => x.MainGroup).Fold(null, fold_body);
+    //      def binding = binding.RemoveDuplicatesSort((x, y) => x.place.idx.CompareTo(y.place.idx));
+    //      def extract = binding.Map(_.extract_expr);
           
           
-          def body = extract + [body];
+    //      def body = extract + [body];
       
-          def fold(x, a)
-          {
-            if (a : object == null)
-            {
-              def expr = x.bind_expr :: body;
-              def expr = expr.Filter(x => !x.IsEmpty());
-              def expr = $<#..$(expr;"\n")#>;
-              if (x.check_expr.IsEmpty())
-              {
-                expr
-              }
-              else
-              {
-                //def ret = if (ret) "false" else "true";
-                $<#if ($(x.check_expr))
-                    {
-                      $expr
-                    }
-                    #>
-              }
-            } else
-            {
-              def expr = [x.bind_expr] + [a];
-              def expr = expr.Filter(x => !x.IsEmpty());
-              def expr = $<#..$(expr;"\n")#>;
-              //def ret = if (ret) "false" else "true";
-              if (x.check_expr.IsEmpty())
-                expr
-              else
-                $<#
-                  if ($(x.check_expr))
-                  {
-                    $expr
-                  }
-                  #>
-            }
-          }
+    //      def fold(x, a)
+    //      {
+    //        if (a : object == null)
+    //        {
+    //          def expr = x.bind_expr :: body;
+    //          def expr = expr.Filter(x => !x.IsEmpty());
+    //          def expr = $<#..$(expr;"\n")#>;
+    //          if (x.check_expr.IsEmpty())
+    //          {
+    //            expr
+    //          }
+    //          else
+    //          {
+    //            //def ret = if (ret) "false" else "true";
+    //            $<#if ($(x.check_expr))
+    //                {
+    //                  $expr
+    //                }
+    //                #>
+    //          }
+    //        } else
+    //        {
+    //          def expr = [x.bind_expr] + [a];
+    //          def expr = expr.Filter(x => !x.IsEmpty());
+    //          def expr = $<#..$(expr;"\n")#>;
+    //          //def ret = if (ret) "false" else "true";
+    //          if (x.check_expr.IsEmpty())
+    //            expr
+    //          else
+    //            $<#
+    //              if ($(x.check_expr))
+    //              {
+    //                $expr
+    //              }
+    //              #>
+    //        }
+    //      }
           
-          def check = binding.Fold(null, fold);
+    //      def check = binding.Fold(null, fold);
           
-          $<#bool res = false;
-          $check
-          #>
-        } else
-        {
-          //def ret = if (ret) "false" else "true";
-          def group = sorted.Fold("res = true;", create_body);
-          $<#bool res = false;
-          $group
-            #>;
-        }
-    }
+    //      $<#bool res = false;
+    //      $check
+    //      #>
+    //    } else
+    //    {
+    //      //def ret = if (ret) "false" else "true";
+    //      def group = sorted.Fold("res = true;", create_body);
+    //      $<#bool res = false;
+    //      $group
+    //        #>;
+    //    }
+    //}
     
     public EnumTransitions : list[GenTran]
     {
