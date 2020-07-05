@@ -40,7 +40,7 @@ namespace PetriNetLib
       def net = PetriNetCompiler();
       mutable page = null;
       mutable only_cpp = false;
-      
+            
       def get_opts(o)
       {
         | <[ debug ]>          => assert2(false);

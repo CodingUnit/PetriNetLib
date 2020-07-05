@@ -35,16 +35,21 @@ namespace PetriNetLib
     {
       this.only_ = only_;
       def parser = Parser(page);
-      parser.Parse(file);
-      def file = System.IO.Path.GetFileNameWithoutExtension(file);
-      proc = PetriNetProcessor(file, Flags, typer, ty, parser.Places, parser.Transitions, parser.Arcs, parser.Decls);
-      proc.Process();      
-      //gen = Generator(proc.OutModel, proc);
-      _gen = Generator($"$file.h", proc.OutModel, proc);
-      //when (!only_)
-        //gen.PhaseOne();
-      _gen.PhaseOne();
-      ty.UserData["PetriNetGen"] = this;
+      if (parser.Parse(file))
+      {
+        def file = System.IO.Path.GetFileNameWithoutExtension(file);
+        proc = PetriNetProcessor(file, Flags, typer, ty, parser.Places, parser.Transitions, parser.Arcs, parser.Decls);
+        proc.Process();      
+        //gen = Generator(proc.OutModel, proc);
+        _gen = Generator($"$file.h", proc.OutModel, proc, TypeInterface(typer));
+        //when (!only_)
+          //gen.PhaseOne();
+        _gen.PhaseOne();
+        ty.UserData["PetriNetGen"] = this;
+      } else
+      {
+        Message.Error($"Error opening file $file")
+      }
     }
     
     public MainGen() : void

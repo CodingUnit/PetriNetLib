@@ -354,7 +354,7 @@ namespace PetriNetLib
     }
     
     add_arc(matrix : array[2, list[Arc]], p : int, t : int, a : Arc) : void
-    {
+    {      
       def val = matrix[p, t];
       def val = if (val == null) [a] else a :: val;
       matrix[p, t] = val

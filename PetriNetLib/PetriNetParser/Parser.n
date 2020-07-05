@@ -165,38 +165,51 @@ namespace PetriNetLib
       CpnDecl.GlobRef(id, value)
     }
 
-    public Parse(file : string) : void
+    public Parse(file : string) : bool
     {
       def xml = XmlDocument();
-      xml.Load(file);
-      def glob = xml.GetChilds("workspaceElements", "cpnet", "globbox");
-      def blocks = glob.GetChilds("block");
-      def glob = glob.Concat(blocks);
-      def ml_decls = glob.GetFirstChildText("ml");
-      decls = ml_decls.Map(x => CpnDecl.ML(x));
-      def var_tags = glob.Get("var");
-      def glob_refs = glob.Get("globref").Concat(glob.Get("pageref")).Concat(glob.Get("instref"));
-      def color = glob.Get("color");
+      xml.Load(file);      
+      mutable glob;
+      mutable read = true;
+      try
+      {
+        glob = xml.GetChilds("workspaceElements", "cpnet", "globbox");
+      }
+      catch
+      {
+        | _ => read = false
+      }
+      if (read)
+      {
+        def blocks = glob.GetChilds("block");
+        glob = glob.Concat(blocks);
+        def ml_decls = glob.GetFirstChildText("ml");
+        decls = ml_decls.Map(x => CpnDecl.ML(x));
+        def var_tags = glob.Get("var");
+        def glob_refs = glob.Get("globref").Concat(glob.Get("pageref")).Concat(glob.Get("instref"));
+        def color = glob.Get("color");
 
-      def glob_refs = glob_refs.Map(parse_glob_ref);
-      decls += color.Map(parse_color);
-      decls += glob_refs;
+        def glob_refs = glob_refs.Map(parse_glob_ref);
+        decls += color.Map(parse_color);
+        decls += glob_refs;
 
 
-      //decls = idx_color.Map((x, r, i) => CpnDecl.ColorSet(x.InnerText, Color.Index(r.First().InnerText |> int.Parse, r.Skip(1).First().InnerText |> int.Parse, i.First().InnerText)));
-      def var = var_tags.Map(x => CpnDecl.Var(x.GetOneText("id"), x.GetOneText("type", "id")));
-      decls += var;
-      def pages = xml.Get("workspaceElements", "cpnet", "page");
-      def page  = if (page != null) 
-                   {
-                     pages.Filter(x => x.GetOne("pageattr").GetAttrText("name") == page)
-                   } else pages;
-      def page = page.GetChilds();
-      def places = page.Get("place");
-      this.places = places.Map(get_place);
-      def tran   = page.Get("trans");
-      transitions   = tran.Map(get_tran);
-      arcs          = page.Get("arc").Map(get_arc);
+        //decls = idx_color.Map((x, r, i) => CpnDecl.ColorSet(x.InnerText, Color.Index(r.First().InnerText |> int.Parse, r.Skip(1).First().InnerText |> int.Parse, i.First().InnerText)));
+        def var = var_tags.Map(x => CpnDecl.Var(x.GetOneText("id"), x.GetOneText("type", "id")));
+        decls += var;
+        def pages = xml.Get("workspaceElements", "cpnet", "page");
+        def page  = if (page != null) 
+                     {
+                       pages.Filter(x => x.GetOne("pageattr").GetAttrText("name") == page)
+                     } else pages;
+        def page = page.GetChilds();
+        def places = page.Get("place");
+        this.places = places.Map(get_place);
+        def tran   = page.Get("trans");
+        transitions   = tran.Map(get_tran);
+        arcs          = page.Get("arc").Map(get_arc);
+        true
+      } else false      
     }
   }
 }

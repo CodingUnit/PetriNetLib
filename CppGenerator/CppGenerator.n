@@ -15,7 +15,7 @@ namespace PetriNetLib
   public class CppGenerator
   {
     model : GenModel;
-    colours  : Hashtable[string, CppColour] = Hashtable();
+    //colours  : Hashtable[string, CppColour] = Hashtable();
     
     public this(model : GenModel)
     {
@@ -26,7 +26,7 @@ namespace PetriNetLib
     {
       get
       {
-        ""
+        model.name
       }
     }
     
@@ -75,10 +75,10 @@ namespace PetriNetLib
     public Generate() : void
     {
       //  // создаем типы генерации из цветов
-      foreach (c in model.colours)
-      {
-        colours.Add(c.Key, c.Value |> GenColour(_, this))
-      }
+      //foreach (c in model.colours)
+      //{
+      //  colours.Add(c.Key, c.Value |> GenColour(_, this))
+      //}
 
       //def places_enum = CreatePlaces();
       //Define(places_enum);

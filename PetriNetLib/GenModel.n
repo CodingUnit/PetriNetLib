@@ -38,13 +38,19 @@ namespace PetriNetLib
       }
     }
   }
-  
+    
   [Record]
   public variant GClassDecl : GenNode
   {
     | None
     | EnumBitMask {name : string; val : int}
+    | Func { ret : LangType; name : string; parameters : list[GColour]; body : FuncBodyExpr}
     | ColourField       { name : string; type : GColour; val : option[PExpr] }
+  }
+  
+  public variant LangType
+  {
+    | Unit
   }
   
   [Record]
@@ -65,6 +71,8 @@ namespace PetriNetLib
     //gen : GenColour;
     
     public Name : string;
+    
+    public Type : Colour;
   }
   
   public variant GDecls
@@ -129,6 +137,7 @@ namespace PetriNetLib
   [Record]
   public class GenModel
   {
+    public name            : string;
     public composer        : INetComposer;
     public places          : list[GPlace];
     public init_marking    : list[GInitMarking];

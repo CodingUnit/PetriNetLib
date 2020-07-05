@@ -62,13 +62,13 @@ namespace PetriNetLib
   public class LinearTran : GTran
   {
     public Idx : int;
-    
+        
     public override Decl : GClassDecl
     {
       [Memoize]
       get
       {
-        GClassDecl.EnumBitMask("tr_$(x.ExecName)", (1 << Idx))
+        GClassDecl.None()
       }
     }
     
@@ -86,6 +86,15 @@ namespace PetriNetLib
   {
     model : GenModel;
     
+    Tran : GClassDecl
+    {
+      [Memoize]
+      get
+      {
+        GClassDecl.Func(LangType.Unit(), "transition", [], FuncBodyExpr.Sequence(model.tran.Map(x => x.body)))
+      }
+    }
+    
     public Result : list[GenNode]
     {
       [Memoize]
@@ -95,7 +104,7 @@ namespace PetriNetLib
                       Concat(model.glob_refs).
                       Concat(model.places.Select(x => x.Decl)).
                       Concat(model.places.Select(x => x.VarDecl)).
-                      Concat(model.tran).NToList()
+                      Concat([Tran]).NToList()
       }      
     }
   }

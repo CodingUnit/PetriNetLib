@@ -12,7 +12,7 @@ using PetriNetModel;
 namespace time_example1
 {
 
-  [PetriNet("pt14.cpn", Main, debug)]
+  [PetriNet("..\\nets\\blackbox.cpn", gps_bind, debug)]
   public class Pt14
   {
   }

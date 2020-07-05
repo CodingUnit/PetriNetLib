@@ -6,6 +6,9 @@ using Nemerle.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Nemerle.Compiler;
+using Nemerle.Compiler.Parsetree;
+using Nemerle.Compiler.Typedtree;
 
 namespace PetriNetLib
 {
@@ -16,11 +19,11 @@ namespace PetriNetLib
       [Accessor]
       typer : Typer;
       
-      public typing_stage : Action {get;set}
+      //public typing_stage : Action {get;set}
       
       public InitTyping() : void
       {
-          typing_stage()
+          //typing_stage()
       }
       
       public BindType(expr : PExpr) : TypeVar

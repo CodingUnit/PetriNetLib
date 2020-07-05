@@ -9,12 +9,5 @@ using System.Linq;
 
 namespace CppGenerator
 {
-  /// <summary>
-  /// Description of CppColour.
-  /// </summary>
-  [Record]
-  class CppColour
-  {
-    colour : GenColour;
-  }
+ 
 }
