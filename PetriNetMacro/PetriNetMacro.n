@@ -37,14 +37,14 @@ namespace PetriNetLib
     {
       //Macros.DefineCTX(typer);
       //assert2(false);
-      def net = PetriNetCompiler();
+      def net = PetriNetLib.Compiler();
       mutable page = null;
-      mutable only_cpp = false;
+      mutable target = None();
             
       def get_opts(o)
       {
         | <[ debug ]>          => assert2(false);
-        | <[ only_cpp]>        => only_cpp = true;
+        | <[ c++ ]>            => target = Some(TargetLangType.Cpp);
         | <[ $(n : usesite) ]> => page = n
         | _                    => ()
      }
@@ -52,7 +52,8 @@ namespace PetriNetLib
       match (expr)
       {
         | <[$(str : string)]> => foreach (o in other) get_opts(o);
-                                 net.Process(ty, typer, str, page, only_cpp)
+                                 def tar = if (target is Some(t)) t else TargetLangType.Cpp;
+                                 net.Process(ty, MainProcessorv1(), typer, str, page, tar)
         | _                   => ()
       }
       
@@ -71,7 +72,7 @@ namespace PetriNetLib
       //      }
       //    ]>;
       //def expr1 = typer.TypeExpr(expr1);
-      def gen = ty.UserData["PetriNetGen"] :> PetriNetCompiler;
+      def gen = ty.UserData["PetriNetGen"] :> PetriNetLib.Compiler;
       gen.MainGen();
     }
     
@@ -79,7 +80,7 @@ namespace PetriNetLib
     {
       //Macros.DefineCTX(typer);
       //assert2(false);
-      def gen = ty.UserData["PetriNetGen"] :> PetriNetCompiler;
+      def gen = ty.UserData["PetriNetGen"] :> PetriNetLib.Compiler;
       gen.PhaseTwo();
       //def b = <[ a + 1 ]>;
       //    def expr1 = <[

@@ -36,7 +36,7 @@ namespace PetriNetLib
   /// <summary>
   /// Description of Generator.
   /// </summary>
-  partial class Generator
+  partial class Generator : IMainProcessor
   {
     [Accessor]
     model       : OutModel;
@@ -952,8 +952,7 @@ namespace PetriNetLib
       //CreateTranQueue();
       //CreateToString();
       CreateStartMethod();
-
-
+      
       //Define(places + ["\n"])//_ = typebuilder.DefineWithSource(m);
     }
 

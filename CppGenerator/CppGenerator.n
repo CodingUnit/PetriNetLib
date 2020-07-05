@@ -12,14 +12,19 @@ namespace PetriNetLib
   /// <summary>
   /// Description of CppGenerator.
   /// </summary>
-  public class CppGenerator
+  public class CppGenerator : ILangGenerator
   {
     model : GenModel;
     //colours  : Hashtable[string, CppColour] = Hashtable();
-    
-    public this(model : GenModel)
+        
+    public this(mod : GenModel)
     {
-      this.model = model;
+      model = mod;
+    }
+    
+    public Construct(mod : GenModel) : CppGenerator
+    {
+      CppGenerator(mod)
     }
     
     net_name : string

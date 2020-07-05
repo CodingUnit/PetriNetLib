@@ -1,0 +1,42 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+using Nemerle.Compiler;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace PetriNetLib
+{
+  /// <summary>
+  /// Description of Compiler.
+  /// </summary>
+  public class Compiler
+  {
+    comp : PetriNetCompiler = PetriNetCompiler();
+    mutable target : TargetLangType;
+    
+    public PhaseTwo() : void
+    {
+      comp.PhaseTwo()
+    }
+    
+    public Process(ty : TypeBuilder, mainproc : IMainProcessorFabric, typer : Typer, file : string, page : string, target : TargetLangType) : void
+    {
+      this.target = target;
+      comp.Process(ty, mainproc, typer, file, page, target)
+    }
+    
+    public MainGen() : void
+    {
+      def res = comp.MainGen();
+      def lang = match (target)
+      {
+        | TargetLangType.Cpp => CppGenerator(res)                                  
+      }
+      
+      lang.Generate()
+    }
+  }
+}

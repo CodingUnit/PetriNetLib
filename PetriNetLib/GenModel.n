@@ -10,10 +10,19 @@ using Nemerle.Compiler.Parsetree;
 
 namespace PetriNetLib
 {
+
+  public enum TargetLangType
+  {
+    | Cpp
+    | Csharp
+    | Nemerle
+    | NemerleMacro
+  }
+
   public variant FunBodyKind
   {
   }
-  
+
   [Record]
   public abstract class GPlace : GenNode
   {
@@ -22,13 +31,13 @@ namespace PetriNetLib
     public abstract Decl : GClassDecl {get;}
     public abstract VarDecl : GClassDecl {get;}
   }
-  
-  
+
+
   [Record]
   public abstract class GTran : GenNode
   {
     public name : string;
-    
+
     public abstract Decl : GClassDecl {get;}
     public body : FuncBodyExpr
     {
@@ -38,7 +47,7 @@ namespace PetriNetLib
       }
     }
   }
-    
+
   [Record]
   public variant GClassDecl : GenNode
   {
@@ -47,12 +56,12 @@ namespace PetriNetLib
     | Func { ret : LangType; name : string; parameters : list[GColour]; body : FuncBodyExpr}
     | ColourField       { name : string; type : GColour; val : option[PExpr] }
   }
-  
+
   public variant LangType
   {
     | Unit
   }
-  
+
   [Record]
   public class GGlobRef : GenNode
   {
@@ -60,21 +69,21 @@ namespace PetriNetLib
     public Val  : option[PExpr];
     public Type : GColour;
   }
-  
+
   public class GenNode
   {
   }
-  
+
   [Record]
   public class GColour : GenNode
   {
     //gen : GenColour;
-    
+
     public Name : string;
-    
+
     public Type : Colour;
   }
-  
+
   public variant GDecls
   {
     | EnumBitMask { vals : list[string * int]}  
@@ -87,15 +96,15 @@ namespace PetriNetLib
     | Flag { val : bool}
     | Multiset
   }
-  
+
   public variant GInitMarking
   {
     | Empty
     | Value { init_value : GInitValue;}
-    
+
     place : GPlace;
   }
-  
+
   public variant FuncBodyExpr
   {
     | Sequence { seq : list[FuncBodyExpr]}
@@ -115,22 +124,22 @@ namespace PetriNetLib
     | CallTran {tran : GTran}
     | CallTranFunc {tran : GTran; parm : PExpr}
   }
-  
+
   public class PetriNetFunc : GenNode
   {
     ret_type : GenColour;
-    
+
     name : string;
-    
+
     kind : FunBodyKind;
     body : FuncBodyExpr;
   }
-  
+
   public interface INetComposer
   {
     Result : list[GenNode] {get;}
   }
-  
+
   /// <summary>
   /// Description of GenModel.
   /// </summary>

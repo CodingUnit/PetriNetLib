@@ -71,6 +71,11 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\PetriNetCompiler\PetriNetCompiler.nproj">
+      <Name>PetriNetCompiler</Name>
+      <Project>{7494bf05-9412-4570-8a95-5d3fd417c1f0}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\PetriNetLib\PetriNetLib.nproj">
       <Name>PetriNetLib</Name>
       <Project>{2edff5c5-d99f-4416-96e2-c5b4a4f18247}</Project>

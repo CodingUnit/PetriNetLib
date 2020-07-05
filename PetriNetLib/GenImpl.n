@@ -77,7 +77,7 @@ namespace PetriNetLib
     //    #>
     //  }
     //}
-
+    
     public this(file : string, model : OutModel, proc : PetriNetProcessor, type_int : ITypeInterface)
     {
       this.typer = type_int;
