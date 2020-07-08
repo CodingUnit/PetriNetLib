@@ -15,7 +15,7 @@ namespace PetriNetLib
   /// </summary>
   [Record]
   [Lens]
-  class GenTran : Transition, IEquatable[GenTran]
+  public class GenTran : Transition, IEquatable[GenTran]
   {
     gen : Generator;
 
@@ -419,6 +419,14 @@ namespace PetriNetLib
       }
     }
 
+    public Body : FuncBodyExpr
+    {
+      get
+      {
+        null
+      }
+    }
+    
     public virtual OutputGenPlaces : list[GenPlace]
     {
       [Memoize]

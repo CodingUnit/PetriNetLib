@@ -16,7 +16,7 @@ namespace PetriNetLib
   /// Description of OutArcProcess.
   /// </summary>
   [Record]
-  class OutArcProcess
+  public class OutArcProcess
   {
 
     public place      : GenPlace;

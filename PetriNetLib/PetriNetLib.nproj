@@ -129,9 +129,6 @@
     <Compile Include="DfsIter.n">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="GenColour.n">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="GenImpl.n">
       <SubType>Code</SubType>
     </Compile>
@@ -183,6 +180,11 @@
     <ProjectReference Include="..\CommonLib.Macros\CommonLib.Macros.nproj">
       <Name>CommonLib.Macros</Name>
       <Project>{5e9cfda7-975a-4ef5-a7e7-b638df3d19f7}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\CppGenerator\CppGenerator.nproj">
+      <Name>CppGenerator</Name>
+      <Project>{3635cc09-575e-47a1-98c6-425137da3a7b}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\PetriNetModel\PetriNetModel.nproj">

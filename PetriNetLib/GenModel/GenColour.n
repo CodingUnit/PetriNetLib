@@ -13,11 +13,11 @@ namespace PetriNetLib
   /// Description of GenColour.
   /// </summary>
   [Record]
-  class GenColour
+  public class GenColour
   {
     [Accessor]
     colour : ColourSet;
-    gen : Generator;
+    //gen : Generator;
 
     public type : Colour
     {
@@ -218,6 +218,10 @@ namespace PetriNetLib
       }
     }
     
+    //public IsSimple : bool
+    //{
+    //}
+    
     //public VarSpec : string
     //{
     //  [Memoize]
@@ -236,7 +240,7 @@ namespace PetriNetLib
     //  }
     //}
     
-    //public DestType : string
+    //public DestType : GClassDecl.Type
     //{
     //  [Memoize]
     //  get
@@ -246,36 +250,36 @@ namespace PetriNetLib
     //      | Colour.Integer =>
     //          match (Name)
     //          {
-    //            | "SBYTE"  => "s8"
-    //            | "BYTE"   => "u8"
-    //            | "SHORT"  => "short"
-    //            | "INT"    => "int"
-    //            | "INTINF" => "unsigned long long"//cpp("type: int")
-    //            | "UINT"   => "u32"
-    //            | "USHORT" => "u16"
-    //            | _        => "int"
+    //            | "SBYTE"  => LangType.SByte()
+    //            | "BYTE"   => LangType.Byte()
+    //            | "SHORT"  => LangType.Int16()
+    //            | "INT"    => LangType.Int32()
+    //            | "INTINF" => LangType.UInt64()
+    //            | "UINT"   => LangType.UInt32()
+    //            | "USHORT" => LangType.UInt16()
+    //            //| _        => "int"
     //          }
 
     //      | Colour.Alias(type)  => 
     //          match (Name)
     //          {
-    //            | "SBYTE"  => "s8"
-    //            | "BYTE"   => "u8"
-    //            | "SHORT"  => "short"
-    //            | "INTINF" => "unsigned long long"//cpp("type: int")
-    //            | "INT"    => "int"
-    //            | "UINT"   => "u32"
-    //            | "USHORT" => "u16"
+    //            | "SBYTE"  => LangType.SByte()
+    //            | "BYTE"   => LangType.Byte()
+    //            | "SHORT"  => LangType.Int16()
+    //            | "INT"    => LangType.Int32()
+    //            | "INTINF" => LangType.UInt64()
+    //            | "UINT"   => LangType.UInt32()
+    //            | "USHORT" => LangType.UInt16()
     //            | _        => get_type(gen.Proc.colour_sets[type].type)
     //          }
     //      | Colour.Simple(type) => 
     //          match (type)
     //          {
-    //            | "string" => "char *"//cpp("type: char *")
-    //            | "int"    => "int"//cpp("type: int")
-    //            | "TIME"   => "int"
+    //            | "string" => LangType.String()//cpp("type: char *")
+    //            | "int"    => LangType.Int32()//cpp("type: int")
+    //            | "TIME"   => LangType.UInt32()
     //            | "INTINF"
-    //            | "intinf" => "long long"//cpp("type: int")
+    //            | "intinf" => LangType.UInt64()//cpp("type: int")
     //            | "real"   => "float"//cpp("type: float")
     //            | "time"   => "int"//cpp("type: int")
     //            | "bool"   => "bool"//cpp("type: bool")
@@ -312,19 +316,20 @@ namespace PetriNetLib
 
     //    }
 
-    //    get_type(type)
+    //    def type : LangType = get_type(type);
+    //    GClassDecl.Type(type)
     //  }
     //}
 
-    public Public : bool
-    {
-      [Memoize]
-      get
-      {
-        def places_uses = gen.Places.Filter(x => x.colour == colour : object);
-        places_uses.Exists(x => x.port.HasValue)
-      }
-    }
+    //public Public : bool
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    def places_uses = gen.Places.Filter(x => x.colour == colour : object);
+    //    places_uses.Exists(x => x.port.HasValue)
+    //  }
+    //}
     
     //public IsBytes : bool
     //{

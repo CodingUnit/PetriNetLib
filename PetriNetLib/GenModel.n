@@ -23,123 +23,102 @@ namespace PetriNetLib
   {
   }
 
-  [Record]
-  public abstract class GPlace : GenNode
+  public variant TFieldKind
   {
-    public Name : string;
-    public Colour : GColour;
-    public abstract Decl : GClassDecl {get;}
-    public abstract VarDecl : GClassDecl {get;}
+    | Place {place : GenPlace}
   }
-
-
-  [Record]
-  public abstract class GTran : GenNode
+ 
+  public variant TFuncKind
   {
-    public name : string;
-
-    public abstract Decl : GClassDecl {get;}
-    public body : FuncBodyExpr
-    {
-      get
-      {
-        null
-      }
-    }
+    | Transition {tran : GenTran}
+    | CommonTransition {tran : list[GenTran]}
+    | Event { name : string }    
+    | AddPlace { place : GenPlace}
   }
-
+    
   [Record]
   public variant GClassDecl : GenNode
   {
     | None
     | EnumBitMask {name : string; val : int}
-    | Func { ret : LangType; name : string; parameters : list[GColour]; body : FuncBodyExpr}
-    | ColourField       { name : string; type : GColour; val : option[PExpr] }
+    | Func { ret : LangType; name : string; parameters : list[GenColour]; body : FuncBodyExpr; kind : TFuncKind}
+    //| ColourField       { name : string; type : GenColour; val : option[PExpr] }
+    | Type { type : LangType}
+    | Field { name : string; type : GenColour; val : option[PExpr]; kind : TFieldKind }
   }
 
+  public class GlobRef
+  {
+  }
+  
+  [Record]
   public variant LangType
   {
     | Unit
-  }
-
-  [Record]
-  public class GGlobRef : GenNode
-  {
-    public Name : string;
-    public Val  : option[PExpr];
-    public Type : GColour;
+    | Int32
+    | UInt32
+    | Int16
+    | UInt16
+    | Int64
+    | UInt64
+    | String
+    | Array
+    | Byte
+    | SByte
+    | Float
+    | Double
   }
 
   public class GenNode
   {
   }
 
-  [Record]
-  public class GColour : GenNode
-  {
-    //gen : GenColour;
 
-    public Name : string;
 
-    public Type : Colour;
-  }
-
-  public variant GDecls
-  {
-    | EnumBitMask { vals : list[string * int]}  
-    | Field       { name : string; type : PExpr; value : option[PExpr]} 
-  }
-
-  public variant GInitValue
-  {
-    | Val {val : int}
-    | Flag { val : bool}
-    | Multiset
-  }
-
-  public variant GInitMarking
-  {
-    | Empty
-    | Value { init_value : GInitValue;}
-
-    place : GPlace;
-  }
+  //public variant GDecls
+  //{
+  //  | EnumBitMask { vals : list[string * int]}  
+  //  | Field       { name : string; type : PExpr; value : option[PExpr]} 
+  //}
 
   public variant FuncBodyExpr
   {
     | Sequence { seq : list[FuncBodyExpr]}
     | Empty
-    | Lock { places : list[GPlace]}
-    | Unlock { places : list[GPlace]}
+    | Lock { places : list[GenPlace]}
+    | Unlock { places : list[GenPlace]}
     | VarRef { name : string }
     | ImmutableVarDeclSimple { ty : PExpr; name : string; init : option[FuncBodyExpr]}
-    | ImmutableVarDecl { ty : GColour; name : string; init : option[FuncBodyExpr]}
+    | ImmutableVarDecl { ty : GenColour; name : string; init : option[FuncBodyExpr]}
     | FuncExec { name : string }
     | GetTokensExpr { expr : PExpr}
     | PeekIndexed { name : string; arc_name : string; }
-    | Peek { ty : GColour; name : string}
+    | Peek { ty : GenColour; name : string}
     | AddTokensExpr { expr : PExpr}
     | CombinedExpr  {expr : PExpr}
     | Action {name : string; parms : list[PExpr];}
-    | CallTran {tran : GTran}
-    | CallTranFunc {tran : GTran; parm : PExpr}
+    | CallTran {tran : GenTran}
+    | CallTranFunc {tran : GenTran; parm : PExpr}
   }
 
-  public class PetriNetFunc : GenNode
-  {
-    ret_type : GenColour;
+  //public class PetriNetFunc : GenNode
+  //{
+  //  ret_type : GenColour;
 
-    name : string;
+  //  name : string;
 
-    kind : FunBodyKind;
-    body : FuncBodyExpr;
-  }
+  //  kind : FunBodyKind;
+  //  body : FuncBodyExpr;
+  //}
 
   public interface INetComposer
   {
     Result : list[GenNode] {get;}
   }
 
+  public class InitMarking
+  {
+  }
   /// <summary>
   /// Description of GenModel.
   /// </summary>
@@ -148,12 +127,20 @@ namespace PetriNetLib
   {
     public name            : string;
     public composer        : INetComposer;
-    public places          : list[GPlace];
-    public init_marking    : list[GInitMarking];
-    public tran            : list[GTran];
-    public glob_refs       : list[GGlobRef];
-    public colours         : list[GColour];
-    public funcs           : list[PetriNetFunc];
-    public add_place_funcs : list[PetriNetFunc];
+    public places          : list[GenPlace];
+    public init_marking    : list[InitMarking];
+    public tran            : list[GenTran];
+    public glob_refs       : list[GlobRef];
+    public colours         : list[GenColour];
+    public funcs           : list[GenFunc];    
+  }
+  
+  public class GenFileStruct
+  {
+    public module_name : string;
+    
+    public funcs : list[GClassDecl.Func];
+    public vars  : list[GClassDecl.Field];
+    public types : list[GClassDecl.Type];
   }
 }

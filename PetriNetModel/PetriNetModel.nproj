@@ -140,6 +140,11 @@
       <Project>{5e9cfda7-975a-4ef5-a7e7-b638df3d19f7}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\PetriNetLib\GenModel\GenModel.nproj">
+      <Name>GenModel</Name>
+      <Project>{d58468ea-0528-4d08-b65c-db03e4193003}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="packages.config">

@@ -12,102 +12,35 @@ namespace PetriNetLib
   /// <summary>
   /// Description of LinearTree.
   /// </summary>
-  [Record]
-  public class LinearGlobRef : GGlobRef
-  {
-    public Decl : GClassDecl
-    {
-      [Memoize]
-      get
-      {
-        GClassDecl.ColourField(Name, Type, Val)
-        //$"$type $name = $val;"
-      }
-    }
-  }
   
-  [Record]
-  public class LinearGPlace : GPlace
-  {
-    public Idx : int;
-        
-    public override Decl : GClassDecl
-    {
-      [Memoize]
-      get
-      {
-        GClassDecl.EnumBitMask($<#pl_$(Name)#>, 1 << Idx)
-      }
-    }
+  //[Record]
+  //public class LinearNet : INetComposer
+  //{
+  //  model : GenModel;
     
-    public override VarDecl : GClassDecl
-    {
-      [Memoize]
-      get
-      {
-        GClassDecl.ColourField(Name, Colour, None())
-      }
-    }
+  //  Tran : GClassDecl
+  //  {
+  //    [Memoize]
+  //    get
+  //    {
+  //      GClassDecl.Func(LangType.Unit(), "transition", [], FuncBodyExpr.Sequence(model.tran.Map(x => x.body)))
+  //    }
+  //  }
     
-    public Decls : list[GClassDecl]
-    {
-      get
-      {
-        Decl :: VarDecl :: []
-      }
-    }
-  }
-    
-  [Record]
-  public class LinearTran : GTran
-  {
-    public Idx : int;
-        
-    public override Decl : GClassDecl
-    {
-      [Memoize]
-      get
-      {
-        GClassDecl.None()
-      }
-    }
-    
-    public Decls : list[GClassDecl]
-    {
-      get
-      {
-        []
-      }
-    }
-  }
-  
-  [Record]
-  public class LinearNet : INetComposer
-  {
-    model : GenModel;
-    
-    Tran : GClassDecl
-    {
-      [Memoize]
-      get
-      {
-        GClassDecl.Func(LangType.Unit(), "transition", [], FuncBodyExpr.Sequence(model.tran.Map(x => x.body)))
-      }
-    }
-    
-    public Result : list[GenNode]
-    {
-      [Memoize]
-      get
-      {        
-        model.colours.Concat(model.funcs).
-                      Concat(model.glob_refs).
-                      Concat(model.places.Select(x => x.Decl)).
-                      Concat(model.places.Select(x => x.VarDecl)).
-                      Concat([Tran]).NToList()
-      }      
-    }
-  }
+  //  public Result : list[GenNode]
+  //  {
+  //    [Memoize]
+  //    get
+  //    {        
+  //      []
+  //      //model.colours.Concat(model.funcs).
+  //      //              Concat(model.glob_refs).
+  //      //              Concat(model.places.Select(x => x.Decl)).
+  //      //              Concat(model.places.Select(x => x.VarDecl)).
+  //      //              Concat([Tran]).NToList()
+  //    }      
+  //  }
+  //}
   
   //public class LinearInitMarking : GInitValue
   //{

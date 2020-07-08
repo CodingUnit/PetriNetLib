@@ -26,65 +26,69 @@ namespace PetriNetLib
       }
     }
     
-    CreatePlaces() : list[GPlace]
+    //CreatePlaces() : list[GPlace]
+    //{
+    //  places.Where(x => !x.IsFuncPlace).Map(x => LinearGPlace(x.Name, GColour(x.Colour.Name, x.Colour.type), x.gen_idx) : GPlace);
+    //  //$<#pl_$(x.Name) = 0x$((1 << x.gen_idx).ToString("X"))#>
+    //  //$<#typedef enum
+    //  //   {
+    //  //     ..$(enums;",\n")
+    //  //   } tplace;#>
+    //}
+    
+    //CreateTransitions() : list[GTran]
+    //{
+    // // def func = $<#      
+    // // tran_func get_transition(int n) const
+	   // //{
+		  // // return *(tran_func *)&tran_funcs[n];
+	   // //}
+    // // #>;
+    // // protected_fields.Add(func);
+    //  def tran = gen.EnumTransitions.OrderBy(x => x.Priority);
+    //  def restran = tran.Select((x, i) => LinearTran(x.ExecName, i) : GTran).NToList();//$<#tr_$(x.ExecName) = 0x$((1 << i).ToString("X"))#>);
+      
+      
+      
+    //  //private_fields.Add($<#
+    //  //typedef enum 
+    //  //{
+    //  //  ..$(restran;",\n")
+    //  //} ttran;#>);
+      
+    //  //def lock_places = tran.Select(x => if (x == null) "(tplace)0" else x.PlacesParticipateMask);
+      
+    //  //def can_rep = tran.Select((x, i) => if (x == null) 1 << i else if (x.CompleteTran) 1 << i else 0);
+      
+    //  //private_fields.Add($<#const tran_func_type *tran_funcs;
+    //  //#>);
+      
+    //  //def init = tran.Select(x => $<#&$Name::$(x.ExecName)#>);//..$(tran;",\n");
+    //  //def init = $<#static const tran_func_type tr_funcs[] = {..$(init; ",\n")};
+    //  //             tran_funcs = tr_funcs; 
+    //  //            #>;
+                  
+    //  //def lock_init = $<#static const tplace tr_lock[] = {..$(lock_places; ",\n")};
+    //  //                   tran_lock = tr_lock;
+    //  //                 #>;
+                       
+    //  //cons_expr.AddRange(init :: lock_init :: []);
+      
+    //  //// все переходы у которых во входных позициях есть фишки
+    //  //def tran = transitions.Where(x => x.IsUnnamed && !x.IsTimed && x.InputGenPlaces.All(x => x.IsHaveInitMarking && x.port.IsNone));
+    //  //def tran = tran |> TranMask;
+    //  //def tran = $<#tran_ena($tran);#>;
+    //  //cons_expr.Add(tran);
+    //  restran
+    //}      
+    ColourToType(col : GenColour) : GClassDecl
     {
-      places.Where(x => !x.IsFuncPlace).Map(x => LinearGPlace(x.Name, GColour(x.Colour.Name, x.Colour.type), x.gen_idx) : GPlace);
-      //$<#pl_$(x.Name) = 0x$((1 << x.gen_idx).ToString("X"))#>
-      //$<#typedef enum
-      //   {
-      //     ..$(enums;",\n")
-      //   } tplace;#>
     }
     
-    CreateTransitions() : list[GTran]
+    public Process(model : GenModel) : GenFileStruct
     {
-     // def func = $<#      
-     // tran_func get_transition(int n) const
-	    //{
-		   // return *(tran_func *)&tran_funcs[n];
-	    //}
-     // #>;
-     // protected_fields.Add(func);
-      def tran = gen.EnumTransitions.OrderBy(x => x.Priority);
-      def restran = tran.Select((x, i) => LinearTran(x.ExecName, i) : GTran).NToList();//$<#tr_$(x.ExecName) = 0x$((1 << i).ToString("X"))#>);
-      
-      
-      
-      //private_fields.Add($<#
-      //typedef enum 
-      //{
-      //  ..$(restran;",\n")
-      //} ttran;#>);
-      
-      //def lock_places = tran.Select(x => if (x == null) "(tplace)0" else x.PlacesParticipateMask);
-      
-      //def can_rep = tran.Select((x, i) => if (x == null) 1 << i else if (x.CompleteTran) 1 << i else 0);
-      
-      //private_fields.Add($<#const tran_func_type *tran_funcs;
-      //#>);
-      
-      //def init = tran.Select(x => $<#&$Name::$(x.ExecName)#>);//..$(tran;",\n");
-      //def init = $<#static const tran_func_type tr_funcs[] = {..$(init; ",\n")};
-      //             tran_funcs = tr_funcs; 
-      //            #>;
-                  
-      //def lock_init = $<#static const tplace tr_lock[] = {..$(lock_places; ",\n")};
-      //                   tran_lock = tr_lock;
-      //                 #>;
-                       
-      //cons_expr.AddRange(init :: lock_init :: []);
-      
-      //// все переходы у которых во входных позициях есть фишки
-      //def tran = transitions.Where(x => x.IsUnnamed && !x.IsTimed && x.InputGenPlaces.All(x => x.IsHaveInitMarking && x.port.IsNone));
-      //def tran = tran |> TranMask;
-      //def tran = $<#tran_ena($tran);#>;
-      //cons_expr.Add(tran);
-      restran
-    }      
-    
-    public Process(model : OutModel) : GenModel
-    {
-      def places = CreatePlaces();
+      //def places = CreatePlaces();
+      model.colours.Select(ColourToType);
       null
     }
   }

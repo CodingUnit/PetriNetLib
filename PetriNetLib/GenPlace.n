@@ -17,7 +17,7 @@ namespace PetriNetLib
   /// Description of GenPlace.
   /// </summary>
   [Record]
-  class GenPlace : Place, IEquatable[GenPlace]
+  public class GenPlace : Place, IEquatable[GenPlace]
   {
     gen : Generator;
 

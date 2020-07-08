@@ -76,7 +76,7 @@ namespace PetriNetLib
       }
     }
     
-    
+    //public ColourToType(col : Gen)
     public Generate() : void
     {
       //  // создаем типы генерации из цветов
