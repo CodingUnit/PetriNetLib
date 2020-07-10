@@ -23,12 +23,12 @@ namespace PetriNetLib
   {
   }
 
-  public variant TFieldKind
+  variant TFieldKind
   {
     | Place {place : GenPlace}
   }
  
-  public variant TFuncKind
+  variant TFuncKind
   {
     | Transition {tran : GenTran}
     | CommonTransition {tran : list[GenTran]}
@@ -37,7 +37,7 @@ namespace PetriNetLib
   }
     
   [Record]
-  public variant GClassDecl : GenNode
+  variant GClassDecl : GenNode
   {
     | None
     | EnumBitMask {name : string; val : int}
@@ -55,6 +55,7 @@ namespace PetriNetLib
   public variant LangType
   {
     | Unit
+    | Bool
     | Int32
     | UInt32
     | Int16
@@ -62,7 +63,7 @@ namespace PetriNetLib
     | Int64
     | UInt64
     | String
-    | Array
+    | List {of_type : LangType}
     | Byte
     | SByte
     | Float
@@ -81,7 +82,7 @@ namespace PetriNetLib
   //  | Field       { name : string; type : PExpr; value : option[PExpr]} 
   //}
 
-  public variant FuncBodyExpr
+  variant FuncBodyExpr
   {
     | Sequence { seq : list[FuncBodyExpr]}
     | Empty
@@ -123,7 +124,7 @@ namespace PetriNetLib
   /// Description of GenModel.
   /// </summary>
   [Record]
-  public class GenModel
+  class GenModel
   {
     public name            : string;
     public composer        : INetComposer;
@@ -135,7 +136,7 @@ namespace PetriNetLib
     public funcs           : list[GenFunc];    
   }
   
-  public class GenFileStruct
+  class GenFileStruct
   {
     public module_name : string;
     

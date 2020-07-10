@@ -1,0 +1,34 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace PetriNetLib
+{
+  /// <summary>
+  /// Description of PetriNetType.
+  /// </summary>
+  [Record]
+  variant PetriNetType
+  {    
+    | Unit
+    | Bool
+    | Int
+    | UInt
+    | Short
+    | UShort
+    | IntInf
+    | String
+    | List {of_type : PetriNetType; range : option[int * int]}
+    | Byte
+    | SByte
+    | Real
+    | Timed {type : PetriNetType}
+    | Complex {col : ColourSet}
+    | Time
+  }
+}

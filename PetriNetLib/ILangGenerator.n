@@ -12,7 +12,7 @@ namespace PetriNetLib
   /// <summary>
   /// Description of ILangGenerator.
   /// </summary>
-  public interface ILangGenerator
+  interface ILangGenerator
   {
     Construct(model : GenModel) : ILangGenerator;
     Generate() : void;

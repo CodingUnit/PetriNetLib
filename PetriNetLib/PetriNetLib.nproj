@@ -114,6 +114,12 @@
     <Compile Include="Composition.n">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="CppGenerator.n">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="GenColour.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="GenType.n">
       <SubType>Code</SubType>
     </Compile>
@@ -168,6 +174,9 @@
     <Compile Include="PetriNetCompiler.n">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="PetriNetType.n">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.n" />
     <Compile Include="TypeInterface.n">
       <SubType>Code</SubType>
@@ -180,11 +189,6 @@
     <ProjectReference Include="..\CommonLib.Macros\CommonLib.Macros.nproj">
       <Name>CommonLib.Macros</Name>
       <Project>{5e9cfda7-975a-4ef5-a7e7-b638df3d19f7}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\CppGenerator\CppGenerator.nproj">
-      <Name>CppGenerator</Name>
-      <Project>{3635cc09-575e-47a1-98c6-425137da3a7b}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\PetriNetModel\PetriNetModel.nproj">

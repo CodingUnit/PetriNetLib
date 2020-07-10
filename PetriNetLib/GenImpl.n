@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 
 namespace PetriNetLib
 {
-  public variant PetriNetNode
+  variant PetriNetNode
   {
     | Place {place : GenPlace;}
     | Tran {tran : GenTran;}

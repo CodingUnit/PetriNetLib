@@ -13,7 +13,7 @@ namespace PetriNetLib
   /// <summary>
   /// Description of GroupTran.
   /// </summary>
-  public class GroupTran : GenTran
+  class GroupTran : GenTran
   {
     public grouped : list[GenTran];
     public gen : Generator;

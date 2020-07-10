@@ -81,14 +81,11 @@ namespace PetriNetLib
     //  //cons_expr.Add(tran);
     //  restran
     //}      
-    ColourToType(col : GenColour) : GClassDecl
-    {
-    }
     
     public Process(model : GenModel) : GenFileStruct
     {
       //def places = CreatePlaces();
-      model.colours.Select(ColourToType);
+      //model.colours.Select(ColourToType);
       null
     }
   }

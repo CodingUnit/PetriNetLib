@@ -14,7 +14,7 @@ namespace PetriNetLib
   /// </summary>
   interface ProcessComposition
   {
-    Process(model : OutModel) : GenModel;
+    //Process(model : OutModel) : GenFileStruct;
   }
   
   

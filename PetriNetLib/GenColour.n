@@ -1,0 +1,338 @@
+﻿using Nemerle;
+using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace PetriNetLib
+{
+  /// <summary>
+  /// Description of GenColour.
+  /// </summary>
+  [Record]
+  class GenColour
+  {
+    [Accessor]
+    colour : ColourSet;
+    gen : Generator;
+
+    public type : Colour
+    {
+      [Memoize]
+      get
+      {        
+        colour.type
+      }
+    }
+
+    name : string
+    {
+      [Memoize]
+      get
+      {
+        colour.name
+      }
+    }
+    
+    public Name : string
+    {
+      [Memoize]
+      get
+      {
+        match (name.IndexOf("__"))
+        {
+          | -1 => name
+          | i  => name.Substring(i + 2)
+        }
+        //def splitted = colour.name.Split('_').Filter(x => !Opts.Contains(x));
+        //string.Join("_", splitted)
+      }
+    }
+
+    public IsComplexType : bool
+    { 
+      [Memoize]
+      get
+      {
+        def loop(t)
+        {
+          def loop2(t2)
+          {
+            | Colour.Timed(t) => loop2(t)
+            | Colour.Union
+            | Colour.String
+            | Colour.Record
+            | Colour.Product
+            | Colour.List     => true
+            | Colour.Alias(t) => loop(t)
+            | _               => false
+          }
+
+          match (t)
+          {
+            | "time"
+            | "TIME"
+            | "real"
+            | "REAL"
+            | "BOOL"
+            | "bool"
+            | "USHORT"
+            | "SHORT"
+            | "BYTE"
+            | "int"    => false
+            | _        => loop2(gen.Model.colour_sets[t].type)
+          }
+
+        }
+
+        loop(Name)
+      }
+    }
+
+    public Opts : list[string]
+    {
+      [Memoize]
+      get
+      {
+        def name = colour.name.Split(array["__"], StringSplitOptions.RemoveEmptyEntries);
+        if (name.Length == 1) [] else
+        {
+          def name = name.First();
+          name.Split('_').NToList()
+        }
+      }
+    }
+
+    public Req : bool
+    {
+      [Memoize]
+      get
+      {
+        Opts.Exists(_ == "REQ")
+      }
+    }
+
+    public ZeroSingle : bool
+    {
+      [Memoize]
+      get
+      {
+        Opts.Exists(_ == "ZEROSINGLE") 
+      }
+    }
+    
+    public Push : bool
+    {
+      [Memoize]
+      get
+      {
+        Opts.Exists(_ == "PUSH") 
+      }
+    }
+    
+    public Cached : bool
+    {
+      [Memoize]
+      get
+      {
+        Opts.Exists(_ == "CACHED")
+      }
+    }
+
+    public Var : bool
+    {
+      [Memoize]
+      get
+      {
+        Opts.Exists(_ == "VAR")
+      }
+    }
+
+    public Single : bool
+    {
+      [Memoize]
+      get
+      {
+        Opts.Exists(_ == "SINGLE")
+      }
+    }
+
+    public Queue : bool
+    {
+      [Memoize]
+      get
+      {
+        Opts.Exists(_ == "QUEUE")
+      }
+    }
+
+    public Sorted : bool
+    {
+      [Memoize]
+      get
+      {
+        Opts.Exists(_ == "SORTED")
+      }
+    }
+    //public static TypeFromStr(str : string, gen : CppGenerator) : string
+    //{
+    //  match (str)
+    //  {
+    //    | "string" => "char *"//cpp("type: char *")
+    //    | "int"    => "int"//cpp("type: int")
+    //    | "intinf" => "long long"//cpp("type: int")
+    //    | "real"   => "float"//cpp("type: float")
+    //    | "time"   => "int"//cpp("type: int")
+    //    | "bool"   => "bool"//cpp("type: bool")
+    //    | "unit"   => "char"//cpp("type: Unit")
+    //    | str      => (gen.Proc.colour_sets[str] |> GenColour(_, gen)).DestType//GetTypeExpr
+    //  }
+    //}
+
+    //public ParmType : string
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    def type = match (DestType)
+    //              {
+    //                | x when x.StartsWith("bytes") => "bytes"
+    //                | x                            => x
+    //              }
+    //    if (IsComplexType) 
+    //    {
+    //      $<#const $type &#> 
+    //    } else $<#$type #>;
+    //  }
+    //}
+    
+    public IsUnit : bool
+    {
+      [Memoize]
+      get
+      {
+        Name == "UNIT" || colour.type is Colour.Unit 
+      }
+    }
+    
+    //public IsSimple : bool
+    //{
+    //}
+    
+    //public VarSpec : string
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    if (IsComplexType) $"const $DestType &" else $"$DestType "
+    //  }
+    //}
+    
+    //public VarSpecCopy : string
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    if (IsComplexType) $"const $DestType *" else $"$DestType "
+    //  }
+    //}
+    
+    public DestType : PetriNetType
+    {
+      [Memoize]
+      get
+      {
+        def get_type(c)
+        {
+          | Colour.Integer =>
+              match (Name)
+              {
+                | "SBYTE"  => PetriNetType.SByte()
+                | "BYTE"   => PetriNetType.Byte()
+                | "SHORT"  => PetriNetType.Short()
+                | "INT"    => PetriNetType.Int()
+                | "INTINF" => PetriNetType.IntInf()
+                | "UINT"   => PetriNetType.UInt()
+                | "USHORT" => PetriNetType.UShort()
+                //| _        => "int"
+              }
+
+          | Colour.Alias(type)  => 
+              match (Name)
+              {
+                | "SBYTE"  => PetriNetType.SByte()
+                | "BYTE"   => PetriNetType.Byte()
+                | "SHORT"  => PetriNetType.Short()
+                | "INT"    => PetriNetType.Int()
+                | "INTINF" => PetriNetType.IntInf()
+                | "UINT"   => PetriNetType.UInt()
+                | "USHORT" => PetriNetType.UShort()
+                | _        => get_type(gen.Proc.colour_sets[type].type)
+              }
+          | Colour.Simple(type) => 
+              match (type)
+              {
+                | "string" => PetriNetType.String()//cpp("type: char *")
+                | "int"    => PetriNetType.Int()//cpp("type: int")
+                | "time"
+                | "TIME"   => PetriNetType.Time()
+                | "INTINF"
+                | "intinf" => PetriNetType.IntInf()//cpp("type: int")
+                | "real"   => PetriNetType.Real()//cpp("type: float")
+                | "bool"   => PetriNetType.Bool()//cpp("type: bool")
+                | "unit"   => PetriNetType.Unit()//cpp("type: Unit")
+                | "SBYTE"  => PetriNetType.SByte()
+                | "BYTE"   => PetriNetType.Byte()
+                | "SHORT"  => PetriNetType.Short()
+                | "INT"    => PetriNetType.Int()
+                | "UINT"   => PetriNetType.UInt()
+                | "USHORT" => PetriNetType.UShort()
+                | str      => get_type(gen.Proc.colour_sets[str].type)
+              }
+          | Unit(None())  => PetriNetType.Unit()//cpp("type: Unit")
+          | Unit(Some(t)) => get_type(gen.Proc.colour_sets[t].type)//cpp("type: $t")
+      //| Product(vals) => def vals = vals.Map(TypeFromStr);
+      //                  $<#type: tuple2<..$vals>#>//cpp(<#type: tuple2<..$vals>#>)
+          | List(t, r)    => PetriNetType.List(get_type(gen.Proc.colour_sets[t].type), r)
+          | Timed(p) => PetriNetType.Timed(p |> get_type)
+          | _        => get_type(gen.Proc.colour_sets[Name].type)//cpp("type: $n")
+                        //cpp("type: $(inner : type) *")
+
+        }
+      
+        get_type(type)        
+      }
+    }
+
+    //public Public : bool
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    def places_uses = gen.Places.Filter(x => x.colour == colour : object);
+    //    places_uses.Exists(x => x.port.HasValue)
+    //  }
+    //}
+    
+    //public IsBytes : bool
+    //{
+    //  [Memoize]
+    //  get
+    //  {
+    //    Colour.type is Colour.List || Colour.name.StartsWith("BYTES")
+    //  }
+    //}
+    
+    //FinalType(str : string) : string
+    //{
+    //  match (str.Trim())
+    //  {
+    //    | "BYTES" => "bytesn"
+    //    | t       => t
+    //  }
+    //}
+  }
+}
