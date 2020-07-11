@@ -78,7 +78,7 @@ namespace PetriNetLib
     //  }
     //}
     
-    public this(file : string, model : OutModel, proc : PetriNetProcessor, type_int : ITypeInterface)
+    public this(file : string, model : OutModel, proc : PetriNetProcessor, lang : ILangGenerator, type_int : ITypeInterface)
     {
       this.typer = type_int;
       this.file = file;
@@ -86,7 +86,7 @@ namespace PetriNetLib
 
       this.model = model;
       this.proc = proc;
-      
+      langgen = lang;
       this.places = model.places.MapToArray(GenPlace(_, this, 0));
       //mutable idx = 0;
       this.transitions = model.transitions.MapToArray(x => GenTran(x, this)).ToArray();

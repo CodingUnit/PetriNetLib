@@ -31,10 +31,7 @@ namespace PetriNetLib
     public MainGen() : void
     {
       def res = comp.MainGen();
-      def lang = match (target)
-      {
-        | TargetLangType.Cpp => CppGenerator(res)                                  
-      }
+
       
       lang.Generate()
     }

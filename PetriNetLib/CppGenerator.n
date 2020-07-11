@@ -17,15 +17,18 @@ namespace PetriNetLib
     model : GenModel;
     //colours  : Hashtable[string, CppColour] = Hashtable();
         
-    public this(mod : GenModel)
-    {
-      model = mod;
-    }
+    //public this(mod : GenModel)
+    //{
+    //  model = mod;
+    //}
     
-    public Construct(mod : GenModel) : CppGenerator
-    {
-      CppGenerator(mod)
-    }
+    //public Construct(mod : GenModel) : CppGenerator
+    //{
+    //  CppGenerator(mod)
+    //}
+    
+    extern_fields : List[string] = List();
+    private_fields : List[string] = List();
     
     net_name : string
     {
@@ -74,6 +77,45 @@ namespace PetriNetLib
         };
         #>
       }
+    }
+    
+    IsTimed : bool
+    {
+      [Memoize]
+      get
+      {
+        model.options.Exists(x => x is PetriNetOptions.Timed)
+      }
+    }
+    
+    Name : string
+    {
+      get
+      {
+        model.name
+      }
+    }
+    
+    public DefineMethod(meth : GClassDecl.Func) : void
+    {
+    }
+    
+    public DefinePlace(pl : GenPlace) : void
+    {
+      
+    }
+    
+    public GenerateUsings() : void
+    {
+      if (IsTimed)
+      {
+        extern_fields.Add(<##include "timed_petrinet.h"#>)
+      } else
+      {
+        extern_fields.Add(<#include "petrinet.h"#>);
+      }
+      extern_fields.Add(<#using namespace petrinet_lib;#>);
+      private_fields.Add($"typedef u32 ($Name::*tran_func_type)();");
     }
     
     //public ColourToType(col : Gen)

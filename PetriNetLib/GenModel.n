@@ -120,6 +120,11 @@ namespace PetriNetLib
   public class InitMarking
   {
   }
+  
+  variant PetriNetOptions
+  {
+    | Timed
+  }
   /// <summary>
   /// Description of GenModel.
   /// </summary>
@@ -127,6 +132,7 @@ namespace PetriNetLib
   class GenModel
   {
     public name            : string;
+    public options         : list[PetriNetOptions];
     public composer        : INetComposer;
     public places          : list[GenPlace];
     public init_marking    : list[InitMarking];

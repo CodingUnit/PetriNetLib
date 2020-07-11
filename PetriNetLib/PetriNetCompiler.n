@@ -16,8 +16,7 @@ namespace PetriNetLib
   class PetriNetCompiler
   {
     //mutable gen : Generator;
-    mutable genproc : IMainProcessor;
-    mutable langgen : ILangGenerator;
+    mutable gen : Generator;
     mutable proc : PetriNetProcessor;
     [Accessor]
     mutable target_lang : TargetLangType;
@@ -30,13 +29,17 @@ namespace PetriNetLib
     {
       //when (!only_)
         //gen.PhaseTwo();   
-      genproc.PhaseTwo();
+      gen.PhaseTwo();
     }
     
-    public Process(ty : TypeBuilder, mainproc : IMainProcessorFabric, typer : Typer, file : string, page : string, target : TargetLangType) : void
+    public Process(ty : TypeBuilder, typer : Typer, file : string, page : string, target : TargetLangType) : void
     {
       target_lang = target;
             
+      def lang = match (target)
+      {
+        | TargetLangType.Cpp => CppGenerator()                                  
+      }
       def parser = Parser(page);
       if (parser.Parse(file))
       {
@@ -44,10 +47,10 @@ namespace PetriNetLib
         proc = PetriNetProcessor(file, Flags, typer, ty, parser.Places, parser.Transitions, parser.Arcs, parser.Decls);
         proc.Process();      
         //gen = Generator(proc.OutModel, proc);
-        genproc = mainproc.Construct($"$file.h", proc.OutModel, proc, TypeInterface(typer));
+        gen = Generator($"$file.h", proc.OutModel, proc, lang, TypeInterface(typer));
         //when (!only_)
           //gen.PhaseOne();
-        genproc.PhaseOne();
+        gen.PhaseOne();
         ty.UserData["PetriNetGen"] = this;
       } else
       {
@@ -59,9 +62,9 @@ namespace PetriNetLib
     {
       //when (!only_)
         //gen.Generate();
-      genproc.Generate();
-      def comp = LinearComposition();
-      comp.Process(proc.OutModel)
+      gen.Generate();
+      //def comp = LinearComposition();
+      //comp.Process(proc.OutModel)
     }
   }
 }

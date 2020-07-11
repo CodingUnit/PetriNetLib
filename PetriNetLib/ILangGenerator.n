@@ -14,7 +14,9 @@ namespace PetriNetLib
   /// </summary>
   interface ILangGenerator
   {
-    Construct(model : GenModel) : ILangGenerator;
+    //Construct(model : GenModel) : ILangGenerator;
+    DefineMethod(meth : GClassDecl.Func) : void;
+    GenerateUsings() : void;
     Generate() : void;
   }
 }

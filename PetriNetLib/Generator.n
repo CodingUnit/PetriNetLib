@@ -36,7 +36,7 @@ namespace PetriNetLib
   /// <summary>
   /// Description of Generator.
   /// </summary>
-  partial class Generator : IMainProcessor
+  partial class Generator
   {
     [Accessor]
     model       : OutModel;
@@ -58,6 +58,7 @@ namespace PetriNetLib
 
     [Accessor]
     typer : ITypeInterface;
+    lang : ILangGenerator;
     
     //public TypingMethod : MethodBuilder
     //{
@@ -883,6 +884,7 @@ namespace PetriNetLib
                       {
                         ..$init_body;
                       })*/
+      lang.
     }
 
     CreateEvents() : void
