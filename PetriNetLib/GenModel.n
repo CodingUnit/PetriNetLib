@@ -138,7 +138,7 @@ namespace PetriNetLib
     public init_marking    : list[InitMarking];
     public tran            : list[GenTran];
     public glob_refs       : list[GlobRef];
-    public colours         : list[GenColour];
+    public colours         : Hashtable[string, GenColour];
     public funcs           : list[GenFunc];    
   }
   

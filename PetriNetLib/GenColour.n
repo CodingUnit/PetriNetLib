@@ -2,7 +2,7 @@
 using Nemerle.Collections;
 using Nemerle.Text;
 using Nemerle.Utility;
-
+using Nemerle.Compiler.Parsetree;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -192,20 +192,21 @@ namespace PetriNetLib
     //  }
     //}
 
-    //public ParmType : string
+    //public ParmType : PExpr
     //{
     //  [Memoize]
     //  get
     //  {
-    //    def type = match (DestType)
-    //              {
-    //                | x when x.StartsWith("bytes") => "bytes"
-    //                | x                            => x
-    //              }
-    //    if (IsComplexType) 
-    //    {
-    //      $<#const $type &#> 
-    //    } else $<#$type #>;
+    //    DestType
+    //    //def type = match (DestType)
+    //    //          {
+    //    //            | x when x.StartsWith("bytes") => "bytes"
+    //    //            | x                            => x
+    //    //          }
+    //    //if (IsComplexType) 
+    //    //{
+    //    //  $<#const $type &#> 
+    //    //} else $<#$type #>;
     //  }
     //}
     
@@ -239,8 +240,16 @@ namespace PetriNetLib
     //    if (IsComplexType) $"const $DestType *" else $"$DestType "
     //  }
     //}
+    public LangType : PExpr
+    {
+      [Memoize]
+      get
+      {
+        gen.GetLangType(DestType)
+      }
+    }
     
-    public DestType : PetriNetType
+    public DestType : PExpr
     {
       [Memoize]
       get
@@ -250,54 +259,61 @@ namespace PetriNetLib
           | Colour.Integer =>
               match (Name)
               {
-                | "SBYTE"  => PetriNetType.SByte()
-                | "BYTE"   => PetriNetType.Byte()
-                | "SHORT"  => PetriNetType.Short()
-                | "INT"    => PetriNetType.Int()
-                | "INTINF" => PetriNetType.IntInf()
-                | "UINT"   => PetriNetType.UInt()
-                | "USHORT" => PetriNetType.UShort()
+                | "SBYTE"  => <[sbyte]>
+                | "BYTE"   => <[ byte ]>
+                | "SHORT"  => <[ short ]>
+                | "INT"    => <[ int ]>
+                | "UINT"   => <[ uint ]>
+                | "USHORT" => <[ ushort]>
+                | "INTINF" => <[ intinf ]>
                 //| _        => "int"
               }
 
           | Colour.Alias(type)  => 
               match (Name)
               {
-                | "SBYTE"  => PetriNetType.SByte()
-                | "BYTE"   => PetriNetType.Byte()
-                | "SHORT"  => PetriNetType.Short()
-                | "INT"    => PetriNetType.Int()
-                | "INTINF" => PetriNetType.IntInf()
-                | "UINT"   => PetriNetType.UInt()
-                | "USHORT" => PetriNetType.UShort()
+                | "SBYTE"  => <[sbyte]>
+                | "BYTE"   => <[ byte ]>
+                | "SHORT"  => <[ short ]>
+                | "INT"    => <[ int ]>
+                | "UINT"   => <[ uint ]>
+                | "USHORT" => <[ ushort]>
+                | "INTINF" => <[ intinf ]>
                 | _        => get_type(gen.Proc.colour_sets[type].type)
               }
           | Colour.Simple(type) => 
               match (type)
               {
-                | "string" => PetriNetType.String()//cpp("type: char *")
-                | "int"    => PetriNetType.Int()//cpp("type: int")
+                | "string" => <[ string ]>//cpp("type: char *")
+                | "int"    => <[ int ]>//cpp("type: int")
                 | "time"
-                | "TIME"   => PetriNetType.Time()
+                | "TIME"   => <[time]>
                 | "INTINF"
-                | "intinf" => PetriNetType.IntInf()//cpp("type: int")
-                | "real"   => PetriNetType.Real()//cpp("type: float")
-                | "bool"   => PetriNetType.Bool()//cpp("type: bool")
-                | "unit"   => PetriNetType.Unit()//cpp("type: Unit")
-                | "SBYTE"  => PetriNetType.SByte()
-                | "BYTE"   => PetriNetType.Byte()
-                | "SHORT"  => PetriNetType.Short()
-                | "INT"    => PetriNetType.Int()
-                | "UINT"   => PetriNetType.UInt()
-                | "USHORT" => PetriNetType.UShort()
+                | "intinf" => <[ intinf ]>
+                | "real"   => <[ real ]>
+                | "bool"   => <[ bool]>
+                | "unit"   => <[ unit ]>
+                | "SBYTE"  => <[ sbyte ]>
+                | "BYTE"   => <[ byte ]>
+                | "SHORT"  => <[ short ]>
+                | "INT"    => <[ int ]>
+                | "UINT"   => <[ uint ]>
+                | "USHORT" => <[ ushort ]>
                 | str      => get_type(gen.Proc.colour_sets[str].type)
               }
-          | Unit(None())  => PetriNetType.Unit()//cpp("type: Unit")
+          | Unit(None())  => <[ unit ]>//cpp("type: Unit")
           | Unit(Some(t)) => get_type(gen.Proc.colour_sets[t].type)//cpp("type: $t")
       //| Product(vals) => def vals = vals.Map(TypeFromStr);
       //                  $<#type: tuple2<..$vals>#>//cpp(<#type: tuple2<..$vals>#>)
-          | List(t, r)    => PetriNetType.List(get_type(gen.Proc.colour_sets[t].type), r)
-          | Timed(p) => PetriNetType.Timed(p |> get_type)
+          | List(t, r)    => def type = get_type(gen.Proc.colour_sets[t].type);
+                             match (r)
+                              {
+                                | Some((mn, mx)) => <[ range($type, $(mn : int), $(mx : int))]>
+                                | _              => <[ list[$type] ]>
+                              }
+                             //def type = <[ $range ]>;//, r);//$type
+                             //<[ list[$type]$range ]>
+          | Timed(p) => <[timed($(get_type(p))]>//PetriNetType.Timed(p |> get_type)
           | _        => get_type(gen.Proc.colour_sets[Name].type)//cpp("type: $n")
                         //cpp("type: $(inner : type) *")
 

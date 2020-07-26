@@ -2,7 +2,8 @@
 using Nemerle.Collections;
 using Nemerle.Text;
 using Nemerle.Utility;
-
+using Nemerle.Compiler;
+using Nemerle.Compiler.Parsetree;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,8 +28,9 @@ namespace PetriNetLib
     //  CppGenerator(mod)
     //}
     
-    extern_fields : List[string] = List();
+    extern_fields  : List[string] = List();
     private_fields : List[string] = List();
+    public_fields  : List[string] = List();
     
     net_name : string
     {
@@ -96,13 +98,136 @@ namespace PetriNetLib
       }
     }
     
-    public DefineMethod(meth : GClassDecl.Func) : void
+    ConvType(exp : PExpr) : string
     {
+      ""
     }
     
-    public DefinePlace(pl : GenPlace) : void
+    ConvParm(exp : PParameter) : string
     {
+      ""
+    }
+    
+    ConvBody(exp : list[PExpr]) : string
+    {
+      ""
+    }
+    
+    ConvMember(mem : ClassMember) : string
+    {
+      ""
+    }
+    
+    CreateAuxProduct(n : string, types : list[PExpr]) : string
+    { 
+      def fnames = types.MapI((i, t) => ($"field$(i + 1)", GetType(t)));
+      //def ctor = fnames.Map(ConvParm);
+      //def ftypes = fields.Map((n, t) => (n, model.colours[t].LangType));
+      def ctor = fnames.Map((n, t) => $"$(ParmType(t)) $n");
+      def fields = fnames.Map((n, t) => $"$t $n;");
       
+      def ctorbody = fnames.Map((f, _) => $"this->$f = $f;");
+      //def num = vals.Length;
+      def assign = fnames.Map((x, _) => $"$x = tup.$x;");
+      def types = fnames.Map((_, t) => t);
+      //def add_buf_fields = fnames.Map((n, t) => (n, colours[t].DestType));
+      //def bytes = get_bytes_func(fnames);
+      def str = $<#struct $n
+            {
+              $n() {}
+              $n(..$(ctor;", ")) 
+              {
+                ..$(ctorbody;"\n")
+              }
+
+              $n(const tuple$num<..$types> &tup)
+              {
+                ..$(assign;"\n")
+              }
+
+              ..$(fields;"\n")
+
+              /*bytesn get_bytes() const
+              {
+                $bytes
+                //return bytes_ptr(&field1, sizeof($n));
+              }*/
+
+              /*void operator=(const tuple$num<..$types> &tup)
+              {
+                ..$(assign;"\n")
+              }*/
+            };#>;
+        str
+    }
+    
+    GetType(ty : PExpr) : string
+    {
+      | <[ sbyte]>   => "s8"
+      | <[ byte ]>   => "u8"
+      | <[ short ]>  => "s16"
+      | <[ int ]>    => "int"
+      | <[ uint ]>   => "u32"
+      | <[ ushort]>  => "u16"
+      | <[ intinf ]> => "u64"
+    }
+    
+    ParmType(ty : string) : string
+    {
+      | "sbyte"  => "s8"
+      | "byte "  => "u8"
+      | "short"  => "s16"
+      | "int"    => "int"
+      | "uint"   => "u32"
+      | "ushort" => "u16"
+      | "intinf" => "u64"
+    }
+    
+    public Define(type : ClassMember.TypeDeclaration) : void
+    {
+      def str = match (type)
+      {
+        | <[decl: class $(name : usesite)
+             {
+               ..$fields
+             }]> => 
+             
+             def fields = fields.Map(ConvMember);
+             $<#struct $name
+             {
+               ..$(fields; "\n")
+             }#>
+      | ClassMember.TypeDeclaration(TopDeclaration.Alias(FullName = n, ty = ty)) => 
+         match (ty)
+         {
+           | <[ (..$lst)]>          => CreateAuxProduct(n, lst)
+           | <[ $(name : usesite)]> => $<#typedef $n $name;#>
+         }
+         
+       }
+       private_fields.Add(str)
+    }
+    
+    
+    public Define(meth : ClassMember.Function, readonly : bool) : void
+    {
+      match (meth)
+      {
+       | <[decl: $(name : usesite)(..$parms) : $ty {..$body}]> as m => 
+           def pub = m.Attributes.HasFlag(NemerleModifiers.Public);
+           def ty = ConvType(ty);
+           def parms = parms.Map(ConvParm);
+           def const = if (readonly) " const" else "";
+           def body = ConvBody(body);
+           def str = $<#$ty $name(..$(parms;", "))$const
+                        {
+                          $body
+                        }
+                       #>;
+           
+           if (pub) public_fields.Add(str) else private_fields.Add(str)
+         
+       }
     }
     
     public GenerateUsings() : void

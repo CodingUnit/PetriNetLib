@@ -32,12 +32,12 @@ namespace PetriNetLib
         //mutable typing_method : MethodBuilder;
     //compiler : CompilerHost = CompilerHost();
     mutable cons_expr : List[string] = List();
-    mutable private_fields    : List[string] = List();
+    mutable private_f ields    : List[string] = List();
     mutable public_fields    : List[string] = List();
     mutable protected_fields : List[string] = List();
     mutable extern_fields    : List[string] = List();
     mutable first_public_fields : List[string] = List();
-    mutable init_body : list[string] = [];
+    mutable init_body : PExpr = <[]>;
     file : string;
     mutable ctx : list[string];
     
@@ -53,6 +53,13 @@ namespace PetriNetLib
       res
     }
     
+    internal TypeDecl(new_expr : PExpr, n : string) : ClassMember.TypeDeclaration
+    {
+      def name = Macros.UseSiteSymbol(n);
+      def mods = AttributesAndModifiers(NemerleModifiers.Private, []);
+      def al = TopDeclaration.Alias(name, mods, Typarms.Empty, new_expr);
+      al |> ClassMember.TypeDeclaration.TypeDeclaration
+    }
     //main_class : string
     //{
     //  [Memoize]
@@ -197,12 +204,13 @@ namespace PetriNetLib
     ////  if (func.StartsWith("FUNC_")) func.Substring(5) else func
     ////}
 
-    //ConvParm(n : string, t : string) : string
-    //{
-    //  def col = colours[t];
-    //  def type = col.ParmType;
-    //  $<#$type$n#>;
-    //}
+    ConvParm(n : string, t : string) : PExpr
+    {
+      def col = colours[t];
+      def type = col.DestType;
+      <[ $(n : usesite) : $type]>
+      //$<#$type$n#>;
+    }
 
     //internal ConvParm(expr : PParameter) : string
     //{

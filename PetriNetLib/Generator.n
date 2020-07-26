@@ -468,279 +468,237 @@ namespace PetriNetLib
     //    | _                   => func.Decl
     //  }
     //}
-
-    //CreateColourSet(col : GenColour) : string
-    //{
-    //  def get_bytes_func(fnames)
-    //  {
-    //    def fgroup = List();
+    //type a = void;
+    
+    CreateColourSet(col : GenColour) : list[ClassMember.TypeDeclaration]
+    {
+      //def get_bytes_func(fnames)
+      //{
+      //  def fgroup = List();
                                                   
-    //    def write_group()
-    //    {
-    //      if (fgroup.IsEmpty()) [] else
-    //      {
-    //        def size = fgroup.Map(n => $<#sizeof($n)#>);
-    //        def size = size.Fold("", (x, a) => if (a.IsEmpty()) x else $"$x + $a");
-    //        def first = fgroup.First();
-    //        fgroup.Clear();
-    //        $<#bytesn((void *)&$first, $size);#> :: []
-    //      }
-    //    }
+      //  def write_group()
+      //  {
+      //    if (fgroup.IsEmpty()) [] else
+      //    {
+      //      def size = fgroup.Map(n => $<#sizeof($n)#>);
+      //      def size = size.Fold("", (x, a) => if (a.IsEmpty()) x else $"$x + $a");
+      //      def first = fgroup.First();
+      //      fgroup.Clear();
+      //      $<#bytesn((void *)&$first, $size);#> :: []
+      //    }
+      //  }
                                                   
-    //    def get_bytes_fields(n, t)
-    //    {
-    //      def col = colours[t];
-    //      //def a = if (a.IsEmpty()) "" else $"$a\n";
-    //      if (col.IsBytes) 
-    //      {
-    //        def group = write_group();
-    //        group + [$<#$n;#>]
-    //      } else
-    //      if (col.IsComplexType) 
-    //      {
-    //        def group = write_group();
-    //        group + [$<#$n.get_bytes();#>]
-    //      } else//$group
-    //        //$(a)res += 
-    //      {
-    //        fgroup.Add(n);
-    //        []
-    //      }
-    //    }
+      //  def get_bytes_fields(n, t)
+      //  {
+      //    def col = colours[t];
+      //    //def a = if (a.IsEmpty()) "" else $"$a\n";
+      //    if (col.IsBytes) 
+      //    {
+      //      def group = write_group();
+      //      group + [$<#$n;#>]
+      //    } else
+      //    if (col.IsComplexType) 
+      //    {
+      //      def group = write_group();
+      //      group + [$<#$n.get_bytes();#>]
+      //    } else//$group
+      //      //$(a)res += 
+      //    {
+      //      fgroup.Add(n);
+      //      []
+      //    }
+      //  }
                                                   
-    //    def bytes = fnames.SelectMany(get_bytes_fields).NToList();
-    //    def bytes = if (fgroup.IsEmpty()) bytes else bytes + write_group();
-    //    if (bytes.IsEmpty()) "" else
-    //    if (bytes.IsSingle()) $"return $(bytes.First());" else
-    //    {
-    //      def bytes = bytes.Map(x => $"res += $x");
-    //      def bytes = bytes.Fold("", (x, a) => if (a.IsEmpty()) x else $<#$(a)
-    //      $x#>);
-    //      $<#bytesn res;
-    //      $bytes
-    //      return res;#>
-    //    }
-    //  }
+      //  def bytes = fnames.SelectMany(get_bytes_fields).NToList();
+      //  def bytes = if (fgroup.IsEmpty()) bytes else bytes + write_group();
+      //  if (bytes.IsEmpty()) "" else
+      //  if (bytes.IsSingle()) $"return $(bytes.First());" else
+      //  {
+      //    def bytes = bytes.Map(x => $"res += $x");
+      //    def bytes = bytes.Fold("", (x, a) => if (a.IsEmpty()) x else $<#$(a)
+      //    $x#>);
+      //    $<#bytesn res;
+      //    $bytes
+      //    return res;#>
+      //  }
+      //}
       
-    //  match (col.Colour)
-    //  {
-    //    | ColourSet(n, Colour.Product(vals))   => def fnames = vals.MapI((i, t) => ($"field$(i + 1)", t));
-    //                                              def ctor = fnames.Map(ConvParm);
-    //                                              def ftypes = fnames.Map((n, t) => (n, colours[t].DestType));
-    //                                              def fields = ftypes.Map((n, t) => $"$t $n;");
-    //                                              def ctorbody = fnames.Map((f, _) => $"this->$f = $f;");
-    //                                              def num = vals.Length;
-    //                                              def assign = ftypes.Map((x, _) => $"$x = tup.$x;");
-    //                                              def types = ftypes.Map((_, t) => t);
-    //                                              //def add_buf_fields = fnames.Map((n, t) => (n, colours[t].DestType));
-    //                                              def bytes = get_bytes_func(fnames);
-    //                                              $<#struct $n
-    //                                                    {
-    //                                                      $n() {}
-    //                                                      $n(..$(ctor;", ")) 
-    //                                                      {
-    //                                                        ..$(ctorbody;"\n")
-    //                                                      }
+      match (col.Colour)
+      {
+        | ColourSet(n, Colour.Product(vals))   => def expr = vals.Map(x => colours[x].DestType);
+                                                  [TypeDecl(<[ (..$expr) ]>, n)]
+                                                  
+                                                  //CTypeDecl.Decl(CTree.Decl([CSpec.Typedef()], CType.Class(n), [CDecl.Id(CName.String(new_name), None())]))
+        | ColourSet(n, Colour.Record(vals))    => 
+                                                  //def ctor = vals.Map(ConvParm
+                                                  def fields = vals.Map((n, t) => <[decl: $(n : usesite) : $(colours[t].DestType);]>);
+                                                  //def ctorbody = vals.Map((f, _) => <[ this.$(f : usesite) = $(f : usesite);]>);
+                                                  //def bytes = get_bytes_func(vals);
+                                                  [<[decl: [Record] class $(n : usesite)
+                                                        {
+                                                          
 
-    //                                                      $n(const tuple$num<..$types> &tup)
-    //                                                      {
-    //                                                        ..$(assign;"\n")
-    //                                                      }
+                                                          //bytesn get_bytes() const
+                                                          //{
+                                                          //  $bytes
+                                                          //}
+                                                          ..$(fields)
+                                                        };]>]
+                                                  
+        | ColourSet(n, Colour.Index(_mn, _mx, i)) => [TypeDecl(<[ int ]>, n)]
+     
+        | ColourSet(n, Colour.Unit(Some(t))) => [TypeDecl(<[ void ]>, t), TypeDecl(<[ $(t : usesite)]>, n)]
+        | ColourSet("REAL", Colour.Simple(_t))  => []
+        | ColourSet(n, Colour.Simple)
+        | ColourSet(n, Colour.Alias(t))
+        | ColourSet(n, Colour.Integer) => [TypeDecl(col.DestType, n)]//def t = col.DestType;
+        | ColourSet(n, Colour.Unit)    => [TypeDecl(<[ void]>, n)]
+        | ColourSet(n, Colour.Enum(vals)) => def fields = vals.Map(x => <[decl: $(x : usesite) ]>);
+                                             [<[decl: enum $(n : usesite)
+                                                     {
+                                                       ..$fields
+                                                     }]>]
+                                            //def vals = vals.Map(x => $"$x");
+                                            //$<#    enum $n
+                                            //       {
+                                            //         ..$vals;
+                                            //       };#>
+        | ColourSet(n, Colour.Timed(c))   => //def col = GenColour(ColourSet(n, c), this);
+                                             //[TypeDecl(<[ Timed.[$(n : usesite)] ]>, n)]//
+                                             def td = CreateColourSet(ColourSet(n, c) |> GenColour(_, this));
+                                             td.Iter(x => x.AddCustomAttribute(<[ Timed ]>));
+                                             td
+                                             //<[decl: class ]>
 
-    //                                                      ..$(fields;"\n")
+        | ColourSet(n, Colour.List(t, r)) => def ty = <[ list.[$(t : usesite)] ]>;
+                                             def ty = if (r is Some((mn, mx)))
+                                             {
+                                               <[ range($ty, $(mn : int), $(mx : int))]>
+                                             } else
+                                             {
+                                               ty
+                                             }
+                                             [TypeDecl(ty, n)]
+                                            //def ty = match (n)
+                                            //{
+                                            //  | "BYTES" => "bytesn"
+                                            //  | x       when x.StartsWith("BYTES") => 
+                                            //      def num = x.Substring(5);
+                                            //      $"bytes$num"
+                                            //  | _       => "bytesn"
+                                            //}
+                                            //$"typedef $ty $n;"
+        | _                               => null
+      }
+    }    
 
-    //                                                      bytesn get_bytes() const
-    //                                                      {
-    //                                                        $bytes
-    //                                                        //return bytes_ptr(&field1, sizeof($n));
-    //                                                      }
+    CreateInitMarking(place : GenPlace) : GInitValue
+    {
+      def combine(e1, e2)
+      {
+        | (<[Enumerable.Repeat($tok, $(n : int))]>, <[Enumerable.Repeat($tok2, $(n2 : int))]>) when (tok.Equals(tok2)) 
+            => <[Enumerable.Repeat($tok, $(n2 + n))]>
+        | (<[Enumerable.Repeat($(tok : int), $(n : int))]>, <[Enumerable.Repeat($(tok2 : int), $(n2 : int))]>)                         
+            => def val = Enumerable.Repeat(tok, n).Concat(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : int)]>).ToArray();
+              if (val.Length > 50) <[ $(e1).Concat($e2)]> else
+              <[ array[..$val] ]>
+        | (<[Enumerable.Repeat($(tok : string), $(n : int))]>, <[Enumerable.Repeat($(tok2 : string), $(n2 : int))]>)                         
+            => def val = Enumerable.Repeat(tok, n).Concat(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : string)]>).ToArray();
+              if (val.Length > 50) <[ $(e1).Concat($e2)]> else
+              <[ array[..$val] ]>
+        | (<[Enumerable.Repeat($(tok : double), $(n : int))]>, <[Enumerable.Repeat($(tok2 : double), $(n2 : int))]>)                         
+            => def val = Enumerable.Repeat(tok, n).Concat(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : double)]>).ToArray();
+              if (val.Length > 50) <[ $(e1).Concat($e2)]> else
+              <[ array[..$val] ]>       
+        | _  //(<[Enumerable.Repeat($_, $(_ : int))]>, <[Enumerable.Repeat($_, $(_ : int))]>)                         
+            => <[ $e1.Concat($e2)]> 
+      }
 
-    //                                                      /*void operator=(const tuple$num<..$types> &tup)
-    //                                                      {
-    //                                                        ..$(assign;"\n")
-    //                                                      }*/
-    //                                                    };#>
+      def unfold(expr)
+      {
+        | <[ () ]> => <[ 1 ]>
+        | e        => e
+      }
 
-    //                                              //CTypeDecl.Decl(CTree.Decl([CSpec.Typedef()], CType.Class(n), [CDecl.Id(CName.String(new_name), None())]))
-    //    | ColourSet(n, Colour.Record(vals))     => 
-    //                                              def ctor = vals.Map(ConvParm);
-    //                                              def ftypes = vals.Map((n, t) => (n, colours[t].DestType));
-    //                                              def fields = ftypes.Map((n, t) => $"$t $n;");
-    //                                              def ctorbody = vals.Map((f, _) => $"this->$f = $f;");
-    //                                              def bytes = get_bytes_func(vals);
-    //                                              $<#struct $n
-    //                                                    {
-    //                                                      $n() {}
-    //                                                      $n(..$(ctor;", ")) 
-    //                                                      {
-    //                                                        ..$(ctorbody;"\n")
-    //                                                      }
+      def fold(expr) : PExpr
+      {
+        //| <[ {..$e} ]>   => e.Fold(acc, fold)
+        | <[ 1 ` $tok %@ $time ]>             => def time = time |> ConvExpr(_, false);
+                                                def tok = unfold(tok);
+                                                <[at_time($tok, $time)]>
+        | <[ 1 ` $tok]>                       => <[$(unfold(tok))]>
+        | <[ $(n : int) ` $tok %@ $time ]>    => <[IEnumerable.Repeat(at_time($(unfold(tok)), $time), $n)]>
+        | <[ $(n : int) ` $tok]>              => <[IEnumerable.Repeat($(unfold(tok)), $n)]>
+        | <[ $l %++ $r]>                      => <[$(combine(fold(l), fold(r)))]>
+        | e                                   => unfold(e)
+      }
 
-    //                                                      bytesn get_bytes() const
-    //                                                      {
-    //                                                        $bytes
-    //                                                      }
-    //                                                      ..$(fields;"\n")
-    //                                                    };#>
-    //    | ColourSet(n, Colour.Index(_mn, _mx, i)) =>   $<#typedef $n int;;
-    //                                                 typedef $i int;#>;
-    //    //def name = Macros.UseSiteSymbol(n);
-    //                                              //def mods = AttributesAndModifiers(NemerleModifiers.Private, []);
-    //                                              //def al = TopDeclaration.Alias(name, mods, Typarms.Empty, <[ $(new_name : usesite) ]>);
-    //                                              //al |> ClassMember.TypeDeclaration.TypeDeclaration;
-    //                                              // ("typedef $n $new_name")
-    //        //$"typedef $n $new_name;"
-    //    //| ColourSet(n, Colour.Unit(Some(t))) => 
-    //    | ColourSet(n, Colour.Unit(Some(t))) => $<#typedef $t $n;
-    //                                               typedef char $t;
-    //                                              #>
-
-    //    | ColourSet("REAL", Colour.Simple(_t))  => null
-    //    | ColourSet(n, Colour.Simple)
-    //    | ColourSet(n, Colour.Integer) => def t = col.DestType;
-    //                                      $<#typedef $t $n;#>   
-    //    | ColourSet(n, Colour.Alias(t))   =>  def t = match (n)
-    //                                          {
-    //                                            | "SBYTE"  => "s8"
-    //                                            | "BYTE"   => "u8"
-    //                                            | "SHORT"  => "short"
-    //                                            | "INTINF" => "unsigned long long"//("type: int")
-    //                                            | "INT"    => "int"
-    //                                            | "UINT"   => "u32"
-    //                                            | "USHORT" => "u16"
-    //                                            | _        => t
-    //                                          }
-    //                                          $<#typedef $t $n;#>
-    //    | ColourSet(n, Colour.Unit) with t = "char"                                                       
-    //                                      => $<#typedef $t $n;#> 
-
-    //    | ColourSet(n, Colour.Enum(vals)) => //def vals = vals.Map(x => $"$x");
-    //                                        $<#    enum $n
-    //                                               {
-    //                                                 ..$vals;
-    //                                               };#>
-    //    | ColourSet(n, Colour.Timed(c))   => CreateColourSet(ColourSet(n, c) |> GenColour(_, this))
-
-    //    | ColourSet(n, Colour.List)      => def ty = match (n)
-    //                                        {
-    //                                          | "BYTES" => "bytesn"
-    //                                          | x       when x.StartsWith("BYTES") => 
-    //                                              def num = x.Substring(5);
-    //                                              $"bytes$num"
-    //                                          | _       => "bytesn"
-    //                                        }
-    //                                        $"typedef $ty $n;"
-    //    | _                               => null
-    //  }
-    //}    
-
-    //CreateInitMarking(place : GenPlace) : GInitValue
-    //{
-    //  def combine(e1, e2)
-    //  {
-    //    | (<[Enumerable.Repeat($tok, $(n : int))]>, <[Enumerable.Repeat($tok2, $(n2 : int))]>) when (tok.Equals(tok2)) 
-    //        => <[Enumerable.Repeat($tok, $(n2 + n))]>
-    //    | (<[Enumerable.Repeat($(tok : int), $(n : int))]>, <[Enumerable.Repeat($(tok2 : int), $(n2 : int))]>)                         
-    //        => def val = Enumerable.Repeat(tok, n).Concat(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : int)]>).ToArray();
-    //          if (val.Length > 50) <[ $(e1).Concat($e2)]> else
-    //          <[ array[..$val] ]>
-    //    | (<[Enumerable.Repeat($(tok : string), $(n : int))]>, <[Enumerable.Repeat($(tok2 : string), $(n2 : int))]>)                         
-    //        => def val = Enumerable.Repeat(tok, n).Concat(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : string)]>).ToArray();
-    //          if (val.Length > 50) <[ $(e1).Concat($e2)]> else
-    //          <[ array[..$val] ]>
-    //    | (<[Enumerable.Repeat($(tok : double), $(n : int))]>, <[Enumerable.Repeat($(tok2 : double), $(n2 : int))]>)                         
-    //        => def val = Enumerable.Repeat(tok, n).Concat(Enumerable.Repeat(tok2, n2)).Select(x => <[ $(x : double)]>).ToArray();
-    //          if (val.Length > 50) <[ $(e1).Concat($e2)]> else
-    //          <[ array[..$val] ]>       
-    //    | _  //(<[Enumerable.Repeat($_, $(_ : int))]>, <[Enumerable.Repeat($_, $(_ : int))]>)                         
-    //        => <[ $e1.Concat($e2)]> 
-    //  }
-
-    //  def unfold(expr)
-    //  {
-    //    | <[ () ]> => <[ 1 ]>
-    //    | e        => e
-    //  }
-
-    //  def fold(expr) : PExpr
-    //  {
-    //    //| <[ {..$e} ]>   => e.Fold(acc, fold)
-    //    | <[ 1 ` $tok %@ $time ]>             => def time = time |> ConvExpr(_, false);
-    //                                            def tok = unfold(tok);
-    //                                            <[at_time($tok, $time)]>
-    //    | <[ 1 ` $tok]>                       => <[$(unfold(tok))]>
-    //    | <[ $(n : int) ` $tok %@ $time ]>    => <[IEnumerable.Repeat(at_time($(unfold(tok)), $time), $n)]>
-    //    | <[ $(n : int) ` $tok]>              => <[IEnumerable.Repeat($(unfold(tok)), $n)]>
-    //    | <[ $l %++ $r]>                      => <[$(combine(fold(l), fold(r)))]>
-    //    | e                                   => unfold(e)
-    //  }
-
-    //  if (place.init_mark == null) null else
-    //  {
-    //    def markexpr = fold(place.init_mark);
-    //    //def mark = markexpr |> ConvExprPlaceCtx(_, place.Colour, false);
-    //    def mark = null;
-    //    //def name = place.Name;
+      if (place.init_mark == null) null else
+      {
+        def markexpr = fold(place.init_mark);
+        //def mark = markexpr |> ConvExprPlaceCtx(_, place.Colour, false);
+        def mark = null;
+        //def name = place.Name;
 
 
-    //    //def mark = if (place.IsTimed) 
-    //    //            {
-    //    //              match (place.DestContainerType)
-    //    //              {
-    //    //                | TDestCont.MinusSingle
-    //    //                | TDestCont.Single     
-    //    //                | TDestCont.ZeroSingle
-    //    //                | TDestCont.Var         => place.InitMarkWithoutTime |> ConvExpr(_, false)
-    //    //                | _                     => $"add_time($mark, 0);"
-    //    //              }
+        //def mark = if (place.IsTimed) 
+        //            {
+        //              match (place.DestContainerType)
+        //              {
+        //                | TDestCont.MinusSingle
+        //                | TDestCont.Single     
+        //                | TDestCont.ZeroSingle
+        //                | TDestCont.Var         => place.InitMarkWithoutTime |> ConvExpr(_, false)
+        //                | _                     => $"add_time($mark, 0);"
+        //              }
 
-    //    //            } else mark;
+        //            } else mark;
 
-    //    //def time = if (place.IsTimed) 
-    //    //            {
-    //    //              match (place.DestContainerType)
-    //    //              {
-    //    //                | TDestCont.MinusSingle
-    //    //                | TDestCont.Single     
-    //    //                | TDestCont.ZeroSingle
-    //    //                | TDestCont.Var         => $"\n$(name)_time = $(place.InitTime);"
-    //    //                | _                     => ""
-    //    //              }
-    //    //            } else "";
-    //    //<[ $(name : usesite).Add($mark)]>
-    //    //if ((place.port is Some(PortType.In) && place.Req)
-    //    //     || place.port is Some(PortType.Out) 
-    //    //     || place.port is Some(PortType.InOut) 
-    //    //  || place.IsFuncPlace) "" else
-    //      if (markexpr is <[]>)
-    //      {
-    //        match (place.DestContainerType)
-    //        {
-    //          | TDestCont.MinusSingle => GInitValue.Val(-1)//$"$(name) = -1;"
-    //          | TDestCont.Single      => if (place.IsUnit)
-    //                                     {
-    //                                       GInitValue.Val(0)//$"$(name) = 0;"
-    //                                     } else GInitValue.Flag(false);//$"$(name)_flag = false;"
-    //          | TDestCont.ZeroSingle  => GInitValue.Val(0)//$"$(name) = 0;"
-    //          | _                     => mark
-    //        }
-    //      } else mark
-    //      //else 
-    //      //  match (place.DestContainerType)
-    //      //  {
+        //def time = if (place.IsTimed) 
+        //            {
+        //              match (place.DestContainerType)
+        //              {
+        //                | TDestCont.MinusSingle
+        //                | TDestCont.Single     
+        //                | TDestCont.ZeroSingle
+        //                | TDestCont.Var         => $"\n$(name)_time = $(place.InitTime);"
+        //                | _                     => ""
+        //              }
+        //            } else "";
+        //<[ $(name : usesite).Add($mark)]>
+        //if ((place.port is Some(PortType.In) && place.Req)
+        //     || place.port is Some(PortType.Out) 
+        //     || place.port is Some(PortType.InOut) 
+        //  || place.IsFuncPlace) "" else
+          if (markexpr is <[]>)
+          {
+            match (place.DestContainerType)
+            {
+              | TDestCont.MinusSingle => GInitValue.Val(-1)//$"$(name) = -1;"
+              | TDestCont.Single      => if (place.IsUnit)
+                                         {
+                                           GInitValue.Val(0)//$"$(name) = 0;"
+                                         } else GInitValue.Flag(false);//$"$(name)_flag = false;"
+              | TDestCont.ZeroSingle  => GInitValue.Val(0)//$"$(name) = 0;"
+              | _                     => mark
+            }
+          } else mark
+          //else 
+          //  match (place.DestContainerType)
+          //  {
 
-    //      //    | TDestCont.Single when place.IsUnit => mark//$<#$name = $mark;#>
-    //      //    | TDestCont.Single                   => mark//$<#$name = $mark;
-    //      //                             $(name)_flag = true;$time#>;
-    //      //    | TDestCont.Var
-    //      //    | TDestCont.ZeroSingle
-    //      //    | TDestCont.MinusSingle
-    //      //                        => $"$name = $mark;$time"
-    //      //    | _                     => $"$name.add($mark);"
-    //      //  }
+          //    | TDestCont.Single when place.IsUnit => mark//$<#$name = $mark;#>
+          //    | TDestCont.Single                   => mark//$<#$name = $mark;
+          //                             $(name)_flag = true;$time#>;
+          //    | TDestCont.Var
+          //    | TDestCont.ZeroSingle
+          //    | TDestCont.MinusSingle
+          //                        => $"$name = $mark;$time"
+          //    | _                     => $"$name.add($mark);"
+          //  }
 
-    //  }
-    //}
+      }
+    }
 
     //CreateToString() : void
     //{
@@ -876,7 +834,12 @@ namespace PetriNetLib
     //    ..$(body; "\n")
     //  }#>
     //}
-
+    
+    internal GetLangType(ty : PExpr) : PExpr
+    {
+      lang.GetType(ty)
+    }
+    
     CreateStartMethod() : void
     {
       //fields ::= []
@@ -884,7 +847,12 @@ namespace PetriNetLib
                       {
                         ..$init_body;
                       })*/
-      lang.
+      //def init = GClassDecl.Func()
+      def init = <[decl: public Inittiate()
+                   {
+                     ..$init_body
+                   } ]>;
+      lang.DefineMethod(init)
     }
 
     CreateEvents() : void

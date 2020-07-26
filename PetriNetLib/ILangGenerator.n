@@ -6,6 +6,8 @@ using Nemerle.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Nemerle.Compiler;
+using Nemerle.Compiler.Parsetree;
 
 namespace PetriNetLib
 {
@@ -15,7 +17,9 @@ namespace PetriNetLib
   interface ILangGenerator
   {
     //Construct(model : GenModel) : ILangGenerator;
-    DefineMethod(meth : GClassDecl.Func) : void;
+    //GetType(ty : PExpr) : PExpr;
+    Define(type : ClassMember.TypeDeclaration) : void;
+    Define(meth : ClassMember.Function, readonly : bool) : void;
     GenerateUsings() : void;
     Generate() : void;
   }
